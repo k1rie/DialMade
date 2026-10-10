@@ -1,5 +1,5 @@
 import type { OutputKind } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import type { DesignDoc, LayoutBrief } from "@dialmade/doc";
 import type {
   Adjustment,
   AppNav,
@@ -90,8 +90,12 @@ export type GeneratedScreen = {
   copyOf?: { screenId: ScreenId; blocks: Record<BlockId, BlockId> };
 };
 
-/** Output of `generate()`: every screen in order, and how many blocks changed since the previous run. */
-export type GenerateResult = { screens: GeneratedScreen[]; changed: number };
+/**
+ * Output of `generate()`: every screen in order, and how many blocks changed since the previous run. `brief`: the
+ * «Describe tu producto» behind these screens (while one of the screens it created is still there), for
+ * `provenance.layoutBrief`.
+ */
+export type GenerateResult = { screens: GeneratedScreen[]; changed: number; brief?: LayoutBrief };
 
 /** Fingerprints of the last «Generar», per screen and block (the baseline of «Regenerar N bloques»). */
 export type GeneratedPrints = Record<ScreenId, Record<BlockId, GeneratedFingerprint>>;

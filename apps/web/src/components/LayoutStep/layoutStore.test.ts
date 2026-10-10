@@ -13,6 +13,8 @@ import {
   type ScreenTemplateId,
 } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
+import { normalizeProposals } from "@/lib/ai/layout/normalize";
+import { barberAnswer } from "@/lib/ai/layout/testing";
 import type { Screen } from "./types";
 import {
   createLayoutStore,
@@ -1291,5 +1293,83 @@ describe("duplicated screens carry their source to the next «Generar» (review 
     t.actions.generate({ accept: () => true });
     expect(t.state().copies).toEqual({});
     expect(t.actions.generate().screens.every((screen) => screen.copyOf === undefined)).toBe(true);
+  });
+});
+
+describe("«Describe tu producto» and «Sugerir con IA» (v1.1)", () => {
+  const proposal = () => normalizeProposals(barberAnswer() as never, { labelFor: label })[0]!;
+  const brief = { description: "app de reservas para barberías", source: "ai" as const, variant: "Agenda primero", rationale: "La agenda manda." };
+
+  it("applies a proposal as ONE undo step with fresh ids, unique names and routes, links and the shared navigation", () => {
+    const { store, state, actions, history } = setup();
+    actions.applySet("saas-app");
+    history().clear();
+    const before = state().screenOrder;
+    const created = actions.applyProposal(proposal().screens, { mode: "append", brief });
+    expect(created).toHaveLength(3);
+    expect(state().screenOrder).toEqual([...before, ...created]);
+    expect(history().pastStates).toHaveLength(1);
+    expect(selectActiveScreenId(state())).toBe(created[0]);
+
+    const [agenda, clients] = created.map((id) => state().screens[id]!);
+    expect(agenda!.name).toBe("Agenda");
+    expect(agenda!.route).toBe("/agenda");
+    // «Dashboard» of the set already uses the sidebar: the new app screens share it.
+    expect(agenda!.shell).toEqual({ nav: "sidebar", header: true });
+    const ids = Object.keys(agenda!.layout.blocks);
+    expect(ids.every((id) => /^b-[0-9a-z]{6}$/.test(id))).toBe(true);
+    const list = Object.values(agenda!.layout.blocks).find((block) => block.type === "list")!;
+    expect(list.linkTo).toBe(clients!.id);
+    // Every id is still unique across the project.
+    const all = Object.values(state().screens).flatMap((screen) => [screen.id, ...Object.keys(screen.layout.blocks)]);
+    expect(new Set(all).size).toBe(all.length);
+
+    // «Generar» carries the brief while one of its screens is there.
+    expect(actions.generate().brief).toEqual(brief);
+    expect(actions.undo()).toBe(true);
+    expect(state().screenOrder).toEqual(before);
+    expect(actions.generate().brief).toBeUndefined();
+    void store;
+  });
+
+  it("replaces every screen in one step (undo brings them back) and refuses past the screen limit", () => {
+    const { state, actions, history } = setup();
+    actions.applySet("landing");
+    history().clear();
+    const before = { screens: state().screens, order: state().screenOrder };
+    const created = actions.applyProposal(proposal().screens, { mode: "replace" });
+    expect(state().screenOrder).toEqual(created);
+    expect(history().pastStates).toHaveLength(1);
+    actions.undo();
+    expect(state().screens).toBe(before.screens);
+    expect(state().screenOrder).toEqual(before.order);
+
+    const many = Array.from({ length: MAX_SCREENS }, (_, i) => ({ ...proposal().screens[0]!, key: `k${i}` }));
+    expect(actions.applyProposal(many, { mode: "append" })).toEqual([]);
+    expect(state().limitHit?.limit).toBe("screens");
+  });
+
+  it("retypes free blocks as one undo step, following the default label, and skips what changed meanwhile", () => {
+    const { state, actions, history, blank, block } = setup();
+    const screenId = blank("app");
+    const a = actions.insertBlock("free", { rect: { col: 0, row: 0, w: 6, h: 20 } }).id!;
+    const b = actions.insertBlock("free", { rect: { col: 6, row: 0, w: 6, h: 20 } }).id!;
+    const c = actions.insertBlock("free", { rect: { col: 0, row: 30, w: 6, h: 20 } }).id!;
+    actions.updateBlock(c, { type: "chart" });
+    history().clear();
+    const changed = actions.retypeBlocks([
+      { screenId, blockId: a, type: "calendar" },
+      { screenId, blockId: b, type: "list" },
+      { screenId, blockId: c, type: "table" },
+      { screenId, blockId: "b-gone00", type: "table" },
+    ]);
+    expect(changed).toBe(2);
+    expect(block(a)).toMatchObject({ type: "calendar", label: label("calendar") });
+    expect(block(b).type).toBe("list");
+    expect(block(c).type).toBe("chart");
+    expect(history().pastStates).toHaveLength(1);
+    actions.undo();
+    expect([block(a).type, block(b).type]).toEqual(["free", "free"]);
+    expect(state().batchBase).toBeNull();
   });
 });
