@@ -4,7 +4,7 @@
 import type { AiBlock, AiGateWarning } from "@dialmade/doc";
 import { fixContrast, type ThemeColors } from "./contrast";
 import { hash32 } from "./direction";
-import { fixHeadings, newContacts, snippet, warning } from "./gates";
+import { extraGateWarnings, fixHeadings, newContacts, snippet, warning } from "./gates";
 import type { RenderBlockInput } from "./prompt";
 import { droppedClassRatio, sanitizeBlock, sanitizeSurfaceClasses, type SanitizeFailure, type SanitizeReport } from "./sanitize";
 import { attr, serialize } from "./tree";
@@ -56,11 +56,12 @@ export function processBlock(raw: string, context: BlockContext): ProcessedBlock
     const detail = `${issue.ratio.toFixed(1)}:1 · ${snippet(issue.element.children) || issue.element.tag} (${issue.kind === "text" ? "" : `${issue.kind}, `}${issue.mode})`;
     if (seen.has(detail) || seen.size >= 4) continue;
     seen.add(detail);
-    warnings.push(warning("contrast", detail));
+    warnings.push(warning(issue.kind === "focus" ? "focus-ring" : "contrast", detail));
   }
 
   const contacts = newContacts(tree, [...block.draft, block.label, block.note ?? ""]);
   for (const contact of contacts.slice(0, 3)) warnings.push(warning("new-contact", contact));
+  warnings.push(...extraGateWarnings(tree, [...block.draft, block.label, block.note ?? ""]));
 
   return {
     ok: true,

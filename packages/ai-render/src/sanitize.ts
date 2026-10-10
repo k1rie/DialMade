@@ -3,7 +3,7 @@
 // the first wall; the real guarantee is the sandboxed iframe on the preview origin and its CSP.
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
-import { ALLOWED_TAGS, ROOT_TAGS } from "./allowlist";
+import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
 import { checkClass, type ClassRejection } from "./vocabulary";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
@@ -20,7 +20,6 @@ const PLACEHOLDERS: ReadonlySet<string> = new Set(PLACEHOLDER_KINDS);
 const ICONS: ReadonlySet<string> = new Set(ICON_NAMES);
 export const FALLBACK_ICON = "dot";
 
-const INPUT_TYPES: ReadonlySet<string> = new Set(["text", "email", "search", "checkbox", "radio", "password", "tel", "number", "url", "date"]);
 const ROLES: ReadonlySet<string> = new Set([
   "list", "listitem", "group", "region", "img", "presentation", "none", "note", "status", "tablist", "tab", "tabpanel",
   "navigation", "banner", "contentinfo", "complementary", "separator", "switch", "progressbar", "meter", "figure",
@@ -63,7 +62,7 @@ export type SanitizeReport = {
   hostile: number;
 };
 
-export type SanitizeFailure = "too-large" | "too-many-elements" | "too-deep" | "no-root" | "wrong-root" | "empty";
+export type SanitizeFailure = "too-large" | "too-many-elements" | "too-deep" | "no-root" | "wrong-root" | "empty" | "unstable";
 
 export type SanitizeResult =
   | { ok: true; html: string; tree: AiElement; report: SanitizeReport; textNodes: number }
@@ -90,9 +89,11 @@ class Walker {
   constructor(private readonly context: SanitizeContext) {}
 
   private prefixId(id: string): string | null {
+    const prefix = `ai-${sanitizeIdPart(this.context.blockId)}-`;
+    // Idempotent: stored (already sanitized) HTML can go through the sanitizer again without growing its ids.
+    if (id.startsWith(prefix) && SAFE_ID.test(id.slice(prefix.length))) return id;
     const part = sanitizeIdPart(id);
-    if (!SAFE_ID.test(part)) return null;
-    return `ai-${sanitizeIdPart(this.context.blockId)}-${part}`;
+    return SAFE_ID.test(part) ? `${prefix}${part}` : null;
   }
 
   /** The attributes `element` keeps, in a canonical order (class first). */
@@ -197,7 +198,8 @@ class Walker {
         continue;
       }
       if (name === "name") {
-        if (/^[\w-]{1,64}$/.test(value)) out.push([name, value]);
+        // Only form controls: a `name` elsewhere (img) clobbers `document`'s own properties.
+        if (NAMED_TAGS.has(tag) && /^[\w-]{1,64}$/.test(value)) out.push([name, value]);
         else drop(name);
         continue;
       }
@@ -237,8 +239,12 @@ class Walker {
     if (tag === "img" && !out.some(([name]) => name === "data-placeholder" || name === "data-asset")) out.push(["data-placeholder", "photo"]);
     if (tag === "input" && type === "password") out.push(["autocomplete", "off"]);
     if (tag === "a" && !out.some(([name]) => name === "href")) out.push(["href", "#"]);
-    // `class` first, then the rest as kept: a canonical order keeps diffs and undo snapshots small.
-    return out.sort(([a], [b]) => (a === "class" ? -1 : b === "class" ? 1 : 0));
+    // One value per name (the first, as a browser keeps it), `class` first, then the rest as kept: a canonical
+    // order keeps diffs and undo snapshots small, and sanitizing the output again changes nothing.
+    const seen = new Set<string>();
+    return out
+      .filter(([name]) => (seen.has(name) ? false : (seen.add(name), true)))
+      .sort(([a], [b]) => (a === "class" ? -1 : b === "class" ? 1 : 0));
   }
 
   children(nodes: readonly RawNode[], depth: number): AiNode[] {
@@ -297,6 +303,22 @@ function markText(root: AiElement): number {
  * (it is never truncated halfway).
  */
 export function sanitizeBlock(raw: string, context: SanitizeContext): SanitizeResult {
+  let result = sanitizeOnce(raw, context);
+  // Fixpoint: unwrapping a tag can leave a nesting the HTML parser rebuilds differently (`<h2>` inside `<h1>`, a `<p>`
+  // in a `<p>`, table parts out of place). The stored HTML must parse back into exactly the tree it was serialized
+  // from (no mutation between us and the browser), so the output goes through the sanitizer again until it is stable.
+  for (let pass = 0; pass < MAX_PASSES && result.ok; pass++) {
+    const again = sanitizeOnce(result.html, context);
+    if (!again.ok) return { ok: false, failure: again.failure, report: result.report };
+    if (again.html === result.html) return result;
+    result = { ...again, report: result.report };
+  }
+  return result.ok ? { ok: false, failure: "unstable", report: result.report } : result;
+}
+
+const MAX_PASSES = 4;
+
+function sanitizeOnce(raw: string, context: SanitizeContext): SanitizeResult {
   const walker = new Walker(context);
   if (new TextEncoder().encode(raw).length > BLOCK_LIMITS.rawBytes) return { ok: false, failure: "too-large", report: walker.report };
   const { nodes } = parseRaw(raw);
