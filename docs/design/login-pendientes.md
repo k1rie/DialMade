@@ -4,7 +4,7 @@ Rama `feat/auth` (2026-10-10). Better Auth 1.7.7 en el Postgres de Supabase, sch
 
 ## Bloqueante para usarlo con la base real
 
-- [ ] **Aplicar la migración** `supabase/migrations/20261010150000_auth_designs.sql`. Es aditiva e idempotente y necesita la aprobación del usuario. La del ledger se aplicó a mano, así que antes de `supabase db push` hay que correr `supabase migration repair --status applied 20261010120000`. Sin la migración, `/api/auth/*` responde 500 («Database schema mismatch»: Better Auth detecta las tablas que faltan y no toca nada) y la app sigue funcionando sin cuenta.
+- [x] **Migración aplicada** (2026-10-10, con aprobación del usuario): `supabase migration repair --status applied 20261010120000` y después `supabase db push` con el pooler en modo sesión (5432). RLS está activo en las 12 tablas de `dialmade` y `dialmade_auth`, y `anon`/`authenticated` no tienen permisos.
 - [ ] **`DATABASE_SSL_CA`:** descargar el CA de Supabase (Database settings → SSL Configuration). En desarrollo se conecta cifrado pero sin verificar el certificado. En producción no arranca sin el CA o sin `DATABASE_SSL=no-verify`.
 - [ ] **`BETTER_AUTH_SECRET`** en `.env.local` y en Vercel (`openssl rand -base64 32`). Sin él, en desarrollo las sesiones caducan en cada reinicio.
 - [ ] **Apps OAuth** (con aprobación del usuario):
