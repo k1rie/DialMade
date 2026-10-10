@@ -5,6 +5,10 @@
 @import "./minis/MiniBrand/MiniBrand.css";
 @import "./minis/MiniLanding/MiniLanding.css";
 @import "./minis/MiniApp/MiniApp.css";
+@import "./minis/SketchFrame/SketchFrame.css";
+@import "./minis/SketchLanding/SketchLanding.css";
+@import "./minis/SketchApp/SketchApp.css";
+@import "./minis/SketchBrand/SketchBrand.css";
 @import "./brand/styles.css";
 @import "./landing/styles.css";
 @import "./app/styles.css";
