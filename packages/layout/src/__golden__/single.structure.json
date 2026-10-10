@@ -1,0 +1,66 @@
+{
+  "structure": {
+    "root": {
+      "kind": "block",
+      "id": "intro",
+      "rect": {
+        "col": 3,
+        "row": 4,
+        "w": 6,
+        "h": 20
+      },
+      "frame": {
+        "col": 3,
+        "w": 6
+      },
+      "content": null
+    },
+    "overlays": [],
+    "order": [
+      "intro"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "intro": {
+          "rect": {
+            "col": 2,
+            "row": 0,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {},
+      "order": [
+        "intro"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "intro": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {},
+      "order": [
+        "intro"
+      ]
+    }
+  }
+}

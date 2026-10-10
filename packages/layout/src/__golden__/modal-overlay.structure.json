@@ -1,0 +1,150 @@
+{
+  "structure": {
+    "root": {
+      "kind": "block",
+      "id": "table",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 60
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "content": null
+    },
+    "overlays": [
+      {
+        "kind": "block",
+        "id": "dialog",
+        "rect": {
+          "col": 3,
+          "row": 10,
+          "w": 6,
+          "h": 30
+        },
+        "frame": {
+          "col": 3,
+          "w": 6
+        },
+        "content": {
+          "kind": "block",
+          "id": "invite-form",
+          "rect": {
+            "col": 4,
+            "row": 14,
+            "w": 4,
+            "h": 20
+          },
+          "frame": {
+            "col": 4,
+            "w": 4
+          },
+          "content": null
+        }
+      }
+    ],
+    "order": [
+      "table",
+      "dialog",
+      "invite-form"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "dialog": {
+          "rect": {
+            "col": 2,
+            "row": 10,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "invite-form": {
+          "rect": {
+            "col": 2,
+            "row": 14,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "table": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "dialog": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "table",
+        "dialog",
+        "invite-form"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "dialog": {
+          "rect": {
+            "col": 0,
+            "row": 10,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "sheet",
+          "hidden": false
+        },
+        "invite-form": {
+          "rect": {
+            "col": 0,
+            "row": 14,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "table": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 60
+          },
+          "behavior": "card-list",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "dialog": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "table",
+        "dialog",
+        "invite-form"
+      ]
+    }
+  }
+}

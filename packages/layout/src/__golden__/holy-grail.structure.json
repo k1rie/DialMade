@@ -1,0 +1,297 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-pmr20b",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 92
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "header",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 8
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "row",
+            "id": "r-mqnirv",
+            "rect": {
+              "col": 0,
+              "row": 10,
+              "w": 12,
+              "h": 60
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "children": [
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "nav",
+                  "rect": {
+                    "col": 0,
+                    "row": 10,
+                    "w": 2,
+                    "h": 60
+                  },
+                  "frame": {
+                    "col": 0,
+                    "w": 2
+                  },
+                  "content": null
+                },
+                "start": 0,
+                "span": 2
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "main",
+                  "rect": {
+                    "col": 2,
+                    "row": 10,
+                    "w": 8,
+                    "h": 60
+                  },
+                  "frame": {
+                    "col": 2,
+                    "w": 8
+                  },
+                  "content": null
+                },
+                "start": 2,
+                "span": 8
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "aside",
+                  "rect": {
+                    "col": 10,
+                    "row": 10,
+                    "w": 2,
+                    "h": 60
+                  },
+                  "frame": {
+                    "col": 10,
+                    "w": 2
+                  },
+                  "content": null
+                },
+                "start": 10,
+                "span": 2
+              }
+            ]
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "footer",
+            "rect": {
+              "col": 0,
+              "row": 72,
+              "w": 12,
+              "h": 20
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        2,
+        2
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "header",
+      "nav",
+      "main",
+      "aside",
+      "footer"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "aside": {
+          "rect": {
+            "col": 0,
+            "row": 72,
+            "w": 8,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 134,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "header": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 8
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "main": {
+          "rect": {
+            "col": 1,
+            "row": 10,
+            "w": 7,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "nav": {
+          "rect": {
+            "col": 0,
+            "row": 10,
+            "w": 1,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-pmr20b": {
+          "mode": "stack"
+        },
+        "r-mqnirv": {
+          "mode": "wrap",
+          "spans": [
+            1,
+            7,
+            8
+          ]
+        }
+      },
+      "order": [
+        "header",
+        "nav",
+        "main",
+        "aside",
+        "footer"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "aside": {
+          "rect": {
+            "col": 0,
+            "row": 82,
+            "w": 4,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 144,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "accordion",
+          "hidden": false
+        },
+        "header": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 8
+          },
+          "behavior": "hamburger",
+          "hidden": false
+        },
+        "main": {
+          "rect": {
+            "col": 0,
+            "row": 20,
+            "w": 4,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "nav": {
+          "rect": {
+            "col": 0,
+            "row": 10,
+            "w": 4,
+            "h": 8
+          },
+          "behavior": "drawer",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-pmr20b": {
+          "mode": "stack"
+        },
+        "r-mqnirv": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "header",
+        "nav",
+        "main",
+        "aside",
+        "footer"
+      ]
+    }
+  }
+}

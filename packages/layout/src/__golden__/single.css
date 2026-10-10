@@ -1,0 +1,16 @@
+.dl-layout {
+  position: relative;
+  container: dl-layout / inline-size;
+}
+
+.dl-layout [data-dl-id="intro"] {
+  width: 50%;
+  margin-inline-start: 25%;
+}
+
+@container dl-layout (width < 40rem) {
+  .dl-layout [data-dl-id="intro"] {
+    width: auto;
+    margin-inline-start: 0;
+  }
+}

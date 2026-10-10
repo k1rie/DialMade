@@ -1,0 +1,397 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-t57b2b",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 270
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "navbar",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 8
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "hero",
+            "rect": {
+              "col": 0,
+              "row": 8,
+              "w": 12,
+              "h": 60
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "logos",
+            "rect": {
+              "col": 0,
+              "row": 68,
+              "w": 12,
+              "h": 12
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "features",
+            "rect": {
+              "col": 0,
+              "row": 80,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "testimonials",
+            "rect": {
+              "col": 0,
+              "row": 120,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "pricing",
+            "rect": {
+              "col": 0,
+              "row": 160,
+              "w": 12,
+              "h": 60
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "cta",
+            "rect": {
+              "col": 0,
+              "row": 220,
+              "w": 12,
+              "h": 25
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "footer",
+            "rect": {
+              "col": 0,
+              "row": 245,
+              "w": 12,
+              "h": 25
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "navbar",
+      "hero",
+      "logos",
+      "features",
+      "testimonials",
+      "pricing",
+      "cta",
+      "footer"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "cta": {
+          "rect": {
+            "col": 0,
+            "row": 220,
+            "w": 8,
+            "h": 25
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "features": {
+          "rect": {
+            "col": 0,
+            "row": 80,
+            "w": 8,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 245,
+            "w": 8,
+            "h": 25
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "hero": {
+          "rect": {
+            "col": 0,
+            "row": 8,
+            "w": 8,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "logos": {
+          "rect": {
+            "col": 0,
+            "row": 68,
+            "w": 8,
+            "h": 12
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 8
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "pricing": {
+          "rect": {
+            "col": 0,
+            "row": 160,
+            "w": 8,
+            "h": 60
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "testimonials": {
+          "rect": {
+            "col": 0,
+            "row": 120,
+            "w": 8,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-t57b2b": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "navbar",
+        "hero",
+        "logos",
+        "features",
+        "testimonials",
+        "pricing",
+        "cta",
+        "footer"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "cta": {
+          "rect": {
+            "col": 0,
+            "row": 420,
+            "w": 4,
+            "h": 25
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "features": {
+          "rect": {
+            "col": 0,
+            "row": 80,
+            "w": 4,
+            "h": 120
+          },
+          "behavior": "one-column",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 445,
+            "w": 4,
+            "h": 25
+          },
+          "behavior": "accordion",
+          "hidden": false
+        },
+        "hero": {
+          "rect": {
+            "col": 0,
+            "row": 8,
+            "w": 4,
+            "h": 60
+          },
+          "behavior": "text-first",
+          "hidden": false
+        },
+        "logos": {
+          "rect": {
+            "col": 0,
+            "row": 68,
+            "w": 4,
+            "h": 12
+          },
+          "behavior": "scroll-x",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 8
+          },
+          "behavior": "hamburger",
+          "hidden": false
+        },
+        "pricing": {
+          "rect": {
+            "col": 0,
+            "row": 240,
+            "w": 4,
+            "h": 180
+          },
+          "behavior": "one-column",
+          "hidden": false
+        },
+        "testimonials": {
+          "rect": {
+            "col": 0,
+            "row": 200,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "carousel",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-t57b2b": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "navbar",
+        "hero",
+        "logos",
+        "features",
+        "testimonials",
+        "pricing",
+        "cta",
+        "footer"
+      ]
+    }
+  }
+}

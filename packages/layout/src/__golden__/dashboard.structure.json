@@ -1,0 +1,258 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-zov2o9",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 108
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "kpis",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 14
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "row",
+            "id": "r-t82ira",
+            "rect": {
+              "col": 0,
+              "row": 16,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "children": [
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "chart",
+                  "rect": {
+                    "col": 0,
+                    "row": 16,
+                    "w": 8,
+                    "h": 40
+                  },
+                  "frame": {
+                    "col": 0,
+                    "w": 8
+                  },
+                  "content": null
+                },
+                "start": 0,
+                "span": 8
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "activity",
+                  "rect": {
+                    "col": 8,
+                    "row": 16,
+                    "w": 4,
+                    "h": 40
+                  },
+                  "frame": {
+                    "col": 8,
+                    "w": 4
+                  },
+                  "content": null
+                },
+                "start": 8,
+                "span": 4
+              }
+            ]
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "table",
+            "rect": {
+              "col": 0,
+              "row": 58,
+              "w": 12,
+              "h": 50
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        2,
+        2
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "kpis",
+      "chart",
+      "activity",
+      "table"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "activity": {
+          "rect": {
+            "col": 5,
+            "row": 16,
+            "w": 3,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "chart": {
+          "rect": {
+            "col": 0,
+            "row": 16,
+            "w": 5,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "kpis": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 14
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "table": {
+          "rect": {
+            "col": 0,
+            "row": 58,
+            "w": 8,
+            "h": 50
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-zov2o9": {
+          "mode": "stack"
+        },
+        "r-t82ira": {
+          "mode": "keep",
+          "spans": [
+            5,
+            3
+          ],
+          "starts": [
+            0,
+            5
+          ]
+        }
+      },
+      "order": [
+        "kpis",
+        "chart",
+        "activity",
+        "table"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "activity": {
+          "rect": {
+            "col": 0,
+            "row": 72,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "chart": {
+          "rect": {
+            "col": 0,
+            "row": 30,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "kpis": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 28
+          },
+          "behavior": "grid-2x2",
+          "hidden": false
+        },
+        "table": {
+          "rect": {
+            "col": 0,
+            "row": 114,
+            "w": 4,
+            "h": 50
+          },
+          "behavior": "card-list",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-zov2o9": {
+          "mode": "stack"
+        },
+        "r-t82ira": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "kpis",
+        "chart",
+        "activity",
+        "table"
+      ]
+    }
+  }
+}

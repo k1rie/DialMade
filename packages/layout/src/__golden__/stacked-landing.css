@@ -1,0 +1,9 @@
+.dl-layout {
+  position: relative;
+  container: dl-layout / inline-size;
+}
+
+.dl-layout [data-dl-id="r-t57b2b"] {
+  display: flex;
+  flex-direction: column;
+}

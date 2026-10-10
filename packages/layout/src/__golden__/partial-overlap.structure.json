@@ -1,0 +1,246 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-g3tzqp",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 55
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "grid",
+            "id": "r-11lkt9s",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "columns": [
+              4,
+              4,
+              4
+            ],
+            "rows": [
+              10,
+              20,
+              10
+            ],
+            "items": [
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "copy",
+                  "rect": {
+                    "col": 0,
+                    "row": 0,
+                    "w": 8,
+                    "h": 30
+                  },
+                  "frame": {
+                    "col": 0,
+                    "w": 8
+                  },
+                  "content": null
+                },
+                "colStart": 1,
+                "colEnd": 3,
+                "rowStart": 1,
+                "rowEnd": 3
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "photo",
+                  "rect": {
+                    "col": 4,
+                    "row": 10,
+                    "w": 8,
+                    "h": 30
+                  },
+                  "frame": {
+                    "col": 4,
+                    "w": 8
+                  },
+                  "content": null
+                },
+                "colStart": 2,
+                "colEnd": 4,
+                "rowStart": 2,
+                "rowEnd": 4
+              }
+            ],
+            "areas": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "footer",
+            "rect": {
+              "col": 0,
+              "row": 45,
+              "w": 12,
+              "h": 10
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        5
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "copy",
+      "photo",
+      "footer"
+    ],
+    "warnings": [
+      {
+        "code": "overlap",
+        "ids": [
+          "copy",
+          "photo"
+        ],
+        "fixes": [
+          {
+            "kind": "move-below",
+            "id": "photo",
+            "below": "copy"
+          }
+        ],
+        "ratio": 0.333
+      }
+    ]
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "copy": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 6,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 45,
+            "w": 8,
+            "h": 10
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "photo": {
+          "rect": {
+            "col": 3,
+            "row": 10,
+            "w": 5,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-g3tzqp": {
+          "mode": "stack"
+        },
+        "r-11lkt9s": {
+          "mode": "keep",
+          "spans": [
+            6,
+            5
+          ],
+          "starts": [
+            0,
+            3
+          ]
+        }
+      },
+      "order": [
+        "copy",
+        "photo",
+        "footer"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "copy": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 67,
+            "w": 4,
+            "h": 10
+          },
+          "behavior": "accordion",
+          "hidden": false
+        },
+        "photo": {
+          "rect": {
+            "col": 0,
+            "row": 32,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-g3tzqp": {
+          "mode": "stack"
+        },
+        "r-11lkt9s": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "copy",
+        "photo",
+        "footer"
+      ]
+    }
+  }
+}

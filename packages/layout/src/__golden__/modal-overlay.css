@@ -1,0 +1,43 @@
+.dl-layout {
+  position: relative;
+  container: dl-layout / inline-size;
+}
+
+.dl-layout [data-dl-id="table"] {
+  min-height: 480px;
+}
+
+.dl-layout [data-dl-id="dialog"] {
+  position: absolute;
+  left: 25%;
+  top: 80px;
+  width: 50%;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: var(--dl-space-5);
+}
+
+.dl-layout [data-dl-id="invite-form"] {
+  grid-column: 2 / span 4;
+  grid-row: 1;
+  min-height: 160px;
+}
+
+@container dl-layout (width < 64rem) {
+  .dl-layout [data-dl-id="dialog"] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dl-layout [data-dl-id="invite-form"] {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@container dl-layout (width < 40rem) {
+  .dl-layout [data-dl-id="dialog"] {
+    left: 0;
+    width: 100%;
+  }
+}

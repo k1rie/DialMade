@@ -16,6 +16,7 @@
     "@anthropic-ai/sdk": "0.128.0",
     "@dialmade/catalog": "workspace:*",
     "@dialmade/doc": "workspace:*",
+    "@dialmade/layout": "workspace:*",
     "@dialmade/palette": "workspace:*",
     "@dialmade/sections": "workspace:*",
     "@dialmade/ui": "workspace:*",

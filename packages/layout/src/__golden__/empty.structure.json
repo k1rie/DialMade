@@ -1,0 +1,24 @@
+{
+  "structure": {
+    "root": null,
+    "overlays": [],
+    "order": [],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {},
+      "nodes": {},
+      "order": []
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {},
+      "nodes": {},
+      "order": []
+    }
+  }
+}

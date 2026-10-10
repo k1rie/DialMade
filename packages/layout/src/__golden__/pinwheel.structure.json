@@ -1,0 +1,287 @@
+{
+  "structure": {
+    "root": {
+      "kind": "grid",
+      "id": "r-1qn0fyu",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 60
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "columns": [
+        3,
+        6,
+        3
+      ],
+      "rows": [
+        20,
+        20,
+        20
+      ],
+      "items": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "north",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 9,
+              "h": 20
+            },
+            "frame": {
+              "col": 0,
+              "w": 9
+            },
+            "content": null
+          },
+          "colStart": 1,
+          "colEnd": 3,
+          "rowStart": 1,
+          "rowEnd": 2
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "east",
+            "rect": {
+              "col": 9,
+              "row": 0,
+              "w": 3,
+              "h": 40
+            },
+            "frame": {
+              "col": 9,
+              "w": 3
+            },
+            "content": null
+          },
+          "colStart": 3,
+          "colEnd": 4,
+          "rowStart": 1,
+          "rowEnd": 3
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "west",
+            "rect": {
+              "col": 0,
+              "row": 20,
+              "w": 3,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 3
+            },
+            "content": null
+          },
+          "colStart": 1,
+          "colEnd": 2,
+          "rowStart": 2,
+          "rowEnd": 4
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "center",
+            "rect": {
+              "col": 3,
+              "row": 20,
+              "w": 6,
+              "h": 20
+            },
+            "frame": {
+              "col": 3,
+              "w": 6
+            },
+            "content": null
+          },
+          "colStart": 2,
+          "colEnd": 3,
+          "rowStart": 2,
+          "rowEnd": 3
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "south",
+            "rect": {
+              "col": 3,
+              "row": 40,
+              "w": 9,
+              "h": 20
+            },
+            "frame": {
+              "col": 3,
+              "w": 9
+            },
+            "content": null
+          },
+          "colStart": 2,
+          "colEnd": 4,
+          "rowStart": 3,
+          "rowEnd": 4
+        }
+      ],
+      "areas": [
+        "north north east",
+        "west center east",
+        "west south south"
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "north",
+      "east",
+      "west",
+      "center",
+      "south"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "center": {
+          "rect": {
+            "col": 0,
+            "row": 106,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "east": {
+          "rect": {
+            "col": 0,
+            "row": 22,
+            "w": 8,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "north": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "south": {
+          "rect": {
+            "col": 0,
+            "row": 128,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "west": {
+          "rect": {
+            "col": 0,
+            "row": 64,
+            "w": 8,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-1qn0fyu": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "north",
+        "east",
+        "west",
+        "center",
+        "south"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "center": {
+          "rect": {
+            "col": 0,
+            "row": 106,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "one-column",
+          "hidden": false
+        },
+        "east": {
+          "rect": {
+            "col": 0,
+            "row": 22,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "north": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "south": {
+          "rect": {
+            "col": 0,
+            "row": 148,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "west": {
+          "rect": {
+            "col": 0,
+            "row": 64,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-1qn0fyu": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "north",
+        "east",
+        "west",
+        "center",
+        "south"
+      ]
+    }
+  }
+}

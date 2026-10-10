@@ -32,6 +32,9 @@ importers:
       '@dialmade/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@dialmade/layout':
+        specifier: workspace:*
+        version: link:../../packages/layout
       '@dialmade/palette':
         specifier: workspace:*
         version: link:../../packages/palette
@@ -145,6 +148,21 @@ importers:
       '@dialmade/ui':
         specifier: workspace:*
         version: link:../ui
+      tsup:
+        specifier: 8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(typescript@5.9.3)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@24.19.2)(jsdom@29.1.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0))
+
+  packages/layout:
+    devDependencies:
       tsup:
         specifier: 8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(typescript@5.9.3)

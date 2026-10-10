@@ -1,0 +1,345 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-rdm8f2",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 72
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "navbar",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 8
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "plans",
+            "rect": {
+              "col": 0,
+              "row": 10,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": {
+              "kind": "row",
+              "id": "r-9d638e",
+              "rect": {
+                "col": 1,
+                "row": 12,
+                "w": 10,
+                "h": 36
+              },
+              "frame": {
+                "col": 0,
+                "w": 12
+              },
+              "children": [
+                {
+                  "node": {
+                    "kind": "block",
+                    "id": "card-a",
+                    "rect": {
+                      "col": 1,
+                      "row": 12,
+                      "w": 3,
+                      "h": 36
+                    },
+                    "frame": {
+                      "col": 1,
+                      "w": 3
+                    },
+                    "content": null
+                  },
+                  "start": 1,
+                  "span": 3
+                },
+                {
+                  "node": {
+                    "kind": "block",
+                    "id": "card-b",
+                    "rect": {
+                      "col": 5,
+                      "row": 12,
+                      "w": 3,
+                      "h": 36
+                    },
+                    "frame": {
+                      "col": 5,
+                      "w": 3
+                    },
+                    "content": null
+                  },
+                  "start": 5,
+                  "span": 3
+                },
+                {
+                  "node": {
+                    "kind": "block",
+                    "id": "card-c",
+                    "rect": {
+                      "col": 9,
+                      "row": 12,
+                      "w": 2,
+                      "h": 36
+                    },
+                    "frame": {
+                      "col": 9,
+                      "w": 2
+                    },
+                    "content": null
+                  },
+                  "start": 9,
+                  "span": 2
+                }
+              ]
+            }
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "footer",
+            "rect": {
+              "col": 0,
+              "row": 52,
+              "w": 12,
+              "h": 20
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        2,
+        2
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "navbar",
+      "plans",
+      "card-a",
+      "card-b",
+      "card-c",
+      "footer"
+    ],
+    "warnings": []
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "card-a": {
+          "rect": {
+            "col": 0,
+            "row": 12,
+            "w": 4,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "card-b": {
+          "rect": {
+            "col": 4,
+            "row": 12,
+            "w": 4,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "card-c": {
+          "rect": {
+            "col": 0,
+            "row": 50,
+            "w": 8,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 90,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 8
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "plans": {
+          "rect": {
+            "col": 0,
+            "row": 10,
+            "w": 8,
+            "h": 78
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-rdm8f2": {
+          "mode": "stack"
+        },
+        "r-9d638e": {
+          "mode": "wrap",
+          "spans": [
+            4,
+            4,
+            8
+          ]
+        },
+        "plans": {
+          "mode": "wrap",
+          "spans": [
+            4,
+            4,
+            8
+          ]
+        }
+      },
+      "order": [
+        "navbar",
+        "plans",
+        "card-a",
+        "card-b",
+        "card-c",
+        "footer"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "card-a": {
+          "rect": {
+            "col": 0,
+            "row": 12,
+            "w": 4,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "card-b": {
+          "rect": {
+            "col": 0,
+            "row": 50,
+            "w": 4,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "card-c": {
+          "rect": {
+            "col": 0,
+            "row": 88,
+            "w": 4,
+            "h": 36
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "footer": {
+          "rect": {
+            "col": 0,
+            "row": 128,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "accordion",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 8
+          },
+          "behavior": "hamburger",
+          "hidden": false
+        },
+        "plans": {
+          "rect": {
+            "col": 0,
+            "row": 10,
+            "w": 4,
+            "h": 116
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-rdm8f2": {
+          "mode": "stack"
+        },
+        "r-9d638e": {
+          "mode": "stack"
+        },
+        "plans": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "navbar",
+        "plans",
+        "card-a",
+        "card-b",
+        "card-c",
+        "footer"
+      ]
+    }
+  }
+}

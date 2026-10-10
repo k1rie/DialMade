@@ -1,0 +1,4 @@
+.dl-layout {
+  position: relative;
+  container: dl-layout / inline-size;
+}

@@ -1,0 +1,457 @@
+{
+  "structure": {
+    "root": {
+      "kind": "stack",
+      "id": "r-o7rnit",
+      "rect": {
+        "col": 0,
+        "row": 0,
+        "w": 12,
+        "h": 101
+      },
+      "frame": {
+        "col": 0,
+        "w": 12
+      },
+      "children": [
+        {
+          "node": {
+            "kind": "block",
+            "id": "navbar",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 8
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "block",
+            "id": "hero",
+            "rect": {
+              "col": 0,
+              "row": 7,
+              "w": 12,
+              "h": 40
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "content": null
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "row",
+            "id": "r-115e8i2",
+            "rect": {
+              "col": 0,
+              "row": 48,
+              "w": 12,
+              "h": 30
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "children": [
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "copy",
+                  "rect": {
+                    "col": 0,
+                    "row": 48,
+                    "w": 6,
+                    "h": 30
+                  },
+                  "frame": {
+                    "col": 0,
+                    "w": 6
+                  },
+                  "content": null
+                },
+                "start": 0,
+                "span": 6
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "shot",
+                  "rect": {
+                    "col": 6,
+                    "row": 49,
+                    "w": 6,
+                    "h": 29
+                  },
+                  "frame": {
+                    "col": 6,
+                    "w": 6
+                  },
+                  "content": null
+                },
+                "start": 6,
+                "span": 6
+              }
+            ]
+          },
+          "start": 0,
+          "span": 12
+        },
+        {
+          "node": {
+            "kind": "row",
+            "id": "r-1ghw01k",
+            "rect": {
+              "col": 0,
+              "row": 80,
+              "w": 12,
+              "h": 21
+            },
+            "frame": {
+              "col": 0,
+              "w": 12
+            },
+            "children": [
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "cards",
+                  "rect": {
+                    "col": 0,
+                    "row": 80,
+                    "w": 4,
+                    "h": 20
+                  },
+                  "frame": {
+                    "col": 0,
+                    "w": 4
+                  },
+                  "content": null
+                },
+                "start": 0,
+                "span": 3
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "list",
+                  "rect": {
+                    "col": 3,
+                    "row": 80,
+                    "w": 5,
+                    "h": 20
+                  },
+                  "frame": {
+                    "col": 3,
+                    "w": 5
+                  },
+                  "content": null
+                },
+                "start": 3,
+                "span": 5
+              },
+              {
+                "node": {
+                  "kind": "block",
+                  "id": "form",
+                  "rect": {
+                    "col": 8,
+                    "row": 81,
+                    "w": 4,
+                    "h": 20
+                  },
+                  "frame": {
+                    "col": 8,
+                    "w": 4
+                  },
+                  "content": null
+                },
+                "start": 8,
+                "span": 4
+              }
+            ]
+          },
+          "start": 0,
+          "span": 12
+        }
+      ],
+      "gaps": [
+        0,
+        1,
+        2
+      ]
+    },
+    "overlays": [],
+    "order": [
+      "navbar",
+      "hero",
+      "copy",
+      "shot",
+      "cards",
+      "list",
+      "form"
+    ],
+    "warnings": [
+      {
+        "code": "overlap",
+        "ids": [
+          "cards",
+          "list"
+        ],
+        "fixes": [
+          {
+            "kind": "move-below",
+            "id": "list",
+            "below": "cards"
+          }
+        ],
+        "ratio": 0.25
+      },
+      {
+        "code": "overlap",
+        "ids": [
+          "navbar",
+          "hero"
+        ],
+        "fixes": [
+          {
+            "kind": "move-below",
+            "id": "hero",
+            "below": "navbar"
+          },
+          {
+            "kind": "clip",
+            "id": "navbar",
+            "rect": {
+              "col": 0,
+              "row": 0,
+              "w": 12,
+              "h": 7
+            }
+          }
+        ],
+        "ratio": 0.125
+      }
+    ]
+  },
+  "responsive": {
+    "tablet": {
+      "breakpoint": "tablet",
+      "columns": 8,
+      "blocks": {
+        "cards": {
+          "rect": {
+            "col": 0,
+            "row": 81,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "copy": {
+          "rect": {
+            "col": 0,
+            "row": 49,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "form": {
+          "rect": {
+            "col": 0,
+            "row": 103,
+            "w": 8,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "hero": {
+          "rect": {
+            "col": 0,
+            "row": 8,
+            "w": 8,
+            "h": 40
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "list": {
+          "rect": {
+            "col": 4,
+            "row": 81,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 8,
+            "h": 8
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "shot": {
+          "rect": {
+            "col": 4,
+            "row": 50,
+            "w": 4,
+            "h": 29
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-o7rnit": {
+          "mode": "stack"
+        },
+        "r-115e8i2": {
+          "mode": "keep",
+          "spans": [
+            4,
+            4
+          ],
+          "starts": [
+            0,
+            4
+          ]
+        },
+        "r-1ghw01k": {
+          "mode": "wrap",
+          "spans": [
+            4,
+            4,
+            8
+          ]
+        }
+      },
+      "order": [
+        "navbar",
+        "hero",
+        "copy",
+        "shot",
+        "cards",
+        "list",
+        "form"
+      ]
+    },
+    "mobile": {
+      "breakpoint": "mobile",
+      "columns": 4,
+      "blocks": {
+        "cards": {
+          "rect": {
+            "col": 0,
+            "row": 112,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "one-column",
+          "hidden": false
+        },
+        "copy": {
+          "rect": {
+            "col": 0,
+            "row": 49,
+            "w": 4,
+            "h": 30
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "form": {
+          "rect": {
+            "col": 0,
+            "row": 156,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "hero": {
+          "rect": {
+            "col": 0,
+            "row": 8,
+            "w": 4,
+            "h": 40
+          },
+          "behavior": "text-first",
+          "hidden": false
+        },
+        "list": {
+          "rect": {
+            "col": 0,
+            "row": 134,
+            "w": 4,
+            "h": 20
+          },
+          "behavior": "stack",
+          "hidden": false
+        },
+        "navbar": {
+          "rect": {
+            "col": 0,
+            "row": 0,
+            "w": 4,
+            "h": 8
+          },
+          "behavior": "hamburger",
+          "hidden": false
+        },
+        "shot": {
+          "rect": {
+            "col": 0,
+            "row": 81,
+            "w": 4,
+            "h": 29
+          },
+          "behavior": "stack",
+          "hidden": false
+        }
+      },
+      "nodes": {
+        "r-o7rnit": {
+          "mode": "stack"
+        },
+        "r-115e8i2": {
+          "mode": "stack"
+        },
+        "r-1ghw01k": {
+          "mode": "stack"
+        }
+      },
+      "order": [
+        "navbar",
+        "hero",
+        "copy",
+        "shot",
+        "cards",
+        "list",
+        "form"
+      ]
+    }
+  }
+}
