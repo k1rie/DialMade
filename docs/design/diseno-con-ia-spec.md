@@ -583,6 +583,65 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 - la variedad entre marcas no está medida, y es la primera tarea del spike (§4.4, §12);
 - la construcción empieza solo después de fusionar `feat/ai-layout` en `main`.
 
+## 15. Spike y cimientos (2026-10-10): resultados y desviaciones
+
+### 15.1 Variedad entre marcas (6 llamadas reales con Haiku 5.5, $0,014)
+
+- **Método:** `packages/ai-render/eval/variety.eval.ts`. Un mismo landing de 5 bloques (navbar, hero, ventajas ×3, precios ×3 y pie) con 3 marcas ficticias, cada una con su tono, tipo de producto y receta:
+  - Brisa: reservas para barberías, `soft-ui`, en español;
+  - Ollaria: cerámica, `editorial`, en inglés;
+  - Vectora: finanzas, `tech-precision`, en inglés.
+
+  Por marca, una llamada de dirección y una pantalla en streaming. Capturas a 1280 px en color y en un tema gris, para que la paleta no cuente.
+- **Resultados:**
+
+  | Métrica | Resultado |
+  |---|---|
+  | Ejes de dirección distintos entre pares | 3, 4 y 5 de 6 |
+  | Similitud estructural (Jaccard de shingles sin color) | 0 en los 3 pares |
+  | SSIM en gris, IA entre marcas | mediana 0,61 |
+  | SSIM en gris, base entre marcas | mediana 0,73 |
+  | Bloques fallidos | 0 de 15 |
+
+- **Veredicto (mirando las capturas):** la variedad es **suficiente**: la base es la misma página con otro color, y la IA da tres productos distintos.
+  - Cambia el tratamiento del hero: un marco de producto, una foto o una tarjeta de datos.
+  - Cambian la voz tipográfica (mono en Vectora), las ventajas (tarjetas tintadas, fila editorial con pasos numerados, tarjetas con borde y una franja de métricas) y la densidad.
+  - El esqueleto grande se parece, porque el layout es el del usuario: es lo esperado.
+  - El criterio de §4.4 (SSIM ≤ 0,6 frente a ≥ 0,9) no se cumple al pie de la letra: la base no llega a 0,9 porque el texto cambia entre marcas. Hay que recalibrarlo con más marcas.
+  - No se midió el ruido de una misma marca: costaba 3 llamadas más.
+- **Fallos vistos:**
+  - Haiku coló caracteres chinos en una frase en español («sin配置»);
+  - dejó los planes sin precio, porque el borrador no enviaba los números (corregido: los precios viajan como `price: 12`);
+  - el logo sale como placeholder, igual que sin logo.
+
+  El track D añadirá una puerta de escritura (caracteres fuera del alfabeto del idioma).
+- Capturas, sin commit:
+  - `docs/design/assets/diseno-con-ia-spike-variedad.png`;
+  - `…-variedad-gris.png`;
+  - `…-base.png`;
+  - las salidas en bruto, en `docs/design/assets/spike/`.
+- **Latencia:** 18,6–28,3 s por pantalla, con TTFT de 5–9 s; la dirección tarda 3–4 s.
+
+### 15.2 Riesgo técnico: `compile()` de Tailwind en un worker
+
+**Verificado.** Corre en `src/workers/aiRender.worker.ts` con Turbopack en ≈ 80 ms (sanear, puertas y CSS). Dos detalles:
+1. **`build()` es incremental:** acumula todos los candidatos que ha visto. Un compilador compartido mezclaría las clases de bloques anteriores, así que se crea uno por llamada (≈ 20 ms).
+2. **El tema es `@theme inline reference`:** los nombres de las escalas ya son `--color-brand-500`, y emitirlos crearía un ciclo.
+
+### 15.3 Desviaciones de la spec, y por qué
+
+| Spec | Implementación | Por qué |
+|---|---|---|
+| Contraste medido en el iframe con `getComputedStyle` | Contraste **sobre tokens**, en el worker (`contrast.ts`), en claro y oscuro, con muestreo de degradados, hover y foco | En el vocabulario, el color de cada nodo se conoce por sus clases. Así es determinista, testeable sin navegador y se puede repetir en cada cambio de paleta. El iframe se queda con la puerta 5 |
+| Inserción con `Element.setHTML()` donde exista | Siempre `<template>` con una política de Trusted Types y copia con lista blanca | La configuración por defecto del Sanitizer API quita `class` y `data-*`, y la configuración propia aún cambia entre versiones |
+| Una reserva única ampliable (`extend`) por sesión | Una fila de sesión con contadores, más una reserva por llamada sin uso gratis (`dialmade_ai_session_reserve`) | Mismas garantías (un uso, presupuesto duro, liquidar lo real), sin estado acumulado en el cliente y con reembolso por pantalla fallida |
+| Kit (navbar y pie) generado en la petición de dirección | El primer navbar o pie generado se clona en las demás pantallas (track A) | La dirección sale en 3 s y no retrasa las pantallas |
+| `srcdoc` como fallback de desarrollo | Sin fallback: sin `NEXT_PUBLIC_PREVIEW_ORIGIN` válido, la feature no se ofrece | Nunca hay HTML de la IA en el origen de la app, tampoco en desarrollo |
+| `parse5` + DOMPurify como referencia | Solo parse5 y la lista blanca propia | Nada que añadir a la superficie |
+| Contenedores con `surfaceClasses` en el DOM de la app | La superficie también va en una isla (`underlay`) en Ajustar; en el export, como `div` | El CSS de la IA no debe tocar el DOM de la app |
+
+Reparto del resto del MVP: `diseno-con-ia-tracks.md`.
+
 ## Cambios tras la crítica
 
 | Id | Hallazgo de la crítica | Cambio en esta spec |
