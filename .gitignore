@@ -37,3 +37,6 @@ pnpm-debug.log*
 
 # third-party skill with an ambiguous license (Apache-2.0 template vs MIT claim) — kept local, not redistributed
 .claude/skills/ui-styling/
+
+# promo captures (pnpm promo:capture)
+apps/web/.promo-captures/
