@@ -1,0 +1,334 @@
+{
+ "variants": [
+  {
+   "name": "Agenda primero",
+   "rationale": "Pone la agenda semanal como pantalla principal, con clientes y pagos a un clic, para que el barbero vea el día de un vistazo.",
+   "recipeId": "soft-ui",
+   "recipeReason": "Superficies suaves y esquinas redondeadas que resultan cercanas para un público de barberías sin perder contraste.",
+   "screens": [
+    {
+     "name": "Agenda",
+     "kind": "app",
+     "route": "/agenda",
+     "nav": "sidebar",
+     "blocks": [
+      {
+       "type": "calendar",
+       "label": "Agenda semanal",
+       "note": "vista semanal con huecos libres",
+       "col": 3,
+       "row": 0,
+       "w": 9,
+       "h": 60,
+       "count": 0,
+       "linkTo": 1
+      },
+      {
+       "type": "list",
+       "label": "Próximas citas",
+       "note": "citas de hoy en orden",
+       "col": 3,
+       "row": 61,
+       "w": 4,
+       "h": 40,
+       "count": 0,
+       "linkTo": -1
+      },
+      {
+       "type": "kpis",
+       "label": "Resumen del día",
+       "note": "citas, ingresos y ocupación",
+       "col": 7,
+       "row": 61,
+       "w": 5,
+       "h": 14,
+       "count": 3,
+       "linkTo": -1
+      }
+     ]
+    },
+    {
+     "name": "Reservar cita",
+     "kind": "app",
+     "route": "/reservar",
+     "nav": "sidebar",
+     "blocks": [
+      {
+       "type": "form",
+       "label": "Nueva cita",
+       "note": "servicio, barbero y hora",
+       "col": 3,
+       "row": 0,
+       "w": 6,
+       "h": 50,
+       "count": 0,
+       "linkTo": 0
+      },
+      {
+       "type": "empty",
+       "label": "Sin huecos",
+       "note": "elige otro día",
+       "col": 9,
+       "row": 0,
+       "w": 3,
+       "h": 30,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    },
+    {
+     "name": "Clientes",
+     "kind": "app",
+     "route": "/clientes",
+     "nav": "sidebar",
+     "blocks": [
+      {
+       "type": "table",
+       "label": "Clientes",
+       "note": "nombre, última visita y saldo",
+       "col": 3,
+       "row": 0,
+       "w": 9,
+       "h": 50,
+       "count": 0,
+       "linkTo": -1
+      },
+      {
+       "type": "activity",
+       "label": "Actividad reciente",
+       "note": "visitas y pagos recientes",
+       "col": 3,
+       "row": 51,
+       "w": 4,
+       "h": 40,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Panel de cobros",
+   "rationale": "Reúne clientes y pagos en pocas pantallas, pensado para el dueño que revisa ingresos y deudas cada semana.",
+   "recipeId": "corporate-clean",
+   "recipeReason": "Orden, bordes finos y lectura clara sirven para cuadrar cobros y ver cifras sin distracciones.",
+   "screens": [
+    {
+     "name": "Inicio",
+     "kind": "app",
+     "route": "/inicio",
+     "nav": "topnav",
+     "blocks": [
+      {
+       "type": "kpis",
+       "label": "Ingresos del mes",
+       "note": "cobrado, pendiente y citas",
+       "col": 0,
+       "row": 0,
+       "w": 12,
+       "h": 14,
+       "count": 4,
+       "linkTo": -1
+      },
+      {
+       "type": "chart",
+       "label": "Ingresos semanales",
+       "note": "barras por día",
+       "col": 0,
+       "row": 15,
+       "w": 8,
+       "h": 40,
+       "count": 0,
+       "linkTo": -1
+      },
+      {
+       "type": "activity",
+       "label": "Pagos recientes",
+       "note": "cobros de hoy",
+       "col": 8,
+       "row": 15,
+       "w": 4,
+       "h": 40,
+       "count": 0,
+       "linkTo": 1
+      }
+     ]
+    },
+    {
+     "name": "Pagos",
+     "kind": "app",
+     "route": "/pagos",
+     "nav": "topnav",
+     "blocks": [
+      {
+       "type": "table",
+       "label": "Pagos",
+       "note": "fecha, cliente, importe y estado",
+       "col": 0,
+       "row": 0,
+       "w": 12,
+       "h": 50,
+       "count": 0,
+       "linkTo": -1
+      },
+      {
+       "type": "empty",
+       "label": "Sin pagos pendientes",
+       "note": "todo al día",
+       "col": 0,
+       "row": 51,
+       "w": 6,
+       "h": 30,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Web de reservas",
+   "rationale": "Añade una página pública que explica el servicio y lleva a registrarse, para captar barberías nuevas además de gestionar las existentes.",
+   "recipeId": "bento",
+   "recipeReason": "Tarjetas modulares de distintos tamaños muestran servicios y funciones de forma atractiva y directa.",
+   "screens": [
+    {
+     "name": "Inicio",
+     "kind": "landing",
+     "route": "/",
+     "nav": "none",
+     "blocks": [
+      {
+       "type": "navbar",
+       "label": "Menú principal",
+       "note": "logo, enlaces y botón de entrar",
+       "col": 0,
+       "row": 0,
+       "w": 12,
+       "h": 8,
+       "count": 0,
+       "linkTo": 1
+      },
+      {
+       "type": "hero",
+       "label": "Reserva tu cita en segundos",
+       "note": "agenda y cobros para tu barbería",
+       "col": 0,
+       "row": 8,
+       "w": 12,
+       "h": 60,
+       "count": 0,
+       "linkTo": 1
+      },
+      {
+       "type": "features",
+       "label": "Todo en un lugar",
+       "note": "agenda, clientes y pagos",
+       "col": 0,
+       "row": 68,
+       "w": 12,
+       "h": 40,
+       "count": 3,
+       "linkTo": -1
+      },
+      {
+       "type": "cta",
+       "label": "Empieza hoy",
+       "note": "prueba gratis",
+       "col": 0,
+       "row": 108,
+       "w": 12,
+       "h": 25,
+       "count": 0,
+       "linkTo": 1
+      },
+      {
+       "type": "footer",
+       "label": "Pie de página",
+       "note": "",
+       "col": 0,
+       "row": 133,
+       "w": 12,
+       "h": 25,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    },
+    {
+     "name": "Registro",
+     "kind": "app",
+     "route": "/registro",
+     "nav": "none",
+     "blocks": [
+      {
+       "type": "form",
+       "label": "Crear cuenta",
+       "note": "nombre de la barbería y correo",
+       "col": 3,
+       "row": 0,
+       "w": 6,
+       "h": 50,
+       "count": 0,
+       "linkTo": 2
+      },
+      {
+       "type": "text",
+       "label": "Tu barbería en orden",
+       "note": "breve explicación del servicio",
+       "col": 9,
+       "row": 0,
+       "w": 3,
+       "h": 20,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    },
+    {
+     "name": "Panel",
+     "kind": "app",
+     "route": "/panel",
+     "nav": "none",
+     "blocks": [
+      {
+       "type": "cards",
+       "label": "Servicios y barberos",
+       "note": "cortes, barba y equipo",
+       "col": 0,
+       "row": 0,
+       "w": 12,
+       "h": 30,
+       "count": 4,
+       "linkTo": -1
+      },
+      {
+       "type": "calendar",
+       "label": "Citas de la semana",
+       "note": "vista mensual",
+       "col": 0,
+       "row": 31,
+       "w": 8,
+       "h": 60,
+       "count": 0,
+       "linkTo": -1
+      },
+      {
+       "type": "list",
+       "label": "Clientes frecuentes",
+       "note": "",
+       "col": 8,
+       "row": 31,
+       "w": 4,
+       "h": 40,
+       "count": 0,
+       "linkTo": -1
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -24,6 +24,7 @@ import {
   valueAtPointer,
   type DesignDoc,
   type Dials,
+  type LayoutBrief,
   type Lock,
   type LockKey,
   type Page,
@@ -277,6 +278,11 @@ export type GenerateOptions = {
   allowLocked?: boolean;
   /** Content context of the copy (default: `contentContextFromDoc(doc)`). */
   contentContext?: ContentContext;
+  /**
+   * «Describe tu producto»: the description and the chosen variant, written to `provenance.layoutBrief` in the same
+   * write (DESIGN.md and the prompt packs carry it). Absent: the document keeps the brief it has.
+   */
+  layoutBrief?: LayoutBrief | null;
 };
 
 type ScreenRecord = Record<string, Screen>;
@@ -585,6 +591,10 @@ export function withGeneratedScreens(doc: DesignDoc, screens: readonly Generated
     if (!doc.pages.brand && next.pages.brand) ops.push({ op: "add", path: "/pages/brand", value: next.pages.brand });
     if (doc.brief.focus !== focus && !isLocked(doc, "/brief/focus", { hardOnly: true })) ops.push({ op: "replace", path: "/brief/focus", value: focus });
     ops.push(...screenStashOps(doc, stash));
+    const brief = options.layoutBrief;
+    if (brief && JSON.stringify(doc.provenance.layoutBrief) !== JSON.stringify(brief)) {
+      ops.push({ op: doc.provenance.layoutBrief ? "replace" : "add", path: "/provenance/layoutBrief", value: brief });
+    }
     if (options.allowLocked) ops.push(...danglingLockOps(doc, next));
     return applyPatch(doc, ops, { allowLocked: options.allowLocked ?? false });
   });

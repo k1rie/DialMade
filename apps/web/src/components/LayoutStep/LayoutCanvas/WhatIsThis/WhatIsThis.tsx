@@ -9,7 +9,7 @@ import { useDictionary } from "@/i18n";
 import { layout as layoutText } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
-import { BlockIcon, SearchIcon } from "../../icons";
+import { BlockIcon, SearchIcon, SparkleIcon } from "../../icons";
 import { searchBlocks } from "../../searchBlocks";
 import { moveActive, whatIsThisOptions } from "./options";
 
@@ -26,6 +26,11 @@ export type WhatIsThisProps = {
   onKeepFree: () => void;
   /** A press outside: closes without moving focus (the press decides where it goes). */
   onDismiss: () => void;
+  /**
+   * «Sugerir con IA» (optional AI): `onSuggest` gets what was typed in the search, sent as the box's note; `costLine`
+   * is shown before calling; `message` says what the AI did when the box stays free.
+   */
+  ai?: { onSuggest: (query: string) => void; pending: boolean; costLine: string; message: string | null };
 };
 
 /** Both locales: «agenda» finds the calendar and «header» the navbar whatever the UI language. */
@@ -42,7 +47,7 @@ const STAGGER_MAX = 0.08;
  * first one highlighted. Combobox pattern: the input keeps focus, ↑/↓ move the highlight, Enter picks it.
  * Esc or «Dejar como bloque libre» keeps the free block.
  */
-export function WhatIsThis({ blockId, rect, layout, kind, getAnchor, onChoose, onKeepFree, onDismiss }: WhatIsThisProps) {
+export function WhatIsThis({ blockId, rect, layout, kind, getAnchor, onChoose, onKeepFree, onDismiss, ai }: WhatIsThisProps) {
   const t = useDictionary(layoutText);
   const reduce = useReducedMotion();
   const baseId = useId();
@@ -246,6 +251,25 @@ export function WhatIsThis({ blockId, rect, layout, kind, getAnchor, onChoose, o
           <p id={listId} className="text-small text-muted">
             {t.whatIsThis.noResults(query.trim())}
           </p>
+        )}
+        {ai && (
+          <div className="flex flex-col gap-1 border-t border-app pt-2.5">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="self-start"
+              leadingIcon={<SparkleIcon />}
+              loading={ai.pending}
+              disabled={ai.pending}
+              aria-describedby={`${baseId}-ai`}
+              onClick={() => ai.onSuggest(query)}
+            >
+              {t.whatIsThis.suggestAi}
+            </Button>
+            <p id={`${baseId}-ai`} role="status" aria-live="polite" className="m-0 text-caption text-muted">
+              {ai.pending ? t.whatIsThis.suggesting : (ai.message ?? [t.whatIsThis.suggestAiHint, ai.costLine].filter(Boolean).join(" "))}
+            </p>
+          </div>
         )}
         <Button variant="ghost" size="sm" className="self-start" onClick={onKeepFree}>
           {t.whatIsThis.keepFree}

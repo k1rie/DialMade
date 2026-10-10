@@ -14,7 +14,7 @@ import {
 } from "@dialmade/layout";
 import type { AppNavId } from "../constants";
 import { SCREEN_EXPORT_FILES } from "../constants";
-import type { DesignDoc, Screen, ScreenKind, ScreenLayout } from "../schema";
+import type { DesignDoc, LayoutBriefSource, Screen, ScreenKind, ScreenLayout } from "../schema";
 import { orderedScreens } from "../screens";
 
 /** Width of the ASCII wireframes, in characters. */
@@ -25,6 +25,10 @@ const TASK_NAMES = 6;
 type LayoutCopy = {
   flowTitle: string;
   flowIntro: string;
+  /** «Describe tu producto»: the user's description and the variant they picked (`provenance.layoutBrief`). */
+  brief: (description: string) => string;
+  chosen: (variant: string, by: string) => string;
+  briefBy: Record<LayoutBriefSource, string>;
   /** DESIGN.md only: the per-screen files of the code pack. */
   files: string;
   kinds: Record<ScreenKind, string>;
@@ -62,6 +66,9 @@ const ES: LayoutCopy = {
   flowTitle: "Pantallas y flujo",
   flowIntro:
     "Una ruta por pantalla, en este orden. Cada pantalla es una rejilla de 12 columnas (filas de 8 px); su wireframe y su orden de lectura usan los mismos números.",
+  brief: (description) => `Descripción del producto: «${description}»`,
+  chosen: (variant, by) => `Estructura elegida: «${variant}» (${by})`,
+  briefBy: { ai: "propuesta por IA", claude: "propuesta por Claude", fallback: "propuesta sin IA, por palabras clave" },
   files: `En el pack de código, cada pantalla lleva junto a su \`index.html\` su \`${SCREEN_EXPORT_FILES.layoutCss}\` (la rejilla; va después del CSS del kit) y su \`${SCREEN_EXPORT_FILES.layoutJson}\` (bloques, orden de lectura, reglas de tablet y móvil y enlaces).`,
   kinds: { landing: "Web pública", app: "Pantalla de app" },
   nav: { sidebar: "Lateral", rail: "Rail", topnav: "Superior", none: "Ninguna" },
@@ -113,6 +120,9 @@ const EN: LayoutCopy = {
   flowTitle: "Screens and flow",
   flowIntro:
     "One route per screen, in this order. Each screen is a 12-column grid (8px rows); its wireframe and its reading order share the same numbers.",
+  brief: (description) => `Product description: "${description}"`,
+  chosen: (variant, by) => `Chosen structure: "${variant}" (${by})`,
+  briefBy: { ai: "proposed by AI", claude: "proposed by Claude", fallback: "proposed without AI, from keywords" },
   files: `In the code pack, each screen carries its \`${SCREEN_EXPORT_FILES.layoutCss}\` (the grid; load it after the kit CSS) and its \`${SCREEN_EXPORT_FILES.layoutJson}\` (blocks, reading order, tablet and phone rules and links) next to its \`index.html\`.`,
   kinds: { landing: "Public website", app: "App screen" },
   nav: { sidebar: "Sidebar", rail: "Rail", topnav: "Top bar", none: "None" },
@@ -277,10 +287,27 @@ function factsOf(screen: Screen): ScreenFacts {
 
 const labelOf = (screen: Screen, id: string) => plainText(screen.layout.blocks[id]?.label ?? id);
 
+/**
+ * «Describe tu producto» (`provenance.layoutBrief`): the description, then the chosen variant and its rationale.
+ * Nothing without a brief, so documents without one export byte for byte as before. User text loses backticks and
+ * double quotes (it is already one line).
+ */
+function briefLines(doc: DesignDoc, L: LayoutCopy): string[] {
+  const brief = doc.provenance.layoutBrief;
+  if (!brief) return [];
+  const text = (value: string) => plainText(value).replace(/"/g, "'");
+  const out = [L.brief(text(brief.description))];
+  if (brief.variant) {
+    const chosen = L.chosen(text(brief.variant), L.briefBy[brief.source]);
+    out.push(brief.rationale ? `${chosen}: ${text(brief.rationale)}` : chosen);
+  }
+  return [...out, ""];
+}
+
 function flowLines(doc: DesignDoc, all: readonly ScreenFacts[], L: LayoutCopy, locale: Locale): string[] {
   const nameOf = (id: string) => (Object.hasOwn(doc.screens, id) ? doc.screens[id]!.name : id);
   const quote = locale === "es" ? guillemets : straight;
-  const out = [`### ${L.flowTitle}`, "", L.flowIntro, ""];
+  const out = [`### ${L.flowTitle}`, "", L.flowIntro, "", ...briefLines(doc, L)];
   all.forEach(({ screen }, i) => {
     const parts = [`${i + 1}. ${plainText(screen.name)} (\`${screen.route}\`)`, L.kinds[screen.kind]];
     if (screen.shell) parts.push(L.navLine(L.nav[screen.shell.nav]), L.header(screen.shell.header));

@@ -1,9 +1,10 @@
 "use client";
 
-import { MAX_SCREENS, ROUTE_MAX } from "@dialmade/doc";
+import { MAX_SCREENS, ROUTE_MAX, type LayoutBrief } from "@dialmade/doc";
 import {
   applyFix as applyLayoutFix,
   duplicateBlock as duplicateLayoutBlock,
+  emptyLayout,
   estimateContent,
   getBlockDef,
   getScreenTemplate,
@@ -48,6 +49,7 @@ import { createContext, createElement, useContext, useMemo, useState, type React
 import { temporal, type TemporalState } from "zundo";
 import { createStore, useStore, type StoreApi } from "zustand";
 import { useShallow } from "zustand/react/shallow";
+import type { ProposedScreen } from "@/lib/ai/layout/normalize";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { ADD_SPACE_ROWS, DEFAULT_APP_SHELL, HISTORY_LIMIT, SHORTCUTS_STORAGE_KEY } from "./constants";
 import { getResponsive, getStructure } from "./structureCache";
@@ -135,6 +137,14 @@ export type LayoutActions = {
   setShell: (id: ScreenId, shell: Partial<AppShell>) => boolean;
   /** «Convertir en pantalla de app / web pública». To app, navbar/sidebar blocks become the navigation frame. */
   convertScreen: (id: ScreenId, kind: ScreenKind) => boolean;
+  /**
+   * «Describe tu producto»: the screens of the chosen variant (already normalized by `normalizeProposals`) get fresh
+   * ids, unique names and routes, the project's shared app navigation and their links, and replace every screen
+   * (`replace`) or go after them (`append`), as ONE undo step; the first one becomes active. `brief` is remembered for
+   * `provenance.layoutBrief` (the next «Generar» writes it while one of these screens remains). Nothing (and
+   * `limitHit`) past `MAX_SCREENS`. Returns the new screen ids.
+   */
+  applyProposal: (screens: readonly ProposedScreen[], options: { mode: ProposalMode; brief?: LayoutBrief | null }) => ScreenId[];
 
   /* Blocks (active screen unless `screenId` is given). Every change is one undo step unless batched. */
   /**
@@ -152,6 +162,12 @@ export type LayoutActions = {
   duplicateBlock: (id: BlockId, screenId?: ScreenId) => BlockId | null;
   /** Applies a warning's one-click fix. */
   applyFix: (fix: LayoutFix, screenId?: ScreenId) => boolean;
+  /**
+   * «Sugerir con IA» for free blocks: each block takes its type like a pick in the inspector (`updateBlock`: a
+   * default label follows, navbar/sidebar on app screens become the frame), all as ONE undo step. Blocks that no
+   * longer exist or already changed type are skipped. Returns how many changed.
+   */
+  retypeBlocks: (changes: readonly BlockRetype[]) => number;
   /** «+ Añadir espacio»: extra empty rows at the bottom of the frame (view state, not undoable). */
   addSpace: (screenId: ScreenId, rows?: number) => void;
 
@@ -264,6 +280,8 @@ export type LayoutState = {
   limitHit: LimitHit | null;
   /** Screens made with «Duplicar» since the last «Generar», and what they copy (see `GeneratedScreen.copyOf`). Not undoable. */
   copies: Record<ScreenId, ScreenCopy>;
+  /** The last «Describe tu producto» applied and the screens it created. Not undoable: `generate` checks the screens. */
+  brief: { value: LayoutBrief; screenIds: ScreenId[] } | null;
 
   actions: LayoutActions;
 };
@@ -292,6 +310,12 @@ export type LimitHit = { limit: "screens" | "blocks"; tick: number };
 
 /** A screen made with «Duplicar»: the screen it copies and, for each copied block id, its source block id. */
 export type ScreenCopy = { from: ScreenId; blocks: Record<BlockId, BlockId> };
+
+/** How a proposal lands: instead of every screen, or after them. */
+export type ProposalMode = "replace" | "append";
+
+/** One block of `retypeBlocks`: still a free block when it is applied. */
+export type BlockRetype = { screenId: ScreenId; blockId: BlockId; type: LibraryBlockType };
 
 /** What `syncFromDoc` did. */
 export type SyncOutcome = "unchanged" | "reseeded" | "merged";
@@ -1216,6 +1240,69 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             set({ screens: withShell(converted, screenOrder, id, { nav }) });
             return true;
           },
+          applyProposal: (proposed, { mode, brief }) => {
+            const state = get();
+            if (proposed.length === 0) return [];
+            const kept = mode === "append" ? state.screenOrder.length : 0;
+            if (kept + proposed.length > MAX_SCREENS) {
+              limitHit("screens");
+              return [];
+            }
+            // Every id in use stays taken, the replaced screens' too: an undo brings them back next to these.
+            const taken = takenIds();
+            const screens: Record<ScreenId, Screen> = mode === "append" ? { ...state.screens } : {};
+            const order: ScreenId[] = mode === "append" ? [...state.screenOrder] : [];
+            const screenIds = new Map(proposed.map((screen) => [screen.key, nextId("s", taken)] as const));
+            const created: ScreenId[] = [];
+            for (const source of proposed) {
+              const id = screenIds.get(source.key)!;
+              const name = uniqueName(sanitizeLabel(source.name) || labelers.screenNameFor("blank"), namesOf(screens));
+              const routes = new Set(Object.values(screens).map((screen) => screen.route));
+              const wanted = source.route.trim().toLowerCase();
+              const route =
+                wanted.length <= ROUTE_MAX && ROUTE_RE.test(wanted) && !routes.has(wanted) && (wanted !== "/" || source.kind === "landing")
+                  ? wanted
+                  : routeFor(name, source.kind, screens);
+              const blockIds = new Map(Object.keys(source.layout.blocks).map((blockId) => [blockId, nextId("b", taken)] as const));
+              const blocks: Record<BlockId, LayoutBlock> = {};
+              for (const [blockId, block] of Object.entries(source.layout.blocks)) {
+                if (!isLibraryBlockType(block.type)) continue;
+                const copy: LayoutBlock = { ...block, rect: boundRect(block.rect) };
+                delete copy.generated;
+                delete copy.pinned;
+                if (copy.parentId !== undefined) {
+                  const parentId = blockIds.get(copy.parentId);
+                  if (parentId) copy.parentId = parentId;
+                  else delete copy.parentId;
+                }
+                if (copy.linkTo !== undefined) {
+                  const target = screenIds.get(copy.linkTo);
+                  if (target) copy.linkTo = target;
+                  else delete copy.linkTo;
+                }
+                blocks[blockIds.get(blockId)!] = copy;
+              }
+              let shell: AppShell | null = null;
+              if (source.kind === "app") {
+                const base: AppShell = source.shell ? { nav: source.shell.nav, header: source.shell.header } : { ...DEFAULT_APP_SHELL };
+                // The project's app screens share one navigation (decision 40): a new screen with navigation takes it.
+                const shared = sharedNav(screens, order);
+                shell = base.nav !== "none" && shared ? { ...base, nav: shared } : base;
+              }
+              screens[id] = { id, name, kind: source.kind, route, layout: { ...emptyLayout(), blocks }, shell };
+              order.push(id);
+              created.push(id);
+            }
+            set({
+              screens,
+              screenOrder: order,
+              activeScreenId: created[0]!,
+              selectedId: null,
+              ...(mode === "replace" && { copies: {} }),
+              brief: brief ? { value: brief, screenIds: created } : null,
+            });
+            return created;
+          },
 
           /* ---------------------------------------------------------------------------------------- */
           /* Blocks                                                                                   */
@@ -1362,6 +1449,22 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             if (layout === screen.layout) return false;
             set({ screens: withLayout(screen, layout) });
             return true;
+          },
+          retypeBlocks: (changes) => {
+            const pending = changes.filter(({ screenId, blockId, type }) => {
+              const block = get().screens[screenId]?.layout.blocks[blockId];
+              return block !== undefined && block.type === "free" && type !== "free" && isLibraryBlockType(type);
+            });
+            if (pending.length === 0) return 0;
+            // One undo step; inside a batch someone else opened, the changes join it.
+            const own = get().batchBase === null;
+            if (own) actions.beginBatch();
+            let changed = 0;
+            for (const { screenId, blockId, type } of pending) {
+              if (actions.updateBlock(blockId, { type }, screenId).changed) changed++;
+            }
+            if (own) actions.commitBatch();
+            return changed;
           },
           addSpace: (screenId, rows = ADD_SPACE_ROWS) => {
             if (!get().screens[screenId] || !(rows > 0)) return;
@@ -1547,7 +1650,8 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               for (const [blockId, block] of Object.entries(layout.blocks)) screenPrints[blockId] = fingerprintOf(block, layout, blockId);
               prints[screenId] = screenPrints;
             }
-            const result: GenerateResult = { screens, changed };
+            const brief = state.brief && state.brief.screenIds.some((id) => Object.hasOwn(state.screens, id)) ? state.brief.value : null;
+            const result: GenerateResult = { screens, changed, ...(brief && { brief }) };
             // The document would refuse it: say why instead of a write that can only fail (`accept` is not asked).
             if (overLimit) {
               limitHit(overLimit);
@@ -1590,6 +1694,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           docSync: null,
           limitHit: null,
           copies: {},
+          brief: null,
           actions,
         };
       },
