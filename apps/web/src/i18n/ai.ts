@@ -2,6 +2,8 @@ import type { AiApiErrorCode } from "@/lib/ai/api";
 import type { CopyBlockState } from "@/lib/ai/layoutCopy";
 import type { ManualParseError } from "@/lib/ai/manual";
 import type { AiFallbackReason } from "@/lib/ai/policy";
+import type { AiRenderPath } from "@dialmade/doc";
+import type { RENDER_SESSION_ERROR_CODES } from "@/lib/ai/render/api";
 import { defineDictionary } from "./config";
 
 type ErrorTexts = Record<AiApiErrorCode | "no-document" | "not-implemented" | "unavailable", string>;
@@ -222,6 +224,55 @@ export const ai = defineDictionary({
         "payload-too-large": "Tus capturas pesan demasiado para enviarlas a la IA.",
       } satisfies VisionErrorTexts,
     },
+    /* «Diseño con IA»: the three ways in (free tier, your key, your Claude), the cost line and the key's model. Track C. */
+    aiAccess: {
+      paths: { free: "IA gratis", byok: "Con tu key", manual: "Con tu Claude" } satisfies Record<AiRenderPath, string>,
+      cost: {
+        free: (cost: string, uses: number, total: number, left: number, screens: number, seconds: number) =>
+          `≈ ${cost} · ${uses} ${plural(uses, "uso", "usos")} de ${total} (te ${plural(left, "queda", "quedan")} ${left}) · ${screens} ${plural(screens, "pantalla", "pantallas")} · ≈ ${seconds} s`,
+        byok: (range: string, model: string) => `≈ ${range} con tu key (${model})`,
+        cheaper: (model: string, range: string) => `Más barato: ${model} (≈ ${range})`,
+        manual: (screens: number) => `$0 · ${screens} ${plural(screens, "pantalla", "pantallas")} con tu cuenta de Claude`,
+        sessions: (screens: number, uses: number) => `${screens} ${plural(screens, "pantalla", "pantallas")} = ${uses} ${plural(uses, "uso", "usos")}`,
+        unmeasured: "tiempo aproximado: este modelo aún no está medido",
+        session: "1 uso = 1 «Generar con IA» de hasta 3 pantallas + 10 cambios de bloque en 24 h.",
+      },
+      session: {
+        actionsLeft: (left: number, max: number) => `Te ${plural(left, "queda", "quedan")} ${left} de ${max} cambios de bloque en esta sesión`,
+        expiresIn: (hours: number) => `caduca en ${hours} h`,
+        noActions: "Ya usaste los 10 cambios de esta sesión. Puedes seguir con tu key o con tu Claude.",
+      },
+      cancel: {
+        free: "Ya se pagó esta pantalla; no gasta otra de tu sesión.",
+        byok: "Cancelado de verdad: solo pagas lo que se generó hasta ahora.",
+        manual: "Cancelado.",
+      } satisfies Record<AiRenderPath, string>,
+      models: {
+        legend: "Modelo para «Diseño con IA»",
+        "claude-opus-5-5": { name: "Opus 5.5", hint: "El mejor resultado. Por defecto." },
+        "claude-sonnet-5-5": { name: "Sonnet 5.5", hint: "Más barato, muy buen resultado." },
+        cheaper: "Más barato: Sonnet 5.5",
+        perSession: (range: string) => `≈ ${range} por 3 pantallas`,
+        note: "La key y el modelo solo se usan para «Diseño con IA» desde tu navegador.",
+      },
+      errors: {
+        "session-not-found": "Esta sesión de diseño no es de este navegador. Vuelve a «Generar con IA».",
+        "session-expired": "La sesión de diseño caducó (dura 24 h). «Generar con IA» abre otra con un uso.",
+        "session-exhausted": "Esta sesión ya no tiene más pantallas ni cambios. Sigue con tu key o con tu Claude.",
+      } satisfies Record<(typeof RENDER_SESSION_ERROR_CODES)[number], string>,
+      manual: {
+        answer: "Copia todo el HTML que responda Claude y pégalo aquí.",
+        answerPlaceholder: "Pega aquí el HTML que te devolvió Claude",
+        direction: "Con tu Claude, la dirección de arte la elige Dialmade con tu semilla.",
+        errors: {
+          empty: "Pega primero la respuesta de Claude.",
+          "not-json": "No encontramos HTML en esa respuesta. Copia toda la respuesta de Claude.",
+          "invalid-schema": "La respuesta pasa de 400 KB o no tiene la forma que pedimos. Pídesela otra vez a Claude con el mismo prompt.",
+          "no-result": "Los bloques de esa respuesta no son de estas pantallas. Pídesela otra vez a Claude con el mismo prompt.",
+        } satisfies ManualErrorTexts,
+        dropped: (n: number) => `Descartamos ${n} ${plural(n, "bloque que no pedimos o repetido", "bloques que no pedimos o repetidos")}.`,
+      },
+    },
   },
   en: {
     errors: {
@@ -413,6 +464,54 @@ export const ai = defineDictionary({
         "invalid-response": "The AI returned an analysis we couldn't use. Try again.",
         "invalid-request": "We couldn't send the screenshots. Try again.",
         "payload-too-large": "Your screenshots are too large to send to the AI.",
+      },
+    },
+    aiAccess: {
+      paths: { free: "Free AI", byok: "With your key", manual: "With your Claude" },
+      cost: {
+        free: (cost: string, uses: number, total: number, left: number, screens: number, seconds: number) =>
+          `≈ ${cost} · ${uses} ${plural(uses, "use", "uses")} of ${total} (${left} left) · ${screens} ${plural(screens, "screen", "screens")} · ≈ ${seconds} s`,
+        byok: (range: string, model: string) => `≈ ${range} with your key (${model})`,
+        cheaper: (model: string, range: string) => `Cheaper: ${model} (≈ ${range})`,
+        manual: (screens: number) => `$0 · ${screens} ${plural(screens, "screen", "screens")} with your Claude account`,
+        sessions: (screens: number, uses: number) => `${screens} ${plural(screens, "screen", "screens")} = ${uses} ${plural(uses, "use", "uses")}`,
+        unmeasured: "rough time: this model is not measured yet",
+        session: "1 use = 1 «Generate with AI» of up to 3 screens + 10 block changes within 24 h.",
+      },
+      session: {
+        actionsLeft: (left: number, max: number) => `${left} of ${max} block changes left in this session`,
+        expiresIn: (hours: number) => `expires in ${hours} h`,
+        noActions: "You used the 10 changes of this session. Continue with your key or your Claude.",
+      },
+      cancel: {
+        free: "This screen is already paid for; it does not take another one from your session.",
+        byok: "Cancelled for real: you only pay for what was generated so far.",
+        manual: "Cancelled.",
+      },
+      models: {
+        legend: "Model for «Design with AI»",
+        "claude-opus-5-5": { name: "Opus 5.5", hint: "The best result. Default." },
+        "claude-sonnet-5-5": { name: "Sonnet 5.5", hint: "Cheaper, very good result." },
+        cheaper: "Cheaper: Sonnet 5.5",
+        perSession: (range: string) => `≈ ${range} for 3 screens`,
+        note: "The key and the model are only used for «Design with AI», from your browser.",
+      },
+      errors: {
+        "session-not-found": "This design session does not belong to this browser. Run «Generate with AI» again.",
+        "session-expired": "The design session expired (it lasts 24 h). «Generate with AI» opens a new one for one use.",
+        "session-exhausted": "This session has no screens or changes left. Continue with your key or your Claude.",
+      },
+      manual: {
+        answer: "Copy all the HTML Claude answers and paste it here.",
+        answerPlaceholder: "Paste the HTML Claude gave you here",
+        direction: "With your Claude, Dialmade picks the art direction from your seed.",
+        errors: {
+          empty: "Paste Claude's answer first.",
+          "not-json": "We found no HTML in that answer. Copy Claude's whole answer.",
+          "invalid-schema": "The answer is over 400 KB or not in the shape we asked for. Ask Claude again with the same prompt.",
+          "no-result": "The blocks in that answer are not from these screens. Ask Claude again with the same prompt.",
+        },
+        dropped: (n: number) => `We dropped ${n} ${plural(n, "block we did not ask for or repeated", "blocks we did not ask for or repeated")}.`,
       },
     },
   },
