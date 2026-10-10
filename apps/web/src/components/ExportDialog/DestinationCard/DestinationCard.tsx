@@ -16,6 +16,8 @@ export type DestinationCardProps = {
   extra?: ReactNode;
   /** Action buttons. */
   children: ReactNode;
+  /** Under the actions (e.g. the steps an action button discloses). */
+  footer?: ReactNode;
 };
 
 export const destinationItem: Variants = {
@@ -23,7 +25,7 @@ export const destinationItem: Variants = {
   animate: { opacity: 1, y: 0, transition: { ...smooth, opacity: tween(0.2) } },
 };
 
-export function DestinationCard({ icon, name, description, recommended = false, recommendedLabel, extra, children }: DestinationCardProps) {
+export function DestinationCard({ icon, name, description, recommended = false, recommendedLabel, extra, children, footer }: DestinationCardProps) {
   return (
     <motion.li
       variants={destinationItem}
@@ -44,6 +46,7 @@ export function DestinationCard({ icon, name, description, recommended = false, 
       <p className="m-0 text-small text-muted">{description}</p>
       {extra}
       <div className="mt-auto flex flex-wrap gap-2 pt-1">{children}</div>
+      {footer}
     </motion.li>
   );
 }

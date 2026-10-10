@@ -11,6 +11,9 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
+# the Figma plugin ZIP the app serves (apps/web/scripts/figma-plugin.mjs)
+apps/web/public/downloads/
+
 # tests
 coverage/
 

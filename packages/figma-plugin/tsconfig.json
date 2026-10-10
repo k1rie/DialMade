@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
+    "types": [
+      "@figma/plugin-typings"
+    ],
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src",
+    "*.config.ts"
+  ]
+}

@@ -388,12 +388,33 @@ export const ImportRecordSchema = z.strictObject({
   dismissed: z.array(SingleLineText(200)).max(2000).default([]).refine(unique, "Dismissed locators must be unique"),
 });
 
+/** Who proposed the layout that «Describe tu producto» applied. */
+export const LAYOUT_BRIEF_SOURCES = ["ai", "claude", "fallback"] as const;
+
+/**
+ * «Describe tu producto» (Modo Layout v1.1): the user's description and the variant they picked. Additive and
+ * optional: documents without it export exactly as before. Free text is single-line and short, like a block note.
+ */
+export const LayoutBriefSchema = z.strictObject({
+  /** What the user wrote («app de reservas para barberías: agenda semanal, clientes, pagos»). */
+  description: SingleLineText(500),
+  /** `ai` (hosted free tier or the user's key), `claude` («Copiar prompt para mi Claude») or `fallback` (sin IA). */
+  source: z.enum(LAYOUT_BRIEF_SOURCES),
+  /** Name of the chosen variant. */
+  variant: SingleLineText(80).optional(),
+  /** Why that variant (the model's one-line rationale, or the fallback's). */
+  rationale: SingleLineText(300).optional(),
+  /** Model that proposed it (`claude.ai` for «mi Claude»). */
+  model: SingleLineText(80).optional(),
+});
+
 export const ProvenanceSchema = z.strictObject({
   engineVersion: z.string().min(1),
   catalogSha: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
   createdAt: z.iso.datetime().optional(),
   imports: z.array(ImportRecordSchema).max(100).optional(),
+  layoutBrief: LayoutBriefSchema.optional(),
 });
 
 // ── pages ──────────────────────────────────────────────────────────────────────
@@ -962,6 +983,8 @@ export type ComponentSize = z.output<typeof SizeSchema>;
 export type DesignSystem = z.output<typeof SystemSchema>;
 export type Reference = z.output<typeof ReferenceSchema>;
 export type Provenance = z.output<typeof ProvenanceSchema>;
+export type LayoutBrief = z.output<typeof LayoutBriefSchema>;
+export type LayoutBriefSource = (typeof LAYOUT_BRIEF_SOURCES)[number];
 export type PageElement = z.output<typeof ElementSchema>;
 /** An absorbed block's props in `page.stash` (screen pages). */
 export type StashedElement = z.output<typeof StashedElementSchema>;

@@ -19,7 +19,9 @@ import { smooth, tween } from "@/lib/motion";
 import { AI_TARGETS, DESTINATION_ORDER, EXPORT_TOASTER_ID, TOASTER_STYLE, type AiTargetId, type DestinationId } from "./constants";
 import { DestinationCard } from "./DestinationCard";
 import { slugify } from "./files";
-import { CloseIcon, CodeGlyph, CopyIcon, DownloadIcon, FolderUpGlyph, FrameGlyph, PromptGlyph, VariablesGlyph } from "./icons";
+import { FigmaInstall } from "./FigmaInstall";
+import { FIGMA_PLUGIN_ZIP } from "./handoffFiles.constants";
+import { ChevronIcon, CloseIcon, CodeGlyph, ComponentsGlyph, CopyIcon, DownloadIcon, FolderUpGlyph, FrameGlyph, PromptGlyph, VariablesGlyph } from "./icons";
 import { PreviewCard } from "./PreviewCard";
 import { previewTarget } from "./previewTarget";
 import { PromptTargetPicker } from "./PromptTargetPicker";
@@ -61,6 +63,8 @@ export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogP
   const titleId = useId();
   const descriptionId = useId();
   const destinationsId = useId();
+  const installId = useId();
+  const [installOpen, setInstallOpen] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const doc = useDesignDoc((state) => state.doc);
   const logoUrl = useDesignDoc((state) => state.logoUrl);
@@ -69,7 +73,7 @@ export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogP
   const activePage = useActiveKey();
   const derived = useDesignDerived(null);
   const [aiTarget, setAiTarget] = useState<AiTargetId>("claude");
-  const { busy, copyPrompt, downloadFigmaTokens, downloadPack } = useExportActions({
+  const { busy, copyPrompt, downloadFigmaPlan, downloadFigmaTokens, downloadPack } = useExportActions({
     doc,
     derived,
     mode,
@@ -126,23 +130,62 @@ export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogP
             </Button>
           </DestinationCard>
         );
-      case "figma":
+      case "tsx":
         return (
-          <DestinationCard key={id} {...common} icon={<VariablesGlyph />} name={d.figma.name} description={d.figma.description}>
+          <DestinationCard key={id} {...common} icon={<ComponentsGlyph />} name={d.tsx.name} description={d.tsx.description}>
             <Button
               size="sm"
               variant={recommended ? "primary" : "secondary"}
               leadingIcon={<DownloadIcon />}
-              onClick={() => downloadFigmaTokens("light")}
+              loading={busy === "tsx"}
+              disabled={busy !== null && busy !== "tsx"}
+              onClick={() => void downloadPack("tsx")}
             >
-              {d.figma.light}
+              {d.tsx.download}
+            </Button>
+          </DestinationCard>
+        );
+      case "figma":
+        return (
+          <DestinationCard
+            key={id}
+            {...common}
+            icon={<VariablesGlyph />}
+            name={d.figma.name}
+            description={d.figma.description}
+            footer={
+              <FigmaInstall
+                id={installId}
+                open={installOpen}
+                steps={d.figma.steps}
+                pluginHref={FIGMA_PLUGIN_ZIP}
+                pluginLabel={d.figma.pluginZip}
+                variablesLabel={d.figma.variablesOnly}
+                lightLabel={d.figma.light}
+                darkLabel={d.figma.dark}
+                onVariables={downloadFigmaTokens}
+              />
+            }
+          >
+            <Button
+              size="sm"
+              variant={recommended ? "primary" : "secondary"}
+              leadingIcon={<DownloadIcon />}
+              loading={busy === "figmaPlan"}
+              disabled={busy !== null && busy !== "figmaPlan"}
+              onClick={() => void downloadFigmaPlan()}
+            >
+              {d.figma.plan}
             </Button>
             <Button
               size="sm"
-              leadingIcon={<DownloadIcon />}
-              onClick={() => downloadFigmaTokens("dark")}
+              variant="ghost"
+              aria-expanded={installOpen}
+              aria-controls={installId}
+              trailingIcon={<ChevronIcon className={installOpen ? "rotate-180 transition-transform" : "transition-transform"} />}
+              onClick={() => setInstallOpen((value) => !value)}
             >
-              {d.figma.dark}
+              {d.figma.install}
             </Button>
             <Button size="sm" variant="ghost" leadingIcon={<CopyIcon />} onClick={() => void copyPrompt("figma", d.figma.name)}>
               {d.figma.prompt}

@@ -76,6 +76,7 @@ import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import { useLibraryDrop } from "./useLibraryDrop";
 import { usePointerGestures } from "./usePointerGestures";
 import { WhatIsThis } from "./WhatIsThis";
+import { useMapFreeBlocks } from "../useMapFreeBlocks";
 
 export type LayoutCanvasProps = { className?: string };
 
@@ -438,6 +439,36 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const dismissAsking = () => {
     closeDrawBatch(true);
     endAsking();
+  };
+
+  /* ---- «Sugerir con IA» in «¿Qué es esto?»: one request, one free use, applied with retypeBlocks ---- */
+  const mapFree = useMapFreeBlocks();
+  const [aiMessage, setAiMessage] = useState<{ id: BlockId; text: string } | null>(null);
+  const suggestAi = (query: string) => {
+    const id = asking;
+    if (!id || !screen) return;
+    setAiMessage(null);
+    void mapFree.run([{ screenId: screen.id, blockId: id }], {
+      note: query,
+      onResult: (outcome) => {
+        const type = outcome.types.get(id);
+        const chosen = type !== undefined && type !== "free" && outcome.changed > 0;
+        const stillAsking = askingRef.current === id;
+        if (!chosen) {
+          // The box stays free: say so inside the dialog (the user can still pick by hand).
+          if (stillAsking) setAiMessage({ id, text: t.whatIsThis.aiKeptFree });
+          announce(t.whatIsThis.aiKeptFree);
+          return;
+        }
+        // While the dialog is open the new type joined the draw batch: one undo step with the box.
+        if (stillAsking) {
+          closeDrawBatch(true);
+          endAsking();
+        }
+        announce(t.whatIsThis.aiChosen(t.blocks[type].name));
+        requestFocus(blockNow(id) ? id : "scroller");
+      },
+    });
   };
 
   const onLibraryDrop = (type: LibraryBlockType, rect: GridRect | null) => {
@@ -933,6 +964,12 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
           onChoose={chooseType}
           onKeepFree={keepFree}
           onDismiss={dismissAsking}
+          ai={{
+            onSuggest: suggestAi,
+            pending: mapFree.pending,
+            costLine: mapFree.costLine([{ screenId: screen.id, blockId: asking }]),
+            message: aiMessage?.id === asking ? aiMessage.text : null,
+          }}
         />
       )}
     </div>

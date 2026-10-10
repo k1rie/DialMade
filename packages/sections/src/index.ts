@@ -80,7 +80,17 @@ export {
 export { EditInert, PageRenderer, isStructuralElement, type EditInertProps, type PageRendererProps } from "./PageRenderer";
 export { ThemeStyles, themeStyle, type ThemeStylesProps } from "./ThemeStyles";
 export { fontsUrlForDoc, pairingForDoc, safeThemeEntries, themeVarsCss } from "./lib/themeVars";
-export { MiniApp, MiniBrand, MiniLanding, miniLabel, type MiniProps } from "./minis";
+export {
+  MiniApp,
+  MiniBrand,
+  MiniLanding,
+  SketchApp,
+  SketchBrand,
+  SketchLanding,
+  miniLabel,
+  sketchLabel,
+  type MiniProps,
+} from "./minis";
 export { BrandMark, type BrandMarkLayout, type BrandMarkProps, type BrandMarkSurface } from "./brand/BrandMark";
 export { renderStaticPage, type RenderStaticPageOptions } from "./renderToHtml";
 export * from "./content";

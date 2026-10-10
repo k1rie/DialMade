@@ -40,6 +40,7 @@ import { ScreensPanel } from "./ScreensPanel";
 import { TemplatePicker } from "./TemplatePicker";
 import type { GenerateResult, LayoutEnv, LayoutStepProps, LeftTab } from "./types";
 import { GenerateAiProvider, useGenerateFlow } from "./useGenerateFlow";
+import { LayoutAiDialogProvider, type LayoutAiDialog, type LayoutAiDialogRequest, type LayoutAiResult } from "./useLayoutAi";
 import { createLayoutStore, LayoutStoreProvider, selectActiveScreen, selectSelectedId } from "./useLayoutStore";
 import { TAB_REGION, useLayoutShortcuts } from "./useLayoutShortcuts";
 import { useMediaQuery } from "./useMediaQuery";
@@ -254,6 +255,11 @@ export function LayoutStep({
     [doc, hasImportedGuide, kind, narrow, generateIntent, generate, reveal, endPlaying, focusRegion],
   );
 
+  /* ---- The layout AI's way out («Describe tu producto», «Sugerir con IA»): BYOK or «mi Claude» ---- */
+  // Owned here, not by the part that asks: the «¿Qué es esto?» popover closes as soon as the dialog takes the pointer.
+  const [layoutAiDialog, setLayoutAiDialog] = useState<LayoutAiDialogRequest | null>(null);
+  const [layoutAi] = useState<LayoutAiDialog>(() => ({ open: (request) => setLayoutAiDialog(request) }));
+
   /* ---- Left tabs (Bloques | Capas) ---- */
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -457,34 +463,47 @@ export function LayoutStep({
 
   return (
     <LayoutStoreProvider store={store} env={env}>
-      <GenerateAiProvider value={flow.aiValue}>
-        <div
-          ref={measureRef}
-          // Standalone, the step is its own landmark; inside the flow its stage already is «Layout».
-          {...(landmark && { role: "region", "aria-label": t.region })}
-          onFocus={rememberFocus}
-          className={cn("mx-auto flex w-full max-w-[1760px] flex-col gap-3", hasScreens && !narrow && "lg:h-(--layout-h)", className)}
-          style={{ "--layout-h": height ? `${height}px` : `max(${LAYOUT_MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
-        >
-          {hasScreens && (
-            <div inert={paused} className={cn("flex-none", pausedLook)}>
-              {parts.topBar}
-            </div>
-          )}
-          {body}
-        </div>
-        <AiKeyDialog<AiCopyResult>
-          open={flow.dialog !== null}
-          onOpenChange={(next) => {
-            if (!next) flow.closeDialog();
-          }}
-          reason={dialogReason}
-          manual={flow.manual}
-          initialView={flow.dialog ?? "key"}
-          onManualResult={flow.onManualResult}
-          onKeySaved={flow.onKeySaved}
-        />
-      </GenerateAiProvider>
+      <LayoutAiDialogProvider value={layoutAi}>
+        <GenerateAiProvider value={flow.aiValue}>
+          <div
+            ref={measureRef}
+            // Standalone, the step is its own landmark; inside the flow its stage already is «Layout».
+            {...(landmark && { role: "region", "aria-label": t.region })}
+            onFocus={rememberFocus}
+            className={cn("mx-auto flex w-full max-w-[1760px] flex-col gap-3", hasScreens && !narrow && "lg:h-(--layout-h)", className)}
+            style={{ "--layout-h": height ? `${height}px` : `max(${LAYOUT_MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
+          >
+            {hasScreens && (
+              <div inert={paused} className={cn("flex-none", pausedLook)}>
+                {parts.topBar}
+              </div>
+            )}
+            {body}
+          </div>
+          <AiKeyDialog<AiCopyResult>
+            open={flow.dialog !== null}
+            onOpenChange={(next) => {
+              if (!next) flow.closeDialog();
+            }}
+            reason={dialogReason}
+            manual={flow.manual}
+            initialView={flow.dialog ?? "key"}
+            onManualResult={flow.onManualResult}
+            onKeySaved={flow.onKeySaved}
+          />
+          <AiKeyDialog<LayoutAiResult>
+            open={layoutAiDialog !== null}
+            onOpenChange={(next) => {
+              if (!next) setLayoutAiDialog(null);
+            }}
+            reason={layoutAiDialog?.reason ?? null}
+            manual={layoutAiDialog?.manual ?? null}
+            initialView={layoutAiDialog?.view ?? "key"}
+            onManualResult={(result) => layoutAiDialog?.onManualResult?.(result)}
+            onKeySaved={() => layoutAiDialog?.onKeySaved?.()}
+          />
+        </GenerateAiProvider>
+      </LayoutAiDialogProvider>
     </LayoutStoreProvider>
   );
 }

@@ -28,6 +28,8 @@ export function Hero({
   const titleId = `${elementId}-title`;
   const size = emphasis === "subtle" ? "md" : "lg";
   const split = variant === "split";
+  // One action color per page: the brand's primary, and the CTA color only when the user asks for «bold».
+  const actionVariant = emphasis === "bold" ? "cta" : "primary";
 
   return (
     <LandingSection
@@ -56,7 +58,7 @@ export function Hero({
             </p>
           ) : null}
           <div className="dl-landing-hero__actions">
-            <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "cta", size })}>
+            <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: actionVariant, size })}>
               <span data-dl-prop="primaryCta">{primaryCta}</span>
               <Icon name="arrow-right" className="dl-button__icon" />
             </a>

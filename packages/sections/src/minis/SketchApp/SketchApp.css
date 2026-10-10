@@ -1,0 +1,111 @@
+.dl-sketch-app {
+  display: flex;
+  height: 100%;
+}
+
+.dl-sketch-app__sidebar {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 1.6cqi;
+  width: 25%;
+  padding: 3.4cqi 2.4cqi;
+  border-right: 1px dashed color-mix(in oklab, var(--_line) 55%, transparent);
+}
+
+.dl-sketch-app__sidebar .dl-sketch__logo {
+  margin-bottom: 1.4cqi;
+}
+
+.dl-sketch-app__nav-item {
+  justify-content: flex-start;
+  height: 5.4cqi;
+  padding: 0 1.6cqi;
+}
+
+.dl-sketch-app__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2cqi;
+  min-width: 0;
+  padding: 3.4cqi;
+}
+
+.dl-sketch-app__top {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2cqi;
+  height: 6cqi;
+  /* Leaves room for the «Esquema» tag on the right. */
+  padding-right: 15cqi;
+}
+
+.dl-sketch-app__title {
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 3.4cqi;
+}
+
+.dl-sketch-app__search {
+  flex: 0 1 45%;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 0 2cqi;
+}
+
+.dl-sketch-app__search svg {
+  flex: none;
+  width: 2.4cqi;
+  height: 2.4cqi;
+}
+
+.dl-sketch-app__metrics {
+  flex: none;
+  height: 13cqi;
+}
+
+.dl-sketch-app__metric {
+  flex-direction: column;
+  gap: 0.4cqi;
+}
+
+.dl-sketch-app__value {
+  font-size: 3.6cqi;
+}
+
+.dl-sketch-app__panels {
+  flex: 1;
+}
+
+.dl-sketch-app__panels > .dl-sketch-app__chart {
+  flex: 1.5;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 2cqi 2.4cqi;
+}
+
+.dl-sketch-app__chart-label {
+  position: absolute;
+  top: 1.8cqi;
+  left: 2.4cqi;
+}
+
+.dl-sketch-app__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.2cqi;
+  height: 55%;
+}
+
+.dl-sketch-app__bars > span {
+  flex: 1;
+  border-radius: 0.8cqi 0.8cqi 0 0;
+  background: color-mix(in oklab, var(--_line) 30%, transparent);
+}
+
+.dl-sketch-app__bars > span:last-child {
+  background: var(--primary);
+}

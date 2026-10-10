@@ -24,6 +24,7 @@ import { strToU8, zipSync, type Zippable } from "fflate";
 import type { ExportDictionary, PackReadmeInfo, PackReadmeScreen } from "@/i18n/export";
 import { bytesToBase64, slugify } from "./files";
 import { layoutJson, linkResolver, relativeHref, screenPages, screenPath, type PackScreen } from "./screenPages";
+import { HANDOFF_FILES, figmaPlanJson, tsxFiles } from "./handoffFiles";
 import { figmaTokensJson } from "./tokens";
 
 export type KitCss = { ui: string; sections: string };
@@ -183,10 +184,12 @@ export function buildCodePack(input: PackInput): BuiltFile {
     [EXPORT_FILES.figmaLight]: figmaTokensJson(doc, inputs, "light"),
     [EXPORT_FILES.figmaDark]: figmaTokensJson(doc, inputs, "dark"),
     [EXPORT_FILES.figmaNumbers]: json(toFigmaNumberVars(doc, inputs)),
+    [HANDOFF_FILES.figmaPlan]: figmaPlanJson(doc, inputs),
     "assets/dialmade-ui.css": input.css.ui,
     "assets/dialmade-sections.css": input.css.sections,
   };
   if (input.logo) files["assets/logo.png"] = input.logo.bytes;
+  for (const [path, content] of Object.entries(tsxFiles(doc, inputs))) files[`${HANDOFF_FILES.tsxDir}/${path}`] = content;
   const options = exportOptions(inputs);
   for (const target of PROMPT_TARGETS) files[`prompts/${target}.md`] = toPromptPack(doc, target, input.locale, options);
 
@@ -237,6 +240,17 @@ export function buildCodePack(input: PackInput): BuiltFile {
     filename: `${slug}-dialmade.zip`,
     type: "application/zip",
     skippedSections,
+  };
+}
+
+/** «Código (TSX)»: the React + Tailwind v4 export alone, in its own ZIP. */
+export function buildTsxPack(input: Pick<PackInput, "doc" | "inputs">): BuiltFile {
+  const slug = slugify(input.doc.brand.name);
+  return {
+    bytes: zip(`${slug}-tsx`, tsxFiles(input.doc, input.inputs)),
+    filename: `${slug}-tsx.zip`,
+    type: "application/zip",
+    skippedSections: 0,
   };
 }
 
