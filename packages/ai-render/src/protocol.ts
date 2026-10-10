@@ -10,6 +10,9 @@ export const ISLAND_PROTOCOL_VERSION = 1;
 export const MAX_ISLAND_HEIGHT = 4000;
 /** Inner margin the island keeps around the block so shadows are not clipped (the parent compensates it). */
 export const ISLAND_BLEED = 24;
+/** Range of the widths gate 5 may ask the island to measure at. */
+export const MIN_MEASURE_WIDTH = 120;
+export const MAX_MEASURE_WIDTH = 4000;
 
 const BlockId = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/);
 /** Theme variables: `--name` → a CSS value without `;`, braces or `<`. */
@@ -33,7 +36,16 @@ export const ParentMessageSchema = z.discriminatedUnion("type", [
     lang: z.enum(["es", "en"]),
   }),
   z.strictObject({ type: z.literal("theme"), v: z.literal(ISLAND_PROTOCOL_VERSION), vars: Vars, mode: z.enum(["light", "dark"]), fontsHref: FontsHref }),
-  z.strictObject({ type: z.literal("measure"), v: z.literal(ISLAND_PROTOCOL_VERSION) }),
+  z.strictObject({
+    type: z.literal("measure"),
+    v: z.literal(ISLAND_PROTOCOL_VERSION),
+    /**
+     * Gate 5 (track D): the widths of the block's cell on each device (`DEVICE_WIDTHS`). The island lays the block
+     * out at each one in turn (in the same task: nothing is painted), answers one `measure` per width, and restores
+     * its own width. Without it, one `measure` at the current width.
+     */
+    widths: z.array(z.number().int().min(MIN_MEASURE_WIDTH).max(MAX_MEASURE_WIDTH)).max(3).optional(),
+  }),
 ]);
 
 /** Island → app. */
@@ -52,6 +64,8 @@ export const IslandMessageSchema = z.discriminatedUnion("type", [
     smallTargets: z.number().int().min(0).max(1000),
     /** Elements whose text is clipped. */
     clipped: z.number().int().min(0).max(1000),
+    /** Height of the block at `width` (gate 5 compares it with the layout's in app screens). */
+    height: z.number().min(0).max(100_000).optional(),
   }),
   z.strictObject({ type: z.literal("error"), message: z.string().max(300) }),
 ]);

@@ -2,7 +2,7 @@
 // inert <template> (through a Trusted Types policy) and copied node by node with the same allowlist. Never
 // `innerHTML` on the live document. Icons and placeholders are our own
 // SVG markup, built from trusted strings.
-import { ALLOWED_TAGS, iconSvg, isAllowedAttr, placeholderSvg } from "@dialmade/ai-render/runtime";
+import { ALLOWED_TAGS, INPUT_TYPES, iconSvg, isAllowedAttrFor, placeholderSvg } from "@dialmade/ai-render/runtime";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -37,10 +37,15 @@ function copyAllowed(source: ParentNode, target: Node): void {
     if (element.namespaceURI !== "http://www.w3.org/1999/xhtml" || !ALLOWED_TAGS.has(tag)) continue;
     const copy = document.createElement(tag);
     for (const { name, value } of Array.from(element.attributes)) {
-      if (!isAllowedAttr(name)) continue;
+      if (!isAllowedAttrFor(tag, name)) continue;
       if (name === "href" && !/^#(?:screen:[\w-]+)?$/.test(value)) continue;
+      if (name === "type" && tag === "input" && !INPUT_TYPES.has(value)) continue;
+      if (name === "type" && tag === "button" && value !== "button") continue;
+      if (name === "tabindex" && value !== "0" && value !== "-1") continue;
       copy.setAttribute(name, value);
     }
+    // A button never submits, whatever it was handed.
+    if (tag === "button") copy.setAttribute("type", "button");
     copyAllowed(element, copy);
     target.appendChild(copy);
   }

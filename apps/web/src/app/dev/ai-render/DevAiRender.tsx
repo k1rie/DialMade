@@ -4,7 +4,7 @@ import { themeColorsFromVars, type RenderBlockInput } from "@dialmade/ai-render"
 import { compileThemeVars, createDesignDoc } from "@dialmade/doc";
 import { fontsUrlForDoc } from "@dialmade/sections";
 import { useEffect, useMemo, useState } from "react";
-import { AiIsland } from "@/components/AiIsland";
+import { AiIsland, useResponsiveGate } from "@/components/AiIsland";
 import { compileCssOffThread, processBlockOffThread } from "@/lib/ai/render/worker";
 
 const RAW = `<section data-block-id="b-hero" class="@container bg-linear-to-r from-primary to-accent py-section" onclick="alert(1)">
@@ -26,6 +26,8 @@ export function DevAiRender() {
   const vars = useMemo(() => compileThemeVars(doc, { mode }), [doc, mode]);
   const [state, setState] = useState<{ html: string; css: string; ms: number; note: string } | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  // Gate 5 at the 3 device widths of a full-width cell.
+  const onMeasure = useResponsiveGate({ desktop: 1440, tablet: 768, mobile: 390 }, undefined, (verdict) => setLog((l) => [...l, `gate5 ${JSON.stringify(verdict)}`]));
 
   useEffect(() => {
     const t0 = performance.now();
@@ -64,7 +66,11 @@ export function DevAiRender() {
             title="Bloque Hero, diseñado con IA"
             onSelect={(t, text) => setLog((l) => [...l, `select ${t} ${text ?? ""}`])}
             onTextEdit={(t, text) => setLog((l) => [...l, `textEdit ${t} ${text}`])}
-            onMeasure={(m) => setLog((l) => [...l, `measure ${JSON.stringify(m)}`])}
+            measureWidths={[1440, 768, 390]}
+            onMeasure={(m) => {
+              setLog((l) => [...l, `measure ${JSON.stringify(m)}`]);
+              onMeasure(m);
+            }}
           />
         ) : null}
       </div>

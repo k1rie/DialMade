@@ -9,7 +9,7 @@ import { insertBlock } from "./insert";
 
 // No `new Function` fast paths: the island's CSP (Trusted Types, no unsafe-eval) forbids them.
 z.config({ jitless: true });
-import { measureBlock } from "./measure";
+import { measureAtWidths, measureBlock } from "./measure";
 
 const params = new URLSearchParams(location.search);
 const parentOrigin = (() => {
@@ -68,10 +68,11 @@ function reportSize() {
   send({ type: "size", blockId, height });
 }
 
-function reportMeasure() {
+function reportMeasure(widths?: readonly number[]) {
   const root = host.firstElementChild;
   if (!blockId || !root) return;
-  send({ type: "measure", blockId, ...measureBlock(root) });
+  const measurements = widths && widths.length > 0 ? measureAtWidths(host, root, widths) : [measureBlock(root)];
+  for (const measurement of measurements) send({ type: "measure", blockId, ...measurement });
 }
 
 new ResizeObserver(() => reportSize()).observe(host);
@@ -84,7 +85,7 @@ window.addEventListener("message", (event) => {
   const message = parsed.data;
   if (message.type === "render") render(message);
   else if (message.type === "theme") setTheme(message.vars, message.mode, message.fontsHref);
-  else reportMeasure();
+  else reportMeasure(message.widths);
 });
 
 // Links never navigate (the sandbox forbids it anyway): `#screen:<id>` asks the app to open that screen.

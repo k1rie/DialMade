@@ -12,7 +12,25 @@ export {
   prng,
   type DirectionCandidates,
 } from "./direction";
-export { StructureTracker, fixHeadings, newContacts, offDirection, snippet, structureGate, styleFingerprint, warning, type StructureVerdict } from "./gates";
+export {
+  APP_HEIGHT_TOLERANCE,
+  DEVICES,
+  StructureTracker,
+  extraGateWarnings,
+  fixHeadings,
+  foreignScript,
+  missingFocusIndicators,
+  newContacts,
+  offDirection,
+  responsiveGate,
+  snippet,
+  structureGate,
+  styleFingerprint,
+  warning,
+  type Device,
+  type DeviceMeasure,
+  type StructureVerdict,
+} from "./gates";
 export {
   CONTAINER_TYPES,
   KIT_TYPES,
