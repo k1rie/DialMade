@@ -145,10 +145,10 @@ describe("app.shell variants", () => {
     expect(items[0]!.fill).toBeDefined();
     expect(nodes.some((node) => node.name === "Top bar")).toBe(true);
     expect(nodes.find((node) => node.name === "Page content")!.children.map((child) => (child.type === "frame" ? child.key : null))).toEqual(["layout"]);
-    // The sidebar is 256 px of the 1440 px frame: 8 of 45 equal columns.
-    const frame = nodes.find((node) => node.name === "Frame")!;
-    expect(frame.layout).toMatchObject({ kind: "grid", columns: PAGE_WIDTH / 32 });
-    expect(input.build.light.components.sidebar.w).toBe(256);
+    // A row: the token's sidebar width beside a `fill` main column.
+    expect(nodes.find((node) => node.name === "Frame")!.layout).toMatchObject({ kind: "flex", direction: "row", align: "stretch" });
+    expect(sidebar.width).toBe(input.build.light.components.sidebar.w);
+    expect(nodes.find((node) => node.name === "Main")!.width).toBe("fill");
   });
 
   it("inset: the main column floats as a rounded panel", () => {
@@ -160,9 +160,7 @@ describe("app.shell variants", () => {
   it("rail: icons only, labels kept as accessible names", () => {
     const { nodes } = build("rail");
     const rail = nodes.find((node) => node.name === "Rail")!;
-    // 72 px of the 1440 px frame: 1 of 20 equal columns.
-    expect(nodes.find((node) => node.name === "Frame")!.layout).toMatchObject({ kind: "grid", columns: 20 });
-    expect(rail.place).toEqual({ col: 0, span: 1, row: 0 });
+    expect(rail.width).toBe(72);
     const items = frames(rail).filter((node) => node.name.startsWith("Nav item"));
     expect(items.every((node) => node.label && !frames(node).some((n) => n.children.some((c) => c.type === "text")))).toBe(true);
   });
@@ -200,7 +198,7 @@ describe("app.shell variants", () => {
     const tree = buildDesignTree(legacyDoc());
     const app = tree.pages.find((page) => page.id === "app")!;
     const content = frames(app.root).find((node) => node.name === "Page content")!;
-    expect(content.layout).toMatchObject({ kind: "grid", columns: 12 });
+    expect(content.layout).toMatchObject({ kind: "grid", columns: 12, rowGap: 4 });
     const places = content.children.map((child) => child.place);
     expect(places).toEqual([
       { col: 0, span: 12, row: 0 },

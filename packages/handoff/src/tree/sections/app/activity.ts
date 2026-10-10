@@ -35,7 +35,7 @@ function body(entry: Entry): FrameNode {
   ]);
 }
 
-export const activityBuilder: SectionBuilder = ({ id, props, variant, ctx }) => {
+export const activityBuilder: SectionBuilder = ({ id, props, variant, ctx, build }) => {
   const timeline = variant !== "list";
   const items = entries(props.items).slice(0, Math.max(1, num(props.count, 5)));
   const link = ctx.linkTarget?.(id) ?? undefined;
@@ -68,10 +68,10 @@ export const activityBuilder: SectionBuilder = ({ id, props, variant, ctx }) => 
           padding: { top: i === 0 ? 0 : 3, bottom: last ? 0 : 3 },
           ...(i > 0 && { stroke: { color: "border", sides: ["top"] } }),
         },
-        [avatar(entry.actor, "sm"), body(entry)],
+        [avatar(build, entry.actor, "sm"), body(entry)],
       );
     }),
   );
 
-  return card("Activity", [widgetHeader(props.title, props.description, [viewAll]), list], { gap: 4, tag: "section" });
+  return card("Activity", [widgetHeader(build, props.title, props.description, [viewAll]), list], { gap: 4, tag: "section" });
 };

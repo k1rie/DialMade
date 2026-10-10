@@ -2,7 +2,7 @@
 // form controls of @dialmade/ui as the dashboard widgets draw them, plus the app strings and formatters the
 // sections use internally (not exported by @dialmade/sections, mirrored here).
 import type { Locale } from "@dialmade/catalog";
-import { orderedScreens, type DesignDoc } from "@dialmade/doc";
+import { orderedScreens, type DesignDoc, type FontSizeName } from "@dialmade/doc";
 import { formatDelta, formatMoney, formatValue, type ValueFormat } from "@dialmade/sections";
 import { colorIndexOf, initialsOf } from "@dialmade/ui";
 import type { BuildContext } from "../../context";
@@ -171,12 +171,22 @@ export function elementWidth(build: BuildContext, id: string, type: string): num
 /* Small pieces                                                                                     */
 /* ------------------------------------------------------------------------------------------------ */
 
-/** `WidgetHeader`: h2 and muted description on the start, actions on the end. */
-export function widgetHeader(title: unknown, description: unknown, actions: (DesignNode | null | undefined | false)[] = []): FrameNode {
+/**
+ * `scale` that turns a text style's size into another size of the scale times a factor (a heading-font title
+ * at `--dl-fs-body` × 1.0625 is `h3` scaled down). Rounded to 4 decimals.
+ */
+export function fontScale(build: BuildContext, style: FontSizeName, size: FontSizeName, factor = 1): number {
+  const from = build.light.fontSizes[style].px;
+  const to = build.light.fontSizes[size].px * factor;
+  return Math.round((to / (from || 1)) * 10000) / 10000;
+}
+
+/** `WidgetHeader`: h2 (heading font at body × 1.0625) and muted description on the start, actions on the end. */
+export function widgetHeader(build: BuildContext, title: unknown, description: unknown, actions: (DesignNode | null | undefined | false)[] = []): FrameNode {
   const present = actions.filter((node): node is DesignNode => !!node);
   return row({ name: "Widget header", width: "fill", justify: "between", align: "start", gap: 3 }, [
     column({ name: "Heading", width: "fill", gap: { px: 2 } }, [
-      text(title, "body-strong", { color: "card-foreground", tag: "h2" }),
+      text(title, "h3", { color: "card-foreground", tag: "h2", scale: fontScale(build, "h3", "body", 1.0625) }),
       text(description, "small", { color: "muted-foreground", tag: "p" }),
     ]),
     present.length > 0 ? row({ name: "Actions", align: "center", gap: 2 }, present) : null,
@@ -239,13 +249,13 @@ export function deltaBadge(delta: number, locale: Locale, invert = false, size: 
 
 /**
  * Inline text with mixed weights («**Actor** did something»): one text per word in a wrapping row with a
- * space-wide gap, so it wraps like a paragraph (the tree's texts have a single style; trailing spaces inside
+ * space-wide gap and no gap between lines, so it wraps like a paragraph (the tree's texts have a single style; trailing spaces inside
  * texts would collapse in the TSX flex items).
  */
 export function inlineText(name: string, parts: { text: string; style: TextStyleId; color?: ColorVar }[]): FrameNode {
   const words = parts.flatMap((part) => part.text.split(/\s+/).filter(Boolean).map((word) => ({ word, part })));
   return row(
-    { name, width: "fill", wrap: true, gap: { px: 4 } },
+    { name, width: "fill", wrap: true, gap: { px: 4 }, crossGap: 0 },
     words.map(({ word, part }): TextNode => ({
       type: "text",
       text: word,
@@ -259,24 +269,29 @@ export function inlineText(name: string, parts: { text: string; style: TextStyle
 const AVATAR_PX = { xs: 24, sm: 32, md: 40 } as const;
 
 /** `Avatar` without photo: initials on the tone of the name (`chart-1`…`chart-5` at 24 %). */
-export function avatar(name: string, size: keyof typeof AVATAR_PX = "sm", square = false): FrameNode {
-  const px = AVATAR_PX[size];
+export function avatar(build: BuildContext, name: string, size: keyof typeof AVATAR_PX = "sm", square = false): FrameNode {
+  return avatarPx(build, name, AVATAR_PX[size], square);
+}
+
+/** An avatar of any px size (initials at 0.38 × the size, like `.dl-avatar__fallback`). */
+export function avatarPx(build: BuildContext, name: string, px: number, square = false): FrameNode {
+  const caption = build.light.fontSizes.caption.px;
   // `color-mix(tone 24%, card)`: the tone at 24 % over a card-colored base.
-  return row({ name: `Avatar/${size}`, width: px, height: px, radius: square ? "sm" : "full", fill: { color: "card" }, clip: true, label: name }, [
+  return row({ name: `Avatar/${px}`, width: px, height: px, radius: square ? "sm" : "full", fill: { color: "card" }, clip: true, label: name }, [
     row({ name: "Initials", width: px, height: px, align: "center", justify: "center", fill: { color: `chart-${colorIndexOf(name)}`, opacity: 0.24 } }, [
-      text(initialsOf(name), "caption-strong", { color: "foreground", tag: "span" }),
+      text(initialsOf(name), "caption-strong", { color: "foreground", tag: "span", scale: Math.round(((px * 0.38) / caption) * 10000) / 10000 }),
     ]),
   ]);
 }
 
 /** Avatar with its status dot (sidebar user). */
-export function avatarWithStatus(name: string, status: ColorVar = "success"): FrameNode {
+export function avatarWithStatus(build: BuildContext, name: string, status: ColorVar = "success"): FrameNode {
   return frame({
     name: "Avatar with status",
     width: 32,
     layout: { kind: "tracks", columns: [1], rows: [32], areas: null },
     children: [
-      { ...avatar(name, "sm"), area: CELL },
+      { ...avatar(build, name, "sm"), area: CELL },
       {
         ...row({ name: "Status", width: 32, height: 32, align: "end", justify: "end" }, [
           shape({ name: "Status dot", shape: "ellipse", width: 10, height: 10, fill: { color: status }, stroke: { color: "background", width: 2 }, role: "decor" }),
@@ -414,7 +429,7 @@ export function control(options: ControlOptions): FrameNode {
   );
   if (!options.label && !options.hint) return { ...box, width: options.width ?? "fill" };
   return column({ name: "Field", gap: 2, width: options.width ?? "fill", tag: "label" }, [
-    text(options.label, "small-strong", { tag: "span" }),
+    text(options.label, "small", { tag: "span", weight: 550 }),
     box,
     text(options.hint, "caption", { color: "muted-foreground" }),
   ]);
@@ -447,10 +462,19 @@ export function checkbox(checked = false): ShapeNode | FrameNode {
   return shape({ name: "Checkbox", width: 18, height: 18, radius: "sm", fill: { color: "background" }, stroke: { color: "input", width: 1.5 } });
 }
 
-/** `Progress` (sm): a track and its value, as a share of 20 equal columns (the tree has no proportional widths). */
+/**
+ * `Progress`: a tinted track and its value. The tree has no proportional widths: the value is a span of a few
+ * equal columns (the share rounded to 5 %, reduced: 64 % → 13 of 20, 40 % → 2 of 5, 100 % → the whole track).
+ */
 export function progressBar(value: number, tone: ColorVar = "primary", height = 6): FrameNode {
-  const span = Math.max(0, Math.min(20, Math.round(Math.max(0, Math.min(100, value)) / 5)));
-  return grid({ name: "Progress", columns: 20, gap: 0, height, radius: "full", fill: { color: tone, opacity: 0.16 }, clip: true }, [
-    span > 0 ? { ...shape({ name: "Value", width: "fill", height, radius: "full", fill: { color: tone } }), place: { col: 0, span, row: 0 } } : null,
-  ]);
+  const twentieths = Math.round(Math.max(0, Math.min(100, value)) / 5);
+  const track = { name: "Progress", width: "fill" as const, height, radius: "full" as const, fill: { color: tone, opacity: 0.16 }, clip: true };
+  const bar = shape({ name: "Value", width: "fill", height, radius: "full", fill: { color: tone } });
+  if (twentieths <= 0) return row(track, []);
+  if (twentieths >= 20) return row(track, [bar]);
+  const unit = gcd(twentieths, 20);
+  const columns = 20 / unit;
+  return grid({ ...track, columns, gap: 0 }, [{ ...bar, place: { col: 0, span: twentieths / unit, row: 0 } }]);
 }
+
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));

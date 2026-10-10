@@ -2,7 +2,7 @@
 // and the first page of rows (checkbox, cells drawn by column kind, row menu), then the pagination. Columns
 // get px widths from their content (like an auto table) and the last data column absorbs the rest.
 import { UI_STRINGS } from "@dialmade/ui";
-import type { SectionBuilder } from "../../context";
+import type { BuildContext, SectionBuilder } from "../../context";
 import { button, column, num, records, row, str, text } from "../../nodes";
 import type { DesignNode, FrameNode, Size } from "../../types";
 import { appStrings, avatar, checkbox, control, elementWidth, iconButton, kitBadge, progressBar, widgetHeader, type KitBadgeVariant } from "./shared";
@@ -53,27 +53,28 @@ function statusVariant(tone: string | undefined): KitBadgeVariant {
 }
 
 /** `DataTableCell`: what each column kind draws. */
-function cellContent(column: Column, cell: Cell | undefined, rowHeader: boolean): DesignNode | null {
+function cellContent(build: BuildContext, column: Column, cell: Cell | undefined, rowHeader: boolean): DesignNode | null {
   if (!cell) return text("—", "small", { color: "muted-foreground", tag: "span" });
-  const strong = rowHeader ? "small-strong" : "small";
+  // `tbody th` (the row's first cell) is 550; entity names are 500.
+  const weight = rowHeader ? { weight: 550 } : {};
   switch (column.kind) {
     case "status":
       return kitBadge(cell.text, statusVariant(cell.tone), { dot: true });
     case "person":
     case "company":
-      return row({ name: "Entity", align: "center", gap: 2 }, [avatar(cell.text, "xs", column.kind === "company"), text(cell.text, rowHeader ? "small-strong" : "small", { color: "card-foreground", tag: "span" })]);
+      return row({ name: "Entity", align: "center", gap: 2 }, [avatar(build, cell.text, "xs", column.kind === "company"), text(cell.text, "small", { color: "card-foreground", tag: "span", weight: rowHeader ? 550 : 500 })]);
     case "id":
-      return text(cell.text, "mono", { color: "card-foreground", tag: "code" });
+      return text(cell.text, "mono", { color: "card-foreground", tag: "code", scale: 0.92, ...weight });
     case "percent":
       return cell.value !== undefined && column.key === "progress"
         ? row({ name: "Progress cell", width: "fill", align: "center", gap: 2 }, [progressBar(cell.value), text(cell.text, "small", { tag: "span" })])
-        : text(cell.text, strong, { color: "card-foreground", tag: "span" });
+        : text(cell.text, "small", { color: "card-foreground", tag: "span", ...weight });
     case "date":
     case "relative":
     case "time":
       return text(cell.text, "small", { color: "muted-foreground", tag: "span" });
     default:
-      return text(cell.text, strong, { color: "card-foreground", tag: "span" });
+      return text(cell.text, "small", { color: "card-foreground", tag: "span", ...weight });
   }
 }
 
@@ -116,7 +117,7 @@ export const dataTableBuilder: SectionBuilder = ({ id, props, variant, ctx, buil
       const content =
         kind === "head"
           ? text(column.label, "caption-strong", { color: "muted-foreground", tag: "th" })
-          : cellContent(column, r!.cells[column.key], c === 0);
+          : cellContent(build, column, r!.cells[column.key], c === 0);
       out.push(tableCell(kind === "head" ? `th/${column.key}` : `td/${column.key}`, last ? "fill" : widths[c]! + (index === 0 ? edge.first - CELL_PAD : 0), height, column.align, content, pad));
       index++;
     });
@@ -166,6 +167,7 @@ export const dataTableBuilder: SectionBuilder = ({ id, props, variant, ctx, buil
   );
 
   const header = widgetHeader(
+    build,
     props.title,
     props.description,
     props.showToolbar === true

@@ -22,10 +22,10 @@ export const chartCardBuilder: SectionBuilder = ({ id, props, variant, ctx, buil
   return card(
     "Chart card",
     [
-      widgetHeader(props.title, null, [button(props.rangeLabel, { variant: "outline", size: "sm", icon: "chevron-down" })]),
+      widgetHeader(build, props.title, null, [button(props.rangeLabel, { variant: "outline", size: "sm", icon: "chevron-down" })]),
       props.showSummary === true
         ? column({ name: "Summary", width: "fill", gap: { px: 2 } }, [
-            text(props.totalLabel, "caption", { color: "muted-foreground", tag: "span" }),
+            text(props.totalLabel, "caption", { color: "muted-foreground", tag: "span", weight: 500 }),
             row({ name: "Total", align: "center", gap: 3, wrap: true }, [
               text(summary.value, "h2", { color: "card-foreground", tag: "span" }),
               deltaBadge(summary.delta, ctx.locale),
@@ -33,6 +33,7 @@ export const chartCardBuilder: SectionBuilder = ({ id, props, variant, ctx, buil
           ])
         : null,
       chart({
+        build,
         type,
         title: str(props.title),
         categories,

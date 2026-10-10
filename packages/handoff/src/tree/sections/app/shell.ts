@@ -2,8 +2,7 @@
 // the page header and the widgets in a 12-column content grid. A shell placed as a block (narrow, inside a
 // landing screen) draws the phone layout its container query shows: menu, brand and account in the top bar.
 import { SHELL_ELEMENT_ID, monogramOf } from "@dialmade/sections";
-import type { SectionBuilder, SectionInput } from "../../context";
-import { COL_PX, DESKTOP_COLUMNS } from "@dialmade/layout";
+import type { BuildContext, SectionBuilder, SectionInput } from "../../context";
 import { button, column, grid, icon, records, row, shape, str, text } from "../../nodes";
 import type { ColorVar, DesignNode, FrameNode, Paint, Stroke } from "../../types";
 import {
@@ -14,6 +13,7 @@ import {
   brandMark,
   control,
   elementType,
+  fontScale,
   iconButton,
   menuButton,
   overlay,
@@ -113,7 +113,7 @@ function sideNavItem(input: SectionInput, item: NavItem, active: boolean, tone: 
       : null;
   const content = row({ name: "Content", width: rail ? "hug" : "fill", align: "center", gap: 3, padding: rail ? 0 : { left: { px: active ? 9 : 12 } } }, [
     icon(item.icon, color, 16),
-    rail ? null : text(item.label, active ? "small-strong" : "small", { color, width: "fill", tag: "span" }),
+    rail ? null : text(item.label, "small", { color, width: "fill", tag: "span", weight: active ? 600 : 500 }),
     chip,
   ]);
   const indicator = active ? shape({ name: "Indicator", width: 3, height: 18, radius: "sm", fill: { color: tone.indicator }, role: "decor" }) : null;
@@ -146,14 +146,15 @@ function navList(input: SectionInput, items: NavItem[], activeId: string, tone: 
 }
 
 /** `ShellBrand`: monogram and name, with an optional second line. */
-function shellBrand(name: string, meta: string | null, tone: Tone | null, rail = false): FrameNode {
+function shellBrand(build: BuildContext, name: string, meta: string | null, tone: Tone | null, rail = false): FrameNode {
   const fg = tone?.fg ?? "foreground";
   return row({ name: "Brand", width: rail ? "hug" : "fill", align: "center", gap: 2 }, [
     brandMark(monogramOf(name), tone?.mark.fill ?? "primary", tone?.mark.color ?? "primary-foreground"),
     rail
       ? null
       : column({ name: "Brand text", width: "fill" }, [
-          text(name, "small-strong", { color: fg, tag: "span" }),
+          // `.dl-app-shell__brand-name`: heading font at the small size, 600.
+          text(name, "h3", { color: fg, tag: "span", scale: fontScale(build, "h3", "small"), weight: 600 }),
           meta ? text(meta, "caption", { color: tone?.muted ?? "muted-foreground", tag: "span" }) : null,
         ]),
   ]);
@@ -172,7 +173,7 @@ function sidebar(input: SectionInput, tone: Tone, rail: boolean, inset: boolean)
 
   const switcher = row(
     { name: "Workspace switcher", tag: "button", width: rail ? "hug" : "fill", align: "center", gap: 2, padding: rail ? 1 : 2, radius: "md" },
-    [shellBrand(str(props.brandName), str(props.workspace) || null, tone, rail), rail ? null : icon("chevrons-up-down", tone.muted, 16)],
+    [shellBrand(build, str(props.brandName), str(props.workspace) || null, tone, rail), rail ? null : icon("chevrons-up-down", tone.muted, 16)],
   );
   const userBlock = row(
     {
@@ -185,7 +186,7 @@ function sidebar(input: SectionInput, tone: Tone, rail: boolean, inset: boolean)
       stroke: { ...border, sides: ["top"] },
     },
     [
-      avatarWithStatus(userName),
+      avatarWithStatus(build, userName),
       rail
         ? null
         : column({ name: "User text", width: "fill" }, [
@@ -247,7 +248,7 @@ function search(input: SectionInput, width: number): FrameNode {
     placeholder: str(input.props.searchPlaceholder),
     leadingIcon: "search",
     trailing: row({ name: "Kbd", padding: { x: { px: 5 }, y: { px: 1 } }, radius: "sm", fill: { color: "muted" }, stroke: { color: "border" } }, [
-      text(strings.searchShortcut, "caption", { color: "muted-foreground", tag: "span" }),
+      text(strings.searchShortcut, "mono-caption", { color: "muted-foreground", tag: "span", scale: fontScale(input.build, "caption", "caption", 11 / input.build.light.fontSizes.caption.px) }),
     ]),
   });
 }
@@ -279,7 +280,7 @@ function topbar(input: SectionInput, variant: string, tone: Tone, padStep: numbe
             },
             [
               row({ name: "Content", align: "center", gap: 2, padding: { x: 3 }, ...(active && { offsetTop: { px: 2 } }) }, [
-                text(item.label, active ? "small-strong" : "small", { color, tag: "span" }),
+                text(item.label, "small", { color, tag: "span", weight: active ? 600 : 500 }),
                 item.count !== undefined
                   ? row({ name: "Count", minHeight: 20, padding: { x: { px: 6 } }, align: "center", radius: "full", fill: active ? tone.chip.activeFill : tone.chip.fill }, [
                       text(item.count, "caption-strong", { color: active ? tone.chip.activeColor : tone.chip.color }),
@@ -288,7 +289,7 @@ function topbar(input: SectionInput, variant: string, tone: Tone, padStep: numbe
               ]),
               // The active item's 2 px underline, over the middle half of the item.
               active
-                ? row({ name: "Underline", width: "fill", justify: "center", offsetTop: { px: 0 } }, [
+                ? row({ name: "Underline", width: "fill", justify: "center" }, [
                     shape({ name: "Indicator", width: Math.max(12, Math.round(item.label.length * 3.8)), height: 2, radius: "sm", fill: { color: tone.indicator }, role: "decor" }),
                   ])
                 : null,
@@ -311,14 +312,14 @@ function topbar(input: SectionInput, variant: string, tone: Tone, padStep: numbe
     },
     [
       row({ name: "Top bar start", width: "fill", align: "center", gap: 3 }, [
-        topnav ? { ...shellBrand(str(props.brandName), null, tone), width: "hug" } : null,
+        topnav ? { ...shellBrand(input.build, str(props.brandName), null, tone), width: "hug" } : null,
         navBar,
         !topnav && showSearch ? search(input, 384) : null,
       ]),
       row({ name: "Top bar end", align: "center", gap: 2 }, [
         topnav && showSearch ? search(input, 224) : null,
         bell(fg, topnav && props.tone === "brand" ? "primary-foreground" : "primary"),
-        topnav ? avatar(str(user.name) || "—", "sm") : null,
+        topnav ? avatar(input.build, str(user.name) || "—", "sm") : null,
       ]),
     ],
   );
@@ -358,14 +359,14 @@ function content(input: SectionInput, gapStep: number): FrameNode {
     }
     const place = { col, span, row: line };
     col += span;
-    const node = { ...child, place, ...(line > 0 && { offsetTop: gapStep }) } as DesignNode;
+    const node = { ...child, place } as DesignNode;
     if (col >= 12) {
       col = 0;
       line += 1;
     }
     return node;
   });
-  return grid({ name: "Page content", columns: 12, gap: gapStep }, placed);
+  return grid({ name: "Page content", columns: 12, gap: gapStep, rowGap: gapStep }, placed);
 }
 
 /** A shell placed as a block: the phone layout of its container query (top bar with menu, brand and account). */
@@ -376,11 +377,11 @@ function blockShell(input: SectionInput, gapStep: number): FrameNode {
     row(
       { name: "Top bar", tag: "header", width: "fill", align: "center", gap: 3, minHeight: input.build.light.components.nav.h, padding: { x: 4 }, stroke: { color: "border", sides: ["bottom"] } },
       [
-        row({ name: "Top bar start", width: "fill", align: "center", gap: 2 }, [menuButton("foreground"), { ...shellBrand(str(props.brandName), null, null), width: "hug" }]),
+        row({ name: "Top bar start", width: "fill", align: "center", gap: 2 }, [menuButton("foreground"), { ...shellBrand(input.build, str(props.brandName), null, null), width: "hug" }]),
         row({ name: "Top bar end", align: "center", gap: 1 }, [
           props.showSearch === true ? iconButton("Search", "search") : null,
           bell("foreground", "primary"),
-          avatar(str(user.name) || "—", "sm"),
+          avatar(input.build, str(user.name) || "—", "sm"),
         ]),
       ],
     ),
@@ -427,25 +428,6 @@ export const shellBuilder: SectionBuilder = (input) => {
   // Inset: the panel keeps 8 px from the edges and the canvas takes the navigation's tone.
   const body = inset ? column({ name: "Main inset", width: "fill", padding: { y: 2, right: 2 } }, [main]) : main;
   return column({ name: "App shell", width: "fill", minHeight: 900, fill: inset && props.tone === "default" ? { color: "muted", opacity: 0.55 } : canvas }, [
-    layout === "topnav" ? body : frameRow(sidebar(input, tone, layout === "rail", inset), body, layout === "rail" ? 72 : build.light.components.sidebar.w),
+    layout === "topnav" ? body : row({ name: "Frame", width: "fill", align: "stretch", minHeight: 900 }, [sidebar(input, tone, layout === "rail", inset), body]),
   ]);
 };
-
-/**
- * Navigation beside the main column. A row of a fixed sidebar and a `fill` main would be the plain structure,
- * but the plan emitter gives a row's `fill` child less room when it has fixed siblings, and the content's
- * grids take their cell widths from that room. So the frame is a grid of equal columns where the sidebar's
- * px are a whole number of columns of the 1440 px frame (256 px = 8 of 45; the 72 px rail = 1 of 20).
- */
-function frameRow(side: FrameNode, main: FrameNode, sidePx: number): FrameNode {
-  const PAGE_WIDTH = DESKTOP_COLUMNS * COL_PX;
-  const unit = gcd(PAGE_WIDTH, sidePx);
-  const columns = PAGE_WIDTH / unit;
-  const span = sidePx / unit;
-  return grid({ name: "Frame", columns, gap: 0, minHeight: 900 }, [
-    { ...side, width: "fill", place: { col: 0, span, row: 0 } },
-    { ...main, place: { col: span, span: columns - span, row: 0 } },
-  ]);
-}
-
-const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));

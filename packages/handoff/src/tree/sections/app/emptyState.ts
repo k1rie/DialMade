@@ -3,7 +3,7 @@
 import type { SectionBuilder } from "../../context";
 import { button, column, icon, row, shape, str, text } from "../../nodes";
 import type { FrameNode } from "../../types";
-import { overlay } from "./shared";
+import { fontScale, overlay } from "./shared";
 
 /** `.dl-app-empty__art`: two tilted sheets behind a front sheet with lines, and the icon badge. */
 function art(glyph: string): FrameNode {
@@ -34,7 +34,7 @@ function art(glyph: string): FrameNode {
   );
 }
 
-export const emptyStateBuilder: SectionBuilder = ({ id, props, variant, ctx }) => {
+export const emptyStateBuilder: SectionBuilder = ({ id, props, variant, ctx, build }) => {
   const illustrated = variant === "illustrated";
   const glyph = str(props.icon) || "folder";
   const link = ctx.linkTarget?.(id) ?? undefined;
@@ -54,13 +54,13 @@ export const emptyStateBuilder: SectionBuilder = ({ id, props, variant, ctx }) =
     },
     [
       illustrated
-        ? { ...art(glyph), offsetTop: 0 }
+        ? art(glyph)
         : row({ name: "Icon", width: 48, height: 48, align: "center", justify: "center", radius: "lg", fill: { color: "primary", opacity: 0.12 } }, [icon(glyph, "primary-text", 22)]),
       illustrated ? shape({ name: "Art gap", width: 1, height: 4, role: "decor" }) : null,
       // 28rem of copy, centered (a `fill` box with a max width inside a centered row).
       row({ name: "Text row", width: "fill", justify: "center" }, [
         column({ name: "Text", width: "fill", maxWidth: 448, align: "center", gap: 1 }, [
-          text(props.title, "body-strong", { align: "center", tag: "h2" }),
+          text(props.title, "h3", { align: "center", tag: "h2", scale: fontScale(build, "h3", "body", 1.125) }),
           text(props.description, "small", { color: "muted-foreground", align: "center", tag: "p" }),
         ]),
       ]),

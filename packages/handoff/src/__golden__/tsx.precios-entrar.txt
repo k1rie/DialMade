@@ -1,0 +1,1071 @@
+===== README.md =====
+# Brisa · Código (TSX)
+
+Componentes React + Tailwind v4 generados por Dialmade: un componente por sección y una página por pantalla. Usan las variables CSS del tema (el contrato de `@dialmade/ui`), así que cambiar `dialmade.css` cambia todo.
+
+## Cómo usarlo
+
+1. Copia `src/` en tu proyecto (React 19 y Tailwind CSS v4).
+2. Importa `src/dialmade.css` desde tu CSS de entrada (ya incluye `@import "tailwindcss"`).
+3. Monta cada pantalla en su ruta. Con Next.js App Router: `app/precios/page.tsx` → `export { default } from "@/screens/PreciosScreen";`.
+4. Modo oscuro: añade la clase `dark` a `<html>`.
+
+## Pantallas
+
+| Pantalla | Ruta | Archivo |
+| --- | --- | --- |
+| Precios | /precios | `src/screens/PreciosScreen.tsx` |
+| Entrar | /entrar | `src/screens/EntrarScreen.tsx` |
+
+Las imágenes son marcadores (degradados con `role="img"`): cámbialos por tus fotos. Los textos son los de tu diseño.
+
+===== src/components/Icon.tsx =====
+// Icons of @dialmade/ui used by the exported screens: 24×24 strokes in currentColor.
+import type { SVGProps } from "react";
+
+export type IconName = "check" | "mail";
+
+const ICONS: Record<IconName, readonly string[]> = {
+  "check": ["M5 12.5l4.5 4.5L19 7.5"],
+  "mail": ["M4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11A1.5 1.5 0 0 1 4.5 5Z","M3.5 6.5 12 13l8.5-6.5"],
+};
+
+export function Icon({ name, ...props }: { name: IconName } & Omit<SVGProps<SVGSVGElement>, "name">) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      {ICONS[name].map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
+  );
+}
+
+===== src/dialmade.css =====
+/* Brisa · Dialmade · Tailwind v4 */
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Brisa · Dialmade theme (DesignDoc v2) */
+/* Recipe: glass · Type: inter-neo-grotesque · Motion: standard · Palette: brand */
+
+:root, .light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.146 0.006 285.58);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.146 0.006 285.58);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.146 0.006 285.58);
+  --primary: oklch(0.599 0.23 286.2);
+  --primary-foreground: oklch(0.146 0.006 285.58);
+  --secondary: oklch(0.971 0.005 286.3);
+  --secondary-foreground: oklch(0.206 0.008 285.69);
+  --muted: oklch(0.971 0.005 286.3);
+  --muted-foreground: oklch(0.549 0.012 291.74);
+  --accent: oklch(0.951 0.024 285.93);
+  --accent-foreground: oklch(0.395 0.133 285.77);
+  --destructive: oklch(0.5806 0.2205 11.899);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.923 0.007 286.27);
+  --input: oklch(0.67 0.012 291.83);
+  --ring: oklch(0.683 0.176 286.33);
+  --chart-1: oklch(0.599 0.23 286.2);
+  --chart-2: oklch(0.619 0.17 358.23);
+  --chart-3: oklch(0.619 0.134 70.14);
+  --chart-4: oklch(0.619 0.17 142.2);
+  --chart-5: oklch(0.619 0.109 214.29);
+  --brand: oklch(0.599 0.23 286.2);
+  --cta: oklch(0.599 0.23 286.2);
+  --cta-foreground: oklch(0.146 0.006 285.58);
+  --primary-text: oklch(0.516 0.201 286.33);
+  --border-strong: oklch(0.67 0.012 291.83);
+  --success: oklch(0.54 0.114 165);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.5229 0.1232 59.525);
+  --warning-foreground: oklch(1 0 0);
+  --info: oklch(0.531 0.148 254.63);
+  --info-foreground: oklch(1 0 0);
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--card-foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --color-brand-50: oklch(0.978 0.011 286.2);
+  --color-brand-100: oklch(0.951 0.024 285.93);
+  --color-brand-200: oklch(0.906 0.048 286.72);
+  --color-brand-300: oklch(0.84 0.083 286.75);
+  --color-brand-400: oklch(0.755 0.132 286.22);
+  --color-brand-500: oklch(0.683 0.176 286.33);
+  --color-brand-600: oklch(0.599 0.23 286.2);
+  --color-brand-700: oklch(0.516 0.201 286.33);
+  --color-brand-800: oklch(0.446 0.165 286.09);
+  --color-brand-900: oklch(0.395 0.133 285.77);
+  --color-brand-950: oklch(0.278 0.093 285.57);
+  --color-neutral-50: oklch(0.986 0.004 286.33);
+  --color-neutral-100: oklch(0.971 0.005 286.3);
+  --color-neutral-200: oklch(0.923 0.007 286.27);
+  --color-neutral-300: oklch(0.869 0.01 286.2);
+  --color-neutral-400: oklch(0.708 0.012 286.1);
+  --color-neutral-500: oklch(0.555 0.012 285.99);
+  --color-neutral-600: oklch(0.438 0.013 285.85);
+  --color-neutral-700: oklch(0.37 0.012 285.81);
+  --color-neutral-800: oklch(0.271 0.009 285.77);
+  --color-neutral-900: oklch(0.206 0.008 285.69);
+  --color-neutral-950: oklch(0.146 0.006 285.58);
+  --color-success-50: oklch(0.977 0.012 162.05);
+  --color-success-100: oklch(0.953 0.028 165.47);
+  --color-success-200: oklch(0.912 0.055 165.16);
+  --color-success-300: oklch(0.853 0.09 164.86);
+  --color-success-400: oklch(0.7737 0.1224 165.102);
+  --color-success-500: oklch(0.708 0.135 165.17);
+  --color-success-600: oklch(0.631 0.133 164.96);
+  --color-success-700: oklch(0.54 0.114 165);
+  --color-success-800: oklch(0.4623 0.0954 164.91);
+  --color-success-900: oklch(0.4057 0.0762 165.305);
+  --color-success-950: oklch(0.2795 0.0544 165.138);
+  --color-warning-50: oklch(0.978 0.014 64.35);
+  --color-warning-100: oklch(0.952 0.03 59.3);
+  --color-warning-200: oklch(0.91 0.057 59.32);
+  --color-warning-300: oklch(0.851 0.101 60.49);
+  --color-warning-400: oklch(0.77 0.165 59.82);
+  --color-warning-500: oklch(0.697 0.164 59.78);
+  --color-warning-600: oklch(0.608 0.143 59.91);
+  --color-warning-700: oklch(0.5229 0.1232 59.525);
+  --color-warning-800: oklch(0.452 0.106 60.33);
+  --color-warning-900: oklch(0.399 0.094 60.09);
+  --color-warning-950: oklch(0.278 0.065 59.8);
+  --color-error-50: oklch(0.978 0.011 17.34);
+  --color-error-100: oklch(0.95 0.025 11.58);
+  --color-error-200: oklch(0.902 0.052 10.81);
+  --color-error-300: oklch(0.835 0.093 11.77);
+  --color-error-400: oklch(0.744 0.159 12.11);
+  --color-error-500: oklch(0.669 0.224 11.9);
+  --color-error-600: oklch(0.5806 0.2205 11.899);
+  --color-error-700: oklch(0.503 0.193 11.89);
+  --color-error-800: oklch(0.4366 0.1584 11.832);
+  --color-error-900: oklch(0.388 0.127 11.91);
+  --color-error-950: oklch(0.278 0.091 12.26);
+  --color-info-50: oklch(0.977 0.011 256.69);
+  --color-info-100: oklch(0.951 0.023 256.1);
+  --color-info-200: oklch(0.909 0.045 255.63);
+  --color-info-300: oklch(0.848 0.076 255.25);
+  --color-info-400: oklch(0.766 0.121 255.08);
+  --color-info-500: oklch(0.7 0.16 254.74);
+  --color-info-600: oklch(0.62 0.17 254.85);
+  --color-info-700: oklch(0.531 0.148 254.63);
+  --color-info-800: oklch(0.456 0.122 254.89);
+  --color-info-900: oklch(0.403 0.098 254.9);
+  --color-info-950: oklch(0.279 0.068 253.91);
+  --color-cta-50: var(--color-brand-50);
+  --color-cta-100: var(--color-brand-100);
+  --color-cta-200: var(--color-brand-200);
+  --color-cta-300: var(--color-brand-300);
+  --color-cta-400: var(--color-brand-400);
+  --color-cta-500: var(--color-brand-500);
+  --color-cta-600: var(--color-brand-600);
+  --color-cta-700: var(--color-brand-700);
+  --color-cta-800: var(--color-brand-800);
+  --color-cta-900: var(--color-brand-900);
+  --color-cta-950: var(--color-brand-950);
+  --primary-hover: oklch(0.656 0.193 286.22);
+  --primary-foreground-hover: oklch(0.123 0.006 285.56);
+  --primary-foreground-muted: oklch(0.146 0.006 285.58);
+  --secondary-hover: oklch(0.974 0.005 286.3);
+  --cta-hover: oklch(0.656 0.193 286.22);
+  --destructive-hover: oklch(0.5 0.19 11.81);
+  --dl-font-heading: "Inter", -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --dl-font-body: "Inter", -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --dl-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --dl-fs-display: clamp(2.125rem, 1.5552rem + 2.4309vw, 3.5rem);
+  --dl-fs-h1: clamp(1.9375rem, 1.7303rem + 0.884vw, 2.4375rem);
+  --dl-fs-h2: 1.9375rem;
+  --dl-fs-h3: 1.5625rem;
+  --dl-fs-body: 1rem;
+  --dl-fs-small: 0.875rem;
+  --dl-fs-caption: 0.75rem;
+  --dl-lh-tight: 1.15;
+  --dl-lh-body: 1.6;
+  --dl-heading-weight: 600;
+  --dl-heading-tracking: -0.02em;
+  --dl-radius-sm: 8px;
+  --dl-radius-md: 12px;
+  --dl-radius-lg: 16px;
+  --dl-radius-xl: 24px;
+  --dl-radius-full: 9999px;
+  --dl-space-1: 4px;
+  --dl-space-2: 8px;
+  --dl-space-3: 12px;
+  --dl-space-4: 16px;
+  --dl-space-5: 24px;
+  --dl-space-6: 32px;
+  --dl-space-7: 48px;
+  --dl-space-8: 64px;
+  --dl-space-9: 96px;
+  --dl-space-10: 128px;
+  --dl-section-py: 96px;
+  --dl-container: 1200px;
+  --dl-shadow-sm: 0 1px 2px 0 rgb(10 10 13 / 0.05), 0 1px 3px 0 rgb(10 10 13 / 0.08);
+  --dl-shadow-md: 0 4px 12px -2px rgb(10 10 13 / 0.08), 0 2px 4px -2px rgb(10 10 13 / 0.06);
+  --dl-shadow-lg: 0 16px 40px -8px rgb(10 10 13 / 0.14), 0 6px 12px -6px rgb(10 10 13 / 0.08);
+  --dl-border-width: 1px;
+  --dl-duration-fast: 200ms;
+  --dl-duration-base: 440ms;
+  --dl-duration-slow: 600ms;
+  --dl-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --dl-button-radius: var(--dl-radius-full);
+  --dl-button-h-sm: 32px;
+  --dl-button-h-md: 40px;
+  --dl-button-h-lg: 48px;
+  --dl-button-px: var(--dl-space-5);
+  --dl-button-weight: 500;
+  --dl-button-shadow: none;
+  --dl-card-radius: var(--dl-radius-lg);
+  --dl-card-padding: var(--dl-space-5);
+  --dl-card-shadow: var(--dl-shadow-md);
+  --dl-card-border: var(--dl-border-width) solid var(--border);
+  --dl-input-radius: var(--dl-radius-md);
+  --dl-input-h: var(--dl-button-h-md);
+  --dl-badge-radius: var(--dl-radius-full);
+  --dl-nav-h: 64px;
+  --dl-table-row-h: 48px;
+  --dl-sidebar-w: 256px;
+}
+
+.dark {
+  --background: oklch(0.146 0.006 285.58);
+  --foreground: oklch(0.986 0.004 286.33);
+  --card: oklch(0.206 0.008 285.69);
+  --card-foreground: oklch(0.986 0.004 286.33);
+  --popover: oklch(0.206 0.008 285.69);
+  --popover-foreground: oklch(0.986 0.004 286.33);
+  --primary: oklch(0.599 0.23 286.2);
+  --primary-foreground: oklch(0.146 0.006 285.58);
+  --secondary: oklch(0.271 0.009 285.77);
+  --secondary-foreground: oklch(0.986 0.004 286.33);
+  --muted: oklch(0.271 0.009 285.77);
+  --muted-foreground: oklch(0.708 0.012 286.1);
+  --accent: oklch(0.278 0.093 285.57);
+  --accent-foreground: oklch(0.951 0.024 285.93);
+  --destructive: oklch(0.744 0.159 12.11);
+  --destructive-foreground: oklch(0.278 0.091 12.26);
+  --border: oklch(0.271 0.009 285.77);
+  --input: oklch(0.502 0.013 285.94);
+  --ring: oklch(0.755 0.132 286.22);
+  --chart-1: oklch(0.599 0.23 286.2);
+  --chart-2: oklch(0.721 0.17 358.16);
+  --chart-3: oklch(0.719 0.156 70.07);
+  --chart-4: oklch(0.719 0.169 142.35);
+  --chart-5: oklch(0.72 0.127 214.31);
+  --brand: oklch(0.599 0.23 286.2);
+  --cta: oklch(0.599 0.23 286.2);
+  --cta-foreground: oklch(0.146 0.006 285.58);
+  --primary-text: oklch(0.683 0.176 286.33);
+  --border-strong: oklch(0.502 0.013 285.94);
+  --success: oklch(0.7737 0.1224 165.102);
+  --success-foreground: oklch(0.2795 0.0544 165.138);
+  --warning: oklch(0.77 0.165 59.82);
+  --warning-foreground: oklch(0.278 0.065 59.8);
+  --info: oklch(0.766 0.121 255.08);
+  --info-foreground: oklch(0.279 0.068 253.91);
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--card-foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  --color-brand-50: oklch(0.978 0.011 286.2);
+  --color-brand-100: oklch(0.951 0.024 285.93);
+  --color-brand-200: oklch(0.906 0.048 286.72);
+  --color-brand-300: oklch(0.84 0.083 286.75);
+  --color-brand-400: oklch(0.755 0.132 286.22);
+  --color-brand-500: oklch(0.683 0.176 286.33);
+  --color-brand-600: oklch(0.599 0.23 286.2);
+  --color-brand-700: oklch(0.516 0.201 286.33);
+  --color-brand-800: oklch(0.446 0.165 286.09);
+  --color-brand-900: oklch(0.395 0.133 285.77);
+  --color-brand-950: oklch(0.278 0.093 285.57);
+  --color-neutral-50: oklch(0.986 0.004 286.33);
+  --color-neutral-100: oklch(0.971 0.005 286.3);
+  --color-neutral-200: oklch(0.923 0.007 286.27);
+  --color-neutral-300: oklch(0.869 0.01 286.2);
+  --color-neutral-400: oklch(0.708 0.012 286.1);
+  --color-neutral-500: oklch(0.555 0.012 285.99);
+  --color-neutral-600: oklch(0.438 0.013 285.85);
+  --color-neutral-700: oklch(0.37 0.012 285.81);
+  --color-neutral-800: oklch(0.271 0.009 285.77);
+  --color-neutral-900: oklch(0.206 0.008 285.69);
+  --color-neutral-950: oklch(0.146 0.006 285.58);
+  --color-success-50: oklch(0.977 0.012 162.05);
+  --color-success-100: oklch(0.953 0.028 165.47);
+  --color-success-200: oklch(0.912 0.055 165.16);
+  --color-success-300: oklch(0.853 0.09 164.86);
+  --color-success-400: oklch(0.7737 0.1224 165.102);
+  --color-success-500: oklch(0.708 0.135 165.17);
+  --color-success-600: oklch(0.631 0.133 164.96);
+  --color-success-700: oklch(0.54 0.114 165);
+  --color-success-800: oklch(0.4623 0.0954 164.91);
+  --color-success-900: oklch(0.4057 0.0762 165.305);
+  --color-success-950: oklch(0.2795 0.0544 165.138);
+  --color-warning-50: oklch(0.978 0.014 64.35);
+  --color-warning-100: oklch(0.952 0.03 59.3);
+  --color-warning-200: oklch(0.91 0.057 59.32);
+  --color-warning-300: oklch(0.851 0.101 60.49);
+  --color-warning-400: oklch(0.77 0.165 59.82);
+  --color-warning-500: oklch(0.697 0.164 59.78);
+  --color-warning-600: oklch(0.608 0.143 59.91);
+  --color-warning-700: oklch(0.5229 0.1232 59.525);
+  --color-warning-800: oklch(0.452 0.106 60.33);
+  --color-warning-900: oklch(0.399 0.094 60.09);
+  --color-warning-950: oklch(0.278 0.065 59.8);
+  --color-error-50: oklch(0.978 0.011 17.34);
+  --color-error-100: oklch(0.95 0.025 11.58);
+  --color-error-200: oklch(0.902 0.052 10.81);
+  --color-error-300: oklch(0.835 0.093 11.77);
+  --color-error-400: oklch(0.744 0.159 12.11);
+  --color-error-500: oklch(0.669 0.224 11.9);
+  --color-error-600: oklch(0.5806 0.2205 11.899);
+  --color-error-700: oklch(0.503 0.193 11.89);
+  --color-error-800: oklch(0.4366 0.1584 11.832);
+  --color-error-900: oklch(0.388 0.127 11.91);
+  --color-error-950: oklch(0.278 0.091 12.26);
+  --color-info-50: oklch(0.977 0.011 256.69);
+  --color-info-100: oklch(0.951 0.023 256.1);
+  --color-info-200: oklch(0.909 0.045 255.63);
+  --color-info-300: oklch(0.848 0.076 255.25);
+  --color-info-400: oklch(0.766 0.121 255.08);
+  --color-info-500: oklch(0.7 0.16 254.74);
+  --color-info-600: oklch(0.62 0.17 254.85);
+  --color-info-700: oklch(0.531 0.148 254.63);
+  --color-info-800: oklch(0.456 0.122 254.89);
+  --color-info-900: oklch(0.403 0.098 254.9);
+  --color-info-950: oklch(0.279 0.068 253.91);
+  --color-cta-50: var(--color-brand-50);
+  --color-cta-100: var(--color-brand-100);
+  --color-cta-200: var(--color-brand-200);
+  --color-cta-300: var(--color-brand-300);
+  --color-cta-400: var(--color-brand-400);
+  --color-cta-500: var(--color-brand-500);
+  --color-cta-600: var(--color-brand-600);
+  --color-cta-700: var(--color-brand-700);
+  --color-cta-800: var(--color-brand-800);
+  --color-cta-900: var(--color-brand-900);
+  --color-cta-950: var(--color-brand-950);
+  --primary-hover: oklch(0.656 0.193 286.22);
+  --primary-foreground-hover: oklch(0.123 0.006 285.56);
+  --primary-foreground-muted: oklch(0.146 0.006 285.58);
+  --secondary-hover: oklch(0.232 0.008 285.79);
+  --cta-hover: oklch(0.656 0.193 286.22);
+  --destructive-hover: oklch(0.779 0.132 11.78);
+  --dl-font-heading: "Inter", -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --dl-font-body: "Inter", -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  --dl-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --dl-fs-display: clamp(2.125rem, 1.5552rem + 2.4309vw, 3.5rem);
+  --dl-fs-h1: clamp(1.9375rem, 1.7303rem + 0.884vw, 2.4375rem);
+  --dl-fs-h2: 1.9375rem;
+  --dl-fs-h3: 1.5625rem;
+  --dl-fs-body: 1rem;
+  --dl-fs-small: 0.875rem;
+  --dl-fs-caption: 0.75rem;
+  --dl-lh-tight: 1.15;
+  --dl-lh-body: 1.6;
+  --dl-heading-weight: 600;
+  --dl-heading-tracking: -0.02em;
+  --dl-radius-sm: 8px;
+  --dl-radius-md: 12px;
+  --dl-radius-lg: 16px;
+  --dl-radius-xl: 24px;
+  --dl-radius-full: 9999px;
+  --dl-space-1: 4px;
+  --dl-space-2: 8px;
+  --dl-space-3: 12px;
+  --dl-space-4: 16px;
+  --dl-space-5: 24px;
+  --dl-space-6: 32px;
+  --dl-space-7: 48px;
+  --dl-space-8: 64px;
+  --dl-space-9: 96px;
+  --dl-space-10: 128px;
+  --dl-section-py: 96px;
+  --dl-container: 1200px;
+  --dl-shadow-sm: 0 1px 2px 0 rgb(10 10 13 / 0.11), 0 1px 3px 0 rgb(10 10 13 / 0.176);
+  --dl-shadow-md: 0 4px 12px -2px rgb(10 10 13 / 0.176), 0 2px 4px -2px rgb(10 10 13 / 0.132);
+  --dl-shadow-lg: 0 16px 40px -8px rgb(10 10 13 / 0.308), 0 6px 12px -6px rgb(10 10 13 / 0.176);
+  --dl-border-width: 1px;
+  --dl-duration-fast: 200ms;
+  --dl-duration-base: 440ms;
+  --dl-duration-slow: 600ms;
+  --dl-ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --dl-button-radius: var(--dl-radius-full);
+  --dl-button-h-sm: 32px;
+  --dl-button-h-md: 40px;
+  --dl-button-h-lg: 48px;
+  --dl-button-px: var(--dl-space-5);
+  --dl-button-weight: 500;
+  --dl-button-shadow: none;
+  --dl-card-radius: var(--dl-radius-lg);
+  --dl-card-padding: var(--dl-space-5);
+  --dl-card-shadow: var(--dl-shadow-md);
+  --dl-card-border: var(--dl-border-width) solid var(--border);
+  --dl-input-radius: var(--dl-radius-md);
+  --dl-input-h: var(--dl-button-h-md);
+  --dl-badge-radius: var(--dl-radius-full);
+  --dl-nav-h: 64px;
+  --dl-table-row-h: 48px;
+  --dl-sidebar-w: 256px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-brand: var(--brand);
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-border-strong: var(--border-strong);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground-hover: var(--primary-foreground-hover);
+  --color-primary-foreground-muted: var(--primary-foreground-muted);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-cta-hover: var(--cta-hover);
+  --color-destructive-hover: var(--destructive-hover);
+  --font-heading: var(--dl-font-heading);
+  --font-body: var(--dl-font-body);
+  --font-mono: var(--dl-font-mono);
+}
+
+@utility text-display {
+  font-family: var(--dl-font-heading);
+  font-size: var(--dl-fs-display);
+  font-weight: var(--dl-heading-weight);
+  line-height: var(--dl-lh-tight);
+  letter-spacing: var(--dl-heading-tracking);
+}
+
+@utility text-h1 {
+  font-family: var(--dl-font-heading);
+  font-size: var(--dl-fs-h1);
+  font-weight: var(--dl-heading-weight);
+  line-height: var(--dl-lh-tight);
+  letter-spacing: var(--dl-heading-tracking);
+}
+
+@utility text-h2 {
+  font-family: var(--dl-font-heading);
+  font-size: var(--dl-fs-h2);
+  font-weight: var(--dl-heading-weight);
+  line-height: var(--dl-lh-tight);
+  letter-spacing: var(--dl-heading-tracking);
+}
+
+@utility text-h3 {
+  font-family: var(--dl-font-heading);
+  font-size: var(--dl-fs-h3);
+  font-weight: var(--dl-heading-weight);
+  line-height: var(--dl-lh-tight);
+  letter-spacing: var(--dl-heading-tracking);
+}
+
+@utility text-lead {
+  font-family: var(--dl-font-body);
+  font-size: calc(var(--dl-fs-body) * 1.0625);
+  font-weight: 400;
+  line-height: var(--dl-lh-body);
+  letter-spacing: 0;
+}
+
+@utility text-body {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-body);
+  font-weight: 400;
+  line-height: var(--dl-lh-body);
+  letter-spacing: 0;
+}
+
+@utility text-body-strong {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-body);
+  font-weight: 600;
+  line-height: var(--dl-lh-body);
+  letter-spacing: 0;
+}
+
+@utility text-small {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-small);
+  font-weight: 400;
+  line-height: var(--dl-lh-body);
+  letter-spacing: 0;
+}
+
+@utility text-small-strong {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-small);
+  font-weight: 600;
+  line-height: var(--dl-lh-body);
+  letter-spacing: 0;
+}
+
+@utility text-caption {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-caption);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+@utility text-caption-strong {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-caption);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+@utility text-overline {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-caption);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@utility text-button {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-small);
+  font-weight: var(--dl-button-weight);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-button-sm {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-caption);
+  font-weight: var(--dl-button-weight);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-button-lg {
+  font-family: var(--dl-font-body);
+  font-size: var(--dl-fs-body);
+  font-weight: var(--dl-button-weight);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+@utility text-mono {
+  font-family: var(--dl-font-mono);
+  font-size: var(--dl-fs-small);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+@utility text-mono-caption {
+  font-family: var(--dl-font-mono);
+  font-size: var(--dl-fs-caption);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--dl-font-body);
+    line-height: var(--dl-lh-body);
+  }
+}
+
+===== src/index.ts =====
+export { default as PreciosScreen } from "./screens/PreciosScreen";
+export { default as EntrarScreen } from "./screens/EntrarScreen";
+
+===== src/screens/EntrarScreen.tsx =====
+// Entrar (/entrar). Generated by Dialmade: one component per section in ../sections/entrar.
+import { EntrarForm } from "../sections/entrar/EntrarForm";
+import { EntrarMedia } from "../sections/entrar/EntrarMedia";
+
+export default function EntrarScreen() {
+  return (
+    <div className="flex flex-col w-[1440px] shrink-0 bg-background @container min-h-screen">
+      <div className="flex flex-col w-full">
+        <div className="grid grid-cols-12 gap-x-(--dl-space-5) items-start @max-[40rem]:flex @max-[40rem]:flex-col @max-[40rem]:gap-y-(--dl-space-5) w-full">
+          <EntrarForm className="min-w-0 col-start-1 col-span-6 row-start-1" />
+          <EntrarMedia className="min-w-0 col-start-7 col-span-6 row-start-1" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+===== src/screens/PreciosScreen.tsx =====
+// Precios (/precios). Generated by Dialmade: one component per section in ../sections/precios.
+import { PreciosNavbar } from "../sections/precios/PreciosNavbar";
+import { PreciosText } from "../sections/precios/PreciosText";
+import { PreciosPricing } from "../sections/precios/PreciosPricing";
+import { PreciosCta } from "../sections/precios/PreciosCta";
+import { PreciosFooter } from "../sections/precios/PreciosFooter";
+
+export default function PreciosScreen() {
+  return (
+    <div className="flex flex-col w-[1440px] shrink-0 bg-background @container min-h-screen">
+      <main className="flex flex-col w-full">
+        <div className="flex flex-col w-full">
+          <PreciosNavbar className="w-full" />
+          <PreciosText className="w-full" />
+          <PreciosPricing className="w-full" />
+          <PreciosCta className="w-full" />
+          <PreciosFooter className="w-full" />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+===== src/sections/entrar/EntrarForm.tsx =====
+// Form · ui.form (s-login-0). Generated by Dialmade.
+import { Icon } from "../../components/Icon";
+
+export function EntrarForm({ className }: { className?: string }) {
+  return (
+    <section className={["flex flex-col gap-(--dl-space-4) justify-center w-full min-h-[480px] col-start-1 col-span-6 row-start-1", className].filter(Boolean).join(" ")}>
+      <div className="flex flex-col items-center w-full">
+        <div className="flex flex-col gap-(--dl-space-5) w-full max-w-[416px] mx-auto bg-card [border:var(--dl-card-border)] rounded-(--dl-card-radius) shadow-(--dl-card-shadow) p-(--dl-space-5)">
+          <div className="flex flex-col gap-(--dl-space-1) w-full">
+            <h1 className="text-h3 text-foreground text-center">Inicia sesión en Brisa</h1>
+            <p className="text-small text-muted-foreground text-center">Qué bueno verte de nuevo.</p>
+          </div>
+          <form className="flex flex-col gap-(--dl-space-5) w-full">
+            <div className="flex flex-col gap-(--dl-space-4) w-full">
+              <label className="flex flex-col gap-(--dl-space-2) w-full">
+                <div className="flex gap-(--dl-space-2) items-center w-full">
+                  <span className="text-small-strong text-foreground">Correo electrónico</span>
+                  <span className="text-small-strong text-destructive">*</span>
+                </div>
+                <div className="flex gap-(--dl-space-2) items-center w-full min-h-[40px] bg-background border-(length:--dl-border-width) border-input rounded-(--dl-input-radius) px-(--dl-space-3)">
+                  <Icon name="mail" className="size-[16px] shrink-0 text-muted-foreground" />
+                  <span className="text-small text-muted-foreground min-w-0 flex-1">tu@correo.com</span>
+                </div>
+              </label>
+              <label className="flex flex-col gap-(--dl-space-2) w-full">
+                <div className="flex gap-(--dl-space-2) items-center w-full">
+                  <span className="text-small-strong text-foreground">Contraseña</span>
+                  <span className="text-small-strong text-destructive">*</span>
+                </div>
+                <div className="flex gap-(--dl-space-2) items-center w-full min-h-[40px] bg-background border-(length:--dl-border-width) border-input rounded-(--dl-input-radius) px-(--dl-space-3)">
+                  <span className="text-small text-muted-foreground min-w-0 flex-1">Mínimo 8 caracteres</span>
+                </div>
+              </label>
+              <label className="flex gap-(--dl-space-3) items-center w-full">
+                <div aria-hidden="true" className="w-[18px] shrink-0 h-[18px] bg-background border-[1.5px] border-input rounded-(--dl-radius-sm)" />
+                <span className="text-small text-foreground font-medium min-w-0 flex-1">Recordarme</span>
+              </label>
+            </div>
+            <div className="flex flex-col gap-(--dl-space-3) w-full">
+              <button type="button" className="flex gap-(--dl-space-2) items-center justify-center w-full min-h-[40px] bg-primary rounded-(--dl-button-radius) shadow-(--dl-button-shadow) px-(--dl-space-4)">
+                <span className="text-button text-primary-foreground">Iniciar sesión</span>
+              </button>
+              <span className="text-small text-primary-text font-medium w-full text-center">¿Olvidaste tu contraseña?</span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+===== src/sections/entrar/EntrarMedia.tsx =====
+// Media · ui.media (s-login-1). Generated by Dialmade.
+export function EntrarMedia({ className }: { className?: string }) {
+  return (
+    <div className={["flex flex-col gap-(--dl-space-4) w-full min-h-[480px] col-start-7 col-span-6 row-start-1", className].filter(Boolean).join(" ")}>
+      <figure className="flex flex-col gap-(--dl-space-2) w-full">
+        <div aria-label="Vista del producto de Brisa" className="flex flex-col w-full aspect-[1.5] bg-linear-135 from-brand/42 via-brand/16 via-40% via-cta/14 via-62% to-cta/36 rounded-(--dl-radius-xl) pt-[41px] px-[47px] overflow-hidden">
+          <div className="flex flex-col w-full flex-1 bg-card border-t-(length:--dl-border-width) border-l-(length:--dl-border-width) border-r-(length:--dl-border-width) border-border rounded-(--dl-radius-lg) shadow-(--dl-shadow-lg) overflow-hidden">
+            <div className="flex gap-[6px] items-center w-full h-[32px] bg-muted border-b-(length:--dl-border-width) border-border px-[12px]">
+              <div aria-hidden="true" className="w-[8px] shrink-0 h-[8px] bg-border-strong rounded-full" />
+              <div aria-hidden="true" className="w-[8px] shrink-0 h-[8px] bg-border-strong rounded-full" />
+              <div aria-hidden="true" className="w-[8px] shrink-0 h-[8px] bg-border-strong rounded-full" />
+              <div className="flex items-start justify-center min-w-0 flex-1">
+                <div aria-hidden="true" className="w-[233px] shrink-0 h-[10px] bg-card rounded-full" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-[10px] w-full flex-1 bg-linear-180 from-brand/12 to-card to-60% pt-[30px] px-[47px]">
+              <div aria-hidden="true" className="w-[269px] shrink-0 h-[10px] bg-foreground/22 rounded-full" />
+              <div aria-hidden="true" className="w-[186px] shrink-0 h-[10px] bg-foreground/12 rounded-full" />
+              <div className="flex gap-[10px] w-full flex-1 pt-[6px]">
+                <div aria-hidden="true" className="min-w-0 flex-1 self-stretch bg-brand/16 rounded-(--dl-radius-md)" />
+                <div aria-hidden="true" className="min-w-0 flex-1 self-stretch bg-cta/22 rounded-(--dl-radius-md)" />
+                <div aria-hidden="true" className="min-w-0 flex-1 self-stretch bg-brand/16 rounded-(--dl-radius-md)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  );
+}
+
+===== src/sections/precios/PreciosCta.tsx =====
+// Cta · landing.cta (s-pricing-3). Generated by Dialmade.
+export function PreciosCta({ className }: { className?: string }) {
+  return (
+    <section className={["flex flex-col items-center w-full bg-background pt-(--dl-section-py) pb-(--dl-section-py) px-(--dl-space-7)", className].filter(Boolean).join(" ")}>
+      <div className="flex items-start justify-center w-full">
+        <div className="flex flex-col min-w-0 flex-1 max-w-(--dl-container)">
+          <div className="flex flex-col gap-(--dl-space-6) items-center w-full bg-linear-225 from-primary-hover via-primary via-45% to-primary rounded-(--dl-radius-xl) shadow-(--dl-shadow-lg) py-(--dl-space-9) px-(--dl-space-7) overflow-hidden">
+            <div className="flex items-start justify-center w-full">
+              <div className="flex flex-col gap-(--dl-space-3) items-center min-w-0 flex-1 max-w-[640px]">
+                <h2 className="text-h2 text-primary-foreground text-center">Tu equipo, por fin sincronizado</h2>
+                <p className="text-lead text-primary-foreground/82 text-center">Prueba Brisa gratis durante 14 días. Importa tus datos en minutos.</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-(--dl-space-3) items-center w-fit">
+              <div className="flex flex-wrap gap-(--dl-space-2) items-start justify-center w-fit">
+                <button type="button" className="flex gap-(--dl-space-2) items-center justify-center shrink-0 min-h-[48px] bg-primary-foreground rounded-(--dl-button-radius) shadow-(--dl-button-shadow) px-(--dl-space-5)">
+                  <span className="text-button-lg text-primary">Crear cuenta gratis</span>
+                </button>
+                <button type="button" className="flex gap-(--dl-space-2) items-center justify-center shrink-0 min-h-[48px] border-(length:--dl-border-width) border-primary-foreground/48 rounded-(--dl-button-radius) px-(--dl-space-5)">
+                  <span className="text-button-lg text-primary-foreground">Ver demo</span>
+                </button>
+              </div>
+              <p className="text-small text-primary-foreground/82 text-center">Configuración en 2 minutos. Cancela cuando quieras.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+===== src/sections/precios/PreciosFooter.tsx =====
+// Footer · landing.footer (s-pricing-4). Generated by Dialmade.
+export function PreciosFooter({ className }: { className?: string }) {
+  return (
+    <footer className={["flex flex-col items-center w-full bg-background border-t-(length:--dl-border-width) border-border pt-[calc(var(--dl-section-py)*0.6)] pb-[calc(var(--dl-section-py)*0.6)] px-(--dl-space-7) overflow-hidden", className].filter(Boolean).join(" ")}>
+      <div className="flex items-start justify-center w-full">
+        <div className="flex flex-col gap-(--dl-space-7) min-w-0 flex-1 max-w-(--dl-container)">
+          <div className="grid grid-cols-3 gap-x-(--dl-space-7) @max-[40rem]:flex @max-[40rem]:flex-col @max-[40rem]:gap-y-(--dl-space-7) w-full">
+            <div className="flex flex-col gap-(--dl-space-3) items-start max-w-[352px] col-start-1 col-span-1 row-start-1">
+              <div className="flex gap-(--dl-space-2) items-center w-fit">
+                <div className="flex items-center justify-center w-[28px] shrink-0 h-[28px] bg-linear-140 from-primary via-primary via-55% to-cta/85 rounded-(--dl-radius-md)">
+                  <span className="text-caption-strong text-primary-foreground">B</span>
+                </div>
+                <span className="text-h3 text-foreground text-[length:calc(var(--dl-fs-h3)*0.694)]">Brisa</span>
+              </div>
+              <p className="text-small text-muted-foreground">Pagos sin fricción</p>
+            </div>
+            <nav className="grid grid-cols-3 gap-(--dl-space-5) @max-5xl:grid-cols-2 @max-[40rem]:grid-cols-1 min-w-0 col-start-2 col-span-2 row-start-1">
+              <div className="flex flex-col gap-(--dl-space-3) items-start min-w-0">
+                <p className="text-small-strong text-foreground">Producto</p>
+                <ul className="flex flex-col gap-(--dl-space-2) items-start w-fit">
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Producto</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Precios</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Clientes</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Recursos</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-(--dl-space-3) items-start min-w-0">
+                <p className="text-small-strong text-foreground">Empresa</p>
+                <ul className="flex flex-col gap-(--dl-space-2) items-start w-fit">
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Sobre nosotros</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Empleo</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Blog</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Contacto</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="flex flex-col gap-(--dl-space-3) items-start min-w-0">
+                <p className="text-small-strong text-foreground">Legal</p>
+                <ul className="flex flex-col gap-(--dl-space-2) items-start w-fit">
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Privacidad</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Términos</span>
+                  </li>
+                  <li className="flex items-center w-fit">
+                    <span className="text-small text-muted-foreground">Cookies</span>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+          <div className="flex flex-col items-start border-t-(length:--dl-border-width) border-border pt-(--dl-space-5)">
+            <p className="text-caption text-muted-foreground">© 2026 Brisa. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+===== src/sections/precios/PreciosNavbar.tsx =====
+// Navbar · landing.navbar (s-pricing-0). Generated by Dialmade.
+export function PreciosNavbar({ className }: { className?: string }) {
+  return (
+    <header className={["flex flex-col items-center w-full bg-background border-b-(length:--dl-border-width) border-border px-(--dl-space-7)", className].filter(Boolean).join(" ")}>
+      <div className="flex items-start justify-center w-full">
+        <div className="flex flex-col min-w-0 flex-1 max-w-(--dl-container)">
+          <nav className="flex gap-(--dl-space-4) items-center w-full min-h-[64px]">
+            <div className="flex items-center min-w-0 flex-1">
+              <div className="flex gap-(--dl-space-2) items-center shrink-0">
+                <div className="flex items-center justify-center w-[28px] shrink-0 h-[28px] bg-linear-140 from-primary via-primary via-55% to-cta/85 rounded-(--dl-radius-md)">
+                  <span className="text-caption-strong text-primary-foreground">B</span>
+                </div>
+                <span className="text-h3 text-foreground text-[length:calc(var(--dl-fs-h3)*0.694)]">Brisa</span>
+              </div>
+            </div>
+            <ul className="flex gap-[2px] items-center shrink-0">
+              <li className="flex items-start shrink-0">
+                <a href="#" className="flex items-center shrink-0 min-h-[36px] px-(--dl-space-3)">
+                  <span className="text-small text-muted-foreground font-medium">Producto</span>
+                </a>
+              </li>
+              <li className="flex items-start shrink-0">
+                <a href="#" className="flex items-center shrink-0 min-h-[36px] px-(--dl-space-3)">
+                  <span className="text-small text-muted-foreground font-medium">Precios</span>
+                </a>
+              </li>
+              <li className="flex items-start shrink-0">
+                <a href="#" className="flex items-center shrink-0 min-h-[36px] px-(--dl-space-3)">
+                  <span className="text-small text-muted-foreground font-medium">Clientes</span>
+                </a>
+              </li>
+              <li className="flex items-start shrink-0">
+                <a href="#" className="flex items-center shrink-0 min-h-[36px] px-(--dl-space-3)">
+                  <span className="text-small text-muted-foreground font-medium">Recursos</span>
+                </a>
+              </li>
+            </ul>
+            <div className="flex items-center justify-end min-w-0 flex-1">
+              <div className="flex gap-(--dl-space-2) items-center shrink-0">
+                <button type="button" className="flex gap-(--dl-space-1) items-center justify-center shrink-0 min-h-[32px] rounded-(--dl-button-radius) px-(--dl-space-3)">
+                  <span className="text-button-sm text-foreground">Iniciar sesión</span>
+                </button>
+                <button type="button" className="flex gap-(--dl-space-1) items-center justify-center shrink-0 min-h-[32px] bg-primary rounded-(--dl-button-radius) shadow-(--dl-button-shadow) px-(--dl-space-3)">
+                  <span className="text-button-sm text-primary-foreground">Empieza gratis</span>
+                </button>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+===== src/sections/precios/PreciosPricing.tsx =====
+// Pricing · landing.pricing (s-pricing-2). Generated by Dialmade.
+import { Icon } from "../../components/Icon";
+
+export function PreciosPricing({ className }: { className?: string }) {
+  return (
+    <section className={["flex flex-col items-center w-full bg-background pt-(--dl-section-py) pb-(--dl-section-py) px-(--dl-space-7)", className].filter(Boolean).join(" ")}>
+      <div className="flex items-start justify-center w-full">
+        <div className="flex flex-col gap-(--dl-space-7) min-w-0 flex-1 max-w-(--dl-container)">
+          <div className="flex flex-col gap-(--dl-space-5) items-center w-full">
+            <div className="flex items-start justify-center w-full">
+              <div className="flex flex-col gap-(--dl-space-3) items-center min-w-0 flex-1 max-w-[736px]">
+                <p className="text-small-strong text-primary-text text-center">Precios</p>
+                <h2 className="text-h2 text-foreground text-center">Precios simples y transparentes</h2>
+                <div className="flex items-start justify-center w-full">
+                  <p className="text-lead text-muted-foreground min-w-0 flex-1 max-w-[608px] text-center">Empieza gratis y cambia de plan cuando lo necesites.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-[2px] items-start w-fit bg-muted border-(length:--dl-border-width) border-border rounded-(--dl-radius-lg) p-[4px]">
+              <button type="button" className="flex gap-(--dl-space-2) items-center shrink-0 min-h-[34px] bg-background rounded-(--dl-button-radius) shadow-(--dl-shadow-sm) px-(--dl-space-4)">
+                <span className="text-small text-foreground font-medium">Mensual</span>
+              </button>
+              <button type="button" className="flex gap-(--dl-space-2) items-center shrink-0 min-h-[34px] rounded-(--dl-button-radius) px-(--dl-space-4)">
+                <span className="text-small text-muted-foreground font-medium">Anual</span>
+                <div className="flex gap-(--dl-space-1) items-center shrink-0 bg-success/14 rounded-(--dl-badge-radius) py-[2px] px-(--dl-space-2)">
+                  <span className="text-caption-strong text-success">−20 %</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <ul className="grid grid-cols-3 gap-(--dl-space-5) @max-5xl:grid-cols-2 @max-[40rem]:grid-cols-1 w-full">
+            <li className="flex flex-col gap-(--dl-space-4) min-w-0 bg-card [border:var(--dl-card-border)] rounded-(--dl-card-radius) shadow-(--dl-card-shadow) p-(--dl-space-5)">
+              <div className="flex flex-wrap gap-(--dl-space-2) items-center justify-between w-full">
+                <h3 className="text-h3 text-card-foreground text-[length:calc(var(--dl-fs-h3)*0.72)]">Básico</h3>
+              </div>
+              <p className="text-small text-muted-foreground">Para equipos pequeños que empiezan.</p>
+              <div className="flex flex-col gap-[2px] w-full">
+                <div className="flex flex-wrap gap-(--dl-space-1) items-baseline w-fit">
+                  <span className="text-h1 text-card-foreground">Gratis</span>
+                </div>
+                <div className="flex flex-col w-full h-[17px]" />
+              </div>
+              <a href="/entrar" className="flex gap-(--dl-space-2) items-center justify-center w-full min-h-[40px] border-(length:--dl-border-width) border-border-strong rounded-(--dl-button-radius) px-(--dl-space-4)">
+                <span className="text-button text-foreground">Empieza gratis</span>
+              </a>
+              <ul className="flex flex-col gap-(--dl-space-2) w-full border-t-(length:--dl-border-width) border-border pt-(--dl-space-4)">
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Hasta 5 personas</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Proyectos ilimitados</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Integraciones básicas</span>
+                </li>
+              </ul>
+            </li>
+            <li className="flex flex-col gap-(--dl-space-4) min-w-0 bg-card border-[2px] border-primary rounded-(--dl-card-radius) shadow-(--dl-card-shadow) p-(--dl-space-5)">
+              <div className="flex flex-wrap gap-(--dl-space-2) items-center justify-between w-full">
+                <h3 className="text-h3 text-card-foreground text-[length:calc(var(--dl-fs-h3)*0.72)]">Equipo</h3>
+                <div className="flex gap-(--dl-space-1) items-center shrink-0 bg-primary/12 rounded-(--dl-badge-radius) py-[2px] px-(--dl-space-2)">
+                  <span className="text-caption-strong text-primary-text">Más popular</span>
+                </div>
+              </div>
+              <p className="text-small text-muted-foreground">Para equipos que se coordinan a diario.</p>
+              <div className="flex flex-col gap-[2px] w-full">
+                <div className="flex flex-wrap gap-(--dl-space-1) items-baseline w-fit">
+                  <span className="text-h1 text-card-foreground">$12</span>
+                  <span className="text-small text-muted-foreground">/mes</span>
+                </div>
+                <p className="text-caption text-muted-foreground">facturado mensualmente</p>
+              </div>
+              <a href="/entrar" className="flex gap-(--dl-space-2) items-center justify-center w-full min-h-[40px] bg-cta rounded-(--dl-button-radius) shadow-(--dl-button-shadow) px-(--dl-space-4)">
+                <span className="text-button text-cta-foreground">Elegir Equipo</span>
+              </a>
+              <ul className="flex flex-col gap-(--dl-space-2) w-full border-t-(length:--dl-border-width) border-border pt-(--dl-space-4)">
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Todo lo del plan Básico</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Automatizaciones</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Informes avanzados</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Soporte prioritario</span>
+                </li>
+              </ul>
+            </li>
+            <li className="flex flex-col gap-(--dl-space-4) min-w-0 bg-card [border:var(--dl-card-border)] rounded-(--dl-card-radius) shadow-(--dl-card-shadow) p-(--dl-space-5)">
+              <div className="flex flex-wrap gap-(--dl-space-2) items-center justify-between w-full">
+                <h3 className="text-h3 text-card-foreground text-[length:calc(var(--dl-fs-h3)*0.72)]">Empresa</h3>
+              </div>
+              <p className="text-small text-muted-foreground">Para organizaciones con requisitos de seguridad.</p>
+              <div className="flex flex-col gap-[2px] w-full">
+                <div className="flex flex-wrap gap-(--dl-space-1) items-baseline w-fit">
+                  <span className="text-h1 text-card-foreground">$29</span>
+                  <span className="text-small text-muted-foreground">/mes</span>
+                </div>
+                <p className="text-caption text-muted-foreground">facturado mensualmente</p>
+              </div>
+              <a href="/entrar" className="flex gap-(--dl-space-2) items-center justify-center w-full min-h-[40px] border-(length:--dl-border-width) border-border-strong rounded-(--dl-button-radius) px-(--dl-space-4)">
+                <span className="text-button text-foreground">Elegir Empresa</span>
+              </a>
+              <ul className="flex flex-col gap-(--dl-space-2) w-full border-t-(length:--dl-border-width) border-border pt-(--dl-space-4)">
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Todo lo del plan Equipo</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">SSO y SCIM</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Registro de auditoría</span>
+                </li>
+                <li className="flex gap-(--dl-space-2) items-start w-full">
+                  <Icon name="check" className="size-[16px] shrink-0 text-primary-text" />
+                  <span className="text-small text-card-foreground min-w-0 flex-1">Gestor de cuenta dedicado</span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <p className="text-small text-muted-foreground text-center">Precios por persona y mes. Cancela cuando quieras.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+===== src/sections/precios/PreciosText.tsx =====
+// Text · ui.text (s-pricing-1). Generated by Dialmade.
+export function PreciosText({ className }: { className?: string }) {
+  return (
+    <section className={["flex flex-col items-center w-full bg-background py-(--dl-section-py) px-(--dl-space-7)", className].filter(Boolean).join(" ")}>
+      <div className="flex flex-col gap-(--dl-space-4) justify-center w-full max-w-(--dl-container) mx-auto">
+        <div className="flex flex-col gap-(--dl-space-3) items-center w-full">
+          <p className="text-overline text-primary-text text-[length:calc(var(--dl-fs-caption)*1.167)] text-center">Precios</p>
+          <h1 className="text-h1 text-foreground max-w-[858px] text-center">Un plan para cada etapa</h1>
+          <p className="text-body text-muted-foreground max-w-[572px] text-center">Todos los planes incluyen soporte y actualizaciones.</p>
+        </div>
+      </div>
+    </section>
+  );
+}

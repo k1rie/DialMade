@@ -2,6 +2,7 @@
 // (a 2 px line over a fading area) or rounded bars, points, x labels and the legend. Layers share one overlay
 // cell (grid, series, points), the way the SVG paints them in order.
 import { niceDomain } from "@dialmade/ui";
+import type { BuildContext } from "../../context";
 import { column, row, shape, text } from "../../nodes";
 import type { ColorVar, DesignNode, FrameNode } from "../../types";
 import { overlay, plotColumn } from "./shared";
@@ -9,6 +10,7 @@ import { overlay, plotColumn } from "./shared";
 export type ChartType = "area" | "bar" | "line";
 
 export interface ChartInput {
+  build: BuildContext;
   type: ChartType;
   title: string;
   categories: readonly string[];
@@ -158,8 +160,10 @@ export function chart(input: ChartInput): FrameNode {
 
   const labelWidth = Math.max(...categories.map((category) => category.length), 1) * 6.5 + 14;
   const labelEvery = Math.max(1, Math.ceil(count / Math.max(1, Math.floor(plotW / labelWidth))));
+  // `.dl-chart__tick`: 11 px.
+  const tickScale = Math.round((11 / (input.build.light.fontSizes.caption.px || 12)) * 10000) / 10000;
   const tick = (label: string, align: "start" | "center" | "end" = "center") =>
-    text(label, "caption", { color: "muted-foreground", align, tag: "span" });
+    text(label, "caption", { color: "muted-foreground", align, tag: "span", scale: tickScale });
   const xLabels: DesignNode[] =
     type === "bar" || count <= 1
       ? categories.map((category, i) =>
@@ -167,25 +171,19 @@ export function chart(input: ChartInput): FrameNode {
         )
       : categories.flatMap((category, i) => (i % labelEvery === 0 ? [tick(category, i === 0 ? "start" : i === count - 1 ? "end" : "center")!] : []));
 
-  // One overlay for the whole canvas: tick labels on the start, the plot layers padded past them (a row of a
-  // fixed axis and a `fill` plot would give the plot less room in the plan). Labels straddle the grid lines.
-  const inset = { top: { px: TICK_LINE / 2 }, bottom: { px: TICK_LINE / 2 }, left: { px: Math.round(left) } };
+  // Tick labels on the start (centered on their grid lines, so the column is a line taller than the plot),
+  // the plot's layers on top of each other beside them.
   const yTicks = column(
     { name: "Y ticks", width: Math.round(left - 8), height: plotH + TICK_LINE, justify: "between", align: "end" },
     [...tickLabels].reverse().map((label) => tick(label, "end")),
   );
-  const canvas = overlay(
-    "Plot",
-    plotH + TICK_LINE,
-    [
-      row({ name: "Y axis", width: "fill", height: plotH + TICK_LINE }, [yTicks]),
-      ...layers.map((layer) => column({ name: layer.name, width: "fill", height: plotH + TICK_LINE, padding: inset }, [{ ...layer, name: "Layer" }])),
-    ],
-    { label: input.title },
-  );
+  const plot = overlay("Plot", plotH, layers, { label: input.title });
   return column({ name: "Chart", tag: "figure", width: "fill", gap: 3, label: input.title }, [
     column({ name: "Canvas", width: "fill", padding: { top: { px: MARGIN.top - TICK_LINE / 2 }, right: { px: MARGIN.right } } }, [
-      canvas,
+      row({ name: "Axes", width: "fill", align: "start", gap: { px: 8 } }, [
+        yTicks,
+        column({ name: "Plot area", width: "fill", padding: { y: { px: TICK_LINE / 2 } } }, [plot]),
+      ]),
       row(
         { name: "X ticks", width: "fill", justify: type === "bar" || count <= 1 ? "start" : "between", padding: { left: { px: Math.round(left) }, top: { px: 18 - TICK_LINE + TICK_LINE / 2 } } },
         xLabels,

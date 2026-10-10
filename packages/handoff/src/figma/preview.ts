@@ -40,10 +40,22 @@ function sizing(node: PlanNode, parent: Parent, centered = false): string[] {
 
 const ALIGN = { MIN: "flex-start", CENTER: "center", MAX: "flex-end", BASELINE: "baseline", SPACE_BETWEEN: "space-between" } as const;
 
-function strokeCss(stroke: PlanFrame["stroke"]): string[] {
-  if (!stroke || stroke.paint.type !== "SOLID") return [];
-  const value = `${stroke.weight}px ${stroke.dashed ? "dashed" : "solid"} ${css(stroke.paint.color, stroke.paint.opacity)}`;
-  return stroke.sides ? stroke.sides.map((side) => `border-${side}:${value}`) : [`border:${value}`];
+/**
+ * Figma strokes sit inside the box and take no layout room: inset shadows (one per side), not borders. Dashed
+ * strokes keep a border (no shadow can dash).
+ */
+function strokeCss(stroke: PlanFrame["stroke"]): { shadows: string[]; border: string[] } {
+  if (!stroke || stroke.paint.type !== "SOLID") return { shadows: [], border: [] };
+  const color = css(stroke.paint.color, stroke.paint.opacity);
+  const w = stroke.weight;
+  if (stroke.dashed) {
+    const value = `${w}px dashed ${color}`;
+    return { shadows: [], border: stroke.sides ? stroke.sides.map((side) => `border-${side}:${value}`) : [`border:${value}`] };
+  }
+  const sides = stroke.sides ?? ["top", "right", "bottom", "left"];
+  if (sides.length === 4) return { shadows: [`inset 0 0 0 ${w}px ${color}`], border: [] };
+  const offset = { top: `0 ${w}px`, bottom: `0 -${w}px`, left: `${w}px 0`, right: `-${w}px 0` } as const;
+  return { shadows: sides.map((side) => `inset ${offset[side]} 0 0 ${color}`), border: [] };
 }
 
 type Ctx = { styles: Map<string, PlanTextStyle>; effects: Map<string, string> };
@@ -75,7 +87,9 @@ function node(ctx: Ctx, n: PlanNode, parent: Parent, centered = false): string {
       return `<div ${attrs} style="${style.join(";")};line-height:0">${n.svg}</div>`;
     case "RECTANGLE":
     case "ELLIPSE":
-      style.push(`background:${background(n.fills)}`, ...strokeCss(n.stroke));
+      const shapeStroke = strokeCss(n.stroke);
+      style.push(`background:${background(n.fills)}`, ...shapeStroke.border);
+      if (shapeStroke.shadows.length) style.push(`box-shadow:${shapeStroke.shadows.join(", ")}`);
       if (n.type === "ELLIPSE") style.push("border-radius:50%");
       else if (n.cornerRadius) style.push(`border-radius:${n.cornerRadius.value}px`);
       return `<div ${attrs} style="${style.join(";")}"></div>`;
@@ -90,9 +104,11 @@ function node(ctx: Ctx, n: PlanNode, parent: Parent, centered = false): string {
       const p = l.padding;
       style.push(`padding:${p.top.value}px ${p.right.value}px ${p.bottom.value}px ${p.left.value}px`);
       if (n.fills.length) style.push(`background:${background(n.fills)}`);
-      style.push(...strokeCss(n.stroke));
+      const frameStroke = strokeCss(n.stroke);
+      style.push(...frameStroke.border);
       if (n.cornerRadius) style.push(`border-radius:${n.cornerRadius.value}px`);
-      if (n.effectStyle && ctx.effects.has(n.effectStyle)) style.push(`box-shadow:${ctx.effects.get(n.effectStyle)}`);
+      const shadows = [...frameStroke.shadows, ...(n.effectStyle && ctx.effects.has(n.effectStyle) ? [ctx.effects.get(n.effectStyle)!] : [])];
+      if (shadows.length) style.push(`box-shadow:${shadows.join(", ")}`);
       if (n.clipsContent) style.push("overflow:hidden");
       const link = `${n.navigateTo ? ` data-navigate="${escape(n.navigateTo)}"` : ""}${n.key ? ` data-key="${escape(n.key)}"` : ""}`;
       const children = n.children.map((child) => node(ctx, child, l.mode, l.counterAxisAlign === "CENTER")).join("");

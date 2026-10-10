@@ -2,14 +2,14 @@
 // index (variant `index`) and every gallery section (buttons, fields, selection, badges, avatars, navigation,
 // cards, metrics, table, charts, overlays, feedback) with its demos drawn from the kit's pieces.
 import { GALLERY_SECTIONS, type GallerySectionId } from "@dialmade/ui";
-import type { SectionBuilder } from "../../context";
+import type { BuildContext, SectionBuilder } from "../../context";
 import { button, card, column, grid, icon, row, shape, str, text, type ButtonVariant } from "../../nodes";
 import type { ColorVar, DesignNode, FrameNode } from "../../types";
 import { chart, type ChartType } from "./chart";
 import { dialogPanel, dialogPreview } from "./confirmDialog";
 import { GALLERY_COPY, type GalleryCopy } from "./galleryCopy";
 import { statCard } from "./kpiRow";
-import { CELL, appStrings, avatar, checkbox, control, elementWidth, iconButton, kitBadge, progressBar, switchTrack, type KitBadgeVariant } from "./shared";
+import { CELL, appStrings, avatar, avatarPx, checkbox, control, elementWidth, iconButton, kitBadge, progressBar, switchTrack, type KitBadgeVariant } from "./shared";
 
 /** `ESSENTIAL_SECTIONS` of the section (scope «essentials»). */
 const ESSENTIAL_SECTIONS: readonly GallerySectionId[] = ["buttons", "forms", "selection", "badges", "cards", "table", "overlays"];
@@ -17,11 +17,11 @@ const ESSENTIAL_SECTIONS: readonly GallerySectionId[] = ["buttons", "forms", "se
 const PEOPLE = ["Lucía Navarro", "Marco Ruiz", "Aiko Tanaka", "Sam Okafor", "Elena Petrova", "Tomás Vidal", "Nora Lind"] as const;
 
 type Demo = { label: string; full?: boolean; bare?: boolean; content: (DesignNode | null)[] };
-type Ctx = { copy: GalleryCopy; locale: "es" | "en"; kitWidth: number };
+type Ctx = { copy: GalleryCopy; locale: "es" | "en"; kitWidth: number; build: BuildContext };
 
 const intl = (locale: "es" | "en") => (locale === "es" ? "es-MX" : "en-US");
 const wrapRow = (name: string, children: (DesignNode | null)[], gap = 3) => row({ name, width: "fill", align: "center", gap, wrap: true }, children);
-const mono = (value: string) => text(value, "caption", { color: "muted-foreground", tag: "span" });
+const mono = (value: string) => text(value, "mono-caption", { color: "muted-foreground", tag: "span" });
 
 /** `GalleryState`: an example with its state name under it. */
 const state = (label: string, node: DesignNode | null, stretch = false) =>
@@ -48,7 +48,7 @@ function demoGrid(demos: Demo[], columns: number): FrameNode {
       col = 0;
       line += 1;
     }
-    const node = { ...demo(d), place: { col, span, row: line }, ...(line > 0 && { offsetTop: 6 }) } as DesignNode;
+    const node = { ...demo(d), place: { col, span, row: line } } as DesignNode;
     col += span;
     if (col >= columns) {
       col = 0;
@@ -56,7 +56,7 @@ function demoGrid(demos: Demo[], columns: number): FrameNode {
     }
     return node;
   });
-  return { ...grid({ name: "Demos", columns, gap: 6 }, placed), layout: { kind: "grid", columns, gap: 6, align: "start" } };
+  return { ...grid({ name: "Demos", columns, gap: 6 }, placed), layout: { kind: "grid", columns, gap: 6, rowGap: 6, align: "start" } };
 }
 
 /* ------------------------------------------------------------------------------------------------ */
@@ -249,15 +249,9 @@ function badgesDemos({ copy }: Ctx): Demo[] {
 }
 
 /** An avatar of any px size (initials on its tone over the card), with an optional status dot or ring. */
-function sizedAvatar(name: string, px: number, options: { square?: boolean; status?: ColorVar; ring?: boolean } = {}): FrameNode {
-  const base = avatar(name, "md", options.square);
-  const sized: FrameNode = {
-    ...base,
-    width: px,
-    height: px,
-    ...(options.ring && { stroke: { color: "background", width: 2 } }),
-    children: base.children.map((child) => (child.type === "frame" ? { ...child, width: px, height: px } : child)),
-  };
+function sizedAvatar(build: BuildContext, name: string, px: number, options: { square?: boolean; status?: ColorVar; ring?: boolean } = {}): FrameNode {
+  const base = avatarPx(build, name, px, options.square);
+  const sized: FrameNode = options.ring ? { ...base, stroke: { color: "background", width: 2 } } : base;
   if (!options.status) return sized;
   const dot = Math.max(8, Math.round(px * 0.26));
   const layers: FrameNode[] = [
@@ -269,11 +263,11 @@ function sizedAvatar(name: string, px: number, options: { square?: boolean; stat
   return { type: "frame", name: "Avatar with status", width: px, layout: { kind: "tracks", columns: [1], rows: [px], areas: null }, children: layers.map((layer) => ({ ...layer, area: CELL })) };
 }
 
-function avatarGroup(names: readonly string[], px: number, max: number): FrameNode {
+function avatarGroup(build: BuildContext, names: readonly string[], px: number, max: number): FrameNode {
   const shown = names.slice(0, max);
   const rest = names.length - shown.length;
   return row({ name: "Avatar group", align: "center" }, [
-    ...shown.map((name) => sizedAvatar(name, px, { ring: true })),
+    ...shown.map((name) => sizedAvatar(build, name, px, { ring: true })),
     rest > 0
       ? row({ name: "More", width: px, height: px, align: "center", justify: "center", radius: "full", fill: { color: "muted" }, stroke: { color: "background", width: 2 } }, [
           text(`+${rest}`, "caption-strong", { color: "muted-foreground" }),
@@ -282,23 +276,23 @@ function avatarGroup(names: readonly string[], px: number, max: number): FrameNo
   ]);
 }
 
-function avatarsDemos({ copy }: Ctx): Demo[] {
+function avatarsDemos({ copy, build }: Ctx): Demo[] {
   const t = copy.avatars;
   return [
-    { label: t.sizes, content: [wrapRow("Sizes", [24, 32, 40, 48, 64].map((px, i) => sizedAvatar(PEOPLE[i]!, px)))] },
+    { label: t.sizes, content: [wrapRow("Sizes", [24, 32, 40, 48, 64].map((px, i) => sizedAvatar(build, PEOPLE[i]!, px)))] },
     {
       label: t.status,
       content: [
         wrapRow("Status", [
-          sizedAvatar(PEOPLE[0], 48, { status: "success" }),
-          sizedAvatar(PEOPLE[1], 48, { status: "warning" }),
-          sizedAvatar(PEOPLE[2], 48, { status: "destructive" }),
-          sizedAvatar(PEOPLE[3], 48, { status: "muted-foreground" }),
+          sizedAvatar(build, PEOPLE[0], 48, { status: "success" }),
+          sizedAvatar(build, PEOPLE[1], 48, { status: "warning" }),
+          sizedAvatar(build, PEOPLE[2], 48, { status: "destructive" }),
+          sizedAvatar(build, PEOPLE[3], 48, { status: "muted-foreground" }),
         ]),
       ],
     },
-    { label: t.shapes, content: [wrapRow("Shapes", [sizedAvatar(PEOPLE[4], 48), sizedAvatar(PEOPLE[5], 48, { square: true }), sizedAvatar(PEOPLE[6], 48, { square: true, status: "success" })])] },
-    { label: t.group, content: [avatarGroup(PEOPLE, 40, 4), avatarGroup(PEOPLE.slice(0, 3), 32, 3)] },
+    { label: t.shapes, content: [wrapRow("Shapes", [sizedAvatar(build, PEOPLE[4], 48), sizedAvatar(build, PEOPLE[5], 48, { square: true }), sizedAvatar(build, PEOPLE[6], 48, { square: true, status: "success" })])] },
+    { label: t.group, content: [avatarGroup(build, PEOPLE, 40, 4), avatarGroup(build, PEOPLE.slice(0, 3), 32, 3)] },
   ];
 }
 
@@ -345,7 +339,7 @@ function navigationDemos({ copy }: Ctx): Demo[] {
       },
       [
         icon(glyph, options.active ? "primary-text" : "muted-foreground", 16),
-        text(label, options.active ? "small-strong" : "small", { color: options.active ? "primary-text" : "muted-foreground", width: "fill" }),
+        text(label, "small", { color: options.active ? "primary-text" : "muted-foreground", width: "fill", weight: options.active ? 600 : 500 }),
         options.count !== undefined
           ? row({ name: "Count", minHeight: 20, padding: { x: { px: 6 } }, align: "center", radius: "full", fill: { color: "muted" } }, [text(options.count, "caption-strong", { color: "muted-foreground" })])
           : null,
@@ -389,7 +383,7 @@ function navigationDemos({ copy }: Ctx): Demo[] {
           { name: "Top nav", tag: "ul", align: "center", gap: 1 },
           [t.product, t.pricing, t.docs, t.blog].map((label, i) =>
             column({ name: "Nav item", minHeight: 35, justify: "center", padding: { x: 3 }, radius: "md", ...(i === 0 && { fill: { color: "primary", opacity: 0.12 } }), ...(i === 2 && { fill: { color: "sidebar-accent" } }) }, [
-              text(label, i === 0 ? "small-strong" : "small", { color: i === 0 ? "primary-text" : "muted-foreground" }),
+              text(label, "small", { color: i === 0 ? "primary-text" : "muted-foreground", weight: i === 0 ? 600 : 500 }),
             ]),
           ),
         ),
@@ -398,7 +392,7 @@ function navigationDemos({ copy }: Ctx): Demo[] {
   ];
 }
 
-function cardsDemos({ copy }: Ctx): Demo[] {
+function cardsDemos({ copy, build }: Ctx): Demo[] {
   const t = copy.cards;
   const head = (title: string, description?: string, action: DesignNode | null = null, small = false) =>
     row({ name: "Card header", width: "fill", align: "start", justify: "between", gap: 3 }, [
@@ -432,7 +426,7 @@ function cardsDemos({ copy }: Ctx): Demo[] {
             head(t.reportTitle, t.reportDescription, iconButton(t.moreActions, "more")),
             text(t.reportBody, "small", { color: "muted-foreground" }),
             row({ name: "Card footer", width: "fill", align: "center", justify: "between", padding: { top: 4 }, stroke: { color: "border", sides: ["top"] } }, [
-              avatarGroup(PEOPLE.slice(0, 5), 32, 3),
+              avatarGroup(build, PEOPLE.slice(0, 5), 32, 3),
               kitBadge(t.shared, "success", { dot: true }),
             ]),
           ],
@@ -474,7 +468,7 @@ function statsDemos({ copy, locale, kitWidth }: Ctx): Demo[] {
   return [{ label: copy.sections.stats.title, full: true, bare: true, content: [grid({ name: "Stats", columns, gap: 5 }, cards)] }];
 }
 
-function tableDemos({ copy, locale }: Ctx): Demo[] {
+function tableDemos({ copy, locale, build }: Ctx): Demo[] {
   const t = copy.table;
   const statuses = ["paid", "pending", "paid", "overdue", "draft"] as const;
   const variant: Record<(typeof statuses)[number], KitBadgeVariant> = { paid: "success", pending: "warning", overdue: "destructive", draft: "neutral" };
@@ -506,8 +500,8 @@ function tableDemos({ copy, locale }: Ctx): Demo[] {
           ),
           ...invoices.map((invoice, i) =>
             row({ name: `tr/${invoice.id}`, width: "fill", ...(i < invoices.length - 1 && { stroke: { color: "border", sides: ["bottom"] } }) }, [
-              cell(text(invoice.id, "mono", { color: "card-foreground" })),
-              cell(row({ name: "Customer", align: "center", gap: 2 }, [avatar(invoice.customer, "xs"), text(invoice.customer, "small", { color: "card-foreground" })])),
+              cell(text(invoice.id, "mono-caption", { color: "card-foreground" })),
+              cell(row({ name: "Customer", align: "center", gap: 2 }, [avatar(build, invoice.customer, "xs"), text(invoice.customer, "small", { color: "card-foreground" })])),
               cell(kitBadge(t.statuses[invoice.status], variant[invoice.status], { dot: true })),
               cell(text(invoice.date, "small", { color: "card-foreground" })),
               cell(text(invoice.amount, "small", { color: "card-foreground" }), true),
@@ -527,7 +521,7 @@ function tableDemos({ copy, locale }: Ctx): Demo[] {
   ];
 }
 
-function chartsDemos({ copy, locale, kitWidth }: Ctx): Demo[] {
+function chartsDemos({ copy, locale, kitWidth, build }: Ctx): Demo[] {
   const t = copy.charts;
   const width = (kitWidth - 24) / 2 - 48;
   const compact = new Intl.NumberFormat(intl(locale), { notation: "compact", maximumFractionDigits: 1 });
@@ -537,7 +531,7 @@ function chartsDemos({ copy, locale, kitWidth }: Ctx): Demo[] {
     label,
     bare: true,
     content: [
-      card(`Chart/${type}`, [text(title, "h3", { color: "card-foreground", tag: "h4" }), chart({ type, title, categories, series, height: 240, width, formatValue: format, showLegend: series.length > 1 })], {
+      card(`Chart/${type}`, [text(title, "h3", { color: "card-foreground", tag: "h4" }), chart({ build, type, title, categories, series, height: 240, width, formatValue: format, showLegend: series.length > 1 })], {
         gap: 4,
       }),
     ],
@@ -704,7 +698,7 @@ export const componentGalleryBuilder: SectionBuilder = ({ id, props, variant, ct
   const indexPx = 176 + space(7);
   const kitWidth = indexed ? inner - indexPx : inner;
   const columns = Math.max(1, Math.floor((kitWidth + space(6)) / (320 + space(6))));
-  const galleryCtx: Ctx = { copy, locale: ctx.locale, kitWidth };
+  const galleryCtx: Ctx = { copy, locale: ctx.locale, kitWidth, build };
 
   const kit = column(
     { name: "Kit", width: "fill", gap: 10 },
@@ -719,29 +713,18 @@ export const componentGalleryBuilder: SectionBuilder = ({ id, props, variant, ct
     ),
   );
 
-  // Index beside the kit: equal columns where 11rem + the gap is a whole number of them (a fixed column next to
-  // a `fill` one would give the kit less room in the plan).
-  const COLUMNS = 40;
-  const span = Math.max(1, Math.round((indexPx / inner) * COLUMNS));
-  const index = column({ name: "Index", tag: "nav", width: "fill", padding: { right: 7 } }, [
+  // Index beside the kit: an 11rem column, the body gap and the kit.
+  const index = column({ name: "Index", tag: "nav", width: 176 }, [
     column(
       { name: "Index list", tag: "ol", width: "fill", gap: { px: 2 } },
       sections.map((section) =>
         row({ name: "Index link", tag: "a", width: "fill", padding: { y: 1, x: 3 }, stroke: { color: "border", width: 2, sides: ["left"] } }, [
-          text(copy.sections[section].title, "small", { color: "muted-foreground" }),
+          text(copy.sections[section].title, "small", { color: "muted-foreground", width: "fill" }),
         ]),
       ),
     ),
   ]);
-  const body: FrameNode = indexed
-    ? {
-        ...grid({ name: "Body", columns: COLUMNS, gap: 0 }, [
-          { ...index, place: { col: 0, span, row: 0 } },
-          { ...kit, place: { col: span, span: COLUMNS - span, row: 0 } },
-        ]),
-        layout: { kind: "grid", columns: COLUMNS, gap: 0, align: "start" },
-      }
-    : kit;
+  const body: FrameNode = indexed ? row({ name: "Body", width: "fill", gap: 7, align: "start" }, [index, kit]) : kit;
 
   return column({ name: "Component gallery", tag: "section", width: "fill", radius: "xl", fill: { color: "background" }, stroke: { color: "border" } }, [
     column({ name: "Inner", width: "fill", gap: 7, padding: { y: 7, x: 6 } }, [

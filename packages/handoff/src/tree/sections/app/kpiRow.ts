@@ -42,7 +42,7 @@ export function statCard(kpi: Kpi, comparison: string, showTrend: boolean, local
     `Stat card/${kpi.id}`,
     [
       row({ name: "Header", width: "fill", align: "center", justify: "between", gap: 2, minHeight: 32 }, [
-        text(kpi.label, "small", { color: "muted-foreground", width: "fill", tag: "p" }),
+        text(kpi.label, "small", { color: "muted-foreground", width: "fill", tag: "p", weight: 500 }),
         kpi.icon
           ? row({ name: "Icon", width: 32, height: 32, align: "center", justify: "center", radius: "md", fill: { color: "primary", opacity: 0.1 } }, [
               icon(kpi.icon, "primary-text", 16),
@@ -83,7 +83,7 @@ export const kpiRowBuilder: SectionBuilder = ({ id, props, variant, ctx, build }
               ...(i % columns !== 0 || i >= columns ? { stroke: { color: "border", sides: [...(i % columns !== 0 ? ["left" as const] : []), ...(i >= columns ? ["top" as const] : [])] } } : {}),
             },
             [
-              text(kpi.label, "small", { color: "muted-foreground", tag: "p" }),
+              text(kpi.label, "small", { color: "muted-foreground", tag: "p", weight: 500 }),
               text(kpi.value, "h3", { color: "card-foreground", tag: "p" }),
               row({ name: "Change", align: "center", gap: 2, wrap: true }, [
                 deltaBadge(kpi.delta, ctx.locale, kpi.invert, "sm"),
