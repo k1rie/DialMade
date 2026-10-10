@@ -1,29 +1,29 @@
 "use client";
 
-import { firstUseQuestion, recommendKind, type FirstUseAnswer } from "@dialmade/catalog";
+import { firstUseQuestion, type FirstUseAnswer } from "@dialmade/catalog";
 import { AnimatePresence, motion } from "motion/react";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { useDictionary, useI18n } from "@/i18n";
-import { create } from "@/i18n/create";
+import { layout } from "@/i18n/layout";
 import { popVariants } from "@/lib/motion";
-import { kindLabel } from "../constants";
-import { SparkleIcon } from "../icons";
+import { SparkleIcon } from "../../icons";
 
 export type RecommendQuestionProps = {
   answer: FirstUseAnswer | null;
   onAnswer: (answer: FirstUseAnswer) => void;
+  /** What the answer recommends, as a sentence («Te recomendamos Landing.»); `null` before answering. */
+  result: string | null;
 };
 
-/** «¿No sabes cuál?»: one deterministic question (`firstUseQuestion` → `recommendKind`), never AI. */
-export function RecommendQuestion({ answer, onAnswer }: RecommendQuestionProps) {
-  const c = useDictionary(create);
+/** «¿No sabes cuál?»: one deterministic question (`firstUseQuestion`), never AI. The parent turns the answer into a set. */
+export function RecommendQuestion({ answer, onAnswer, result }: RecommendQuestionProps) {
+  const t = useDictionary(layout);
   const { locale } = useI18n();
   const [open, setOpen] = useState(answer !== null);
   const panelId = useId();
   const promptId = useId();
-  const recommended = answer ? recommendKind(answer) : null;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -35,7 +35,7 @@ export function RecommendQuestion({ answer, onAnswer }: RecommendQuestionProps) 
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        {c.recommend.toggle}
+        {t.templatePicker.notSure}
       </Button>
       <AnimatePresence initial={false}>
         {open && (
@@ -57,9 +57,9 @@ export function RecommendQuestion({ answer, onAnswer }: RecommendQuestionProps) 
                 </Chip>
               ))}
             </div>
-            {recommended && (
-              <motion.p key={recommended} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-small text-muted">
-                {c.recommend.result(kindLabel(recommended, locale))}
+            {result && (
+              <motion.p key={result} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-small text-muted">
+                {result}
               </motion.p>
             )}
           </motion.div>

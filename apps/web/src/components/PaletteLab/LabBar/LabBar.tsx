@@ -12,19 +12,17 @@ import { ExportBar } from "./ExportBar";
 export type LabBarProps = {
   theme: Theme;
   hasLogo: boolean;
-  /** Label of the selected preview tab («Landing page»…), for «Crear {pestaña} →». */
-  kindLabel: string;
   /** Stem of exported file names. */
   fileBase: string;
-  /** → «2 Crear» with the selected tab preselected. */
+  /** → «2 Layout» (the preview tab marks the recommended starting set there). */
   onCreate: () => void;
   onChangeLogo: () => void;
   uploading?: boolean;
   className?: string;
 };
 
-/** Bottom bar: «Marca ✓ · Paleta ✓ · AA ✓ · Siguiente: elegir qué crear», logo change, compact export and the main CTA. */
-export function LabBar({ theme, hasLogo, kindLabel, fileBase, onCreate, onChangeLogo, uploading, className }: LabBarProps) {
+/** Bottom bar: «Marca ✓ · Paleta ✓ · AA ✓ · Siguiente: crear el layout», logo change, compact export and the main CTA «Crear layout →». */
+export function LabBar({ theme, hasLogo, fileBase, onCreate, onChangeLogo, uploading, className }: LabBarProps) {
   const t = useDictionary(palette).bar;
   // A pair of the imported guide that fails is the guide's call (the contrast table offers «Ajustar a AA»), not the engine's.
   const aa = theme.contrast.every((check) => check.pass || check.source === "imported");
@@ -51,7 +49,7 @@ export function LabBar({ theme, hasLogo, kindLabel, fileBase, onCreate, onChange
         }
       />
       <Button variant="primary" size="lg" className="w-full shrink-0 lg:w-auto" trailingIcon={<ArrowRightIcon />} onClick={onCreate}>
-        {t.create(kindLabel)}
+        {t.create}
       </Button>
     </div>
   );

@@ -6,7 +6,7 @@ import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { useLayoutActions, useLayoutStoreApi } from "../../useLayoutStore";
-import { checkRoute, type RouteProblem } from "../route";
+import { checkRoute, ROUTE_MAX, type RouteProblem } from "../route";
 import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../../fieldStyles";
 import { useFieldDraft } from "../../useFieldDraft";
 
@@ -14,9 +14,6 @@ export type RouteFieldProps = {
   screenId: ScreenId;
   route: string;
 };
-
-/** Longest route the field takes (slugs are ≤48 per segment; a few segments fit). */
-const ROUTE_MAX = 120;
 
 /**
  * «Ruta»: applied on blur or Enter, normalized («precios» → «/precios»). A malformed or taken route is

@@ -1,6 +1,8 @@
-import { applyPatch, compileThemeVars, createDesignDoc, type DesignDoc } from "@dialmade/doc";
+import { applyPatch, compileThemeVars, createDesignDoc, screenPointer, type DesignDoc } from "@dialmade/doc";
+import { getScreenTemplate, instantiateTemplate } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { deriveDesign } from "./design-derived";
+import { withGeneratedScreens } from "./design-engine";
 
 function lockedPrimaryDoc(): DesignDoc {
   const base = createDesignDoc({
@@ -34,5 +36,24 @@ describe("deriveDesign", () => {
     if (!own.ok) throw new Error(own.error.message);
     expect(deriveDesign(own.doc).fontsUrl).toContain("family=Lora");
     expect(deriveDesign(doc).fontsUrl).toBe(deriveDesign(doc).pairing.googleFontsUrl);
+  });
+});
+
+describe("deriveDesign with screens", () => {
+  it("applies a screen's own dials when given its id; an unknown key means the global dials", () => {
+    let n = 0;
+    const template = getScreenTemplate("dashboard");
+    const { layout, shell } = instantiateTemplate(template, { label: (type) => type, newId: () => `b-${(++n).toString(36).padStart(6, "0")}` });
+    const generated = withGeneratedScreens(lockedPrimaryDoc(), [
+      { screenId: "s-dash", name: "Dashboard", kind: "app", route: "/dashboard", shell, layout },
+    ]);
+    if (!generated.ok) throw new Error(generated.error.message);
+    const dense = applyPatch(generated.doc, [{ op: "add", path: screenPointer("s-dash", "page", "dials"), value: { density: 9 } }]);
+    if (!dense.ok) throw new Error(dense.error.message);
+    const derived = deriveDesign(dense.doc, "s-dash");
+    expect(derived.key).toBe("s-dash");
+    expect(derived.kind).toBe("app");
+    expect(derived.dials.density).toBe(9);
+    expect(deriveDesign(dense.doc, "missing")).toMatchObject({ key: null, kind: null, dials: dense.doc.brief.dials });
   });
 });

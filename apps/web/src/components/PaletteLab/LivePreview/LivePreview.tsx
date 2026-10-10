@@ -20,7 +20,7 @@ export type LivePreviewProps = {
   theme: Theme;
   mode: PreviewMode;
   onModeChange: (mode: PreviewMode) => void;
-  /** Selected output kind (the flow's `previewKind`): it preselects the card in «Crear». */
+  /** Selected output kind (the flow's `previewKind`): it marks the recommended starting set in «Layout». */
   kind: OutputKind;
   onKindChange: (kind: OutputKind) => void;
   brandName: string;

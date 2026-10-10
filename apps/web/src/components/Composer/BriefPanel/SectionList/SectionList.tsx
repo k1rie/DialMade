@@ -1,7 +1,6 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import type { PageKey } from "@dialmade/doc";
 import { useDragDropMonitor } from "@dnd-kit/react";
 import { isSortable } from "@dnd-kit/react/sortable";
 import { sectionRegistry } from "@dialmade/sections";
@@ -13,43 +12,51 @@ import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { DND } from "../../constants";
-import { childrenOps, hiddenOps, isHidden, moveOps, sectionContainerOf } from "../../pageOps";
+import { childrenOps, hiddenOps, isHidden, moveOps, pageTarget, sectionContainerOf, sectionRows, type PageTarget } from "../../pageOps";
 import { sectionInfo } from "../../sectionInfo";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { SectionRow } from "./SectionRow";
 
 export type SectionListProps = {
-  doc: DesignDoc;
-  kind: OutputKind;
+  /** The page shown (a page kind's page or a screen's). */
+  target: PageTarget;
   selectedId: string | null;
   onSelect: (id: string) => void;
 };
 
 /**
  * The page's sections in order: select, show/hide and reorder (drag the grip, or ⌥↑/⌥↓). On the App
- * page the rows are the widgets inside the shell, which gets its own row.
+ * page the rows are the widgets inside the shell, which gets its own row. On a screen the rows are its
+ * blocks in reading order (the frame of an app screen gets its own row); the order and the size change in
+ * «Layout», so there is no reordering here.
  */
-export function SectionList({ doc, kind, selectedId, onSelect }: SectionListProps) {
+export function SectionList({ target, selectedId, onSelect }: SectionListProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
   const store = useDesignDocStore();
   const announce = useDndAnnounce();
   const keys = usePlatformKeys();
-  const page = doc.pages[kind];
+  const { key, page, screen } = target;
+
+  /** The page as the store has it now (handlers run after renders). */
+  const current = useCallback((pageKey: PageKey) => {
+    const doc = store.getState().doc;
+    return doc ? pageTarget(doc, pageKey) : null;
+  }, [store]);
 
   const announcePosition = useCallback(
     (id: string) => {
-      const current = store.getState().doc?.pages[kind];
-      if (!current) return;
-      const container = current.elements[sectionContainerOf(current, sectionRegistry)];
+      const live = current(key)?.page;
+      if (!live) return;
+      const container = live.elements[sectionContainerOf(live, sectionRegistry)];
       const index = container?.children.indexOf(id) ?? -1;
       if (index < 0 || !container) return;
-      const label = sectionInfo(current, id, locale).label;
+      const label = sectionInfo(live, id, locale).label;
       // After the DnD announcer's own «dropped» message.
       setTimeout(() => announce(t.sections.position(label, index + 1, container.children.length)), 80);
     },
-    [store, kind, locale, announce, t],
+    [current, key, locale, announce, t],
   );
 
   useDragDropMonitor({
@@ -58,42 +65,41 @@ export function SectionList({ doc, kind, selectedId, onSelect }: SectionListProp
       if (event.canceled || !source || !isSortable(source) || source.type !== DND.section) return;
       const from = source.initialIndex;
       const to = source.index;
-      const current = store.getState().doc?.pages[kind];
-      if (from === to || !current) return;
-      const containerId = sectionContainerOf(current, sectionRegistry);
-      const children = [...(current.elements[containerId]?.children ?? [])];
+      const live = current(key);
+      if (from === to || !live || live.screen) return;
+      const containerId = sectionContainerOf(live.page, sectionRegistry);
+      const children = [...(live.page.elements[containerId]?.children ?? [])];
       const [moved] = children.splice(from, 1);
       if (moved === undefined || to < 0 || to > children.length) return;
       children.splice(to, 0, moved);
-      if (actions.applyPatch(childrenOps(kind, containerId, children)).ok) announcePosition(moved);
+      if (actions.applyPatch(childrenOps(key, containerId, children)).ok) announcePosition(moved);
     },
   });
 
   const onMove = useCallback(
     (id: string, delta: -1 | 1) => {
-      const current = store.getState().doc?.pages[kind];
-      const ops = current && moveOps(kind, current, id, delta);
+      const live = current(key);
+      const ops = live && !live.screen ? moveOps(key, live.page, id, delta) : null;
       if (ops && actions.applyPatch(ops).ok) announcePosition(id);
     },
-    [store, kind, actions, announcePosition],
+    [current, key, actions, announcePosition],
   );
 
   const onToggleHidden = useCallback(
     (id: string, hide: boolean) => {
-      const current = store.getState().doc?.pages[kind];
-      if (current) actions.applyPatch(hiddenOps(kind, current, id, hide));
+      const live = current(key);
+      if (live) actions.applyPatch(hiddenOps(live, id, hide));
     },
-    [store, kind, actions],
+    [current, key, actions],
   );
 
-  if (!page) return null;
-  const containerId = sectionContainerOf(page, sectionRegistry);
-  const children = page.elements[containerId]?.children ?? [];
-  const container = containerId !== page.root ? sectionInfo(page, containerId, locale) : null;
+  const { containerId, ids, reorderable } = sectionRows(target, sectionRegistry);
+  const container = containerId ? sectionInfo(page, containerId, locale, screen) : null;
+  const hint = reorderable ? t.sections.hint(keys.combo(keys.alt, "↑"), keys.combo(keys.alt, "↓")) : t.sections.layoutHint;
 
   return (
-    <PanelSection title={t.sections.title} hint={t.sections.hint(keys.combo(keys.alt, "↑"), keys.combo(keys.alt, "↓"))}>
-      {container && (
+    <PanelSection title={t.sections.title} hint={hint}>
+      {container && containerId && (
         <button
           type="button"
           aria-current={selectedId === containerId || undefined}
@@ -110,12 +116,12 @@ export function SectionList({ doc, kind, selectedId, onSelect }: SectionListProp
           </span>
         </button>
       )}
-      {children.length === 0 ? (
+      {ids.length === 0 ? (
         <p className="text-small text-muted">{t.sections.empty}</p>
       ) : (
         <ul role="list" className="flex flex-col gap-0.5">
-          {children.map((id, index) => {
-            const info = sectionInfo(page, id, locale);
+          {ids.map((id, index) => {
+            const info = sectionInfo(page, id, locale, screen);
             return (
               <SectionRow
                 key={id}
@@ -125,6 +131,7 @@ export function SectionList({ doc, kind, selectedId, onSelect }: SectionListProp
                 detail={info.variantLabel}
                 hidden={isHidden(page, id)}
                 selected={selectedId === id}
+                reorderable={reorderable}
                 onSelect={onSelect}
                 onToggleHidden={onToggleHidden}
                 onMove={onMove}

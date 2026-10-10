@@ -4,7 +4,7 @@ import type { DesignDoc } from "@dialmade/doc";
 import { useEffect, useId } from "react";
 import { useDesignDocActions } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
-import { create } from "@/i18n/create";
+import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { BrandTextField } from "./BrandTextField";
 import { ProductTypeChips } from "./ProductTypeChips";
@@ -14,17 +14,18 @@ const TAGLINE_MAX = 200;
 
 export type DetailsPanelProps = {
   doc: DesignDoc;
-  /** Pages already exist: the product type no longer resets the style nor rewrites their copy. */
+  /** The doc already shows something (screens or pages): the product type no longer resets the style. */
   hasPages: boolean;
   className?: string;
 };
 
 /**
  * Optional details that feed the sample content: brand name, tagline and product type. They write to
- * the DesignDoc live (the minis follow), never block the CTA, and each field edit is one undo step.
+ * the DesignDoc live (the minis follow), never block a choice, and each field edit is one undo step.
+ * Before the first «Generar» the product type also brings its recipe, pairing and motion (unless locked).
  */
 export function DetailsPanel({ doc, hasPages, className }: DetailsPanelProps) {
-  const c = useDictionary(create);
+  const c = useDictionary(layout).templatePicker;
   const actions = useDesignDocActions();
   const titleId = useId();
   const productLabelId = useId();

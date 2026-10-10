@@ -31,8 +31,10 @@ export const supportsEffort = (model: string): boolean => !NO_EFFORT.test(model)
 export const isAiEffort = (value: unknown): value is AiEffort =>
   typeof value === "string" && (AI_EFFORTS as readonly string[]).includes(value);
 
-/** Section ids the client may ask for in one request, and the length of the free-text request. */
+/** Section ids the client may ask for in one request (all screens together), and the length of the free-text request. */
 export const MAX_SECTION_IDS = 64;
+/** Screens in one request: `MAX_SCREENS` of @dialmade/doc, kept here so the wire schema does not load the doc package. */
+export const MAX_COPY_SCREENS = 24;
 export const MAX_INSTRUCTIONS_LENGTH = 500;
 /** Fields sent to the model in one request (a full landing page has ~80). */
 export const MAX_COPY_FIELDS = 160;

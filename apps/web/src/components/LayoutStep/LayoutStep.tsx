@@ -51,19 +51,25 @@ const TAB_PANEL = { active: { opacity: 1 }, inactive: { opacity: 0 } } as const;
 /**
  * «2 Layout» (refs 11B Replit + 11F Klaviyo): screens and the block library / layers on the left, the
  * grid canvas in the middle with the floating tools + Generar bar, the inspector (block or screen) on
- * the right, and the layout top bar above. Without screens, the template picker. Owns one layout store
- * per instance (undo/redo of the screens), the areas F6 / Shift+F6 cycle through, and the props ↔ store
- * wiring. Under 640 px the canvas is replaced by layers + «Añadir bloque» + inspector. Must be rendered
- * inside `DndProvider` (library drags, announcements).
+ * the right, and the layout top bar above. Without screens, the template picker. Edits one layout store
+ * (undo/redo of the screens): the flow's (`store`, one per DesignDoc, so the draft survives leaving the
+ * step) or its own. The draft follows `doc.screens` (`syncFromDoc`: Ajustar's edits and undo come in).
+ * Owns the areas F6 / Shift+F6 cycle through and the props ↔ store wiring. Under 640 px the canvas is
+ * replaced by layers + «Añadir bloque» + inspector. Must be rendered inside `DndProvider` (library drags,
+ * announcements).
  */
 export function LayoutStep({
   doc,
+  store: externalStore,
+  onStoreCreate,
   initialScreens,
+  preferredKind,
   hasImportedGuide = false,
   style,
   onStyleChange,
   onGenerate,
   onGenerateIntent,
+  onRevealEnd,
   className,
 }: LayoutStepProps) {
   const t = useDictionary(layout);
@@ -72,17 +78,22 @@ export function LayoutStep({
   // Desktop first on the server: the three columns side by side.
   const wide = useMediaQuery(WIDE_QUERY, true);
 
-  // Ids are only created inside actions (handlers), never here: creating the store makes none.
-  const [store] = useState(() =>
-    createLayoutStore({
-      ...(initialScreens && { screens: initialScreens }),
-      style: style ?? (hasImportedGuide ? "guide" : doc.brief.recipeId),
-      labelFor: (type) => t.blocks[type].name,
-      screenNameFor: (templateId) => t.templates[templateId].name,
-      copyName: t.screens.copyName,
-      isDefaultLabel,
-    }),
-  );
+  // Ids are only created inside actions (handlers), never here: creating the store makes none. The draft is
+  // synced with the doc before the first paint (syncing again is a no-op), so it never shows stale screens.
+  const [{ store, created }] = useState(() => {
+    const layoutStore =
+      externalStore ??
+      createLayoutStore({
+        ...(initialScreens && { screens: initialScreens }),
+        style: style ?? (hasImportedGuide ? "guide" : doc.brief.recipeId),
+        labelFor: (type) => t.blocks[type].name,
+        screenNameFor: (templateId) => t.templates[templateId].name,
+        copyName: t.screens.copyName,
+        isDefaultLabel,
+      });
+    layoutStore.getState().actions.syncFromDoc(doc);
+    return { store: layoutStore, created: !externalStore };
+  });
   const actions = useStore(store, (state) => state.actions);
   const leftTab = useStore(store, (state) => state.leftTab);
   const hasScreens = useStore(store, (state) => state.screenOrder.length > 0);
@@ -121,6 +132,18 @@ export function LayoutStep({
   const { focusRegion, rememberFocus } = useLayoutShortcuts(rootRef, store);
 
   /* ---- Props ↔ store ---- */
+  const reportStore = useEffectEvent(() => onStoreCreate?.(store));
+  useEffect(() => {
+    if (created) reportStore();
+  }, [created]);
+
+  // The doc's screens change outside the step (undo in Ajustar, hidden blocks…): the draft follows.
+  const docScreens = doc.screens;
+  const docOrder = doc.screenOrder;
+  useEffect(() => {
+    actions.syncFromDoc({ screens: docScreens, screenOrder: docOrder });
+  }, [actions, docScreens, docOrder]);
+
   // New block and screen names follow the UI language.
   useEffect(() => {
     actions.setLabelers({
@@ -137,7 +160,21 @@ export function LayoutStep({
   const reportStyle = useEffectEvent((next: string) => {
     if (next !== style) onStyleChange?.(next);
   });
-  const reportGenerate = useEffectEvent((result: GenerateResult) => onGenerate?.(result));
+  // Leaving for «Ajustar» right after Generar: the bar (and the report it would open) goes with the step.
+  const [leaving, setLeaving] = useState(false);
+  // Results the flow refused (the store calls the subscription below synchronously inside `generate()`).
+  const [refused] = useState(() => new WeakSet<GenerateResult>());
+  const generateRefused = useCallback((result: GenerateResult) => refused.has(result), [refused]);
+  const reportGenerate = useEffectEvent((result: GenerateResult) => {
+    if (onGenerate?.(result) === false) {
+      refused.add(result);
+      return;
+    }
+    if (!onRevealEnd) return;
+    // Wave 3 plays the signature reveal before this; for now the moment ends right away.
+    setLeaving(true);
+    onRevealEnd();
+  });
   useEffect(
     () =>
       store.subscribe((state, previous) => {
@@ -173,9 +210,10 @@ export function LayoutStep({
   }, [onGenerateIntent]);
   const generateIntent = useCallback(() => intentRef.current?.(), []);
 
+  const kind = preferredKind ?? doc.brief.focus;
   const env = useMemo<LayoutEnv>(
-    () => ({ doc, hasImportedGuide, narrow, onGenerateIntent: generateIntent, focusRegion }),
-    [doc, hasImportedGuide, narrow, generateIntent, focusRegion],
+    () => ({ doc, hasImportedGuide, preferredKind: kind, narrow, onGenerateIntent: generateIntent, generateRefused, focusRegion }),
+    [doc, hasImportedGuide, kind, narrow, generateIntent, generateRefused, focusRegion],
   );
 
   /* ---- Left tabs (Bloques | Capas) ---- */
@@ -313,7 +351,7 @@ export function LayoutStep({
         {leftArea}
         {inspectorArea}
         <div ref={toastClearanceRef} className="sticky bottom-3 z-20 flex justify-center">
-          {parts.generateBar}
+          {!leaving && parts.generateBar}
         </div>
       </div>
     );
@@ -339,7 +377,7 @@ export function LayoutStep({
           ref={toastClearanceRef}
           className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto"
         >
-          {parts.generateBar}
+          {!leaving && parts.generateBar}
         </div>
       </div>
     );

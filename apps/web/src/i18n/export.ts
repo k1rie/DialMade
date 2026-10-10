@@ -1,11 +1,26 @@
 import { defineDictionary } from "./config";
 
+/** A screen of a Modo Layout document in the README of a pack. */
+export type PackReadmeScreen = {
+  name: string;
+  route: string;
+  /** Its file in this pack: `index.html`, `precios/index.html`, `preview-precios.html`… */
+  path: string;
+  /** Names of the screens its page links to, in flow order. */
+  linksTo: string[];
+};
+
 /** What the README of the packs needs (built in ExportDialog/exportPack). */
 export type PackReadmeInfo = {
+  /** `DesignDoc` version of the exported document. */
+  version: number;
   name: string;
   tagline?: string;
   focus: string;
-  pages: { kind: string; label: string }[];
+  /** Pages listed under the focus, each with its file in this pack. */
+  pages: { path: string; label: string }[];
+  /** Modo Layout: the screens in order («Pantallas y flujo»); empty for documents without screens. */
+  screens: PackReadmeScreen[];
   heading: string;
   body: string;
   /** Google Fonts stylesheet; absent when the families load from elsewhere (system or local). */
@@ -14,6 +29,38 @@ export type PackReadmeInfo = {
 };
 
 const list = (items: readonly string[]) => items.map((item) => `- ${item}`).join("\n");
+
+type LayoutFileTexts = { css: string; json: string; flowTitle: string; flowNote: string };
+
+/** «## Pantallas y flujo» of a README: one numbered line per screen with its route, its file and its links. */
+const flowSection = (screens: readonly PackReadmeScreen[], texts: LayoutFileTexts): string[] =>
+  screens.length === 0
+    ? []
+    : [
+        `## ${texts.flowTitle}`,
+        "",
+        ...screens.map(
+          (screen, i) =>
+            `${i + 1}. ${screen.name} (\`${screen.route}\`): \`${screen.path}\`${screen.linksTo.length > 0 ? ` → ${screen.linksTo.join(", ")}` : ""}`,
+        ),
+        "",
+        texts.flowNote,
+        "",
+      ];
+
+const LAYOUT_ES: LayoutFileTexts = {
+  css: "`layout.css` (junto al `index.html` de cada pantalla): la rejilla de la pantalla. Va después del CSS del kit.",
+  json: "`layout.json` (junto al `index.html` de cada pantalla): el layout de la pantalla, con bloques, orden de lectura, reglas de tablet y móvil y enlaces.",
+  flowTitle: "Pantallas y flujo",
+  flowNote: "Los enlaces entre pantallas ya funcionan en el HTML. El flujo completo, con wireframes, está en `DESIGN.md`.",
+};
+
+const LAYOUT_EN: LayoutFileTexts = {
+  css: "`layout.css` (next to each screen's `index.html`): the screen's grid. It goes after the kit CSS.",
+  json: "`layout.json` (next to each screen's `index.html`): the screen's layout, with blocks, reading order, tablet and phone rules and links.",
+  flowTitle: "Screens and flow",
+  flowNote: "Links between screens already work in the HTML. The full flow, with wireframes, is in `DESIGN.md`.",
+};
 
 /** Texts of the Export dialog (DESIGN-BRIEF §6.4, ref. 4B Mistral AI) and of the files it writes. */
 export const exportDialog = defineDictionary({
@@ -74,18 +121,20 @@ export const exportDialog = defineDictionary({
         count === 1 ? "Una sección no se pudo exportar a HTML y se omitió." : `${count} secciones no se pudieron exportar a HTML y se omitieron.`,
     },
     files: {
+      layout: LAYOUT_ES,
       codeReadme: (info: PackReadmeInfo) =>
         [
           `# ${info.name} · Dialmade`,
           "",
           ...(info.tagline ? [info.tagline, ""] : []),
-          "Dirección de diseño exportada desde Dialmade (DesignDoc v1).",
+          `Dirección de diseño exportada desde Dialmade (DesignDoc v${info.version}).`,
           "",
           "## Qué hay aquí",
           "",
           list([
             `\`index.html\`: ${info.focus}. Ábrelo en el navegador o sirve la carpeta con \`npx serve .\`.`,
-            ...info.pages.map((page) => `\`${page.kind}/index.html\`: ${page.label}.`),
+            ...info.pages.map((page) => `\`${page.path}\`: ${page.label}.`),
+            ...(info.screens.length > 0 ? [LAYOUT_ES.css, LAYOUT_ES.json] : []),
             "`assets/dialmade-ui.css` y `assets/dialmade-sections.css`: el CSS del kit (componentes y secciones). Solo usa clases `dl-` y variables CSS.",
             ...(info.hasLogo ? ["`assets/logo.png`: tu logo recortado."] : []),
             "`theme.css`: todas las variables del tema, en `:root` (claro) y `.dark` (oscuro).",
@@ -95,6 +144,7 @@ export const exportDialog = defineDictionary({
             "`prompts/`: prompts listos para Claude, Claude Design, Cursor, v0, Figma y Framer.",
           ]),
           "",
+          ...flowSection(info.screens, LAYOUT_ES),
           "## Usarlo en tu app",
           "",
           "1. Copia `theme.css` a tu proyecto e impórtalo después de `@import \"tailwindcss\";`.",
@@ -132,11 +182,12 @@ export const exportDialog = defineDictionary({
             "`theme.css`: variables CSS de los dos modos.",
             "`tokens.tokens.json`: tokens DTCG 2025.10.",
             `\`preview.html\`: ${info.focus} con el tema aplicado (se abre sin conexión salvo las fuentes).`,
-            ...info.pages.slice(1).map((page) => `\`preview-${page.kind}.html\`: ${page.label}.`),
+            ...info.pages.slice(1).map((page) => `\`${page.path}\`: ${page.label}.`),
             ...(info.hasLogo ? ["`logo.png`: el logo."] : []),
             "`prompt.md`: el prompt para Claude Design.",
           ]),
           "",
+          ...flowSection(info.screens, LAYOUT_ES),
         ].join("\n"),
     },
   },
@@ -197,18 +248,20 @@ export const exportDialog = defineDictionary({
         count === 1 ? "One section couldn't be exported to HTML and was left out." : `${count} sections couldn't be exported to HTML and were left out.`,
     },
     files: {
+      layout: LAYOUT_EN,
       codeReadme: (info: PackReadmeInfo) =>
         [
           `# ${info.name} · Dialmade`,
           "",
           ...(info.tagline ? [info.tagline, ""] : []),
-          "Design direction exported from Dialmade (DesignDoc v1).",
+          `Design direction exported from Dialmade (DesignDoc v${info.version}).`,
           "",
           "## What's here",
           "",
           list([
             `\`index.html\`: ${info.focus}. Open it in the browser or serve the folder with \`npx serve .\`.`,
-            ...info.pages.map((page) => `\`${page.kind}/index.html\`: ${page.label}.`),
+            ...info.pages.map((page) => `\`${page.path}\`: ${page.label}.`),
+            ...(info.screens.length > 0 ? [LAYOUT_EN.css, LAYOUT_EN.json] : []),
             "`assets/dialmade-ui.css` and `assets/dialmade-sections.css`: the kit CSS (components and sections). It only uses `dl-` classes and CSS variables.",
             ...(info.hasLogo ? ["`assets/logo.png`: your cropped logo."] : []),
             "`theme.css`: every theme variable, in `:root` (light) and `.dark` (dark).",
@@ -218,6 +271,7 @@ export const exportDialog = defineDictionary({
             "`prompts/`: ready prompts for Claude, Claude Design, Cursor, v0, Figma and Framer.",
           ]),
           "",
+          ...flowSection(info.screens, LAYOUT_EN),
           "## Use it in your app",
           "",
           "1. Copy `theme.css` into your project and import it after `@import \"tailwindcss\";`.",
@@ -255,11 +309,12 @@ export const exportDialog = defineDictionary({
             "`theme.css`: CSS variables for both modes.",
             "`tokens.tokens.json`: DTCG 2025.10 tokens.",
             `\`preview.html\`: ${info.focus} with the theme applied (works offline except for the fonts).`,
-            ...info.pages.slice(1).map((page) => `\`preview-${page.kind}.html\`: ${page.label}.`),
+            ...info.pages.slice(1).map((page) => `\`${page.path}\`: ${page.label}.`),
             ...(info.hasLogo ? ["`logo.png`: the logo."] : []),
             "`prompt.md`: the prompt for Claude Design.",
           ]),
           "",
+          ...flowSection(info.screens, LAYOUT_EN),
         ].join("\n"),
     },
   },

@@ -4,7 +4,7 @@ import type { Locale, OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { FALLBACK_BETA, MAX_OUTPUT_TOKENS, supportsDefaultFallbacks, supportsEffort, type AiEffort } from "./config";
 import { AiOutputError, type AiOutputErrorCode } from "./errors";
-import { collectCopyFields, type CopyField } from "./fields";
+import { collectCopyFields, collectScreenCopyFields, type CopyField, type ScreenCopyTarget } from "./fields";
 import { editsToPatches, type CopyPatchResult } from "./patches";
 import { messageCostUsd, messageTokens } from "./pricing";
 import { COPY_SYSTEM_PROMPT, CopyEditsSchema, buildCopyUserMessage, type CopyEdits } from "./prompt";
@@ -24,21 +24,30 @@ export type CopyJob = {
   userMessage: string;
 };
 
-export type CopyJobInput = {
+type CopyJobCommon = {
   doc: DesignDoc;
-  kind: OutputKind;
-  sectionIds?: readonly string[];
   instructions?: string;
   /** Language of the copy. Default: the page copy's own (`doc.brief.locale`). */
   locale?: Locale;
 };
 
-/** Fields of the page plus the user message for them (empty `fields` = nothing to write). */
-export function prepareCopyJob({ doc, kind, sectionIds, instructions, locale }: CopyJobInput): CopyJob {
+/** One page (`kind`, optional `sectionIds`) or several screens in one request (`screens`, Modo Layout). */
+export type CopyJobInput = CopyJobCommon &
+  ({ kind: OutputKind; sectionIds?: readonly string[]; screens?: never } | { screens: readonly ScreenCopyTarget[]; kind?: never; sectionIds?: never });
+
+/** Fields of the page (or the screens) plus the user message for them (empty `fields` = nothing to write). */
+export function prepareCopyJob(input: CopyJobInput): CopyJob {
+  const { doc, instructions, locale } = input;
+  const options = { ...(instructions && { instructions }), ...(locale && { locale }) };
+  if (input.screens) {
+    const fields = collectScreenCopyFields(doc, input.screens);
+    return { fields, userMessage: fields.length > 0 ? buildCopyUserMessage({ doc, screens: input.screens, fields, ...options }) : "" };
+  }
+  const { kind, sectionIds } = input;
   const fields = collectCopyFields(doc, kind, sectionIds ? { sectionIds } : {});
   return {
     fields,
-    userMessage: fields.length > 0 ? buildCopyUserMessage({ doc, kind, fields, instructions, ...(locale && { locale }) }) : "",
+    userMessage: fields.length > 0 ? buildCopyUserMessage({ doc, kind, fields, ...options }) : "",
   };
 }
 

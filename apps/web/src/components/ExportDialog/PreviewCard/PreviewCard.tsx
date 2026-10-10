@@ -12,7 +12,7 @@ export type PreviewCardProps = {
   kind: OutputKind;
   mode: PreviewMode;
   logoUrl?: string;
-  /** «Landing page», «Guía de estilo»… in the app's language. */
+  /** Name of the page: «Landing page», «Guía de estilo»… in the app's language, or a screen's name. */
   kindLabel: string;
   /** Accessible name of the card. */
   label: string;

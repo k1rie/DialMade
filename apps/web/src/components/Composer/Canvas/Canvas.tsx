@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { useId } from "react";
 import { Segmented } from "@/components/ui/Segmented";
@@ -12,13 +11,15 @@ import { cn } from "@/lib/cn";
 import { DEVICE_ORDER } from "@/lib/devices";
 import type { DroppedItem } from "@/lib/dnd";
 import { MonitorIcon, MoonIcon, PhoneIcon, SunIcon, TabletIcon } from "../icons";
+import type { PageTarget } from "../pageOps";
 import { CanvasViewport, type CanvasViewportProps } from "./CanvasViewport";
 import { PageTabs } from "./PageTabs";
 
 export type CanvasProps = {
   doc: DesignDoc;
-  kind: OutputKind;
-  labelOf: (kind: OutputKind) => string;
+  /** The page shown: a page kind's page or a screen's. */
+  target: PageTarget;
+  labelOf: (target: Pick<PageTarget, "kind" | "screen">) => string;
   mode: PreviewMode;
   device: PreviewDevice;
   logoUrl: string | undefined;
@@ -34,15 +35,15 @@ export type CanvasProps = {
 const DEVICE_ICONS = { mobile: <PhoneIcon />, tablet: <TabletIcon />, desktop: <MonitorIcon /> } as const;
 
 /** Center column: page tabs, device and color mode, and the live page in its frame. */
-export function Canvas({ doc, kind, labelOf, mode, device, logoUrl, selectedId, onSelect, onDeselect, revealKey, onDrop, toolbar, className }: CanvasProps) {
+export function Canvas({ doc, target, labelOf, mode, device, logoUrl, selectedId, onSelect, onDeselect, revealKey, onDrop, toolbar, className }: CanvasProps) {
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
   const regionId = useId();
 
   return (
-    <section aria-label={t.canvas.label(labelOf(kind))} className={cn("flex min-h-0 min-w-0 flex-col gap-2", className)}>
+    <section aria-label={t.canvas.label(labelOf(target))} className={cn("flex min-h-0 min-w-0 flex-col gap-2", className)}>
       <div className="flex items-center justify-between gap-2 max-sm:flex-wrap">
-        <PageTabs doc={doc} active={kind} labelOf={labelOf} controls={regionId} />
+        <PageTabs doc={doc} active={target.key} labelOf={labelOf} controls={regionId} />
         <div className="flex shrink-0 items-center gap-1.5">
           <Segmented
             label={t.canvas.device}
@@ -65,9 +66,9 @@ export function Canvas({ doc, kind, labelOf, mode, device, logoUrl, selectedId, 
       </div>
       <CanvasViewport
         id={regionId}
-        label={t.canvas.label(labelOf(kind))}
+        label={t.canvas.label(labelOf(target))}
         doc={doc}
-        kind={kind}
+        target={target}
         mode={mode}
         device={device}
         logoUrl={logoUrl}

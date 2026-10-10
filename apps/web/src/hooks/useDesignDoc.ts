@@ -1,13 +1,13 @@
 "use client";
 
 import type { Locale, OutputKind } from "@dialmade/catalog";
-import type { DesignDoc, Dials, PatchResult } from "@dialmade/doc";
+import type { DesignDoc, Dials, PageKey, PatchResult } from "@dialmade/doc";
 import type { PaletteStyleId } from "@dialmade/palette";
 import { createContext, createElement, useContext, useMemo, useState, type ReactNode } from "react";
 import { temporal, type TemporalState } from "zundo";
 import { createStore, useStore, type StoreApi } from "zustand";
 import type { DesignDerived } from "@/lib/design-derived";
-import type { DesignEngine } from "@/lib/design-engine";
+import type { DesignEngine, GeneratedScreenInput } from "@/lib/design-engine";
 import type { Device } from "@/lib/devices";
 import type { PaletteFlowView, PreviewMode } from "./usePaletteFlow";
 
@@ -15,7 +15,20 @@ export type { DesignDerived, ThemeVars } from "@/lib/design-derived";
 
 /** Width of the preview frame in the Composer: the one device union of the app (`Device` in @/lib/devices). */
 export type PreviewDevice = Device;
-export type DialScope = "global" | OutputKind;
+/** `"global"` (the brief's dials) or a page: a kind (`"brand"`, legacy `"landing"`/`"app"`) or a screen id. */
+export type DialScope = "global" | PageKey;
+
+export type { PageKey } from "@dialmade/doc";
+
+/** What «Generar» of the Layout step hands over (`GenerateResult` of LayoutStep fits it). */
+export type GenerateInput = { screens: readonly GeneratedScreenInput[] };
+
+export type ApplyGenerateOptions = {
+  /** The user confirmed «¿Desbloquear y borrar?» after a `locked` result: retry with this. */
+  allowLocked?: boolean;
+  /** Page to show next (a screen id); default: the current one if it still exists, else the first screen. */
+  activeKey?: PageKey;
+};
 
 /** What `initFromPalette` reads from the flow (pass `usePaletteFlow().state`). */
 export type PaletteFlowSnapshot = Pick<PaletteFlowView, "primary" | "secondary" | "styleId" | "logo" | "theme">;
@@ -46,8 +59,19 @@ export type DesignDocActions = {
   addPage: (kind: OutputKind, options?: { layoutId?: string; replace?: boolean; activate?: boolean }) => PatchResult;
   /** Refuses to remove the last page. The focus/active page move to the first remaining one. */
   removePage: (kind: OutputKind) => PatchResult;
-  /** Page shown in the Composer (ignored when the doc has no such page). Not part of the undo history. */
+  /** Page shown in the Composer (ignored when the doc has no such page). Not part of the undo history. Also sets `activeKey`. */
   setActivePage: (kind: OutputKind) => void;
+  /** Page or screen shown in the Composer (ignored when the doc has no such page). Not part of the undo history. */
+  setActiveKey: (key: PageKey) => void;
+  /**
+   * «Generar» of the Layout step as ONE validated write (`withGeneratedScreens`): screens + their pages, the
+   * style guide when missing, `brief.focus`, no more landing/app pages. The first one (a doc with nothing to
+   * show yet) is not undoable, like the first page; later ones are one undo step. Removing a block that holds
+   * a hard lock fails with `locked`: ask «¿Desbloquear y borrar?» and retry with `allowLocked`.
+   */
+  applyGenerate: (result: GenerateInput, options?: ApplyGenerateOptions) => PatchResult;
+  /** «Desbloquear»: removes the hard lock on `pointer` (one undo step). */
+  unlock: (pointer: string) => PatchResult;
   /**
    * RFC 6902 patch validated against the current DesignDoc (v2), as one undo step; an invalid patch leaves the doc
    * untouched. `allowLocked` only for explicit user actions («Desbloquear», editing a locked value).
@@ -82,6 +106,8 @@ export type DesignDocState = {
   doc: DesignDoc | null;
   /** Raw choice; read it through `selectActivePageKind`, which falls back when the page is gone (undo). */
   activePage: OutputKind | null;
+  /** Raw choice of page or screen; read it through `selectActiveKey`, which falls back when it is gone (undo). */
+  activeKey: PageKey | null;
   previewMode: PreviewMode;
   device: PreviewDevice;
   logoUrl: string | undefined;
@@ -122,7 +148,18 @@ function requireEngine(): DesignEngine {
   return engine;
 }
 
-const hasPages = (doc: DesignDoc) => Object.values(doc.pages).some(Boolean);
+const isKind = (key: string): key is OutputKind => (KIND_ORDER as readonly string[]).includes(key);
+
+/**
+ * Whether the document has something to show: a screen or a page. Plain data access (no @dialmade/doc
+ * import), so the main bundle can ask it before the engine loads.
+ */
+export const docHasDesign = (doc: DesignDoc): boolean =>
+  doc.screenOrder.length > 0 || Object.keys(doc.screens).length > 0 || KIND_ORDER.some((kind) => doc.pages[kind] !== undefined);
+
+/** Whether `key` names a page of `doc`: a page kind with its page, or a screen id. */
+export const docHasPage = (doc: DesignDoc, key: PageKey): boolean =>
+  isKind(key) ? doc.pages[key] !== undefined : Object.hasOwn(doc.screens, key);
 
 const noDoc: PatchResult = { ok: false, error: { reason: "invalid-document", message: "There is no DesignDoc yet" } };
 
@@ -133,6 +170,21 @@ export function selectActivePageKind(state: Pick<DesignDocState, "doc" | "active
   if (activePage && doc.pages[activePage]) return activePage;
   if (doc.pages[doc.brief.focus]) return doc.brief.focus;
   return KIND_ORDER.find((kind) => doc.pages[kind]) ?? null;
+}
+
+/**
+ * Page or screen the Composer shows: the chosen one while it exists, else the first screen (then the style
+ * guide) for a document with screens, else what `selectActivePageKind` picks.
+ */
+export function selectActiveKey(state: Pick<DesignDocState, "doc" | "activePage" | "activeKey">): PageKey | null {
+  const { doc, activeKey } = state;
+  if (!doc) return null;
+  if (activeKey && docHasPage(doc, activeKey)) return activeKey;
+  if (doc.screenOrder.length > 0) {
+    const first = doc.screenOrder.find((id) => Object.hasOwn(doc.screens, id));
+    if (first) return first;
+  }
+  return selectActivePageKind(state);
 }
 
 export type DesignDocStoreOptions = {
@@ -164,14 +216,14 @@ export function createDesignDocStore(
           const result = run(requireEngine(), doc);
           return commit(result, result.ok && extra ? extra(result.doc) : undefined);
         };
-        // The first page is where the Composer starts: like the doc's creation, it is not undoable
-        // (an undo past it would drop the user back into «Crear», where redo no longer works).
+        // The first page (or the first «Generar») is where the Composer starts: like the doc's creation, it is
+        // not undoable (an undo past it would drop the user back into «Layout», where redo no longer works).
         const editPages = (run: (e: DesignEngine, doc: DesignDoc) => PatchResult, extra?: (doc: DesignDoc) => Partial<DesignDocState>): PatchResult => {
           const doc = get().doc;
           if (!doc) return noDoc;
-          if (hasPages(doc)) return edit(run, extra);
+          if (docHasDesign(doc)) return edit(run, extra);
           const result = run(requireEngine(), doc);
-          if (!result.ok || !hasPages(result.doc)) return commit(result, result.ok && extra ? extra(result.doc) : undefined);
+          if (!result.ok || !docHasDesign(result.doc)) return commit(result, result.ok && extra ? extra(result.doc) : undefined);
           history().pause();
           set({ doc: result.doc, ...extra?.(result.doc) });
           history().resume();
@@ -202,7 +254,7 @@ export function createDesignDocStore(
             const created = e.createFromPalette(palette, options);
             if (!created.ok) return null;
             history().pause();
-            set({ doc: created.doc, activePage: created.doc.brief.focus });
+            set({ doc: created.doc, activePage: created.doc.brief.focus, activeKey: null });
             history().resume();
             history().clear();
             return created.doc;
@@ -218,8 +270,31 @@ export function createDesignDocStore(
               (doc) => (get().activePage === kind ? { activePage: doc.brief.focus } : {}),
             ),
           setActivePage: (kind) => {
-            if (get().doc?.pages[kind] && get().activePage !== kind) set({ activePage: kind });
+            const { doc, activePage, activeKey } = get();
+            if (!doc?.pages[kind] || (activePage === kind && activeKey === kind)) return;
+            set({ activePage: kind, activeKey: kind });
           },
+          setActiveKey: (key) => {
+            const { doc, activePage, activeKey } = get();
+            if (!doc || !docHasPage(doc, key)) return;
+            const next: Partial<DesignDocState> = {};
+            if (activeKey !== key) next.activeKey = key;
+            if (isKind(key) && activePage !== key) next.activePage = key;
+            if (Object.keys(next).length > 0) set(next);
+          },
+          applyGenerate: (result, options = {}) => {
+            // An open field batch (brand name…) closes first: the write below may clear the history.
+            actions.commitBatch();
+            const current = get().activeKey;
+            return editPages(
+              (e, doc) => e.withGeneratedScreens(doc, result.screens, { ...(options.allowLocked && { allowLocked: true }) }),
+              (doc) => {
+                const wanted = [options.activeKey, current].find((key): key is PageKey => !!key && docHasPage(doc, key));
+                return { activeKey: wanted ?? doc.screenOrder[0] ?? null };
+              },
+            );
+          },
+          unlock: (pointer) => edit((e, doc) => e.withoutLock(doc, pointer)),
           applyPatch: (ops, options) => edit((e, doc) => e.applyPatch(doc, ops, options)),
           setRecipe: (recipeId, options) => edit((e, doc) => e.withRecipe(doc, recipeId, options)),
           setPairing: (pairingId) => edit((e, doc) => e.withPairing(doc, pairingId)),
@@ -261,7 +336,7 @@ export function createDesignDocStore(
           reset: () => {
             batchBase = undefined;
             history().pause();
-            set({ doc: null, activePage: null });
+            set({ doc: null, activePage: null, activeKey: null });
             history().resume();
             history().clear();
           },
@@ -270,6 +345,7 @@ export function createDesignDocStore(
         return {
           doc: null,
           activePage: null,
+          activeKey: null,
           previewMode: "light",
           device: "desktop",
           logoUrl: undefined,
@@ -328,6 +404,9 @@ export const useDesignDocActions = (): DesignDocActions => useStore(useDesignDoc
 
 export const useActivePageKind = (): OutputKind | null => useDesignDoc(selectActivePageKind);
 
+/** Page or screen the Composer shows (`selectActiveKey`). */
+export const useActiveKey = (): PageKey | null => useDesignDoc(selectActiveKey);
+
 export type DesignHistory = {
   canUndo: boolean;
   canRedo: boolean;
@@ -354,13 +433,13 @@ export function useDesignHistory(): DesignHistory {
 }
 
 /**
- * Theme, recipe/pairing/motion tier and the CSS variables of both modes for `kind` (default: the
- * active page). Memoized per doc; `null` until the doc and the engine exist.
+ * Theme, recipe/pairing/motion tier and the CSS variables of both modes for a page (a kind or a screen id;
+ * default: the active one, `selectActiveKey`). Memoized per doc; `null` until the doc and the engine exist.
  */
-export function useDesignDerived(kind?: OutputKind | null): DesignDerived | null {
+export function useDesignDerived(kind?: PageKey | null): DesignDerived | null {
   const doc = useDesignDoc((state) => state.doc);
   const ready = useDesignDoc((state) => state.engineReady);
-  const active = useActivePageKind();
+  const active = useActiveKey();
   const pageKind = kind === undefined ? active : kind;
   return useMemo(() => (doc && ready && engine ? engine.deriveDesign(doc, pageKind) : null), [doc, ready, pageKind]);
 }

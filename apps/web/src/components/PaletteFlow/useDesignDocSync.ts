@@ -11,8 +11,8 @@ import { flow } from "@/i18n/flow";
 /**
  * Keeps the DesignDoc store in step with the flow:
  * - from "crop" on, the doc engine (doc + sections) loads in the background;
- * - entering «Crear»/«Ajustar» creates the doc from the Palette Lab, or syncs seeds and palette style
- *   into the existing one (pages and edits are kept);
+ * - entering «Layout»/«Ajustar» creates the doc from the Palette Lab, or syncs seeds and palette style
+ *   into the existing one (screens, pages and edits are kept);
  * - back in the Palette Lab, the flow takes the doc's seeds and palette style (an undo in the Composer
  *   may have changed them), so the doc stays the source of truth once it exists. The exception is a
  *   new extraction («Recortar de nuevo»): its seeds go into the doc instead of being overwritten;

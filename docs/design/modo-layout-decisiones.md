@@ -105,3 +105,42 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 64. **Insignia de avisos:** si un bloque tiene la insignia en la esquina superior derecha, esa esquina no tiene handle de redimensionado (los otros 7 sí).
 65. **Contraste:** todo texto informativo usa `text-muted` (≥4,5:1). `text-subtle` queda para texto decorativo o ≥14 px seminegrita, como dice el Design Brief. Un test recorre `LayoutStep/` para que no vuelva.
 66. **La pila del lienzo está aislada** (`isolation: isolate`): ningún bloque ni handle pinta por encima de la barra inferior ni de los popovers.
+
+# Fase B
+
+**Inicio:** 2026-10-10, cuando el chat principal avisó de que import ya estaba en `main` (ba15249). Merge de `origin/main` en `feat/layout-mode` sin conflictos de código (solo `package.json`, `next.config.ts` y el lockfile).
+
+## DesignDoc v2 (`@dialmade/doc`)
+
+67. **v2 es aditivo:** `pages` se queda igual y se añaden `screens` y `screenOrder`. Reemplazar `pages` habría tocado unos 57 archivos y obligado a inventar pantallas en la migración. La migración de v1 a v2 solo sube la versión (al parsear); `applyPatch` solo acepta v2.
+68. **Una sola fuente de verdad:** con pantallas, `pages.landing` y `pages.app` no pueden existir. `pages.brand` (la guía de estilo) sigue siendo única y no es una pantalla.
+69. **Reparto de validación:** Zod comprueba tipos y formatos; `validateLayout` del motor, rangos, padres, ciclos, `count`, longitudes y el tope de bloques. Cada problema se reporta una vez, con su código del motor.
+70. **Reglas de pantalla:** ids que no pueden ser `brand`, `landing` ni `app` (así una `PageKey` nunca es ambigua); rutas únicas de hasta 96 caracteres (`/` o segmentos slug); `layoutId = "custom"` en sus páginas, sin buscar en el catálogo; las pantallas de app con navegación comparten la misma; un bloque puede enlazar a su propia pantalla. Máximo 24 pantallas.
+71. **`pinned`** son JSON Pointers relativos a las props (hasta 128). `generated.noteHash` va en base36, como `hashString` del motor.
+72. **Los candados pueden apuntar dentro de `/screens`.** `removeScreenOps` quita también los candados de la pantalla (con `allowLocked`, tras confirmar).
+73. **Exportes:** «Pantallas y flujo» y un bloque por pantalla van dentro del `## Layout` que ya existía (los tests fijan los `##` y el frontmatter). Los bloques ocultos salen de la lista numerada, bajo «Ocultos». La salida de los documentos sin pantallas es idéntica byte a byte (goldens).
+74. **Los exportes describen lo que se ve:** en las páginas de layout las listas se guardan al máximo y `count` decide cuántos ítems se pintan; DESIGN.md y los prompt packs usan `visibleProps` para no listar 6 KPIs donde se ven 4.
+
+## Secciones (`@dialmade/sections`)
+
+75. **Las ocho secciones `ui.*` tienen `kind: "app"`** en el registro. Ese campo solo agrupa `registry.list`, que nadie usa fuera del paquete; la librería sale de `@dialmade/layout` (crítica #1).
+76. **Calendario:** la vista es la variante (mes, semana, agenda, mini). La semana empieza en lunes en es y en domingo en en.
+77. **Formulario:** guarda los 11 campos una vez y cada propósito (login, registro, contacto, búsqueda, genérico) muestra su subconjunto, recortado a `count`. Cambiar de propósito nunca pierde una etiqueta editada.
+78. **`fit()` no escribe textos** (no conoce el idioma): usa interruptores (`showBody`, `showAction`) y variantes. El h1 lo pone `buildPageFromLayout` en el primer texto visible cuando no hay hero ni cabecera de página.
+79. **Semillas de copy:** el primer bloque de cada tipo, en orden de lectura, usa la semilla del documento (así el botón del hero coincide con el del navbar); los siguientes usan una semilla derivada de su id, para que dos listas no repitan textos. Si un título nuevo repite otro de la página, se prueban hasta 8 semillas alternativas (nunca en títulos fijados o conservados).
+80. **Regenerar:**
+    - Huella sin cambios: se conservan las props tal cual (incluido el copy de la IA aunque no esté fijado).
+    - Huella cambiada: se conservan las props, se reajustan las claves del layout y la variante, y si una lista crece se añaden ítems al final sin tocar los existentes.
+    - Modo `content` (cambio de idioma o de producto): copy nuevo, conservando variante, claves del layout y valores fijados.
+    - Cambio de tipo: valores por defecto del tipo nuevo, más eyebrow, título, subtítulo y descripción si encajan, y los valores fijados que sigan siendo válidos.
+81. **Absorción:** los hijos que un bloque no contenedor sí acepta (un media dentro de un hero) se absorben en él (el hero pasa a `split`); los que no acepta se recolocan en el ámbito de ese bloque. Un bloque absorbido conserva su huella (variante `absorbed`) y su `linkTo` pasa al bloque que lo absorbe.
+82. **El marco de app** se construye con el nombre de la pantalla como título y las pantallas de app como ítems de navegación (máximo 10). Un Sidebar suelto en una landing se compila como un marco rail o lateral sin cabecera.
+83. **Modal:** se compila como `app.confirmDialog` en panel; sus hijos van en el cuerpo del diálogo.
+84. **Contenido de relleno:** cuando el chip permite más ítems de los que traen los perfiles (un 4.º plan, testimonios o KPIs hasta 6, actividad hasta 8, logos hasta 8), se completan con ítems neutros.
+85. **Login:** la plantilla de Login lleva la nota «Login» en su formulario, que `parseNote` lee como palabra clave en es y en.
+
+## Limpieza en la web
+
+86. **`Segmented`, `Popover` y `PanelSection` viven en `components/ui/`.** El `Popover` compartido es la versión de `LayoutStep` (Tab fuera de los extremos lo cierra), así que el Composer gana ese arreglo de teclado. La barra de acento de `Segmented` es opcional y solo la usa `LayoutStep`, porque cambia el aspecto y la estética la decide el usuario.
+87. **Anuncios:** el feedback de arrastre sigue siendo `assertive`; en `LayoutStep` todo es `polite` salvo los rechazos (vista de solo lectura, última pantalla, ya está arriba o abajo, solo en pantallas de app).
+88. **Toasts:** suben por encima de la barra inferior del lienzo mientras está visible (`--app-toast-bottom`, `useToastClearance` en `src/hooks/`).

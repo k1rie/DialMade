@@ -45,7 +45,7 @@ export type GenerateBarProps = { className?: string };
 export function GenerateBar({ className }: GenerateBarProps) {
   const t = useDictionary(layout);
   const announce = useDndAnnounce({ politeness: "polite" });
-  const { narrow, onGenerateIntent } = useLayoutEnv();
+  const { narrow, onGenerateIntent, generateRefused } = useLayoutEnv();
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
   const screens = useScreens();
@@ -87,6 +87,8 @@ export function GenerateBar({ className }: GenerateBarProps) {
       return;
     }
     const result = actions.generate();
+    // Refused by the flow: its own message (a toast with the way out) says why; no report over it.
+    if (generateRefused(result)) return;
     const totals = countStats(result.screens);
     setGeneratedMessage(t.announce.generated(totals.screens, totals.blocks));
     setReportOpen(true);

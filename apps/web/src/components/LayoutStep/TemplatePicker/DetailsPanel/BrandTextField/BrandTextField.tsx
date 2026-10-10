@@ -73,7 +73,7 @@ export function BrandTextField({
           onEditEnd?.();
         }}
         className={cn(
-          "h-10 w-full min-w-0 rounded-control border border-app-strong bg-app/60 px-3 text-body text-fg placeholder:text-subtle",
+          "h-10 w-full min-w-0 rounded-control border border-app-strong bg-app/60 px-3 text-body text-fg placeholder:text-muted",
           "transition-[border-color,background-color] duration-150 hover:border-white/20 focus-visible:border-accent/70 focus-visible:bg-app/80",
         )}
       />

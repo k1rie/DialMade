@@ -1,8 +1,9 @@
 // Fixtures for the tests of src/lib/ai (no network: the SDK client is a mock).
 import type Anthropic from "@anthropic-ai/sdk";
 import type { OutputKind } from "@dialmade/catalog";
-import { createDesignDoc, type DesignDoc } from "@dialmade/doc";
-import { addDefaultPage } from "@dialmade/sections";
+import { createDesignDoc, formatIssues, safeParseDesignDoc, type DesignDoc, type ScreenInput } from "@dialmade/doc";
+import { getScreenTemplate, instantiateTemplate, type LayoutDoc, type ScreenTemplateId } from "@dialmade/layout";
+import { addDefaultPage, buildPageFromLayout, contentContextFromDoc } from "@dialmade/sections";
 import { vi } from "vitest";
 
 export function sampleDoc(kinds: readonly OutputKind[] = ["landing"], productType = "saas-general"): DesignDoc {
@@ -12,6 +13,48 @@ export function sampleDoc(kinds: readonly OutputKind[] = ["landing"], productTyp
   });
   for (const kind of kinds) doc = addDefaultPage(doc, kind);
   return doc;
+}
+
+/** Screens of `sampleScreensDoc`: a web home (landing template) and an app detail screen with a sidebar. */
+export const SAMPLE_SCREENS: readonly { id: string; name: string; route: string; template: ScreenTemplateId }[] = [
+  { id: "s-home", name: "Inicio", route: "/", template: "home" },
+  { id: "s-detail", name: "Detalle", route: "/app/detalle", template: "detail" },
+];
+
+/**
+ * A DesignDoc v2 as the layout step writes it after «Generar»: `screens` + `screenOrder` built from the
+ * templates by `buildPageFromLayout`, the style guide in `pages.brand`. Block ids are `b-000000`, `b-000001`…
+ * across the whole document, labels are the type names. `layout` edits a screen's boxes before the build.
+ */
+export function sampleScreensDoc(
+  screens = SAMPLE_SCREENS,
+  options: { layout?: (screenId: string, layout: LayoutDoc) => LayoutDoc } = {},
+): DesignDoc {
+  const base = sampleDoc(["brand"]);
+  const ctx = contentContextFromDoc(base);
+  let n = 0;
+  const newId = () => `b-${(n++).toString(36).padStart(6, "0")}`;
+  const built = screens.map((spec) => {
+    const made = instantiateTemplate(getScreenTemplate(spec.template), { label: (type) => type, newId });
+    return { spec, ...made, layout: options.layout ? options.layout(spec.id, made.layout) : made.layout };
+  });
+  const navScreens = built.filter(({ kind, shell }) => kind === "app" && shell && shell.nav !== "none").map(({ spec }) => ({ id: spec.id, name: spec.name }));
+  const inputs: ScreenInput[] = built.map(({ spec, layout, shell, kind }) => {
+    const screenKind = kind ?? "landing";
+    const result = buildPageFromLayout(layout, screenKind, shell, ctx, { screenId: spec.id, screenTitle: spec.name, navScreens });
+    const blocks = Object.fromEntries(
+      Object.entries(layout.blocks).map(([id, block]) => [id, result.fingerprints[id] ? { ...block, generated: result.fingerprints[id] } : block]),
+    );
+    return { id: spec.id, name: spec.name, kind: screenKind, route: spec.route, layout: { ...layout, blocks }, page: result.page, shell };
+  });
+  const parsed = safeParseDesignDoc({
+    ...base,
+    brief: { ...base.brief, focus: inputs[0]?.kind ?? "landing" },
+    screens: Object.fromEntries(inputs.map((screen) => [screen.id, screen])),
+    screenOrder: inputs.map((screen) => screen.id),
+  });
+  if (!parsed.success) throw new Error(formatIssues(parsed.issues));
+  return parsed.data;
 }
 
 export type MockMessage = {

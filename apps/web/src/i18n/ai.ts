@@ -1,4 +1,5 @@
 import type { AiApiErrorCode } from "@/lib/ai/api";
+import type { CopyBlockState } from "@/lib/ai/layoutCopy";
 import type { ManualParseError } from "@/lib/ai/manual";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { defineDictionary } from "./config";
@@ -108,6 +109,22 @@ export const ai = defineDictionary({
       unavailable: "IA gratis no disponible en este servidor",
       loading: "Cargando usos de IA…",
       exhausted: "Sigue con tu key o con tu Claude.",
+    },
+    layoutCopy: {
+      states: {
+        writing: "Escribiendo",
+        done: "Listo",
+        unchanged: "Sin cambios",
+        error: "Error",
+      } satisfies Record<CopyBlockState, string>,
+      retry: "Reintentar",
+      truncated: (max: number) => `La IA reescribe los primeros ${max} textos.`,
+      estimate: (cost: string) => `≈ ${cost}`,
+      oneUse: "Cuenta como 1 uso, para todas las pantallas.",
+      cancelSpends: "Si cancelas, el uso ya cuenta.",
+      cancelled: "Cancelado. No se cambió ningún texto.",
+      done: (n: number) => `${n} ${plural(n, "bloque con textos nuevos", "bloques con textos nuevos")}.`,
+      stale: (n: number) => `${n} ${plural(n, "texto se quedó como lo editaste", "textos se quedaron como los editaste")}.`,
     },
     vision: {
       label: "Analizar estilo con IA",
@@ -231,6 +248,22 @@ export const ai = defineDictionary({
       unavailable: "Free AI isn't available on this server",
       loading: "Loading AI uses…",
       exhausted: "Keep going with your key or your Claude.",
+    },
+    layoutCopy: {
+      states: {
+        writing: "Writing",
+        done: "Done",
+        unchanged: "No changes",
+        error: "Error",
+      },
+      retry: "Retry",
+      truncated: (max: number) => `AI rewrites the first ${max} texts.`,
+      estimate: (cost: string) => `≈ ${cost}`,
+      oneUse: "Counts as 1 use, for all screens.",
+      cancelSpends: "If you cancel, the use still counts.",
+      cancelled: "Cancelled. No text was changed.",
+      done: (n: number) => `${n} ${plural(n, "block", "blocks")} with new copy.`,
+      stale: (n: number) => `${n} ${plural(n, "text", "texts")} kept as you edited ${plural(n, "it", "them")}.`,
     },
     vision: {
       label: "Analyze style with AI",

@@ -1,6 +1,30 @@
-import { deriveResponsive, getBlockDef, getScreenTemplate, LABEL_MAX, MAX_HEIGHT_ROWS, MAX_ROW, type GridRect, type LibraryBlockType, type ScreenTemplateId } from "@dialmade/layout";
+import {
+  deriveResponsive,
+  getBlockDef,
+  getScreenTemplate,
+  LABEL_MAX,
+  MAX_HEIGHT_ROWS,
+  MAX_ROW,
+  type GridRect,
+  type LayoutBlock,
+  type LibraryBlockType,
+  type ScreenTemplateId,
+} from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { createLayoutStore, selectActiveScreen, selectActiveScreenId, selectSelectedId, slugify, uniqueName, type LayoutStoreInit } from "./useLayoutStore";
+import type { Screen } from "./types";
+import {
+  createLayoutStore,
+  mergeDocScreens,
+  screensFromDoc,
+  selectActiveScreen,
+  selectActiveScreenId,
+  selectSelectedId,
+  slugify,
+  uniqueName,
+  type HistorySlice,
+  type LayoutStoreInit,
+  type ScreensSource,
+} from "./useLayoutStore";
 
 const SCREEN_NAMES: Record<ScreenTemplateId, string> = {
   home: "Inicio",
@@ -370,6 +394,9 @@ describe("screen management", () => {
     expect(actions.setRoute(settings!, " /Cuenta/Datos/ ")).toEqual({ ok: true, route: "/cuenta/datos" });
     expect(actions.setRoute(dashboard!, "/")).toEqual({ ok: true, route: "/" });
     expect(actions.setRoute("s-nope00", "/x")).toEqual({ ok: false, reason: "missing" });
+    // The document's limit (RouteSchema): 96 characters.
+    expect(actions.setRoute(settings!, `/${"a".repeat(95)}`)).toEqual({ ok: true, route: `/${"a".repeat(95)}` });
+    expect(actions.setRoute(settings!, `/${"b".repeat(96)}`)).toEqual({ ok: false, reason: "invalid" });
   });
 
   it("moveScreen reorders as one step", () => {
@@ -790,5 +817,137 @@ describe("block edits keep the document consistent", () => {
     actions.setRect(id, rect(0, 0, 4, 10));
     actions.setRect(id, rect(0, 999_999_999, 4, 999_999_999));
     expect(block(id).rect).toEqual(rect(0, MAX_ROW, 4, MAX_HEIGHT_ROWS));
+  });
+});
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Document sync (Fase B: one draft per DesignDoc)                                                  */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** A DesignDoc's screens as the draft reads them: a copy of the draft with pages (ignored by the sync). */
+function docOf(slice: HistorySlice, change?: (screens: Record<string, Screen>) => void): ScreensSource {
+  const screens: Record<string, Screen & { page: unknown }> = {};
+  for (const id of slice.screenOrder) screens[id] = { ...slice.screens[id]!, page: { kind: slice.screens[id]!.kind } };
+  change?.(screens);
+  return { screens, screenOrder: [...slice.screenOrder] };
+}
+
+/** `screens[id].layout.blocks[blockId]` with `patch` applied (new objects on the way). */
+function patchBlock(screens: Record<string, Screen>, id: string, blockId: string, patch: Partial<LayoutBlock>) {
+  const screen = screens[id]!;
+  const block = { ...screen.layout.blocks[blockId]!, ...patch };
+  for (const key of Object.keys(patch) as (keyof LayoutBlock)[]) if (patch[key] === undefined) delete block[key];
+  screens[id] = { ...screen, layout: { ...screen.layout, blocks: { ...screen.layout.blocks, [blockId]: block } } };
+}
+
+describe("document sync", () => {
+  /** A generated «Landing» project: the doc holds the draft, synced. */
+  function synced() {
+    const t = setup();
+    const [home] = t.actions.applySet("landing");
+    const doc = docOf(t.state());
+    t.actions.syncFromDoc(doc);
+    const ids = Object.keys(t.state().screens[home!]!.layout.blocks);
+    return { ...t, home: home!, doc, ids };
+  }
+
+  it("seeds an empty draft from the document and starts a clean history", () => {
+    const source = setup();
+    const [home] = source.actions.applySet("landing");
+    const doc = docOf(source.state());
+    const { state, actions, history } = setup();
+    expect(actions.syncFromDoc(doc)).toBe("reseeded");
+    expect(state().screenOrder).toEqual(doc.screenOrder);
+    expect(state().screens[home!]).toEqual({ ...source.state().screens[home!] });
+    expect("page" in state().screens[home!]!).toBe(false);
+    expect(history().pastStates).toHaveLength(0);
+    expect(actions.syncFromDoc(doc)).toBe("unchanged");
+  });
+
+  it("follows the document when the draft did not change (Ajustar hid a block and pinned a text, or undo)", () => {
+    const { state, actions, history, home, doc, ids } = synced();
+    const [first, second] = ids;
+    const edited = docOf(state(), (screens) => {
+      patchBlock(screens, home, first!, { hidden: true });
+      patchBlock(screens, home, second!, { pinned: ["/title"] });
+    });
+    actions.insertBlock("text", { screenId: home });
+    actions.undo(); // an edit and its undo: the draft is back to the synced objects
+    expect(actions.syncFromDoc(edited)).toBe("reseeded");
+    expect(state().screens[home]!.layout.blocks[first!]!.hidden).toBe(true);
+    expect(state().screens[home]!.layout.blocks[second!]!.pinned).toEqual(["/title"]);
+    expect(history().pastStates).toHaveLength(0);
+    expect(doc.screenOrder).toEqual(state().screenOrder);
+  });
+
+  it("merges when both changed: geometry from the draft, pins from the doc, hidden from whoever changed it", () => {
+    const { state, actions, history, home, ids } = synced();
+    const [moved, docHidden, draftHidden, unhidden] = ids;
+    // The last sync saw `unhidden` hidden in the doc.
+    const base = docOf(state(), (screens) => patchBlock(screens, home, unhidden!, { hidden: true }));
+    actions.updateBlock(unhidden!, { hidden: true }, home);
+    actions.markSynced(base);
+
+    // The draft: a move, a hide, and an unhide of what the doc had hidden.
+    const before = state().screens[home]!.layout.blocks[moved!]!.rect;
+    actions.setRect(moved!, { ...before, w: before.w - 2 }, home);
+    actions.updateBlock(draftHidden!, { hidden: true }, home);
+    actions.updateBlock(unhidden!, { hidden: false }, home);
+    const steps = history().pastStates.length;
+
+    // The doc meanwhile (Ajustar): hides another block, pins a text, has new fingerprints; `unhidden` stays hidden.
+    const print = { type: "hero" as const, w: 12, h: 60, variant: "split" };
+    const doc = docOf(screensFromDoc(base), (screens) => {
+      patchBlock(screens, home, docHidden!, { hidden: true });
+      patchBlock(screens, home, moved!, { pinned: ["/title"], generated: print });
+    });
+
+    expect(actions.syncFromDoc(doc)).toBe("merged");
+    const blocks = state().screens[home]!.layout.blocks;
+    expect(blocks[moved!]!.rect.w).toBe(before.w - 2);
+    expect(blocks[moved!]!.pinned).toEqual(["/title"]);
+    expect(blocks[moved!]!.generated).toEqual(print);
+    expect(blocks[docHidden!]!.hidden).toBe(true);
+    expect(blocks[draftHidden!]!.hidden).toBe(true);
+    expect(blocks[unhidden!]!.hidden).toBeUndefined();
+    expect(state().generatedPrints).toBeNull();
+    // No history step; the past is rebased (undo keeps the doc's pins).
+    expect(history().pastStates).toHaveLength(steps);
+    actions.undo();
+    expect(state().screens[home]!.layout.blocks[moved!]!.pinned).toEqual(["/title"]);
+    expect(actions.syncFromDoc(doc)).toBe("unchanged");
+  });
+
+  it("mergeDocScreens drops pins and fingerprints the doc does not have, and keeps identity when nothing changes", () => {
+    const { state, home, ids } = synced();
+    const draft: HistorySlice = { screens: state().screens, screenOrder: state().screenOrder };
+    expect(mergeDocScreens(draft, draft, draft)).toBe(draft);
+    const pinnedDraft = docOf(draft, (screens) => patchBlock(screens, home, ids[0]!, { pinned: ["/title"], generated: { type: "navbar", w: 12, h: 8, variant: "default" } }));
+    const merged = mergeDocScreens(screensFromDoc(pinnedDraft), draft, draft);
+    expect(merged.screens[home]!.layout.blocks[ids[0]!]!.pinned).toBeUndefined();
+    expect(merged.screens[home]!.layout.blocks[ids[0]!]!.generated).toBeUndefined();
+  });
+
+  it("a re-parsed document with the same screens (a brand edit) changes nothing in the draft", () => {
+    const { state, actions, history, home } = synced();
+    actions.insertBlock("text", { screenId: home });
+    const screens = state().screens;
+    const steps = history().pastStates.length;
+    const reparsed = JSON.parse(JSON.stringify(docOf(state()))) as ScreensSource;
+    actions.markSynced(docOf(state()));
+    expect(actions.syncFromDoc(reparsed)).toBe("unchanged");
+    expect(state().screens).toBe(screens);
+    expect(history().pastStates).toHaveLength(steps);
+    expect(state().docSync?.doc.screens).toBe(reparsed.screens);
+  });
+
+  it("markSynced after Generar: the same document is not merged again", () => {
+    const { state, actions, home } = synced();
+    actions.insertBlock("text", { screenId: home });
+    const generatedDoc = docOf(state());
+    actions.markSynced(generatedDoc);
+    const screens = state().screens;
+    expect(actions.syncFromDoc(generatedDoc)).toBe("unchanged");
+    expect(state().screens).toBe(screens);
   });
 });

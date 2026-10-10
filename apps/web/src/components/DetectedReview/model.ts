@@ -289,7 +289,7 @@ const ITEM_IDS = (brand: ImportedBrand) => new Map(chipItems(brand).map((item) =
 
 /**
  * The single way out: a complete guide (primary, background and text in one mode, plus a heading or body
- * font) goes straight to «Crear»; anything else of the user's own goes to the Palette Lab; nothing own
+ * font) goes straight to «Layout»; anything else of the user's own goes to the Palette Lab; nothing own
  * (third-party batch, only references) keeps the references.
  */
 export function exitOf(brand: ImportedBrand, review: ReviewState, ownership: Ownership): ReviewExit {

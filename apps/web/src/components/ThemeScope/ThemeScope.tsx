@@ -4,15 +4,15 @@
 // with them — in the lazy design half — and never on the Home.
 import "./ThemeScope.css";
 
-import type { Locale, OutputKind, TypographyPairing } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import type { Locale, TypographyPairing } from "@dialmade/catalog";
+import type { DesignDoc, PageKey } from "@dialmade/doc";
 import { ThemeStyles } from "@dialmade/sections";
 import { UiProvider } from "@dialmade/ui";
 import { useMemo, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
 import { useStore } from "zustand";
 import {
   createDesignDocStore,
-  selectActivePageKind,
+  selectActiveKey,
   useOptionalDesignDocStore,
   type ThemeVars,
 } from "@/hooks/useDesignDoc";
@@ -24,8 +24,11 @@ import { deriveDesign } from "@/lib/design-derived";
 export type ThemeScopeProps = Omit<HTMLAttributes<HTMLElement>, "style" | "children"> & {
   /** Default: the store's `previewMode`. */
   mode?: PreviewMode;
-  /** Page whose dials apply (e.g. the App page's density). Default: the active page; `null` = global dials. */
-  kind?: OutputKind | null;
+  /**
+   * Page whose dials apply (e.g. the App page's density): a page kind or a screen id. Default: the active page
+   * (`selectActiveKey`); `null` = global dials.
+   */
+  kind?: PageKey | null;
   /** Default: the store's doc. */
   doc?: DesignDoc;
   /** Explicit variables (e.g. a live Palette Lab theme without a doc). Win over `doc`. */
@@ -69,7 +72,7 @@ export function ThemeScope({
   const store = useOptionalDesignDocStore() ?? detachedStore;
   const storeDoc = useStore(store, (state) => state.doc);
   const storeMode = useStore(store, (state) => state.previewMode);
-  const activeKind = useStore(store, selectActivePageKind);
+  const activeKind = useStore(store, selectActiveKey);
   const { locale: appLocale } = useI18n();
 
   const doc = docProp ?? storeDoc ?? undefined;

@@ -8,11 +8,15 @@
 //   same prompt and validation (@/lib/ai/browser, loaded on demand), with DIALMADE_AI_MODEL;
 // - or «Copiar prompt para mi Claude» (`manualJob`): the pasted JSON goes through the same validation.
 // The model only returns text for the page's text props; the result is an RFC 6902 patch already
-// validated against the DesignDoc and the section schemas. The hook does NOT apply it: the caller
-// previews it and commits it with `useDesignDocActions().applyPatch`. Without AI the app works fully
-// (`available: false`).
+// validated against the DesignDoc and the section schemas. A request is one page (`kind`) or several
+// screens at once (`screens`, Modo Layout: one «Generar» = one request = one free use). The answer is built
+// against the document as it was when the request started; the result keeps only the ops whose value is
+// still the same in the current document (the user may keep editing while it runs), so it never
+// overwrites a newer edit. The hook does NOT apply it: the caller commits it with
+// `useDesignDocActions().applyPatch` (one undo step), right after the promise resolves; `useLayoutAiCopy`
+// does that for the layout step. Without AI the app works fully (`available: false`).
 import type { OutputKind } from "@dialmade/catalog";
-import type { PatchOperation } from "@dialmade/doc";
+import type { DesignDoc, PatchOperation } from "@dialmade/doc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadAiStatus, updateAiCounters, useAiStatus } from "@/hooks/useAiStatus";
 import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
@@ -21,18 +25,33 @@ import { ai } from "@/i18n/ai";
 import { COPY_ENDPOINT, isAiApiErrorCode, type AiApiErrorCode, type CopyApiSuccess } from "@/lib/ai/api";
 import { getByokKey, useByokKey } from "@/lib/ai/byokKey";
 import { MAX_INSTRUCTIONS_LENGTH, MAX_SECTION_IDS } from "@/lib/ai/config";
+import { collectCopyFields, collectScreenCopyFields, type CopyField, type ScreenCopyTarget } from "@/lib/ai/fields";
+import { normalizeScreenTargets } from "@/lib/ai/layoutCopy";
 import type { ManualJob } from "@/lib/ai/manual";
 import { copyManualJob } from "@/lib/ai/manualCopy";
+import { dropStaleOps } from "@/lib/ai/patches";
 import { aiSourceFor, countersFrom, fallbackReasonOf, hostedBlocker, modelFor, type AiFallbackReason } from "@/lib/ai/policy";
 import { MANUAL_MODEL } from "@/lib/ai/vision/client";
 
-export type AiCopyRequest = {
-  kind: OutputKind;
-  /** Element ids of that page to rewrite. Default: every visible section. */
-  sectionIds?: readonly string[];
-  /** Free text from the user («más directo», «para devs»). */
-  instructions?: string;
-};
+export type AiCopyRequest =
+  | {
+      kind: OutputKind;
+      /** Element ids of that page to rewrite. Default: every visible section. */
+      sectionIds?: readonly string[];
+      /** Free text from the user («más directo», «para devs»). */
+      instructions?: string;
+      screens?: never;
+    }
+  | {
+      /**
+       * Several screens in ONE request (Modo Layout): each whole or only some sections (block ids). Over
+       * `MAX_SECTION_IDS` ids in total, every screen is sent whole (`normalizeScreenTargets`).
+       */
+      screens: readonly ScreenCopyTarget[];
+      instructions?: string;
+      kind?: never;
+      sectionIds?: never;
+    };
 
 export type AiUsage = {
   inputTokens: number;
@@ -41,10 +60,21 @@ export type AiUsage = {
 };
 
 export type AiCopyResult = {
-  /** Ops on `/pages/{kind}/elements/{id}/props/…` (and `/brand/tagline`), already validated. */
+  /**
+   * Ops on `/pages/{kind}/elements/{id}/props/…` or `/screens/{sid}/page/elements/{id}/props/…` (and
+   * `/brand/tagline`), already validated, minus the stale ones: they all apply together on the current doc.
+   */
   patches: PatchOperation[];
   usage: AiUsage;
   costUsd: number;
+  /** Edits of the model dropped by validation. */
+  rejected: number;
+  /** Field ids (`f12`) of those edits: map them to sections with `fields`. */
+  rejectedIds: string[];
+  /** Valid ops dropped because their value changed while the request ran (a user edit, a deleted block). */
+  stale: number;
+  /** The fields that were offered, as the request saw them (ids, pointers, sections and screens). */
+  fields: readonly CopyField[];
 };
 
 export type AiCopyStatus = "idle" | "loading" | "success" | "error";
@@ -125,10 +155,32 @@ const CODE_OF: Record<AiApiErrorCode, AiCopyErrorCode> = {
 
 const isAbort = (error: unknown) => error instanceof DOMException && error.name === "AbortError";
 
-const cleanRequest = (request: AiCopyRequest) => ({
-  sectionIds: request.sectionIds ? [...new Set(request.sectionIds)].slice(0, MAX_SECTION_IDS) : undefined,
-  instructions: request.instructions?.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || undefined,
-});
+type CleanTarget = { kind: OutputKind; sectionIds?: string[]; screens?: never } | { screens: ScreenCopyTarget[]; kind?: never; sectionIds?: never };
+
+/** The request as the wire takes it: deduplicated ids within the caps, trimmed instructions. */
+function cleanRequest(request: AiCopyRequest): { target: CleanTarget; instructions: string | undefined } {
+  const instructions = request.instructions?.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || undefined;
+  if (request.screens) return { target: { screens: normalizeScreenTargets(request.screens) }, instructions };
+  const sectionIds = request.sectionIds ? [...new Set(request.sectionIds)].slice(0, MAX_SECTION_IDS) : undefined;
+  return { target: { kind: request.kind, ...(sectionIds && { sectionIds }) }, instructions };
+}
+
+/** Why the request cannot be sent: no page of that kind or an unknown screen (`no-page`), no screen at all (`no-fields`). */
+function targetProblem(doc: DesignDoc, target: CleanTarget): "no-page" | "no-fields" | null {
+  if (!target.screens) return doc.pages[target.kind] ? null : "no-page";
+  if (target.screens.length === 0) return "no-fields";
+  return target.screens.some((screen) => !Object.hasOwn(doc.screens, screen.id)) ? "no-page" : null;
+}
+
+/** The fields the request offers, computed with the same pure collector as the server. */
+const offeredFields = (doc: DesignDoc, target: CleanTarget): CopyField[] =>
+  target.screens ? collectScreenCopyFields(doc, target.screens) : collectCopyFields(doc, target.kind, target.sectionIds ? { sectionIds: target.sectionIds } : {});
+
+/** The answer as the caller applies it: only the ops still fresh on the current document. */
+function freshResult(before: DesignDoc, now: DesignDoc | null, target: CleanTarget, answer: Omit<AiCopyResult, "stale" | "fields">): AiCopyResult {
+  const { patches, stale } = dropStaleOps(before, now, answer.patches);
+  return { ...answer, patches, stale: stale.length, fields: offeredFields(before, target) };
+}
 
 export function useAiCopy(): UseAiCopy {
   const t = useDictionary(ai);
@@ -170,19 +222,18 @@ export function useAiCopy(): UseAiCopy {
       setStatus("loading");
       setError(undefined);
 
-      const { sectionIds, instructions } = cleanRequest(request);
+      const { target, instructions } = cleanRequest(request);
 
       try {
+        const problem = targetProblem(doc, target);
+        if (problem) throw failure(problem);
         let result: CopyApiSuccess;
         const apiKey = getByokKey();
         const current = hostedRef.current ?? (await loadAiStatus());
         if (apiKey) {
           const { ByokCopyError, generateByokCopy } = await import("@/lib/ai/browser");
           try {
-            result = await generateByokCopy(
-              { doc, kind: request.kind, ...(sectionIds && { sectionIds }), ...(instructions && { instructions }) },
-              { apiKey, model: current.model, signal: own.signal },
-            );
+            result = await generateByokCopy({ doc, ...target, ...(instructions && { instructions }) }, { apiKey, model: current.model, signal: own.signal });
           } catch (byokError) {
             throw byokError instanceof ByokCopyError ? failure(byokError.code) : byokError;
           }
@@ -194,13 +245,7 @@ export function useAiCopy(): UseAiCopy {
           const response = await fetch(COPY_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              doc,
-              kind: request.kind,
-              ...(sectionIds && { sectionIds }),
-              ...(instructions && { instructions }),
-              locale: doc.brief.locale,
-            }),
+            body: JSON.stringify({ doc, ...target, ...(instructions && { instructions }), locale: doc.brief.locale }),
             signal: own.signal,
           });
           const body: unknown = await response.json().catch(() => null);
@@ -211,8 +256,15 @@ export function useAiCopy(): UseAiCopy {
           result = data as CopyApiSuccess;
         }
 
+        const fresh = freshResult(doc, store?.getState().doc ?? null, target, {
+          patches: result.patches,
+          usage: result.usage,
+          costUsd: result.costUsd,
+          rejected: result.rejected ?? 0,
+          rejectedIds: Array.isArray(result.rejectedIds) ? result.rejectedIds : [],
+        });
         if (controller.current === own) setStatus("success");
-        return { patches: result.patches, usage: result.usage, costUsd: result.costUsd };
+        return fresh;
       } catch (caught) {
         const aborted = own.signal.aborted || isAbort(caught);
         const failed =
@@ -234,9 +286,10 @@ export function useAiCopy(): UseAiCopy {
   const manualJob = useCallback(
     (request: AiCopyRequest): ManualJob<AiCopyResult> | null => {
       const doc = store?.getState().doc ?? null;
-      if (!doc?.pages[request.kind]) return null;
-      const { sectionIds, instructions } = cleanRequest(request);
-      const job = copyManualJob({ doc, kind: request.kind, ...(sectionIds && { sectionIds }), ...(instructions && { instructions }) });
+      if (!doc) return null;
+      const { target, instructions } = cleanRequest(request);
+      if (targetProblem(doc, target)) return null;
+      const job = copyManualJob({ doc, ...target, ...(instructions && { instructions }) });
       if (!job) return null;
       return {
         prompt: job.prompt,
@@ -244,11 +297,16 @@ export function useAiCopy(): UseAiCopy {
         parse(text) {
           const parsed = job.parse(text);
           if (!parsed.ok) return parsed;
-          return {
-            ok: true,
-            value: { patches: parsed.value.patches, usage: { inputTokens: 0, outputTokens: 0, model: MANUAL_MODEL }, costUsd: 0 },
-            dropped: parsed.dropped,
-          };
+          // The answer is pasted later: drop what the user changed since the prompt was copied.
+          const value = freshResult(doc, store?.getState().doc ?? null, target, {
+            patches: parsed.value.patches,
+            usage: { inputTokens: 0, outputTokens: 0, model: MANUAL_MODEL },
+            costUsd: 0,
+            rejected: parsed.value.rejected,
+            rejectedIds: parsed.value.rejectedIds,
+          });
+          if (value.patches.length === 0) return { ok: false, error: "no-result" };
+          return { ok: true, value, dropped: parsed.dropped + value.stale };
         },
       };
     },

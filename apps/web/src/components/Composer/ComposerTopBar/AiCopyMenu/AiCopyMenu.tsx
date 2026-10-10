@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { useId, useMemo, useState } from "react";
 import { AiKeyDialog, type AiKeyDialogView } from "@/components/AiKeyDialog";
@@ -13,14 +12,17 @@ import { useDictionary, useI18n } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
-import { estimateCopyCost, formatUsd } from "../../aiEstimate";
+import { estimateCopyCost, estimateScreensCopyCost } from "@/lib/ai/estimate";
+import { formatUsd } from "@/lib/money";
 import { SparklesIcon } from "../../icons";
+import type { PageTarget } from "../../pageOps";
 
 export type AiCopyMenuProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   doc: DesignDoc;
-  kind: OutputKind;
+  /** The page whose copy is rewritten: a screen (one request for that screen) or a page kind. */
+  target: PageTarget;
   pageLabel: string;
   ai: UseAiCopy;
   /** Runs the request and applies the patch (Composer owns undo and toasts). */
@@ -38,7 +40,7 @@ const ENV_LINES = ["ANTHROPIC_API_KEY=…", "DIALMADE_AI_MONTHLY_BUDGET_USD=5"];
  * and «Copiar prompt para mi Claude»; only when the server has no AI at all does it show the variables
  * for self-hosting. The default copy is always there without AI.
  */
-export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGenerate, onManualResult }: AiCopyMenuProps) {
+export function AiCopyMenu({ open, onOpenChange, doc, target, pageLabel, ai, onGenerate, onManualResult }: AiCopyMenuProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const reasons = useDictionary(aiText).key.reasons;
@@ -47,13 +49,23 @@ export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGen
   const [instructions, setInstructions] = useState("");
   const [dialog, setDialog] = useState<AiKeyDialogView | null>(null);
   const loading = ai.status === "loading";
-  const estimate = open ? estimateCopyCost(doc, kind, undefined, ai.model) : 0;
+  const screenId = target.screen?.id;
+  const kind = target.kind;
+  const estimate = !open
+    ? 0
+    : screenId
+      ? estimateScreensCopyCost(doc, [{ id: screenId }], ai.model)
+      : estimateCopyCost(doc, kind, undefined, ai.model);
   const reason = ai.fallbackReason;
   const notConfigured = reason === "not-configured";
   const trimmed = instructions.trim();
   const manual = useMemo(
-    () => (dialog ? ai.manualJob({ kind, ...(trimmed && { instructions: trimmed }) }) : null),
-    [dialog, ai, kind, trimmed],
+    () => {
+      if (!dialog) return null;
+      const extra = trimmed ? { instructions: trimmed } : {};
+      return ai.manualJob(screenId ? { screens: [{ id: screenId }], ...extra } : { kind, ...extra });
+    },
+    [dialog, ai, kind, screenId, trimmed],
   );
 
   const openDialog = (view: AiKeyDialogView) => {

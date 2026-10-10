@@ -6,7 +6,7 @@ export const flow = defineDictionary({
     stepper: {
       label: "Pasos del diseño",
       brand: "Marca",
-      create: "Crear",
+      layout: "Layout",
       compose: "Ajustar",
       export: "Exportar",
       position: (n: number, total: number) => `Paso ${n} de ${total}`,
@@ -23,15 +23,19 @@ export const flow = defineDictionary({
       crop: "Recortar el logo",
       extracting: "Extrayendo los colores del logo",
       palette: "Marca",
-      create: "Crear",
+      layout: "Layout",
       compose: "Ajustar",
+    },
+    generate: {
+      locked: "Un bloque que quitaste tiene valores bloqueados por tu guía. ¿Desbloquear y borrar?",
+      unlockAndDelete: "Desbloquear y borrar",
     },
   },
   en: {
     stepper: {
       label: "Design steps",
       brand: "Brand",
-      create: "Create",
+      layout: "Layout",
       compose: "Adjust",
       export: "Export",
       position: (n: number, total: number) => `Step ${n} of ${total}`,
@@ -48,8 +52,12 @@ export const flow = defineDictionary({
       crop: "Crop the logo",
       extracting: "Extracting the logo's colors",
       palette: "Brand",
-      create: "Create",
+      layout: "Layout",
       compose: "Adjust",
+    },
+    generate: {
+      locked: "A block you removed has values locked by your guide. Unlock and delete?",
+      unlockAndDelete: "Unlock and delete",
     },
   },
 });

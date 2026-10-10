@@ -1,5 +1,16 @@
 import type { MotionTier, OutputKind, StyleRecipe, TypographyPairing } from "@dialmade/catalog";
-import { compileThemeVars, effectiveDials, fontsUrlFor, resolveThemeInputs, themeInputFor, type DesignDoc, type Dials, type ThemeInputs } from "@dialmade/doc";
+import {
+  compileThemeVars,
+  effectiveDials,
+  fontsUrlFor,
+  pageForKey,
+  resolveThemeInputs,
+  themeInputFor,
+  type DesignDoc,
+  type Dials,
+  type PageKey,
+  type ThemeInputs,
+} from "@dialmade/doc";
 import { generateTheme, type Theme } from "@dialmade/palette";
 
 export type ThemeVars = Readonly<Record<string, string>>;
@@ -13,7 +24,9 @@ export type DesignDerived = {
   motionTier: MotionTier;
   /** `{ theme, recipe, pairing, motionTier }`, ready for `compileThemeVars`/`resolveTokens`/exporters. */
   inputs: ThemeInputs;
-  /** Page whose dials were applied (`null` = global dials only). */
+  /** Page whose dials were applied: a page kind or a screen id (`null` = global dials only). */
+  key: PageKey | null;
+  /** Kind of that page (a screen's `kind`; `null` = global dials only). */
   kind: OutputKind | null;
   /** Global dials with the page's overrides on top. */
   dials: Dials;
@@ -49,29 +62,32 @@ function themeFor(doc: DesignDoc): Theme {
 const derivedCache = new WeakMap<DesignDoc, Map<string, DesignDerived>>();
 
 /**
- * Theme, catalog choices and CSS variables (both modes) of a document. Docs are immutable, so the
- * result is memoized per doc object and page: calling it on every render is cheap.
+ * Theme, catalog choices and CSS variables (both modes) of a document, with the dials of one page: a page
+ * kind (`"brand"`, or a legacy `"landing"`/`"app"`) or a screen id. Docs are immutable, so the result is
+ * memoized per doc object and page: calling it on every render is cheap.
  */
-export function deriveDesign(doc: DesignDoc, kind: OutputKind | null = null): DesignDerived {
-  const pageKind = kind && doc.pages[kind] ? kind : null;
-  const key = pageKind ?? "";
+export function deriveDesign(doc: DesignDoc, key: PageKey | null = null): DesignDerived {
+  const page = key ? pageForKey(doc, key) : undefined;
+  const pageKey = page ? key : null;
+  const cacheKey = pageKey ?? "";
   let perDoc = derivedCache.get(doc);
-  const hit = perDoc?.get(key);
+  const hit = perDoc?.get(cacheKey);
   if (hit) return hit;
 
   const inputs = resolveThemeInputs(doc, { theme: themeFor(doc) });
-  const pageDials = pageKind ? doc.pages[pageKind]?.dials : undefined;
+  const pageDials = page?.dials;
   const compile = (mode: "light" | "dark") => compileThemeVars(doc, { ...inputs, mode, ...(pageDials && { pageDials }) });
   const derived: DesignDerived = {
     ...inputs,
     inputs,
-    kind: pageKind,
-    dials: effectiveDials(doc, pageKind ?? undefined),
+    key: pageKey,
+    kind: page?.kind ?? null,
+    dials: effectiveDials(doc, pageKey ?? undefined),
     vars: { light: compile("light"), dark: compile("dark") },
     fontsUrl: fontsUrlFor(doc, inputs.pairing),
   };
 
   if (!perDoc) derivedCache.set(doc, (perDoc = new Map()));
-  perDoc.set(key, derived);
+  perDoc.set(cacheKey, derived);
   return derived;
 }

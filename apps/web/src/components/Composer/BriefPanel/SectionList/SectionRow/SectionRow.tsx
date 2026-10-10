@@ -30,13 +30,26 @@ export type SectionRowProps = {
   detail: string | undefined;
   hidden: boolean;
   selected: boolean;
+  /** False on a screen (its layout decides the order): no grip and no ⌥↑/⌥↓. Default true. */
+  reorderable?: boolean;
   onSelect: (id: string) => void;
   onToggleHidden: (id: string, hide: boolean) => void;
   onMove: (id: string, delta: -1 | 1) => void;
 };
 
 /** One section in the list: grip (sortable handle), select button and show/hide. ⌥↑/⌥↓ move it. */
-export const SectionRow = memo(function SectionRow({ id, index, label, detail, hidden, selected, onSelect, onToggleHidden, onMove }: SectionRowProps) {
+export const SectionRow = memo(function SectionRow({
+  id,
+  index,
+  label,
+  detail,
+  hidden,
+  selected,
+  reorderable = true,
+  onSelect,
+  onToggleHidden,
+  onMove,
+}: SectionRowProps) {
   const { t } = useI18n();
   const c = useDictionary(composer);
   const { ref, handleRef, isDragging } = useSortable({
@@ -48,10 +61,11 @@ export const SectionRow = memo(function SectionRow({ id, index, label, detail, h
     data: { label },
     plugins: SORTABLE_PLUGINS,
     transition: SORTABLE_TRANSITION,
+    disabled: !reorderable,
   });
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+    if (!reorderable || !event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
     event.preventDefault();
     onMove(id, event.key === "ArrowUp" ? -1 : 1);
   };
@@ -66,25 +80,27 @@ export const SectionRow = memo(function SectionRow({ id, index, label, detail, h
         isDragging && "z-10 border-app-strong bg-surface shadow-lift",
       )}
     >
-      <button
-        ref={handleRef}
-        type="button"
-        aria-label={c.sections.handle(label)}
-        aria-roledescription={t.dnd.roleDescription}
-        aria-describedby={DND_INSTRUCTIONS_ID}
-        className={cn(
-          "grid size-7 shrink-0 place-items-center rounded-[8px] text-subtle transition-colors hover:text-fg [&_svg]:size-3.5",
-          isDragging ? "cursor-grabbing" : "cursor-grab",
-        )}
-      >
-        <GripIcon />
-      </button>
+      {reorderable && (
+        <button
+          ref={handleRef}
+          type="button"
+          aria-label={c.sections.handle(label)}
+          aria-roledescription={t.dnd.roleDescription}
+          aria-describedby={DND_INSTRUCTIONS_ID}
+          className={cn(
+            "grid size-7 shrink-0 place-items-center rounded-[8px] text-subtle transition-colors hover:text-fg [&_svg]:size-3.5",
+            isDragging ? "cursor-grabbing" : "cursor-grab",
+          )}
+        >
+          <GripIcon />
+        </button>
+      )}
       <button
         type="button"
         aria-current={selected || undefined}
         onClick={() => onSelect(id)}
         onKeyDown={onKeyDown}
-        className="flex min-w-0 flex-1 flex-col items-start rounded-[8px] px-1.5 py-1 text-start"
+        className={cn("flex min-w-0 flex-1 flex-col items-start rounded-[8px] px-1.5 py-1 text-start", !reorderable && "ps-2.5")}
       >
         {/* Hidden: muted, struck-through text and the eye-off icon; never opacity (it would drop below AA). */}
         <span className={cn("w-full truncate text-small", hidden ? "text-muted line-through decoration-white/30" : "text-fg")}>{label}</span>

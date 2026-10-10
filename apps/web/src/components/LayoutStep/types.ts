@@ -1,3 +1,4 @@
+import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import type {
   Adjustment,
@@ -15,6 +16,7 @@ import type {
   ScreenKind,
   Structure,
 } from "@dialmade/layout";
+import type { LayoutStore } from "./useLayoutStore";
 
 /** Canvas tool of the bottom bar: Dibujar (R) · Editar (V) · Mano (H). */
 export type Tool = "draw" | "edit" | "hand";
@@ -89,18 +91,35 @@ export type GeneratedPrints = Record<ScreenId, Record<BlockId, GeneratedFingerpr
 
 /** Public props of the Layout step (the API Fase B wires into the flow). */
 export type LayoutStepProps = {
-  /** Brand and brief: palette for the style previews, productType, locale. */
+  /**
+   * Brand and brief (palette for the style previews, productType, locale) and the screens: on mount, and
+   * whenever `doc.screens` changes, the draft syncs with them (`syncFromDoc`).
+   */
   doc: DesignDoc;
-  /** Screens to start with; without them the template picker shows. Read once, on mount. */
+  /**
+   * The draft to edit: the flow keeps one per DesignDoc so leaving the step keeps it (read on mount). Without
+   * it LayoutStep creates one and hands it over with `onStoreCreate`.
+   */
+  store?: LayoutStore;
+  /** The store LayoutStep created (only when no `store` was given), once mounted. */
+  onStoreCreate?(store: LayoutStore): void;
+  /** Screens to start with when LayoutStep creates the store; without them (and without screens in `doc`) the template picker shows. */
   initialScreens?: Screen[];
+  /** Output kind the user was looking at (the Palette Lab's preview tab): its starting set is «Recomendada». Default: `doc.brief.focus`. */
+  preferredKind?: OutputKind;
   /** Shows «Tu guía de estilo» first in the style picker. */
   hasImportedGuide?: boolean;
   /** Chosen style. When it changes from outside the store follows it. */
   style?: StyleChoice;
   /** Called when the user picks another style (Fase B → `actions.setRecipe`). */
   onStyleChange?(style: StyleChoice): void;
-  /** Called after every «Generar». */
-  onGenerate?(result: GenerateResult): void;
+  /** Called after every «Generar». Return `false` when the result could not be applied: no reveal follows. */
+  onGenerate?(result: GenerateResult): boolean | void;
+  /**
+   * The «Generar» moment is over (the signature reveal of wave 3; for now right after a successful
+   * `onGenerate`): the flow moves on to «Ajustar».
+   */
+  onRevealEnd?(): void;
   /** Hover or focus on «Generar» (Fase B: preload the Composer chunk). */
   onGenerateIntent?(): void;
   className?: string;
@@ -110,9 +129,16 @@ export type LayoutStepProps = {
 export type LayoutEnv = {
   doc: DesignDoc;
   hasImportedGuide: boolean;
+  /** `preferredKind` of LayoutStep, else the brief's focus: picks the recommended starting set. */
+  preferredKind: OutputKind;
   /** Viewport under 640 px: the canvas is replaced by layers + «Añadir bloque» + inspector. */
   narrow: boolean;
   onGenerateIntent?: () => void;
+  /**
+   * The flow refused that «Generar» (`onGenerate` returned `false`: a locked value, an invalid write): the
+   * GenerateBar then opens no report, so the flow's question («¿Desbloquear y borrar?») is not covered by it.
+   */
+  generateRefused: (result: GenerateResult) => boolean;
   /** Moves focus into an area, like F6 (the «Estilo» chip focuses the inspector, «Añadir bloque» the library). */
   focusRegion: (region: LayoutRegion) => void;
 };

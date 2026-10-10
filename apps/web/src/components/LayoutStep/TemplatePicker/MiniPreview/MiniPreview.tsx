@@ -1,6 +1,7 @@
 "use client";
 
 import type { OutputKind } from "@dialmade/catalog";
+import type { DesignDoc } from "@dialmade/doc";
 import { MiniApp, MiniBrand, MiniLanding, type ContentContext } from "@dialmade/sections";
 import { useLayoutEffect, useRef, useState } from "react";
 import { ThemeScope } from "@/components/ThemeScope";
@@ -14,6 +15,8 @@ const MINI_CLASS: Record<OutputKind, string> = { brand: "h-full content-center",
 export type MiniPreviewProps = {
   kind: OutputKind;
   ctx: ContentContext;
+  /** Doc whose theme paints the mini (default: the DesignDoc store's). */
+  doc?: DesignDoc;
   /** Links the pairing's Google Fonts; one instance per screen is enough. */
   fonts?: boolean;
   className?: string;
@@ -21,10 +24,10 @@ export type MiniPreviewProps = {
 
 /**
  * The kind's mini painted with the user's theme (global dials) at its design size, scaled to the
- * width of its 8:5 box so every card and the canvas show the same composition. Decorative: the
- * surrounding card or slot names it.
+ * width of its 8:5 box so every card shows the same composition. Decorative: the surrounding card
+ * names it.
  */
-export function MiniPreview({ kind, ctx, fonts = false, className }: MiniPreviewProps) {
+export function MiniPreview({ kind, ctx, doc, fonts = false, className }: MiniPreviewProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
@@ -45,6 +48,7 @@ export function MiniPreview({ kind, ctx, fonts = false, className }: MiniPreview
     <div ref={boxRef} aria-hidden className={cn("relative aspect-[8/5] w-full overflow-hidden", className)}>
       <ThemeScope
         kind={null}
+        {...(doc && { doc })}
         fonts={fonts}
         className="pointer-events-none absolute top-0 left-0 origin-top-left"
         style={{ width: MINI_SIZE.width, height: MINI_SIZE.height, transform: `scale(${scale})` }}

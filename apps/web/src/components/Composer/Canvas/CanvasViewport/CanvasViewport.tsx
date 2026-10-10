@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
@@ -12,6 +11,7 @@ import { DEVICE_WIDTHS } from "@/lib/devices";
 import type { DroppedItem } from "@/lib/dnd";
 import { canvasLayoutId } from "@/lib/layout-ids";
 import { smooth } from "@/lib/motion";
+import type { PageTarget } from "../../pageOps";
 import { CanvasDropZone } from "../CanvasDropZone";
 import { PagePreview } from "../PagePreview";
 import { SelectionToolbar, type SelectionToolbarProps } from "../SelectionToolbar";
@@ -23,7 +23,7 @@ export type CanvasViewportProps = {
   id: string;
   label: string;
   doc: DesignDoc;
-  kind: OutputKind;
+  target: PageTarget;
   mode: PreviewMode;
   device: PreviewDevice;
   logoUrl: string | undefined;
@@ -44,7 +44,7 @@ export function CanvasViewport({
   id,
   label,
   doc,
-  kind,
+  target,
   mode,
   device,
   logoUrl,
@@ -142,7 +142,7 @@ export function CanvasViewport({
             style={{ height: frameHeight * scale }}
           >
             <div ref={frameRef} className="absolute top-0 left-0 origin-top-left" style={{ width: deviceWidth, transform: `scale(${scale})` }}>
-              <PagePreview doc={doc} kind={kind} mode={mode} selectedId={selectedId} onSelect={onSelect} logoUrl={logoUrl} />
+              <PagePreview doc={doc} target={target} mode={mode} selectedId={selectedId} onSelect={onSelect} logoUrl={logoUrl} />
             </div>
           </div>
         </div>
@@ -150,9 +150,9 @@ export function CanvasViewport({
       <AnimatePresence>
         {selectedId && (
           <SelectionToolbar
-            key={`${kind}:${selectedId}`}
+            key={`${target.key}:${selectedId}`}
             doc={doc}
-            kind={kind}
+            target={target}
             id={selectedId}
             logoUrl={logoUrl}
             stageRef={stageRef}
@@ -167,12 +167,12 @@ export function CanvasViewport({
 
   return (
     <CanvasDropZone label={label} hint={t.canvas.dropHere} onDrop={onDrop} className="relative min-h-[60vh] flex-1 rounded-panel lg:min-h-0">
-      {/* The frame alone shares `canvasLayoutId` with the mini in «Crear»: it grows into the canvas while
-          the page fades in with the step, so the page itself is never stretched. */}
+      {/* The frame alone shares `canvasLayoutId` (wave 3: with the Layout canvas): it grows into the canvas
+          while the page fades in with the step, so the page itself is never stretched. */}
       <motion.div
         aria-hidden
         layoutId={canvasLayoutId}
-        layoutDependency={kind}
+        layoutDependency={target.key}
         transition={smooth}
         className="absolute inset-0 rounded-[inherit] border border-app bg-app/70"
       />

@@ -33,8 +33,9 @@ async function readLimited(request: Request, limit: number): Promise<string | nu
 }
 
 /**
- * Copy for the sections of one page as an RFC 6902 patch, with one free use of this device (402
- * `free-tier-exhausted` when there are none left: the UI offers BYOK or «mi Claude»).
+ * Copy for the sections of one page, or of several screens at once (one «Generar» in Modo Layout), as an RFC
+ * 6902 patch, with ONE free use of this device per request (402 `free-tier-exhausted` when there are none
+ * left: the UI offers BYOK or «mi Claude»).
  */
 export async function POST(request: Request): Promise<Response> {
   const rejected = rejectForeignRequest(request);
@@ -52,7 +53,12 @@ export async function POST(request: Request): Promise<Response> {
     return error(400, { code: "invalid-request", message: "The body is not JSON" });
   }
   const body = CopyRequestBodySchema.safeParse(json);
-  if (!body.success) return error(400, { code: "invalid-request", message: "Expected { doc, kind, sectionIds?, instructions?, locale }" });
+  if (!body.success) {
+    return error(400, {
+      code: "invalid-request",
+      message: "Expected { doc, kind, sectionIds?, instructions?, locale } or { doc, screens: [{ id, sectionIds? }], instructions?, locale }",
+    });
+  }
 
   const config = readAiServerConfig();
   const caller = resolveAiCaller(request, config);

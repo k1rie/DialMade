@@ -1,13 +1,14 @@
-/** «Café Brisa» → «cafe-brisa». */
-export function slugify(name: string): string {
+/** «Café Brisa» → «cafe-brisa»: only `a-z`, `0-9` and inner hyphens, at most 48 characters; `fallback` when nothing is left. */
+export function slugify(name: string, fallback = "dialmade"): string {
   const slug = name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-  return slug || "dialmade";
+    .slice(0, 48)
+    .replace(/-+$/, "");
+  return slug || fallback;
 }
 
 export function bytesToBase64(bytes: Uint8Array): string {

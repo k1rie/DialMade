@@ -2,12 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { applyPatch } from "@dialmade/doc";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { AiCaller } from "./access";
-import type { AiApiError, CopyApiSuccess } from "./api";
+import { CopyRequestBodySchema, type AiApiError, type CopyApiSuccess, type CopyRequestBody } from "./api";
 import { memoryAiLedger, resetAiLedger } from "./budget";
 import { AiLedgerError } from "./ledger";
 import { COPY_SYSTEM_PROMPT } from "./prompt";
 import { clientIp, generateHostedCopy, readAiServerConfig, type AiServerConfig } from "./server";
-import { message, mockClient, sampleDoc } from "./testing";
+import { collectScreenCopyFields } from "./fields";
+import { message, mockClient, sampleDoc, sampleScreensDoc } from "./testing";
 
 const NOW = new Date("2026-10-09T12:00:00Z");
 const config: AiServerConfig = {
@@ -41,7 +42,7 @@ const quiet = async <T>(run: () => Promise<T>): Promise<T> => {
 
 let ledger = memoryAiLedger();
 const usage = (deviceId = "device-a", ipHash = "ip-a") => ledger.usage({ deviceId, ipHash, now: NOW });
-const run = (overrides: Partial<Parameters<typeof generateHostedCopy>[1]> = {}, request = body) =>
+const run = (overrides: Partial<Parameters<typeof generateHostedCopy>[1]> = {}, request: CopyRequestBody = body) =>
   generateHostedCopy(request, { caller, config, ledger, now: NOW, ...overrides });
 
 describe("readAiServerConfig", () => {
@@ -291,6 +292,102 @@ describe("generateHostedCopy under the free tier", () => {
     expect(asError(await run({ client }, { ...body, sectionIds: ["missing-1"] })).code).toBe("no-fields");
     expect(countTokens).not.toHaveBeenCalled();
     expect(await usage()).toMatchObject({ freeUsesUsed: 0, ipRequestsToday: 0 });
+  });
+});
+
+describe("generateHostedCopy with several screens (one «Generar»)", () => {
+  beforeEach(() => {
+    resetAiLedger();
+    ledger = memoryAiLedger();
+  });
+
+  const screensDoc = sampleScreensDoc();
+  const screens = [{ id: "s-home" }, { id: "s-detail" }];
+  const screensBody: CopyRequestBody = { doc: screensDoc, screens, locale: "es" };
+  const fields = collectScreenCopyFields(screensDoc, screens);
+  const heroTitle = fields.find((field) => field.screenId === "s-home" && field.sectionType === "landing.hero" && field.path.join(".") === "title")!;
+  const detailField = fields.find((field) => field.screenId === "s-detail")!;
+
+  it("makes ONE budgeted call for every screen (one free use) and returns screen patches plus the rejected ids", async () => {
+    const { client, countTokens, create } = mockClient({
+      create: async () =>
+        message({
+          output: {
+            edits: [
+              { id: heroTitle.id, text: "Tu equipo, en un solo lugar" },
+              { id: detailField.id, text: "Texto nuevo del detalle" },
+              { id: "f999", text: "x" },
+            ],
+          },
+        }),
+    });
+    const result = await run({ client }, screensBody);
+    expect(result.status).toBe(200);
+    const success = asSuccess(result);
+    expect(success.patches.map((op) => op.path)).toEqual([heroTitle.pointer, detailField.pointer]);
+    expect(success.rejected).toBe(1);
+    expect(success.rejectedIds).toEqual(["f999"]);
+    expect(applyPatch(screensDoc, success.patches).ok).toBe(true);
+    expect(countTokens).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledOnce();
+    expect(await usage()).toMatchObject({ freeUsesUsed: 1, ipRequestsToday: 1, reservedUsd: 0 });
+    expect(success).toMatchObject({ freeUsesRemaining: 4, freeUsesTotal: 5 });
+
+    const params = create.mock.calls[0]![0] as unknown as { system: { text: string }[]; messages: { content: string }[] };
+    expect(params.system[0]!.text).toBe(COPY_SYSTEM_PROMPT);
+    const content = params.messages[0]!.content;
+    expect(content).toContain('"screen": "s-home"');
+    expect(content).toContain('"screen": "s-detail"');
+    expect(content).toContain("<layout_notes>");
+  });
+
+  it("answers no-page for a screen the document does not have and no-fields for sections without text, before the ledger", async () => {
+    const { client, countTokens } = mockClient();
+    const missing = await run({ client }, { doc: screensDoc, screens: [{ id: "s-home" }, { id: "s-nope" }], locale: "es" });
+    expect(missing.status).toBe(400);
+    expect(asError(missing).code).toBe("no-page");
+    const empty = await run({ client }, { doc: screensDoc, screens: [{ id: "s-home", sectionIds: ["b-nope"] }], locale: "es" });
+    expect(asError(empty).code).toBe("no-fields");
+    const legacyPage = await run({ client }, { doc: screensDoc, kind: "landing", locale: "es" });
+    expect(asError(legacyPage).code).toBe("no-page");
+    expect(countTokens).not.toHaveBeenCalled();
+    expect(await usage()).toMatchObject({ freeUsesUsed: 0, ipRequestsToday: 0 });
+  });
+
+  it("accepts a v1 document (migrated on parse) with today's page body", async () => {
+    const v1 = JSON.parse(JSON.stringify(doc)) as Record<string, unknown>;
+    v1.version = 1;
+    delete v1.screens;
+    delete v1.screenOrder;
+    const { client } = mockClient({ create: async () => message({ output: { edits: [{ id: "f2", text: "Cobra en segundos" }] } }) });
+    const result = await run({ client }, { ...body, doc: v1 });
+    expect(result.status).toBe(200);
+    expect(asSuccess(result).patches).toEqual([{ op: "replace", path: "/pages/landing/elements/hero-1/props/title", value: "Cobra en segundos" }]);
+  });
+});
+
+describe("CopyRequestBodySchema", () => {
+  const ids = (n: number, prefix = "b") => Array.from({ length: n }, (_, i) => `${prefix}-${i}`);
+
+  it("keeps today's page body and adds the screens body", () => {
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, kind: "landing", sectionIds: ["hero-1"], locale: "es" }).success).toBe(true);
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: [{ id: "s-1" }, { id: "s-2", sectionIds: ["b-1"] }], instructions: "x", locale: "en" }).success).toBe(true);
+  });
+
+  it("caps the section ids at 64 in total, the screens at 24, and rejects mixed or repeated targets", () => {
+    const split = [
+      { id: "s-1", sectionIds: ids(40) },
+      { id: "s-2", sectionIds: ids(24) },
+    ];
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: split, locale: "es" }).success).toBe(true);
+    const over = [split[0], { id: "s-2", sectionIds: ids(25) }];
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: over, locale: "es" }).success).toBe(false);
+    const many = ids(25, "s").map((id) => ({ id }));
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: many, locale: "es" }).success).toBe(false);
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: [], locale: "es" }).success).toBe(false);
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: [{ id: "s-1" }, { id: "s-1" }], locale: "es" }).success).toBe(false);
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, kind: "landing", screens: [{ id: "s-1" }], locale: "es" }).success).toBe(false);
+    expect(CopyRequestBodySchema.safeParse({ doc: {}, screens: [{ id: "s-1", sectionIds: [] }], locale: "es" }).success).toBe(false);
   });
 });
 

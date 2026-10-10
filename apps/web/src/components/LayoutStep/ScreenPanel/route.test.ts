@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkRoute, normalizeRoute, ROUTE_PATTERN } from "./route";
+import { checkRoute, normalizeRoute, ROUTE_MAX, ROUTE_PATTERN } from "./route";
 
 const screens = [
   { id: "s-home", route: "/" },
@@ -55,5 +55,11 @@ describe("checkRoute", () => {
     expect(checkRoute("   ", "s-pricing", screens)).toEqual({ ok: false, reason: "invalid" });
     expect(checkRoute("/mis precios", "s-pricing", screens)).toEqual({ ok: false, reason: "invalid" });
     expect(checkRoute("/precios-", "s-pricing", screens)).toEqual({ ok: false, reason: "invalid" });
+  });
+
+  it("refuses a route longer than the document allows (ROUTE_MAX)", () => {
+    expect(ROUTE_MAX).toBe(96);
+    expect(checkRoute(`/${"a".repeat(ROUTE_MAX - 1)}`, "s-pricing", screens)).toEqual({ ok: true, route: `/${"a".repeat(ROUTE_MAX - 1)}` });
+    expect(checkRoute("a".repeat(ROUTE_MAX), "s-pricing", screens)).toEqual({ ok: false, reason: "invalid" });
   });
 });

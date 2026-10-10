@@ -1,6 +1,5 @@
 "use client";
 
-import { outputKindOptions } from "@dialmade/catalog";
 import { PALETTE_STYLES, cssVarName, generateTheme, type ColorMode, type PaletteStyleId, type RoleKey, type ThemePins } from "@dialmade/palette";
 import { useCallback, useEffect, useId, useRef } from "react";
 import { toast } from "sonner";
@@ -170,7 +169,6 @@ export function PaletteLab({ className }: PaletteLabProps) {
   const brandName = docName ?? brandNameFromFile(logo?.name) ?? f.doc.defaultName;
   const logoUrl = croppedLogoUrl ?? logo?.objectUrl;
   const style = PALETTE_STYLES.find((item) => item.id === styleId) ?? PALETTE_STYLES[0]!;
-  const kindOption = outputKindOptions.find((option) => option.id === previewKind) ?? outputKindOptions[0]!;
   const swatches = extract?.swatches ?? [];
   const seedLabels: Record<SeedRole, string> = { primary: p.seeds.primary, secondary: p.seeds.secondary };
   const pinnedCount = Object.keys(state.pinned?.light ?? {}).length + Object.keys(state.pinned?.dark ?? {}).length;
@@ -269,11 +267,10 @@ export function PaletteLab({ className }: PaletteLabProps) {
         className="z-30 sm:sticky sm:bottom-3 lg:col-span-2"
         theme={theme}
         hasLogo={!!logo}
-        kindLabel={kindOption.label[locale]}
         fileBase={brandSlug(brandName)}
         uploading={upload.reading}
         onChangeLogo={upload.open}
-        onCreate={actions.goToCreate}
+        onCreate={actions.goToLayout}
       />
       <input {...upload.inputProps} />
     </div>

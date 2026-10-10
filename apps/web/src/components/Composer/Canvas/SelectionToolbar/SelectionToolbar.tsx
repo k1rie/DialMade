@@ -1,26 +1,26 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { VARIANT_PROP } from "@dialmade/sections";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { IconButton } from "@/components/ui/IconButton";
 import { Popover } from "@/components/ui/Popover";
-import { useDesignDocActions } from "@/hooks/useDesignDoc";
+import { useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
 import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
 import { ArrowDownIcon, ArrowUpIcon, ChevronLeftIcon, ChevronRightIcon, CloseIcon, EyeOffIcon, SlidersIcon, SparklesIcon } from "../../icons";
-import { canMove, setPropOps } from "../../pageOps";
+import { canHide, canMove, pageTarget, setPropOps, type PageTarget } from "../../pageOps";
 import { sectionInfo } from "../../sectionInfo";
 import { KnobsPanel } from "./KnobsPanel";
 import { useToolbarPosition } from "./useToolbarPosition";
 
 export type SelectionToolbarProps = {
   doc: DesignDoc;
-  kind: OutputKind;
+  /** The page shown (a page kind's page or a screen's). */
+  target: PageTarget;
   id: string;
   logoUrl: string | undefined;
   stageRef: RefObject<HTMLDivElement | null>;
@@ -46,7 +46,7 @@ const FRAME_SELECTOR = '.dl-page[data-dl-interactive] .dl-el[tabindex="0"]';
  */
 export function SelectionToolbar({
   doc,
-  kind,
+  target,
   id,
   logoUrl,
   stageRef,
@@ -61,6 +61,7 @@ export function SelectionToolbar({
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
+  const store = useDesignDocStore();
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const outlineRef = useRef<HTMLDivElement | null>(null);
   const [knobsOpen, setKnobsOpen] = useState(false);
@@ -83,15 +84,19 @@ export function SelectionToolbar({
     return () => scroller?.removeEventListener("keydown", onKeyDown);
   }, [id, scrollerRef]);
 
-  const page = doc.pages[kind];
-  if (!page) return null;
-  const info = sectionInfo(page, id, locale);
+  const { page, screen } = target;
+  const info = sectionInfo(page, id, locale, screen);
+  // On a screen the layout decides the order (it changes in «Editar layout»), and only blocks hide.
+  const movable = !screen;
+  const hideable = canHide(target, id);
   const variants = info.def?.variants ?? [];
   const index = Math.max(0, variants.findIndex((v) => v.id === info.variant));
 
   const stepVariant = (delta: -1 | 1) => {
     const next = variants[(index + delta + variants.length) % variants.length];
-    if (next && next.id !== info.variant) actions.applyPatch(setPropOps(kind, id, VARIANT_PROP, next.id));
+    const live = store.getState().doc;
+    const liveTarget = live ? pageTarget(live, target.key) : null;
+    if (next && next.id !== info.variant && live && liveTarget) actions.applyPatch(setPropOps(live, liveTarget, id, VARIANT_PROP, next.id));
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -178,11 +183,15 @@ export function SelectionToolbar({
           )}
         >
           <p className="mb-3 text-caption font-semibold text-fg">{info.label}</p>
-          <KnobsPanel doc={doc} kind={kind} id={id} logoUrl={logoUrl} />
+          <KnobsPanel doc={doc} target={target} id={id} logoUrl={logoUrl} />
         </Popover>
-        <IconButton size="sm" label={t.selection.moveUp} icon={<ArrowUpIcon />} disabled={!canMove(page, id, -1)} onClick={() => onMove(id, -1)} />
-        <IconButton size="sm" label={t.selection.moveDown} icon={<ArrowDownIcon />} disabled={!canMove(page, id, 1)} onClick={() => onMove(id, 1)} />
-        <IconButton size="sm" label={t.selection.hide} icon={<EyeOffIcon />} onClick={() => onHide(id)} />
+        {movable && (
+          <>
+            <IconButton size="sm" label={t.selection.moveUp} icon={<ArrowUpIcon />} disabled={!canMove(page, id, -1)} onClick={() => onMove(id, -1)} />
+            <IconButton size="sm" label={t.selection.moveDown} icon={<ArrowDownIcon />} disabled={!canMove(page, id, 1)} onClick={() => onMove(id, 1)} />
+          </>
+        )}
+        {hideable && <IconButton size="sm" label={t.selection.hide} icon={<EyeOffIcon />} onClick={() => onHide(id)} />}
         <Divider />
         <IconButton
           size="sm"

@@ -13,12 +13,16 @@ import {
   toPromptPack,
   toThemeCss,
   type DesignDoc,
+  type ExportOptions,
+  type Page,
+  type PageElement,
   type ThemeInputs,
 } from "@dialmade/doc";
-import { renderStaticPage } from "@dialmade/sections";
+import { renderStaticPage, visibleProps } from "@dialmade/sections";
 import { strToU8, zipSync, type Zippable } from "fflate";
-import type { ExportDictionary, PackReadmeInfo } from "@/i18n/export";
+import type { ExportDictionary, PackReadmeInfo, PackReadmeScreen } from "@/i18n/export";
 import { bytesToBase64, slugify } from "./files";
+import { layoutJson, linkResolver, relativeHref, screenPages, screenPath, type PackScreen } from "./screenPages";
 import { figmaTokensJson } from "./tokens";
 
 export type KitCss = { ui: string; sections: string };
@@ -43,6 +47,8 @@ export type BuiltFile = { bytes: Uint8Array; filename: string; type: string; ski
 const KIND_ORDER: readonly OutputKind[] = ["brand", "landing", "app"];
 const JSON_INDENT = 2;
 const json = (value: unknown) => `${JSON.stringify(value, null, JSON_INDENT)}\n`;
+/** Only these characters reach a ZIP path; every path is built from fixed names and slugs. */
+const SAFE_PATH = /^[a-z0-9][a-z0-9._-]*(\/[a-z0-9][a-z0-9._-]*)*$/i;
 
 /** Pages of the doc with the focus first (the one `index.html` / `preview.html` shows). */
 export function packKinds(doc: DesignDoc): OutputKind[] {
@@ -50,20 +56,52 @@ export function packKinds(doc: DesignDoc): OutputKind[] {
   return [...kinds.filter((kind) => kind === doc.brief.focus), ...kinds.filter((kind) => kind !== doc.brief.focus)];
 }
 
-function readmeInfo(input: PackInput, kinds: readonly OutputKind[]): PackReadmeInfo {
+/**
+ * The exports describe what the pages render: a screen page stores its lists at their maximum and `count`
+ * decides how many show (`visibleProps` of @dialmade/sections). Documents without screens are not affected.
+ */
+export const describeElement = (element: PageElement): Record<string, unknown> => visibleProps(element);
+
+/** Options of every DESIGN.md and prompt pack of the export. */
+export const exportOptions = (inputs: ThemeInputs): ExportOptions => ({ ...inputs, visibleProps: describeElement });
+
+/** User text inside the README's Markdown: one line, no backticks. */
+const mdText = (text: unknown) => (typeof text === "string" ? text : "").replace(/`/g, "").replace(/\s+/g, " ").trim();
+
+function readmeInfo(
+  input: PackInput,
+  focus: string,
+  pages: PackReadmeInfo["pages"],
+  screens: PackReadmeScreen[] = [],
+): PackReadmeInfo {
   const { doc, inputs } = input;
   const fonts = resolveFonts(doc, inputs.pairing);
   const fontsUrl = fontsUrlFor(doc, inputs.pairing);
   return {
+    version: doc.version,
     name: doc.brand.name,
     ...(doc.brand.tagline && { tagline: doc.brand.tagline }),
-    focus: input.kindLabel(kinds[0] ?? doc.brief.focus),
-    pages: kinds.map((kind) => ({ kind, label: input.kindLabel(kind) })),
+    focus,
+    pages,
+    screens,
     heading: fonts.heading.family ?? inputs.pairing.heading.family,
     body: fonts.body.family ?? inputs.pairing.body.family,
     ...(fontsUrl && { fontsUrl }),
     hasLogo: !!input.logo,
   };
+}
+
+/** «Pantallas y flujo» of the README: every screen with its file in this pack and the screens it links to. */
+function readmeScreens(screens: readonly PackScreen[], pathOf: (screen: PackScreen) => string): PackReadmeScreen[] {
+  return screens.map((screen) => {
+    const targets = new Set(Object.values(screen.links));
+    return {
+      name: mdText(screen.name),
+      route: mdText(screen.route),
+      path: pathOf(screen),
+      linksTo: screens.filter((other) => targets.has(other.id)).map((other) => mdText(other.name)),
+    };
+  });
 }
 
 /** Theme, tokens and briefs shared by both packs. */
@@ -72,18 +110,33 @@ function tokenFiles(input: PackInput): Record<string, string> {
   return {
     [EXPORT_FILES.themeCss]: toThemeCss(doc, inputs),
     [EXPORT_FILES.dtcg]: json(toDTCGFull(doc, inputs)),
-    [EXPORT_FILES.designMd]: toDesignMd(doc, { ...inputs, locale: input.locale }),
+    [EXPORT_FILES.designMd]: toDesignMd(doc, { ...exportOptions(inputs), locale: input.locale }),
   };
 }
 
-function renderPage(input: PackInput, kind: OutputKind, options: { logoUrl?: string; css?: string[]; stylesheets?: string[] }) {
+type RenderTarget = {
+  kind: OutputKind;
+  /** `<title>` after the brand name. */
+  label: string;
+  /** A screen's page; without it, `doc.pages[kind]`. */
+  page?: Page;
+  linkHref?: (id: string) => string | null;
+  links?: Readonly<Record<string, string>>;
+};
+
+type RenderOptions = { logoUrl?: string; css?: string[]; stylesheets?: string[] };
+
+function renderPage(input: PackInput, target: RenderTarget, options: RenderOptions) {
   const { doc, inputs, mode } = input;
-  const pageDials = doc.pages[kind]?.dials;
+  const pageDials = (target.page ?? doc.pages[target.kind])?.dials;
   const vars = compileThemeVars(doc, { ...inputs, mode, ...(pageDials && { pageDials }) });
   let skipped = 0;
-  const html = renderStaticPage(doc, kind, vars, {
+  const html = renderStaticPage(doc, target.kind, vars, {
     mode,
-    title: `${doc.brand.name} · ${input.kindLabel(kind)}`,
+    title: `${doc.brand.name} · ${target.label}`,
+    ...(target.page && { page: target.page }),
+    ...(target.linkHref && { linkHref: target.linkHref }),
+    ...(target.links && { links: target.links }),
     ...(options.logoUrl && { logoUrl: options.logoUrl }),
     ...(options.css && { css: options.css }),
     ...(options.stylesheets && { stylesheets: options.stylesheets }),
@@ -94,24 +147,37 @@ function renderPage(input: PackInput, kind: OutputKind, options: { logoUrl?: str
   return { html, skipped };
 }
 
+const kindTarget = (input: PackInput, kind: OutputKind): RenderTarget => ({ kind, label: input.kindLabel(kind) });
+
+/** A screen rendered with its own dials and page title, its `linkTo`s and `linkHref` for every link. */
+const screenTarget = (screen: PackScreen, linkHref: (id: string) => string | null): RenderTarget => ({
+  kind: screen.kind,
+  label: screen.name,
+  page: screen.page,
+  linkHref,
+  links: screen.links,
+});
+
 const zip = (root: string, files: Record<string, string | Uint8Array>): Uint8Array => {
   const tree: Zippable = {};
   for (const [path, content] of Object.entries(files)) {
+    // Defense in depth: paths come from fixed names and slugs, never from a route or a name as typed.
+    if (!SAFE_PATH.test(path) || path.split("/").includes("..")) throw new Error(`Unsafe path in the export: ${JSON.stringify(path)}`);
     tree[`${root}/${path}`] = typeof content === "string" ? strToU8(content) : [content, { level: 0 }];
   }
   return zipSync(tree, { level: 6 });
 };
 
 /**
- * «Código»: one `index.html` per page (`{kind}/index.html`, plus the focus page at the root) linking
- * the kit CSS, `theme.css`, DTCG tokens, Figma variables, DESIGN.md, every prompt pack and a README.
+ * «Código»: one `index.html` per page linking the kit CSS, `theme.css`, DTCG tokens, Figma variables,
+ * DESIGN.md, every prompt pack and a README. Without screens: `{kind}/index.html`, plus the focus page at the
+ * root. With screens (Modo Layout): one folder per screen (`/` at the root) with its `index.html`,
+ * `layout.css` and `layout.json`, real relative links between them, and the style guide in `brand/`.
  */
 export function buildCodePack(input: PackInput): BuiltFile {
   const { doc, inputs } = input;
-  const kinds = packKinds(doc);
   const slug = slugify(doc.brand.name);
   const files: Record<string, string | Uint8Array> = {
-    "README.md": input.texts.codeReadme(readmeInfo(input, kinds)),
     ...tokenFiles(input),
     [EXPORT_FILES.figmaLight]: figmaTokensJson(doc, inputs, "light"),
     [EXPORT_FILES.figmaDark]: figmaTokensJson(doc, inputs, "dark"),
@@ -120,49 +186,109 @@ export function buildCodePack(input: PackInput): BuiltFile {
     "assets/dialmade-sections.css": input.css.sections,
   };
   if (input.logo) files["assets/logo.png"] = input.logo.bytes;
-  for (const target of PROMPT_TARGETS) files[`prompts/${target}.md`] = toPromptPack(doc, target, input.locale, inputs);
+  const options = exportOptions(inputs);
+  for (const target of PROMPT_TARGETS) files[`prompts/${target}.md`] = toPromptPack(doc, target, input.locale, options);
 
   let skippedSections = 0;
-  const page = (kind: OutputKind, base: string) =>
-    renderPage(input, kind, {
+  const render = (target: RenderTarget, base: string, extraCss: string[] = [], count = true) => {
+    const result = renderPage(input, target, {
       ...(input.logo && { logoUrl: `${base}assets/logo.png` }),
-      stylesheets: [`${base}assets/dialmade-ui.css`, `${base}assets/dialmade-sections.css`],
+      stylesheets: [`${base}assets/dialmade-ui.css`, `${base}assets/dialmade-sections.css`, ...extraCss],
     });
-  kinds.forEach((kind, index) => {
-    const result = page(kind, "../");
-    skippedSections += result.skipped;
-    files[`${kind}/index.html`] = result.html;
-    if (index === 0) files["index.html"] = page(kind, "").html;
-  });
+    if (count) skippedSections += result.skipped;
+    return result.html;
+  };
 
-  return { bytes: zip(`${slug}-dialmade`, files), filename: `${slug}-dialmade.zip`, type: "application/zip", skippedSections };
+  const screens = screenPages(doc);
+  let readme: PackReadmeInfo;
+  if (screens.length > 0) {
+    for (const screen of screens) {
+      const folder = screen.dir ? `${screen.dir}/` : "";
+      const linkHref = linkResolver(screens, (to) => relativeHref(screen, to));
+      // layout.css sits next to the page and loads after the kit CSS.
+      files[`${folder}index.html`] = render(screenTarget(screen, linkHref), screen.dir ? "../" : "", ["layout.css"]);
+      files[`${folder}layout.css`] = screen.css;
+      files[`${folder}layout.json`] = json(layoutJson(screen, linkHref));
+    }
+    if (doc.pages.brand) files["brand/index.html"] = render(kindTarget(input, "brand"), "../");
+    const root = screens.find((screen) => screen.dir === "") ?? screens[0]!;
+    const pages = [
+      ...screens.filter((screen) => screen !== root).map((screen) => ({ path: screenPath(screen), label: mdText(screen.name) })),
+      ...(doc.pages.brand ? [{ path: "brand/index.html", label: input.kindLabel("brand") }] : []),
+    ];
+    readme = readmeInfo(input, mdText(root.name), pages, readmeScreens(screens, screenPath));
+  } else {
+    const kinds = packKinds(doc);
+    kinds.forEach((kind, index) => {
+      files[`${kind}/index.html`] = render(kindTarget(input, kind), "../");
+      // The focus page again at the root (its skipped sections are already counted).
+      if (index === 0) files["index.html"] = render(kindTarget(input, kind), "", [], false);
+    });
+    readme = readmeInfo(
+      input,
+      input.kindLabel(kinds[0] ?? doc.brief.focus),
+      kinds.map((kind) => ({ path: `${kind}/index.html`, label: input.kindLabel(kind) })),
+    );
+  }
+
+  return {
+    bytes: zip(`${slug}-dialmade`, { "README.md": input.texts.codeReadme(readme), ...files }),
+    filename: `${slug}-dialmade.zip`,
+    type: "application/zip",
+    skippedSections,
+  };
 }
 
 /**
  * «Claude Design»: a folder to upload to a Design System artifact. Brand book README, DESIGN.md, theme
- * and tokens, and self-contained previews (kit CSS inline, logo as data URL) of every page.
+ * and tokens, and self-contained previews (kit CSS inline, logo as data URL) of every page. With screens:
+ * `preview.html` is the first screen, `preview-{screen}.html` the others (linked to each other, each with its
+ * layout CSS inline) and `preview-brand.html` the style guide.
  */
 export function buildClaudeDesignPack(input: PackInput): BuiltFile {
   const { doc } = input;
-  const kinds = packKinds(doc);
   const slug = slugify(doc.brand.name);
   const logoUrl = input.logo ? `data:${input.logo.type};base64,${bytesToBase64(input.logo.bytes)}` : undefined;
   const files: Record<string, string | Uint8Array> = {
-    "README.md": input.texts.claudeDesignReadme(readmeInfo(input, kinds)),
     ...tokenFiles(input),
-    "prompt.md": toPromptPack(doc, "claude-design", input.locale, input.inputs),
+    "prompt.md": toPromptPack(doc, "claude-design", input.locale, exportOptions(input.inputs)),
   };
   if (input.logo) files["logo.png"] = input.logo.bytes;
 
   let skippedSections = 0;
-  kinds.forEach((kind, index) => {
-    const result = renderPage(input, kind, { ...(logoUrl && { logoUrl }), css: [input.css.ui, input.css.sections] });
+  const render = (target: RenderTarget, extraCss: string[] = []) => {
+    const result = renderPage(input, target, { ...(logoUrl && { logoUrl }), css: [input.css.ui, input.css.sections, ...extraCss] });
     skippedSections += result.skipped;
-    files[index === 0 ? "preview.html" : `preview-${kind}.html`] = result.html;
-  });
+    return result.html;
+  };
+
+  const screens = screenPages(doc);
+  let readme: PackReadmeInfo;
+  if (screens.length > 0) {
+    const first = screens[0]!;
+    const previewOf = (screen: PackScreen) => (screen === first ? "preview.html" : `preview-${screen.slug}.html`);
+    const linkHref = linkResolver(screens, previewOf);
+    for (const screen of screens) files[previewOf(screen)] = render(screenTarget(screen, linkHref), [screen.css]);
+    if (doc.pages.brand) files["preview-brand.html"] = render(kindTarget(input, "brand"));
+    const pages = [
+      ...screens.map((screen) => ({ path: previewOf(screen), label: mdText(screen.name) })),
+      ...(doc.pages.brand ? [{ path: "preview-brand.html", label: input.kindLabel("brand") }] : []),
+    ];
+    readme = readmeInfo(input, mdText(first.name), pages, readmeScreens(screens, previewOf));
+  } else {
+    const kinds = packKinds(doc);
+    kinds.forEach((kind, index) => {
+      files[index === 0 ? "preview.html" : `preview-${kind}.html`] = render(kindTarget(input, kind));
+    });
+    readme = readmeInfo(
+      input,
+      input.kindLabel(kinds[0] ?? doc.brief.focus),
+      kinds.map((kind, index) => ({ path: index === 0 ? "preview.html" : `preview-${kind}.html`, label: input.kindLabel(kind) })),
+    );
+  }
 
   return {
-    bytes: zip(`${slug}-claude-design`, files),
+    bytes: zip(`${slug}-claude-design`, { "README.md": input.texts.claudeDesignReadme(readme), ...files }),
     filename: `${slug}-claude-design.zip`,
     type: "application/zip",
     skippedSections,

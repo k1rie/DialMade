@@ -1,6 +1,6 @@
 /*
- * Look of the template picker's large cards, shared by SetCard and BlankCard. Same treatment as the
- * «¿Qué quieres crear?» cards (CreateStep/KindCard): surface card with a hover lift, preview on top.
+ * Look of the template picker's large cards, shared by KindCard and BlankCard (the treatment of the old
+ * «¿Qué quieres crear?» cards): surface card with a hover lift, preview on top.
  */
 
 /** Outer focusable element: the focus ring sits outside the card. */
@@ -16,3 +16,6 @@ export const CARD_SURFACE =
 /** Preview area: same aspect on every card so names and descriptions line up. */
 export const CARD_PREVIEW =
   "relative flex aspect-[8/5] w-full items-center justify-center overflow-hidden rounded-card bg-app px-3 shadow-[0_0_0_1px_oklch(1_0_0/0.06)]";
+
+/** Design size of the minis (@dialmade/sections); they are scaled to fit their box. */
+export const MINI_SIZE = { width: 320, height: 200 } as const;

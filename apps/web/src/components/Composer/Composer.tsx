@@ -1,12 +1,13 @@
 "use client";
 
-import { outputKindOptions, type OutputKind } from "@dialmade/catalog";
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { outputKindOptions } from "@dialmade/catalog";
+import type { PageKey } from "@dialmade/doc";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
-import { AiCopyError, useAiCopy, type AiCopyResult } from "@/hooks/useAiCopy";
+import { AiCopyError, useAiCopy, type AiCopyRequest, type AiCopyResult } from "@/hooks/useAiCopy";
 import {
-  selectActivePageKind,
-  useActivePageKind,
+  selectActiveKey,
+  useActiveKey,
   useDesignDerived,
   useDesignDoc,
   useDesignDocActions,
@@ -18,13 +19,13 @@ import { ai as aiText } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
-import { formatUsd } from "./aiEstimate";
+import { formatUsd } from "@/lib/money";
 import { BriefPanel } from "./BriefPanel";
 import { Canvas } from "./Canvas";
 import { ComposerTopBar } from "./ComposerTopBar";
 import { DND, THEME_COMBOS } from "./constants";
 import { DeckFonts } from "./DeckFonts";
-import { hiddenOps, isHidden, moveOps } from "./pageOps";
+import { canHide, hiddenOps, isHidden, moveOps, pageTarget, type PageTarget } from "./pageOps";
 import { sectionInfo } from "./sectionInfo";
 import { ThemePanel } from "./ThemePanel";
 import { useComposerActions } from "./useComposerActions";
@@ -33,14 +34,24 @@ import { useComposerShortcuts } from "./useComposerShortcuts";
 export type ComposerProps = {
   /** Opens the ExportDialog (stepper «4 Exportar»). */
   onExport: () => void;
-  /** Back to «Crear» (pick or switch the output kind). */
+  /** Back to «Layout» (the draft of the screens; legacy documents pick a starting set there). */
   onBack: () => void;
   /** Back to the Palette Lab to change colors; the doc keeps its pages and edits. */
   onEditBrand: () => void;
+  /** «Editar layout» (default: `onBack`, which also goes to «Layout»). */
+  onEditLayout?: () => void;
   className?: string;
 };
 
-type Selection = { kind: OutputKind; id: string };
+type Selection = { key: PageKey; id: string };
+
+/** The AI request for a page: the screen (Modo Layout) or the page kind; only `sectionIds` when given. */
+function copyRequest(target: PageTarget, sectionIds?: string[], instructions?: string): AiCopyRequest {
+  const extra = instructions ? { instructions } : {};
+  return target.screen
+    ? { screens: [{ id: target.screen.id, ...(sectionIds && { sectionIds }) }], ...extra }
+    : { kind: target.kind, ...(sectionIds && { sectionIds }), ...extra };
+}
 
 const MIN_HEIGHT = 600;
 const BOTTOM_GAP = 24;
@@ -51,7 +62,7 @@ const BOTTOM_GAP = 24;
  * themes, button color and font packs on the right. Cards apply by click or by dragging onto the
  * page or a slot; every edit is a validated patch with undo/redo (⌘Z / ⇧⌘Z).
  */
-export function Composer({ onExport, onBack, onEditBrand, className }: ComposerProps) {
+export function Composer({ onExport, onBack, onEditBrand, onEditLayout, className }: ComposerProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const texts = useDictionary(aiText);
@@ -59,8 +70,8 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
   const mode = useDesignDoc((state) => state.previewMode);
   const device = useDesignDoc((state) => state.device);
   const logoUrl = useDesignDoc((state) => state.logoUrl);
-  const active = useActivePageKind();
-  const derived = useDesignDerived(active);
+  const activeKey = useActiveKey();
+  const derived = useDesignDerived(activeKey);
   const actions = useDesignDocActions();
   const store = useDesignDocStore();
   const history = useDesignHistory();
@@ -99,16 +110,26 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
     if (window.matchMedia("(max-width: 639px)").matches && store.getState().device === "desktop") actions.setDevice("mobile");
   }, [store, actions]);
 
-  const labelOf = useCallback((kind: OutputKind) => outputKindOptions.find((option) => option.id === kind)?.label[locale] ?? kind, [locale]);
+  /** A screen by its name, a page by its kind («Guía de estilo», legacy «Landing page»…). */
+  const labelOf = useCallback(
+    (target: Pick<PageTarget, "kind" | "screen">) =>
+      target.screen?.name ?? outputKindOptions.find((option) => option.id === target.kind)?.label[locale] ?? target.kind,
+    [locale],
+  );
 
-  const activeKind = useCallback(() => selectActivePageKind(store.getState()), [store]);
+  /** The page shown right now, read from the store (handlers run after renders). */
+  const activeTarget = useCallback((): PageTarget | null => {
+    const state = store.getState();
+    const key = selectActiveKey(state);
+    return state.doc && key ? pageTarget(state.doc, key) : null;
+  }, [store]);
 
   const selectFromCanvas = useCallback(
     (id: string) => {
-      const kind = activeKind();
-      if (kind) setSelection({ kind, id });
+      const target = activeTarget();
+      if (target) setSelection({ key: target.key, id });
     },
-    [activeKind],
+    [activeTarget],
   );
   const selectFromList = useCallback(
     (id: string) => {
@@ -121,33 +142,33 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
 
   const moveSection = useCallback(
     (id: string, delta: -1 | 1) => {
-      const kind = activeKind();
-      const page = kind ? store.getState().doc?.pages[kind] : undefined;
-      const ops = kind && page ? moveOps(kind, page, id, delta) : null;
+      const target = activeTarget();
+      // On a screen the layout decides the order: it changes in «Editar layout».
+      const ops = target && !target.screen ? moveOps(target.key, target.page, id, delta) : null;
       if (ops && actions.applyPatch(ops).ok) setRevealKey((key) => key + 1);
     },
-    [activeKind, store, actions],
+    [activeTarget, actions],
   );
 
   const hideSection = useCallback(
     (id: string) => {
-      const kind = activeKind();
-      const page = kind ? store.getState().doc?.pages[kind] : undefined;
-      if (!kind || !page) return;
-      const label = sectionInfo(page, id, locale).label;
-      if (!actions.applyPatch(hiddenOps(kind, page, id, true)).ok) return;
+      const target = activeTarget();
+      if (!target || !canHide(target, id)) return;
+      const label = sectionInfo(target.page, id, locale, target.screen).label;
+      if (!actions.applyPatch(hiddenOps(target, id, true)).ok) return;
       setSelection(null);
       toast(t.selection.hiddenToast(label), {
         action: {
           label: t.selection.show,
           onClick: () => {
-            const current = store.getState().doc?.pages[kind];
-            if (current) actions.applyPatch(hiddenOps(kind, current, id, false));
+            const doc = store.getState().doc;
+            const current = doc ? pageTarget(doc, target.key) : null;
+            if (current) actions.applyPatch(hiddenOps(current, id, false));
           },
         },
       });
     },
-    [activeKind, store, actions, locale, t],
+    [activeTarget, store, actions, locale, t],
   );
 
   const reportAiError = useCallback(
@@ -181,18 +202,17 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
 
   const improveSection = useCallback(
     async (id: string) => {
-      const kind = activeKind();
-      const page = kind ? store.getState().doc?.pages[kind] : undefined;
-      if (!kind || !page) return;
+      const target = activeTarget();
+      if (!target) return;
       if (!ai.available) {
         setAiMenuOpen(true);
         return;
       }
       setAiSection(id);
       try {
-        const result = await ai.generateCopy({ kind, sectionIds: [id] });
+        const result = await ai.generateCopy(copyRequest(target, [id]));
         if (!actions.applyPatch(result.patches).ok) throw new AiCopyError("invalid-response");
-        toast.success(t.ai.sectionDone(sectionInfo(page, id, locale).label), {
+        toast.success(t.ai.sectionDone(sectionInfo(target.page, id, locale, target.screen).label), {
           action: { label: t.undoAction, onClick: () => history.undo() },
         });
       } catch (error) {
@@ -201,15 +221,15 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         setAiSection(null);
       }
     },
-    [activeKind, store, ai, actions, history, locale, t, reportAiError],
+    [activeTarget, ai, actions, history, locale, t, reportAiError],
   );
 
   const generatePageCopy = useCallback(
     async (instructions: string) => {
-      const kind = activeKind();
-      if (!kind) return;
+      const target = activeTarget();
+      if (!target) return;
       try {
-        const result = await ai.generateCopy({ kind, ...(instructions && { instructions }) });
+        const result = await ai.generateCopy(copyRequest(target, undefined, instructions));
         if (!actions.applyPatch(result.patches).ok) throw new AiCopyError("invalid-response");
         setAiMenuOpen(false);
         toast.success(t.ai.done(formatUsd(result.costUsd, locale)), { action: { label: t.undoAction, onClick: () => history.undo() } });
@@ -217,7 +237,7 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         reportAiError(error);
       }
     },
-    [activeKind, ai, actions, history, locale, t, reportAiError],
+    [activeTarget, ai, actions, history, locale, t, reportAiError],
   );
 
   /** A validated «Copiar prompt para mi Claude» answer: applied as one undo step, like a generated one. */
@@ -244,9 +264,10 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
     [applyRecipe, applyPairing, applyTheme],
   );
 
-  const page = doc && active ? doc.pages[active] : undefined;
+  const target = useMemo(() => (doc && activeKey ? pageTarget(doc, activeKey) : null), [doc, activeKey]);
+  const page = target?.page;
   const selectedId =
-    selection && page && selection.kind === active && selection.id !== page.root && page.elements[selection.id] && !isHidden(page, selection.id)
+    selection && target && page && selection.key === target.key && selection.id !== page.root && page.elements[selection.id] && !isHidden(page, selection.id)
       ? selection.id
       : null;
 
@@ -259,8 +280,8 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
     },
   });
 
-  if (!doc || !active || !page || !derived) return null;
-  const pageLabel = labelOf(active);
+  if (!doc || !target || !derived) return null;
+  const pageLabel = labelOf(target);
 
   return (
     <div
@@ -273,7 +294,7 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
       <DeckFonts />
       <ComposerTopBar
         doc={doc}
-        kind={active}
+        target={target}
         pageLabel={pageLabel}
         logoUrl={logoUrl}
         ai={ai}
@@ -283,13 +304,14 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         onManualCopy={applyManualCopy}
         onBack={onBack}
         onEditBrand={onEditBrand}
+        onEditLayout={onEditLayout ?? onBack}
         onExport={onExport}
       />
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[17rem_minmax(0,1fr)_15.5rem] xl:grid-cols-[19rem_minmax(0,1fr)_17.5rem]">
         <BriefPanel
           className="order-2 lg:order-none"
           doc={doc}
-          kind={active}
+          target={target}
           pageLabel={pageLabel}
           mode={mode}
           selectedId={selectedId}
@@ -298,7 +320,7 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         <Canvas
           className="order-1 lg:order-none"
           doc={doc}
-          kind={active}
+          target={target}
           labelOf={labelOf}
           mode={mode}
           device={device}

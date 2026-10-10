@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { AnimatePresence, motion } from "motion/react";
 import { useId, useRef, useState, type KeyboardEvent } from "react";
@@ -13,6 +12,7 @@ import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { snappy, tween } from "@/lib/motion";
 import { LanguagesIcon } from "../icons";
+import type { PageTarget } from "../pageOps";
 import { BrandFields } from "./BrandFields";
 import { DialsControl } from "./DialsControl";
 import { DirectionControl } from "./DirectionControl";
@@ -24,7 +24,8 @@ const TABS: readonly Tab[] = ["design", "sections"];
 
 export type BriefPanelProps = {
   doc: DesignDoc;
-  kind: OutputKind | null;
+  /** The page shown (its dials and its sections). */
+  target: PageTarget | null;
   pageLabel: string;
   mode: PreviewMode;
   selectedId: string | null;
@@ -33,7 +34,7 @@ export type BriefPanelProps = {
 };
 
 /** Left column (Replit-style controls): brief, dials and direction cards, plus the section list. */
-export function BriefPanel({ doc, kind, pageLabel, mode, selectedId, onSelect, className }: BriefPanelProps) {
+export function BriefPanel({ doc, target, pageLabel, mode, selectedId, onSelect, className }: BriefPanelProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
@@ -122,11 +123,11 @@ export function BriefPanel({ doc, kind, pageLabel, mode, selectedId, onSelect, c
                   </p>
                 )}
               </PanelSection>
-              <DialsControl doc={doc} kind={kind} pageLabel={pageLabel} />
+              <DialsControl doc={doc} target={target} pageLabel={pageLabel} />
               <DirectionControl doc={doc} mode={mode} />
             </>
-          ) : kind ? (
-            <SectionList doc={doc} kind={kind} selectedId={selectedId} onSelect={onSelect} />
+          ) : target ? (
+            <SectionList target={target} selectedId={selectedId} onSelect={onSelect} />
           ) : null}
         </motion.div>
       </AnimatePresence>

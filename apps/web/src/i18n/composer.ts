@@ -6,9 +6,10 @@ export const composer = defineDictionary({
     region: "Ajustar diseño",
     undoAction: "Deshacer",
     topBar: {
-      back: "Crear",
-      backLabel: "Volver a Crear",
+      back: "Layout",
+      backLabel: "Volver a Layout",
       editBrand: "Editar marca",
+      editLayout: "Editar layout",
       undo: "Deshacer",
       redo: "Rehacer",
       export: "Exportar",
@@ -92,6 +93,7 @@ export const composer = defineDictionary({
     sections: {
       title: "Secciones",
       hint: (up: string, down: string) => `Arrastra el asa para reordenar. Con teclado: ${up} y ${down}.`,
+      layoutHint: "El orden y el tamaño se cambian en Layout.",
       handle: (section: string) => `Reordenar ${section}`,
       hide: (section: string) => `Ocultar ${section}`,
       show: (section: string) => `Mostrar ${section}`,
@@ -161,9 +163,10 @@ export const composer = defineDictionary({
     region: "Adjust design",
     undoAction: "Undo",
     topBar: {
-      back: "Create",
-      backLabel: "Back to Create",
+      back: "Layout",
+      backLabel: "Back to Layout",
       editBrand: "Edit brand",
+      editLayout: "Edit layout",
       undo: "Undo",
       redo: "Redo",
       export: "Export",
@@ -247,6 +250,7 @@ export const composer = defineDictionary({
     sections: {
       title: "Sections",
       hint: (up: string, down: string) => `Drag the handle to reorder. With the keyboard: ${up} and ${down}.`,
+      layoutHint: "Order and size are changed in Layout.",
       handle: (section: string) => `Reorder ${section}`,
       hide: (section: string) => `Hide ${section}`,
       show: (section: string) => `Show ${section}`,

@@ -53,15 +53,5 @@ export const BUTTON_COLOR_STEPS = {
 /** Roles a button color override writes, in both modes. */
 export const BUTTON_COLOR_ROLES = ["primary", "primary-foreground", "cta", "cta-foreground"] as const;
 
-/**
- * Rough size of an AI copy request, shown before generating (prices come from `@/lib/ai/pricing` for
- * the default model): ~3.5 characters per token, the prompt's fixed part and a rewrite slightly longer.
- */
-export const AI_ESTIMATE = {
-  charsPerToken: 3.5,
-  promptOverheadTokens: 2500,
-  outputRatio: 1.3,
-} as const;
-
 /** Palette styles whose theme defaults to dark (`Theme.defaultMode`); theme cards preview them dark. */
 export const DARK_PALETTE_STYLES: ReadonlySet<PaletteStyleId> = new Set<PaletteStyleId>(["dark-luxury", "neon"]);

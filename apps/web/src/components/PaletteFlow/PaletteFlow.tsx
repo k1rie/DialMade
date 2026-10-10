@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import { hexToOklch } from "@dialmade/palette";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import dynamic from "next/dynamic";
@@ -9,12 +8,21 @@ import { toast } from "sonner";
 import { AppBackground } from "@/components/AppBackground";
 import { DndProvider } from "@/components/dnd/DndProvider";
 import { HomeHero } from "@/components/HomeHero";
+import type { GenerateResult, LayoutStore } from "@/components/LayoutStep";
 import { LogoBurst } from "@/components/LogoBurst";
 import { LogoCropper } from "@/components/LogoCropper";
 import { PaletteLab } from "@/components/PaletteLab";
-import { DesignDocProvider, useDesignDoc, useDesignDocActions } from "@/hooks/useDesignDoc";
+import {
+  DesignDocProvider,
+  docHasDesign,
+  selectActiveKey,
+  useDesignDoc,
+  useDesignDocActions,
+  useDesignDocStore,
+} from "@/hooks/useDesignDoc";
 import { PaletteFlowProvider, flowPhaseOf, usePaletteFlow, type FlowStep } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
+import { composer } from "@/i18n/composer";
 import { flow } from "@/i18n/flow";
 import { importText } from "@/i18n/import";
 import { LogoFileError, MAX_LOGO_MB, readLogoFile } from "@/lib/image";
@@ -25,11 +33,12 @@ import { useDesignDocSync } from "./useDesignDocSync";
 import { useFileDropGuard } from "./useFileDropGuard";
 import { useLogoExtraction } from "./useLogoExtraction";
 
-// «Crear», «Ajustar» and «Exportar» pull @dialmade/sections, @dialmade/ui and @dialmade/doc: they load on
-// demand through one chunk boundary (./designHalf) so the Home stays light and their CSS ships once.
+// «Layout», «Ajustar» and «Exportar» pull @dialmade/sections, @dialmade/ui, @dialmade/doc and @dialmade/layout:
+// they load on demand through one chunk boundary (./designHalf) so the Home stays light and their CSS ships once.
 const loadDesignHalf = () => import("./designHalf");
 const loadEngine = () => loadDesignHalf().then((m) => m.designEngine);
-const CreateStep = dynamic(() => loadDesignHalf().then((m) => m.loadCreateStep()), { ssr: false });
+// Client only: the layout store creates block and screen ids, and none may be created while prerendering.
+const LayoutStep = dynamic(() => loadDesignHalf().then((m) => m.loadLayoutStep()), { ssr: false });
 const Composer = dynamic(() => loadDesignHalf().then((m) => m.loadComposer()), { ssr: false });
 const ExportDialog = dynamic(() => loadDesignHalf().then((m) => m.loadExportDialog()), { ssr: false });
 // «Trae tu marca»: the panel is light and loads on its own; «Esto detectamos» paints with the doc engine.
@@ -38,7 +47,7 @@ const DetectedReview = dynamic(() => loadDesignHalf().then((m) => m.loadDetected
 
 function preloadDesignStages() {
   loadDesignHalf()
-    .then((m) => Promise.all([m.loadCreateStep(), m.loadComposer(), m.loadExportDialog()]))
+    .then((m) => Promise.all([m.loadLayoutStep(), m.loadComposer(), m.loadExportDialog()]))
     .catch(() => {});
 }
 
@@ -57,7 +66,7 @@ function tintFor(brand: string | undefined): string | undefined {
 
 type StageProps = { step: FlowStep; label: string; focusOnEnter: boolean; children: ReactNode };
 
-/** How long a lazy step (Crear, Ajustar) may take to render its title before focus settles on the region. */
+/** How long a lazy step (Layout, Ajustar) may take to render its title before focus settles on the region. */
 const FOCUS_TRIES = 30;
 
 /**
@@ -108,13 +117,25 @@ function Stage({ step, label, focusOnEnter, children }: StageProps) {
   );
 }
 
+/** How long the «¿Desbloquear y borrar?» question stays up after a Generar that would delete a locked value. */
+const LOCKED_TOAST_MS = 15_000;
+
+/** The active screen of a layout draft, when it still exists. */
+function activeScreenOf(store: LayoutStore | undefined): string | undefined {
+  const state = store?.getState();
+  const id = state?.activeScreenId;
+  return id && state && Object.hasOwn(state.screens, id) ? id : undefined;
+}
+
 function FlowStage() {
   const { state, actions } = usePaletteFlow();
   const designActions = useDesignDocActions();
+  const designStore = useDesignDocStore();
   const doc = useDesignDoc((s) => s.doc);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const f = useDictionary(flow);
   const imp = useDictionary(importText);
+  const composerText = useDictionary(composer);
   const [reading, setReading] = useState(false);
   // Focus moves into a step only after the first step change, never on page load.
   const [shownStep, setShownStep] = useState(state.step);
@@ -187,25 +208,116 @@ function FlowStage() {
     [designActions, handleFile],
   );
 
-  const handleCreate = useCallback(
-    (kind: OutputKind) => {
-      const result = designActions.setFocus(kind);
-      if (!result.ok) {
-        toast.error(t.errors.generic);
-        return;
-      }
-      actions.setPreviewKind(kind);
-      actions.goToCompose();
+  const hasDesign = !!doc && docHasDesign(doc);
+  // «Ajustar» needs something to show: without it (e.g. reached from the Palette Lab) the flow shows «Layout».
+  const designStep = phase === "brand" ? null : state.step === "compose" && hasDesign ? "compose" : "layout";
+
+  // Until something is generated there is no stored copy: the content simply follows the app's language.
+  const docLocale = doc?.brief.locale;
+  useEffect(() => {
+    if (designStep === "layout" && docLocale && !hasDesign && docLocale !== locale) designActions.setContentLocale(locale);
+  }, [designStep, docLocale, hasDesign, locale, designActions]);
+
+  /* ---- «Layout»: one draft per document, so leaving the step (Marca, Ajustar) keeps it ---- */
+  const [layoutDraft, setLayoutDraft] = useState<{ docId: string; store: LayoutStore } | null>(null);
+  const layoutStore = layoutDraft && layoutDraft.docId === docId ? layoutDraft.store : undefined;
+  const adoptLayoutStore = useCallback(
+    (store: LayoutStore) => {
+      if (docId) setLayoutDraft({ docId, store });
     },
-    [designActions, actions, t],
+    [docId],
   );
 
-  const hasPages = !!doc && Object.values(doc.pages).some(Boolean);
-  // «Ajustar» needs a page: without one (e.g. reached from the Palette Lab) the flow shows «Crear».
-  const designStep = phase === "brand" ? null : state.step === "compose" && hasPages ? "compose" : "create";
+  // Style: «Tu guía de estilo» (an imported guide; its values stay locked) or a recipe of the catalog. The guide
+  // is the default once an import exists (it may land after the step opened), until the user picks a recipe.
+  const hasImportedGuide = (doc?.provenance.imports?.length ?? 0) > 0;
+  const [guideChoice, setGuideChoice] = useState<{ docId: string; guide: boolean } | null>(null);
+  const guideChosen = guideChoice && guideChoice.docId === docId ? guideChoice.guide : null;
+  const layoutStyle = doc ? (hasImportedGuide && (guideChosen ?? true) ? "guide" : doc.brief.recipeId) : undefined;
+
+  const chooseLayoutStyle = useCallback(
+    (style: string) => {
+      if (!docId) return;
+      if (style === "guide") {
+        setGuideChoice({ docId, guide: true });
+        return;
+      }
+      const apply = () => designActions.setRecipe(style, { cascade: true });
+      const result = apply();
+      if (result.ok) {
+        setGuideChoice({ docId, guide: false });
+        return;
+      }
+      // Not applied: the picker goes back to what the doc says.
+      if (layoutStyle) layoutStore?.getState().actions.setStyle(layoutStyle);
+      const lock = result.error.reason === "locked" ? result.error.lock : undefined;
+      if (!lock) return;
+      // The recipe is locked by an imported guide («tu guía manda»): say so and offer «Desbloquear».
+      toast(composerText.direction.lockedByGuide, {
+        action: {
+          label: composerText.direction.unlockAction,
+          onClick: () => {
+            designActions.beginBatch();
+            const unlocked = designActions.unlock(lock);
+            const again = unlocked.ok ? apply() : unlocked;
+            if (!again.ok) {
+              designActions.cancelBatch();
+              return;
+            }
+            designActions.commitBatch();
+            setGuideChoice({ docId, guide: false });
+          },
+        },
+      });
+    },
+    [docId, designActions, layoutStore, layoutStyle, composerText],
+  );
+
+  /** «Generar»: one write of the screens into the doc. `false` keeps the user in «Layout». */
+  const handleGenerate = useCallback(
+    (result: GenerateResult): boolean => {
+      const activeKey = activeScreenOf(layoutStore);
+      const applied = designActions.applyGenerate(result, activeKey ? { activeKey } : {});
+      if (applied.ok) {
+        layoutStore?.getState().actions.markSynced(applied.doc);
+        return true;
+      }
+      if (applied.error.reason !== "locked") {
+        toast.error(t.errors.generic);
+        return false;
+      }
+      // A removed block holds a value locked by the guide: deleting it is the user's call.
+      toast.warning(f.generate.locked, {
+        duration: LOCKED_TOAST_MS,
+        action: {
+          label: f.generate.unlockAndDelete,
+          onClick: () => {
+            // The draft may have changed since that Generar: no markSynced, the next visit merges instead.
+            const again = designActions.applyGenerate(result, { allowLocked: true, ...(activeKey && { activeKey }) });
+            if (!again.ok) {
+              toast.error(t.errors.generic);
+              return;
+            }
+            actions.goToCompose();
+          },
+        },
+      });
+      return false;
+    },
+    [designActions, layoutStore, actions, t, f],
+  );
+
   const stepperStep: FlowStepperStep = exportOpen ? "export" : (designStep ?? "brand");
   const showStepper = state.step !== "drop";
   const errorMessage = state.error ? t.errors.extractFailed : undefined;
+
+  /** «Editar layout» (and «Layout» in Ajustar): back to the draft, on the screen Ajustar was showing. */
+  const editLayout = useCallback(() => {
+    const key = selectActiveKey(designStore.getState());
+    const draft = layoutStore?.getState();
+    if (key && draft && Object.hasOwn(draft.screens, key)) draft.actions.setActiveScreen(key);
+    actions.goToLayout();
+  }, [designStore, layoutStore, actions]);
 
   const selectStep = useCallback(
     (step: FlowStepperStep) => {
@@ -215,10 +327,10 @@ function FlowStage() {
       }
       setExportOpen(false);
       if (step === "brand") actions.showPalette();
-      else if (step === "create") actions.goToCreate();
+      else if (step === "layout") editLayout();
       else actions.goToCompose();
     },
-    [actions, setExportOpen],
+    [actions, setExportOpen, editLayout],
   );
 
   return (
@@ -231,7 +343,7 @@ function FlowStage() {
               <motion.div key="stepper" variants={fadeVariants} initial="initial" animate="animate" exit="exit">
                 <FlowStepper
                   current={stepperStep}
-                  available={{ brand: !!state.primary, create: !!state.primary, compose: hasPages, export: hasPages }}
+                  available={{ brand: !!state.primary, layout: !!state.primary, compose: hasDesign, export: hasDesign }}
                   onSelect={selectStep}
                 />
               </motion.div>
@@ -289,14 +401,31 @@ function FlowStage() {
                   <PaletteLab />
                 </Stage>
               )}
-              {designStep === "create" && doc && (
-                <Stage key="create" step="create" label={f.stage.create} focusOnEnter={stepChanged}>
-                  <CreateStep initialKind={state.previewKind} onCreate={handleCreate} onBack={actions.showPalette} />
+              {designStep === "layout" && doc && (
+                <Stage key="layout" step="layout" label={f.stage.layout} focusOnEnter={stepChanged}>
+                  <LayoutStep
+                    key={docId ?? "doc"}
+                    doc={doc}
+                    store={layoutStore}
+                    onStoreCreate={adoptLayoutStore}
+                    preferredKind={state.previewKind}
+                    hasImportedGuide={hasImportedGuide}
+                    style={layoutStyle}
+                    onStyleChange={chooseLayoutStyle}
+                    onGenerate={handleGenerate}
+                    onGenerateIntent={preloadDesignStages}
+                    onRevealEnd={actions.goToCompose}
+                  />
                 </Stage>
               )}
               {designStep === "compose" && doc && (
                 <Stage key="compose" step="compose" label={f.stage.compose} focusOnEnter={stepChanged}>
-                  <Composer onExport={() => setExportOpen(true)} onBack={actions.goToCreate} onEditBrand={actions.showPalette} />
+                  <Composer
+                    onExport={() => setExportOpen(true)}
+                    onBack={editLayout}
+                    onEditLayout={editLayout}
+                    onEditBrand={actions.showPalette}
+                  />
                 </Stage>
               )}
             </AnimatePresence>
@@ -309,11 +438,12 @@ function FlowStage() {
 }
 
 /**
- * Orchestrates the whole flow: drop → crop → extracting → palette («1 Marca») → create («2 Crear») →
- * (or drop/palette → import → review, «Trae tu marca», which lands in palette or create) →
+ * Orchestrates the whole flow: drop → crop → extracting → palette («1 Marca») → layout («2 Layout») →
+ * (or drop/palette → import → review, «Trae tu marca», which lands in palette or layout) →
  * compose («3 Ajustar») + ExportDialog («4 Exportar»). Owns the flow state (PaletteFlowProvider), the
- * DesignDoc store (DesignDocProvider), the DnD context, the tinted AppBackground and the
- * logo-extraction worker. Steps cross-fade inside one LayoutGroup so `layoutId`s animate between them.
+ * DesignDoc store (DesignDocProvider), the Layout draft of each document, the DnD context, the tinted
+ * AppBackground and the logo-extraction worker. Steps cross-fade inside one LayoutGroup so `layoutId`s
+ * animate between them.
  */
 export function PaletteFlow() {
   return (

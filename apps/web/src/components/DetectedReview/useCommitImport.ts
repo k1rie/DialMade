@@ -65,7 +65,7 @@ export function useCommitImport(session: ImportSession) {
         const finalDoc = store.getState().doc ?? doc;
         const pinned = pinnedFor(finalDoc);
         actions.finishImport({
-          next: exit === "create" ? "create" : "palette",
+          next: exit === "create" ? "layout" : "palette",
           seeds: { ...finalDoc.brand.seeds },
           ...(pinned && { pinned }),
           ...(logo && { logo }),

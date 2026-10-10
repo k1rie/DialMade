@@ -1,34 +1,34 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc, DialKey } from "@dialmade/doc";
 import { PanelSection } from "@/components/ui/PanelSection";
 import { useDesignDocActions } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
+import { pageBase, type PageTarget } from "../../pageOps";
 import { DialSlider } from "./DialSlider";
 
 export type DialsControlProps = {
   doc: DesignDoc;
-  /** Active page: a dial it overrides (the App page's density) is edited on that page only. */
-  kind: OutputKind | null;
+  /** Active page or screen: a dial it overrides (the App page's density) is edited on that page only. */
+  target: PageTarget | null;
   pageLabel: string;
 };
 
 const DIALS: readonly DialKey[] = ["variance", "motion", "density"];
 
 /** Variance, motion and density. Each dial writes where its effective value comes from. */
-export function DialsControl({ doc, kind, pageLabel }: DialsControlProps) {
+export function DialsControl({ doc, target, pageLabel }: DialsControlProps) {
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
-  const pageDials = kind ? doc.pages[kind]?.dials : undefined;
+  const pageDials = target?.page.dials;
 
   return (
     <PanelSection title={t.dials.title}>
       <div className="flex flex-col gap-3.5">
         {DIALS.map((key) => {
           const pageValue = pageDials?.[key];
-          const scope = pageValue !== undefined && kind ? kind : "global";
+          const scope = pageValue !== undefined && target ? target.key : "global";
           const copy = t.dials[key];
           return (
             <DialSlider
@@ -47,7 +47,7 @@ export function DialsControl({ doc, kind, pageLabel }: DialsControlProps) {
                     <button
                       type="button"
                       className="rounded-[6px] text-muted underline decoration-white/20 underline-offset-2 hover:text-fg"
-                      onClick={() => actions.applyPatch([{ op: "remove", path: `/pages/${scope}/dials/${key}` }])}
+                      onClick={() => actions.applyPatch([{ op: "remove", path: `${pageBase(scope)}/dials/${key}` }])}
                     >
                       {t.dials.useGlobal}
                     </button>

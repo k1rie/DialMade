@@ -5,6 +5,7 @@ import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import type { CopyApiErrorCode, CopyApiSuccess } from "./api";
 import { DEFAULT_AI_EFFORT, DEFAULT_AI_MODEL } from "./config";
+import { missingScreens, type ScreenCopyTarget } from "./fields";
 import { CopyGenerationError, generateCopy, prepareCopyJob } from "./generate";
 import { roundUsd } from "./pricing";
 
@@ -31,19 +32,23 @@ function toByokError(error: unknown): ByokCopyError {
   return new ByokCopyError("upstream-error", "Unexpected error");
 }
 
+/** One page (`kind`) or several screens in one request (`screens`, Modo Layout), as /api/ai/copy takes them. */
 export type ByokCopyInput = {
   doc: DesignDoc;
-  kind: OutputKind;
-  sectionIds?: readonly string[];
   instructions?: string;
-};
+} & ({ kind: OutputKind; sectionIds?: readonly string[]; screens?: never } | { screens: readonly ScreenCopyTarget[]; kind?: never; sectionIds?: never });
 
 /** Same prompt, schema and validation as the hosted route. Rejects with `ByokCopyError`. */
 export async function generateByokCopy(
   input: ByokCopyInput,
   options: { apiKey: string; model?: string; signal?: AbortSignal },
 ): Promise<CopyApiSuccess> {
-  if (!input.doc.pages[input.kind]) throw new ByokCopyError("no-page", `The document has no ${input.kind} page`);
+  if (input.screens) {
+    const missing = missingScreens(input.doc, input.screens);
+    if (missing.length > 0) throw new ByokCopyError("no-page", `The document has no screen ${missing.join(", ")}`);
+  } else if (!input.doc.pages[input.kind]) {
+    throw new ByokCopyError("no-page", `The document has no ${input.kind} page`);
+  }
   const job = prepareCopyJob(input);
   if (job.fields.length === 0) throw new ByokCopyError("no-fields", "There is no text to write in those sections");
 
@@ -61,6 +66,7 @@ export async function generateByokCopy(
       usage: result.usage,
       costUsd: roundUsd(result.costUsd),
       rejected: result.rejected,
+      rejectedIds: result.rejectedIds,
       remainingBudgetUsd: null,
     };
   } catch (error) {

@@ -1,7 +1,8 @@
 "use client";
 
 import { outputKindOptions, type Locale, type OutputKind } from "@dialmade/catalog";
-import { EXPORT_FILES, toPromptPack, type DesignDoc, type PromptTarget } from "@dialmade/doc";
+import { EXPORT_FILES, toPromptPack, type DesignDoc, type PageElement, type PromptTarget } from "@dialmade/doc";
+import { visibleProps } from "@dialmade/sections";
 import { useCallback, useState, type RefObject } from "react";
 import { toast } from "sonner";
 import type { DesignDerived } from "@/hooks/useDesignDoc";
@@ -37,7 +38,11 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
     async (target: PromptTarget, targetLabel: string) => {
       if (!doc || !derived) return;
       // Built synchronously: the clipboard write must stay within the click's user activation.
-      const text = toPromptPack(doc, target, locale, derived.inputs);
+      // Same options as the packs (exportPack's `exportOptions`, not imported here to keep that chunk lazy).
+      const text = toPromptPack(doc, target, locale, {
+        ...derived.inputs,
+        visibleProps: (element: PageElement) => visibleProps(element),
+      });
       const copied = await copyText(text, dialog.current);
       if (copied) toast.success(texts.toasts.copied(targetLabel), toastOptions);
       else toast.error(texts.toasts.copyFailed, toastOptions);

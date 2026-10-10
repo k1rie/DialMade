@@ -17,7 +17,7 @@ import { FitScale } from "./FitScale";
 
 export type PreviewStageProps = {
   kind: OutputKind;
-  /** Live theme of the Palette Lab (it wins over the doc's palette, which only syncs on «Crear»). */
+  /** Live theme of the Palette Lab (it wins over the doc's palette, which only syncs on «Layout»). */
   theme: Theme;
   mode: PreviewMode;
   locale: Locale;
@@ -35,7 +35,7 @@ function draftDoc(name: string, locale: Locale): DesignDoc {
 
 /**
  * The mini of the selected output kind, painted with the live theme inside ThemeScope and scaled to
- * the frame. With a DesignDoc (the user came back from «Crear»), its recipe, pairing and copy apply.
+ * the frame. With a DesignDoc (the user came back from «Layout»), its recipe, pairing and copy apply.
  */
 export function PreviewStage({ kind, theme, mode, locale, brandName, logoUrl }: PreviewStageProps) {
   const storeDoc = useDesignDoc((state) => state.doc);

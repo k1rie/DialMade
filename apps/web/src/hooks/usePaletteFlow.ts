@@ -15,13 +15,13 @@ import { normalizeCrop, type CropRect, type FlowLogo } from "@/lib/image";
 
 export type { CropRect, FlowLogo } from "@/lib/image";
 
-export type FlowStep = "drop" | "crop" | "extracting" | "palette" | "import" | "review" | "create" | "compose";
+export type FlowStep = "drop" | "crop" | "extracting" | "palette" | "import" | "review" | "layout" | "compose";
 export type PreviewMode = "light" | "dark";
-/** Steps of the visible stepper (1 Marca · 2 Crear · 3 Ajustar); «4 Exportar» is the export dialog. */
-export type FlowPhase = "brand" | "create" | "compose";
+/** Steps of the visible stepper (1 Marca · 2 Layout · 3 Ajustar); «4 Exportar» is the export dialog. */
+export type FlowPhase = "brand" | "layout" | "compose";
 
-/** drop/crop/extracting/palette and the import (import, review) are «Marca»; create is «Crear»; compose is «Ajustar». */
-export const flowPhaseOf = (step: FlowStep): FlowPhase => (step === "create" || step === "compose" ? step : "brand");
+/** drop/crop/extracting/palette and the import (import, review) are «Marca»; layout is «Layout»; compose is «Ajustar». */
+export const flowPhaseOf = (step: FlowStep): FlowPhase => (step === "layout" || step === "compose" ? step : "brand");
 
 /** Primary used by «No tengo logo» when no color is given. */
 export const DEFAULT_PRIMARY = "#7c5cff";
@@ -58,7 +58,7 @@ export type PendingImport = {
 
 /** How «Esto detectamos» leaves: the seeds and pins of the applied guide, and the next step. */
 export type ImportOutcome =
-  | { next: "create" | "palette"; seeds: { primary: string; secondary?: string }; pinned?: ThemePins; logo?: ImportLogo }
+  | { next: "layout" | "palette"; seeds: { primary: string; secondary?: string }; pinned?: ThemePins; logo?: ImportLogo }
   | { next: "drop"; pending?: PendingImport };
 
 export type PaletteFlowState = {
@@ -73,7 +73,7 @@ export type PaletteFlowState = {
   secondary?: string;
   styleId: PaletteStyleId;
   previewMode: PreviewMode;
-  /** Output kind shown by the Palette Lab's LivePreview tabs; preselects the card in «Crear». */
+  /** Output kind shown by the Palette Lab's LivePreview tabs; marks the recommended starting set in «Layout». */
   previewKind: OutputKind;
   /** Last extraction error (cleared on the next attempt). */
   error?: string;
@@ -106,7 +106,7 @@ export type PaletteFlowAction =
   | { type: "setStyle"; styleId: PaletteStyleId }
   | { type: "setPreviewMode"; mode: PreviewMode }
   | { type: "chooseColorWithoutLogo"; primary?: string }
-  | { type: "goTo"; step: "create" | "compose" }
+  | { type: "goTo"; step: "layout" | "compose" }
   | { type: "setPreviewKind"; kind: OutputKind }
   | { type: "openImport"; files?: readonly File[] }
   | { type: "closeImport" }
@@ -258,11 +258,11 @@ export type PaletteFlowActions = {
   setPreviewMode: (mode: PreviewMode) => void;
   /** «No tengo logo»: straight to "palette" with `primary` (default DEFAULT_PRIMARY). */
   chooseColorWithoutLogo: (primary?: string) => void;
-  /** → step "create" («¿Qué quieres crear?»). Requires a primary; PaletteFlow syncs the DesignDoc on entry. */
-  goToCreate: () => void;
-  /** → step "compose" (Composer). Requires a primary; PaletteFlow falls back to "create" while the doc has no page. */
+  /** → step "layout" (the Layout step). Requires a primary; PaletteFlow syncs the DesignDoc on entry. */
+  goToLayout: () => void;
+  /** → step "compose" (Composer). Requires a primary; PaletteFlow falls back to "layout" while the doc has nothing to show. */
   goToCompose: () => void;
-  /** LivePreview tab of the Palette Lab; preselects that card in «Crear». */
+  /** LivePreview tab of the Palette Lab; marks the matching starting set in «Layout» as recommended. */
   setPreviewKind: (kind: OutputKind) => void;
   /** «Trae tu marca» (step "import"), optionally with files dropped on the Home. «Volver» returns to where it opened. */
   openImport: (files?: readonly File[]) => void;
@@ -319,7 +319,7 @@ export function PaletteFlowProvider({ children, initialState }: { children: Reac
       setStyle: (styleId) => dispatch({ type: "setStyle", styleId }),
       setPreviewMode: (mode) => dispatch({ type: "setPreviewMode", mode }),
       chooseColorWithoutLogo: (primary) => dispatch({ type: "chooseColorWithoutLogo", primary }),
-      goToCreate: () => dispatch({ type: "goTo", step: "create" }),
+      goToLayout: () => dispatch({ type: "goTo", step: "layout" }),
       goToCompose: () => dispatch({ type: "goTo", step: "compose" }),
       setPreviewKind: (kind) => dispatch({ type: "setPreviewKind", kind }),
       openImport: (files) => dispatch({ type: "openImport", files }),

@@ -2,7 +2,7 @@
 import type { OutputKind } from "@dialmade/catalog";
 import type { PatchOperation } from "@dialmade/doc";
 import { z } from "zod";
-import { MAX_INSTRUCTIONS_LENGTH, MAX_SECTION_IDS } from "./config";
+import { MAX_COPY_SCREENS, MAX_INSTRUCTIONS_LENGTH, MAX_SECTION_IDS } from "./config";
 
 const KINDS = ["brand", "landing", "app"] as const satisfies readonly OutputKind[];
 
@@ -11,15 +11,50 @@ export const STATUS_ENDPOINT = "/api/ai/status";
 /** The doc travels whole; a large one is ~100 KB. */
 export const MAX_COPY_BODY_BYTES = 1_000_000;
 
-export const CopyRequestBodySchema = z.strictObject({
-  /** Validated with `safeParseDesignDoc` on the server. */
+const SectionIdsSchema = z.array(z.string().min(1).max(64)).min(1).max(MAX_SECTION_IDS);
+
+/** One page of the document (`doc.pages[kind]`): the body of every client before Modo Layout. */
+export const CopyPageRequestBodySchema = z.strictObject({
+  /** Validated with `safeParseDesignDoc` on the server (v1 is migrated). */
   doc: z.unknown(),
   kind: z.enum(KINDS),
-  sectionIds: z.array(z.string().min(1).max(64)).min(1).max(MAX_SECTION_IDS).optional(),
+  sectionIds: SectionIdsSchema.optional(),
   instructions: z.string().max(MAX_INSTRUCTIONS_LENGTH).optional(),
   locale: z.enum(["es", "en"]),
 });
+export type CopyPageRequestBody = z.infer<typeof CopyPageRequestBodySchema>;
+
+/** One screen of a multi-screen request: the whole screen, or only some of its sections (block ids). */
+export const CopyScreenTargetSchema = z.strictObject({
+  id: z.string().min(1).max(64),
+  sectionIds: SectionIdsSchema.optional(),
+});
+
+/**
+ * Several screens in ONE request (Modo Layout, critique #7: one «Generar» = one free use). At most
+ * `MAX_SECTION_IDS` section ids in total; a screen without `sectionIds` is sent whole.
+ */
+export const CopyScreensRequestBodySchema = z
+  .strictObject({
+    doc: z.unknown(),
+    screens: z.array(CopyScreenTargetSchema).min(1).max(MAX_COPY_SCREENS),
+    instructions: z.string().max(MAX_INSTRUCTIONS_LENGTH).optional(),
+    locale: z.enum(["es", "en"]),
+  })
+  .refine((body) => body.screens.reduce((sum, screen) => sum + (screen.sectionIds?.length ?? 0), 0) <= MAX_SECTION_IDS, {
+    message: `At most ${MAX_SECTION_IDS} section ids in total`,
+    path: ["screens"],
+  })
+  .refine((body) => new Set(body.screens.map((screen) => screen.id)).size === body.screens.length, {
+    message: "Each screen once",
+    path: ["screens"],
+  });
+export type CopyScreensRequestBody = z.infer<typeof CopyScreensRequestBodySchema>;
+
+export const CopyRequestBodySchema = z.union([CopyPageRequestBodySchema, CopyScreensRequestBodySchema]);
 export type CopyRequestBody = z.infer<typeof CopyRequestBodySchema>;
+
+export const isScreensCopyBody = (body: CopyRequestBody): body is CopyScreensRequestBody => "screens" in body;
 
 export type CopyApiUsage = { inputTokens: number; outputTokens: number; model: string };
 
@@ -29,6 +64,8 @@ export type CopyApiSuccess = {
   costUsd: number;
   /** Edits of the model that did not pass validation (dropped). */
   rejected: number;
+  /** Field ids (`f12`) of those edits; the client maps them to sections with the same collector. */
+  rejectedIds?: string[];
   /** Hosted budget left this month after this request; `null` with BYOK. */
   remainingBudgetUsd: number | null;
   /** Hosted free tier only: uses left for this device this month, after this request. */

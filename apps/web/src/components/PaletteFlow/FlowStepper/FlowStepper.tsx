@@ -6,7 +6,7 @@ import { flow } from "@/i18n/flow";
 import { cn } from "@/lib/cn";
 import { smooth } from "@/lib/motion";
 
-export const FLOW_STEPS = ["brand", "create", "compose", "export"] as const;
+export const FLOW_STEPS = ["brand", "layout", "compose", "export"] as const;
 export type FlowStepperStep = (typeof FLOW_STEPS)[number];
 
 export type FlowStepperProps = {
@@ -25,14 +25,14 @@ function CheckIcon() {
   );
 }
 
-/** «1 Marca · 2 Crear · 3 Ajustar · 4 Exportar». Completed steps can be reopened; locked ones are disabled. */
+/** «1 Marca · 2 Layout · 3 Ajustar · 4 Exportar». Completed steps can be reopened; locked ones are disabled. */
 export function FlowStepper({ current, available, onSelect, className }: FlowStepperProps) {
   const { t } = useI18n();
   const f = useDictionary(flow);
   const currentIndex = FLOW_STEPS.indexOf(current);
   const labels: Record<FlowStepperStep, string> = {
     brand: f.stepper.brand,
-    create: f.stepper.create,
+    layout: f.stepper.layout,
     compose: f.stepper.compose,
     export: f.stepper.export,
   };

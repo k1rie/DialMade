@@ -6,12 +6,13 @@
 // @dialmade/palette (Figma color variables) and @dialmade/sections (renderStaticPage). Native <dialog>:
 // focus stays inside, Esc and the backdrop close it, and focus returns to the opener.
 import { outputKindOptions, type OutputKind } from "@dialmade/catalog";
+import type { PageKey } from "@dialmade/doc";
 import { motion, type Variants } from "motion/react";
 import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import { Toaster } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { useActivePageKind, useDesignDerived, useDesignDoc } from "@/hooks/useDesignDoc";
+import { useActiveKey, useDesignDerived, useDesignDoc } from "@/hooks/useDesignDoc";
 import { useDictionary, useI18n } from "@/i18n";
 import { exportDialog } from "@/i18n/export";
 import { smooth, tween } from "@/lib/motion";
@@ -20,6 +21,7 @@ import { DestinationCard } from "./DestinationCard";
 import { slugify } from "./files";
 import { CloseIcon, CodeGlyph, CopyIcon, DownloadIcon, FolderUpGlyph, FrameGlyph, PromptGlyph, VariablesGlyph } from "./icons";
 import { PreviewCard } from "./PreviewCard";
+import { previewTarget } from "./previewTarget";
 import { PromptTargetPicker } from "./PromptTargetPicker";
 import { ShareLink } from "./ShareLink";
 import { preloadPacks, useExportActions } from "./useExportActions";
@@ -28,8 +30,11 @@ export type ExportDialogProps = {
   open: boolean;
   /** Esc, backdrop click and the close button call it with `false`. */
   onOpenChange: (open: boolean) => void;
-  /** Page shown on the preview card. Default: the Composer's active page, else `doc.brief.focus`. */
-  kind?: OutputKind;
+  /**
+   * Page shown on the preview card: a screen id or a kind. Default: the Composer's active page, else the first
+   * screen, else `doc.brief.focus`.
+   */
+  page?: PageKey;
 };
 
 const listVariants: Variants = {
@@ -45,7 +50,7 @@ function isBackdropClick(event: MouseEvent<HTMLDialogElement>): boolean {
   return x < box.left || x > box.right || y < box.top || y > box.bottom;
 }
 
-export function ExportDialog({ open, onOpenChange, kind }: ExportDialogProps) {
+export function ExportDialog({ open, onOpenChange, page }: ExportDialogProps) {
   const { locale } = useI18n();
   const t = useDictionary(exportDialog);
   const titleId = useId();
@@ -55,6 +60,8 @@ export function ExportDialog({ open, onOpenChange, kind }: ExportDialogProps) {
   const doc = useDesignDoc((state) => state.doc);
   const logoUrl = useDesignDoc((state) => state.logoUrl);
   const mode = useDesignDoc((state) => state.previewMode);
+  // The Composer's tab: a screen id or "brand" in a document with screens, else a kind.
+  const activePage = useActiveKey();
   const derived = useDesignDerived(null);
   const [aiTarget, setAiTarget] = useState<AiTargetId>("claude");
   const { busy, copyPrompt, downloadFigmaTokens, downloadPack } = useExportActions({
@@ -78,10 +85,9 @@ export function ExportDialog({ open, onOpenChange, kind }: ExportDialogProps) {
     if (open) void preloadPacks();
   }, [open]);
 
-  const activeKind = useActivePageKind();
   const focus: OutputKind = doc?.brief.focus ?? "brand";
-  const previewKind: OutputKind = kind && doc?.pages[kind] ? kind : (activeKind ?? focus);
   const kindLabel = (id: OutputKind) => outputKindOptions.find((option) => option.id === id)?.label[locale] ?? id;
+  const preview = doc ? previewTarget(doc, [page, activePage], kindLabel) : null;
   const d = t.destinations;
 
   const destination = (id: DestinationId, recommended: boolean) => {
@@ -222,14 +228,16 @@ export function ExportDialog({ open, onOpenChange, kind }: ExportDialogProps) {
             <IconButton label={t.close} icon={<CloseIcon />} tooltip={false} className="-mt-1 -mr-1" onClick={() => onOpenChange(false)} />
           </header>
 
-          <PreviewCard
-            doc={doc}
-            kind={previewKind}
-            mode={mode}
-            logoUrl={logoUrl}
-            kindLabel={kindLabel(previewKind)}
-            label={t.preview.label(doc.brand.name, kindLabel(previewKind))}
-          />
+          {preview && (
+            <PreviewCard
+              doc={doc}
+              kind={preview.kind}
+              mode={mode}
+              logoUrl={logoUrl}
+              kindLabel={preview.label}
+              label={t.preview.label(doc.brand.name, preview.label)}
+            />
+          )}
 
           <ShareLink slug={slugify(doc.brand.name)} texts={t.share} />
 

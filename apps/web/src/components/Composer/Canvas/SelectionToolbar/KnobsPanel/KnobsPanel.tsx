@@ -1,28 +1,29 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import { isBinding, type DesignDoc } from "@dialmade/doc";
 import { VARIANT_PROP, contentContextFromDoc, resolveSectionProps, sectionRegistry, type KnobDef } from "@dialmade/sections";
 import { useMemo } from "react";
-import { useDesignDocActions } from "@/hooks/useDesignDoc";
+import { useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
 import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
-import { setPropOps } from "../../../pageOps";
+import { pageTarget, setPropOps, type PageTarget } from "../../../pageOps";
 import { KnobField } from "./KnobField";
 
 export type KnobsPanelProps = {
   doc: DesignDoc;
-  kind: OutputKind;
+  /** The page shown: on a screen, an edited prop is pinned (and the app frame's goes to every app screen). */
+  target: PageTarget;
   id: string;
   logoUrl: string | undefined;
 };
 
 /** The selected section's knobs (declared by its catalog definition), each edit is an RFC 6902 patch. */
-export function KnobsPanel({ doc, kind, id, logoUrl }: KnobsPanelProps) {
+export function KnobsPanel({ doc, target, id, logoUrl }: KnobsPanelProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
-  const element = doc.pages[kind]?.elements[id];
+  const store = useDesignDocStore();
+  const element = target.page.elements[id];
   const def = element ? sectionRegistry.get(element.type) : undefined;
   const ctx = useMemo(() => contentContextFromDoc(doc, logoUrl ? { logoUrl } : {}), [doc, logoUrl]);
   const resolved = useMemo(() => (def && element ? resolveSectionProps(def, element.props, ctx) : null), [def, element, ctx]);
@@ -44,7 +45,10 @@ export function KnobsPanel({ doc, kind, id, logoUrl }: KnobsPanelProps) {
         } else actions.setBrandText({ tagline: next });
         return;
       }
-      actions.applyPatch(setPropOps(kind, id, key, next));
+      // From the live doc: a slider sends several edits before the next render, and the pin is added once.
+      const live = store.getState().doc;
+      const liveTarget = live ? pageTarget(live, target.key) : null;
+      if (live && liveTarget) actions.applyPatch(setPropOps(live, liveTarget, id, key, next));
     };
     return (
       <KnobField

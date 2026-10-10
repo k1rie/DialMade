@@ -1,6 +1,5 @@
 "use client";
 
-import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -11,12 +10,14 @@ import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { ArrowLeftIcon, ExportIcon, PaletteIcon, RedoIcon, UndoIcon } from "../icons";
+import type { PageTarget } from "../pageOps";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { AiCopyMenu } from "./AiCopyMenu";
 
 export type ComposerTopBarProps = {
   doc: DesignDoc;
-  kind: OutputKind;
+  /** The page shown: the AI menu rewrites its copy. */
+  target: PageTarget;
   pageLabel: string;
   logoUrl: string | undefined;
   ai: UseAiCopy;
@@ -26,14 +27,16 @@ export type ComposerTopBarProps = {
   onManualCopy: (result: AiCopyResult) => void;
   onBack: () => void;
   onEditBrand: () => void;
+  /** «Editar layout»: back to the Layout step (default: `onBack`, which also goes there). */
+  onEditLayout?: () => void;
   onExport: () => void;
   className?: string;
 };
 
-/** Composer actions: back to «Crear», the brand (→ Palette Lab), undo/redo, AI copy and «Exportar». */
+/** Composer actions: back to «Layout», the brand (→ Palette Lab), «Editar layout», undo/redo, AI copy and «Exportar». */
 export function ComposerTopBar({
   doc,
-  kind,
+  target,
   pageLabel,
   logoUrl,
   ai,
@@ -43,6 +46,7 @@ export function ComposerTopBar({
   onManualCopy,
   onBack,
   onEditBrand,
+  onEditLayout,
   onExport,
   className,
 }: ComposerTopBarProps) {
@@ -77,6 +81,9 @@ export function ComposerTopBar({
           {t.topBar.editBrand}
         </span>
       </button>
+      <Button size="sm" variant="secondary" onClick={onEditLayout ?? onBack}>
+        {t.topBar.editLayout}
+      </Button>
       <div className="ms-auto flex items-center gap-1.5">
         <IconButton
           size="sm"
@@ -109,7 +116,7 @@ export function ComposerTopBar({
           open={aiMenuOpen}
           onOpenChange={onAiMenuOpenChange}
           doc={doc}
-          kind={kind}
+          target={target}
           pageLabel={pageLabel}
           ai={ai}
           onGenerate={onGenerateCopy}
