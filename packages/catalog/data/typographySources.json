@@ -1,0 +1,1184 @@
+[
+  {
+    "id": "classic-elegant",
+    "name": "Classic Elegant",
+    "category": "Serif + Sans",
+    "heading": "Playfair Display",
+    "body": "Inter",
+    "mood": [
+      "elegant",
+      "luxury",
+      "sophisticated",
+      "timeless",
+      "premium",
+      "editorial"
+    ]
+  },
+  {
+    "id": "modern-professional",
+    "name": "Modern Professional",
+    "category": "Sans + Sans",
+    "heading": "Poppins",
+    "body": "Open Sans",
+    "mood": [
+      "modern",
+      "professional",
+      "clean",
+      "corporate",
+      "friendly",
+      "approachable"
+    ]
+  },
+  {
+    "id": "tech-startup",
+    "name": "Tech Startup",
+    "category": "Sans + Sans",
+    "heading": "Space Grotesk",
+    "body": "DM Sans",
+    "mood": [
+      "tech",
+      "startup",
+      "modern",
+      "innovative",
+      "bold",
+      "futuristic"
+    ]
+  },
+  {
+    "id": "editorial-classic",
+    "name": "Editorial Classic",
+    "category": "Serif + Serif",
+    "heading": "Cormorant Garamond",
+    "body": "Libre Baskerville",
+    "mood": [
+      "editorial",
+      "classic",
+      "literary",
+      "traditional",
+      "refined",
+      "bookish"
+    ]
+  },
+  {
+    "id": "minimal-swiss",
+    "name": "Minimal Swiss",
+    "category": "Sans + Sans",
+    "heading": "Inter",
+    "body": "Inter",
+    "mood": [
+      "minimal",
+      "clean",
+      "swiss",
+      "functional",
+      "neutral",
+      "professional"
+    ]
+  },
+  {
+    "id": "playful-creative",
+    "name": "Playful Creative",
+    "category": "Display + Sans",
+    "heading": "Fredoka",
+    "body": "Nunito",
+    "mood": [
+      "playful",
+      "friendly",
+      "fun",
+      "creative",
+      "warm",
+      "approachable"
+    ]
+  },
+  {
+    "id": "bold-statement",
+    "name": "Bold Statement",
+    "category": "Display + Sans",
+    "heading": "Bebas Neue",
+    "body": "Source Sans 3",
+    "mood": [
+      "bold",
+      "impactful",
+      "strong",
+      "dramatic",
+      "modern",
+      "headlines"
+    ]
+  },
+  {
+    "id": "wellness-calm",
+    "name": "Wellness Calm",
+    "category": "Serif + Sans",
+    "heading": "Lora",
+    "body": "Raleway",
+    "mood": [
+      "calm",
+      "wellness",
+      "health",
+      "relaxing",
+      "natural",
+      "organic"
+    ]
+  },
+  {
+    "id": "developer-mono",
+    "name": "Developer Mono",
+    "category": "Mono + Sans",
+    "heading": "JetBrains Mono",
+    "body": "IBM Plex Sans",
+    "mood": [
+      "code",
+      "developer",
+      "technical",
+      "precise",
+      "functional",
+      "hacker"
+    ]
+  },
+  {
+    "id": "retro-vintage",
+    "name": "Retro Vintage",
+    "category": "Display + Serif",
+    "heading": "Abril Fatface",
+    "body": "Merriweather",
+    "mood": [
+      "retro",
+      "vintage",
+      "nostalgic",
+      "dramatic",
+      "decorative",
+      "bold"
+    ]
+  },
+  {
+    "id": "geometric-modern",
+    "name": "Geometric Modern",
+    "category": "Sans + Sans",
+    "heading": "Outfit",
+    "body": "Work Sans",
+    "mood": [
+      "geometric",
+      "modern",
+      "clean",
+      "balanced",
+      "contemporary",
+      "versatile"
+    ]
+  },
+  {
+    "id": "luxury-serif",
+    "name": "Luxury Serif",
+    "category": "Serif + Sans",
+    "heading": "Cormorant",
+    "body": "Montserrat",
+    "mood": [
+      "luxury",
+      "high-end",
+      "fashion",
+      "elegant",
+      "refined",
+      "premium"
+    ]
+  },
+  {
+    "id": "friendly-saas",
+    "name": "Friendly SaaS",
+    "category": "Sans + Sans",
+    "heading": "Plus Jakarta Sans",
+    "body": "Plus Jakarta Sans",
+    "mood": [
+      "friendly",
+      "modern",
+      "saas",
+      "clean",
+      "approachable",
+      "professional"
+    ]
+  },
+  {
+    "id": "news-editorial",
+    "name": "News Editorial",
+    "category": "Serif + Sans",
+    "heading": "Newsreader",
+    "body": "Roboto",
+    "mood": [
+      "news",
+      "editorial",
+      "journalism",
+      "trustworthy",
+      "readable",
+      "informative"
+    ]
+  },
+  {
+    "id": "handwritten-charm",
+    "name": "Handwritten Charm",
+    "category": "Script + Sans",
+    "heading": "Caveat",
+    "body": "Quicksand",
+    "mood": [
+      "handwritten",
+      "personal",
+      "friendly",
+      "casual",
+      "warm",
+      "charming"
+    ]
+  },
+  {
+    "id": "corporate-trust",
+    "name": "Corporate Trust",
+    "category": "Sans + Sans",
+    "heading": "Lexend",
+    "body": "Source Sans 3",
+    "mood": [
+      "corporate",
+      "trustworthy",
+      "accessible",
+      "readable",
+      "professional",
+      "clean"
+    ]
+  },
+  {
+    "id": "brutalist-raw",
+    "name": "Brutalist Raw",
+    "category": "Mono + Mono",
+    "heading": "Space Mono",
+    "body": "Space Mono",
+    "mood": [
+      "brutalist",
+      "raw",
+      "technical",
+      "monospace",
+      "minimal",
+      "stark"
+    ]
+  },
+  {
+    "id": "fashion-forward",
+    "name": "Fashion Forward",
+    "category": "Sans + Sans",
+    "heading": "Syne",
+    "body": "Manrope",
+    "mood": [
+      "fashion",
+      "avant-garde",
+      "creative",
+      "bold",
+      "artistic",
+      "edgy"
+    ]
+  },
+  {
+    "id": "soft-rounded",
+    "name": "Soft Rounded",
+    "category": "Sans + Sans",
+    "heading": "Varela Round",
+    "body": "Nunito Sans",
+    "mood": [
+      "soft",
+      "rounded",
+      "friendly",
+      "approachable",
+      "warm",
+      "gentle"
+    ]
+  },
+  {
+    "id": "premium-sans-dm-sans",
+    "name": "Premium Sans (DM Sans)",
+    "category": "Sans + Sans",
+    "heading": "DM Sans",
+    "body": "DM Sans",
+    "mood": [
+      "premium",
+      "modern",
+      "clean",
+      "sophisticated",
+      "versatile",
+      "balanced"
+    ]
+  },
+  {
+    "id": "vietnamese-friendly",
+    "name": "Vietnamese Friendly",
+    "category": "Sans + Sans",
+    "heading": "Be Vietnam Pro",
+    "body": "Noto Sans",
+    "mood": [
+      "vietnamese",
+      "international",
+      "readable",
+      "clean",
+      "multilingual",
+      "accessible"
+    ]
+  },
+  {
+    "id": "japanese-elegant",
+    "name": "Japanese Elegant",
+    "category": "Serif + Sans",
+    "heading": "Noto Serif JP",
+    "body": "Noto Sans JP",
+    "mood": [
+      "japanese",
+      "elegant",
+      "traditional",
+      "modern",
+      "multilingual",
+      "readable"
+    ]
+  },
+  {
+    "id": "korean-modern",
+    "name": "Korean Modern",
+    "category": "Sans + Sans",
+    "heading": "Noto Sans KR",
+    "body": "Noto Sans KR",
+    "mood": [
+      "korean",
+      "modern",
+      "clean",
+      "professional",
+      "multilingual",
+      "readable"
+    ]
+  },
+  {
+    "id": "chinese-traditional",
+    "name": "Chinese Traditional",
+    "category": "Serif + Sans",
+    "heading": "Noto Serif TC",
+    "body": "Noto Sans TC",
+    "mood": [
+      "chinese",
+      "traditional",
+      "elegant",
+      "cultural",
+      "multilingual",
+      "readable"
+    ]
+  },
+  {
+    "id": "chinese-simplified",
+    "name": "Chinese Simplified",
+    "category": "Sans + Sans",
+    "heading": "Noto Sans SC",
+    "body": "Noto Sans SC",
+    "mood": [
+      "chinese",
+      "simplified",
+      "modern",
+      "professional",
+      "multilingual",
+      "readable"
+    ]
+  },
+  {
+    "id": "arabic-elegant",
+    "name": "Arabic Elegant",
+    "category": "Serif + Sans",
+    "heading": "Noto Naskh Arabic",
+    "body": "Noto Sans Arabic",
+    "mood": [
+      "arabic",
+      "elegant",
+      "traditional",
+      "cultural",
+      "rtl",
+      "readable"
+    ]
+  },
+  {
+    "id": "thai-modern",
+    "name": "Thai Modern",
+    "category": "Sans + Sans",
+    "heading": "Noto Sans Thai",
+    "body": "Noto Sans Thai",
+    "mood": [
+      "thai",
+      "modern",
+      "readable",
+      "clean",
+      "multilingual",
+      "accessible"
+    ]
+  },
+  {
+    "id": "hebrew-modern",
+    "name": "Hebrew Modern",
+    "category": "Sans + Sans",
+    "heading": "Noto Sans Hebrew",
+    "body": "Noto Sans Hebrew",
+    "mood": [
+      "hebrew",
+      "modern",
+      "rtl",
+      "clean",
+      "professional",
+      "readable"
+    ]
+  },
+  {
+    "id": "legal-professional",
+    "name": "Legal Professional",
+    "category": "Serif + Sans",
+    "heading": "EB Garamond",
+    "body": "Lato",
+    "mood": [
+      "legal",
+      "professional",
+      "traditional",
+      "trustworthy",
+      "formal",
+      "authoritative"
+    ]
+  },
+  {
+    "id": "medical-clean",
+    "name": "Medical Clean",
+    "category": "Sans + Sans",
+    "heading": "Figtree",
+    "body": "Noto Sans",
+    "mood": [
+      "medical",
+      "clean",
+      "accessible",
+      "professional",
+      "healthcare",
+      "trustworthy"
+    ]
+  },
+  {
+    "id": "financial-trust",
+    "name": "Financial Trust",
+    "category": "Sans + Sans",
+    "heading": "IBM Plex Sans",
+    "body": "IBM Plex Sans",
+    "mood": [
+      "financial",
+      "trustworthy",
+      "professional",
+      "corporate",
+      "banking",
+      "serious"
+    ]
+  },
+  {
+    "id": "real-estate-luxury",
+    "name": "Real Estate Luxury",
+    "category": "Serif + Sans",
+    "heading": "Cinzel",
+    "body": "Josefin Sans",
+    "mood": [
+      "real estate",
+      "luxury",
+      "elegant",
+      "sophisticated",
+      "property",
+      "premium"
+    ]
+  },
+  {
+    "id": "restaurant-menu",
+    "name": "Restaurant Menu",
+    "category": "Serif + Sans",
+    "heading": "Playfair Display SC",
+    "body": "Karla",
+    "mood": [
+      "restaurant",
+      "menu",
+      "culinary",
+      "elegant",
+      "foodie",
+      "hospitality"
+    ]
+  },
+  {
+    "id": "art-deco",
+    "name": "Art Deco",
+    "category": "Display + Sans",
+    "heading": "Poiret One",
+    "body": "Didact Gothic",
+    "mood": [
+      "art deco",
+      "vintage",
+      "1920s",
+      "elegant",
+      "decorative",
+      "gatsby"
+    ]
+  },
+  {
+    "id": "magazine-style",
+    "name": "Magazine Style",
+    "category": "Serif + Sans",
+    "heading": "Libre Bodoni",
+    "body": "Public Sans",
+    "mood": [
+      "magazine",
+      "editorial",
+      "publishing",
+      "refined",
+      "journalism",
+      "print"
+    ]
+  },
+  {
+    "id": "crypto-web3",
+    "name": "Crypto/Web3",
+    "category": "Sans + Sans",
+    "heading": "Orbitron",
+    "body": "Exo 2",
+    "mood": [
+      "crypto",
+      "web3",
+      "futuristic",
+      "tech",
+      "blockchain",
+      "digital"
+    ]
+  },
+  {
+    "id": "gaming-bold",
+    "name": "Gaming Bold",
+    "category": "Display + Sans",
+    "heading": "Russo One",
+    "body": "Chakra Petch",
+    "mood": [
+      "gaming",
+      "bold",
+      "action",
+      "esports",
+      "competitive",
+      "energetic"
+    ]
+  },
+  {
+    "id": "indie-craft",
+    "name": "Indie/Craft",
+    "category": "Display + Sans",
+    "heading": "Amatic SC",
+    "body": "Cabin",
+    "mood": [
+      "indie",
+      "craft",
+      "handmade",
+      "artisan",
+      "organic",
+      "creative"
+    ]
+  },
+  {
+    "id": "startup-bold-outfit-rubik",
+    "name": "Startup Bold (Outfit + Rubik)",
+    "category": "Sans + Sans",
+    "heading": "Outfit",
+    "body": "Rubik",
+    "mood": [
+      "startup",
+      "bold",
+      "modern",
+      "innovative",
+      "confident",
+      "dynamic"
+    ]
+  },
+  {
+    "id": "e-commerce-clean",
+    "name": "E-commerce Clean",
+    "category": "Sans + Sans",
+    "heading": "Rubik",
+    "body": "Nunito Sans",
+    "mood": [
+      "ecommerce",
+      "clean",
+      "shopping",
+      "product",
+      "retail",
+      "conversion"
+    ]
+  },
+  {
+    "id": "academic-research",
+    "name": "Academic/Research",
+    "category": "Serif + Sans",
+    "heading": "Crimson Pro",
+    "body": "Atkinson Hyperlegible",
+    "mood": [
+      "academic",
+      "research",
+      "scholarly",
+      "accessible",
+      "readable",
+      "educational"
+    ]
+  },
+  {
+    "id": "dashboard-data",
+    "name": "Dashboard Data",
+    "category": "Mono + Sans",
+    "heading": "Fira Code",
+    "body": "Fira Sans",
+    "mood": [
+      "dashboard",
+      "data",
+      "analytics",
+      "code",
+      "technical",
+      "precise"
+    ]
+  },
+  {
+    "id": "music-entertainment",
+    "name": "Music/Entertainment",
+    "category": "Display + Sans",
+    "heading": "Righteous",
+    "body": "Poppins",
+    "mood": [
+      "music",
+      "entertainment",
+      "fun",
+      "energetic",
+      "bold",
+      "performance"
+    ]
+  },
+  {
+    "id": "minimalist-portfolio",
+    "name": "Minimalist Portfolio",
+    "category": "Sans + Sans",
+    "heading": "Archivo",
+    "body": "Space Grotesk",
+    "mood": [
+      "minimal",
+      "portfolio",
+      "designer",
+      "creative",
+      "clean",
+      "artistic"
+    ]
+  },
+  {
+    "id": "kids-education",
+    "name": "Kids/Education",
+    "category": "Display + Sans",
+    "heading": "Baloo 2",
+    "body": "Comic Neue",
+    "mood": [
+      "kids",
+      "education",
+      "playful",
+      "friendly",
+      "colorful",
+      "learning"
+    ]
+  },
+  {
+    "id": "wedding-romance",
+    "name": "Wedding/Romance",
+    "category": "Script + Serif",
+    "heading": "Great Vibes",
+    "body": "Cormorant Infant",
+    "mood": [
+      "wedding",
+      "romance",
+      "elegant",
+      "script",
+      "invitation",
+      "feminine"
+    ]
+  },
+  {
+    "id": "science-tech",
+    "name": "Science/Tech",
+    "category": "Sans + Sans",
+    "heading": "Exo",
+    "body": "Roboto Mono",
+    "mood": [
+      "science",
+      "technology",
+      "research",
+      "data",
+      "futuristic",
+      "precise"
+    ]
+  },
+  {
+    "id": "accessibility-first",
+    "name": "Accessibility First",
+    "category": "Sans + Sans",
+    "heading": "Atkinson Hyperlegible",
+    "body": "Atkinson Hyperlegible",
+    "mood": [
+      "accessible",
+      "readable",
+      "inclusive",
+      "wcag",
+      "dyslexia-friendly",
+      "clear"
+    ]
+  },
+  {
+    "id": "sports-fitness",
+    "name": "Sports/Fitness",
+    "category": "Sans + Sans",
+    "heading": "Barlow Condensed",
+    "body": "Barlow",
+    "mood": [
+      "sports",
+      "fitness",
+      "athletic",
+      "energetic",
+      "condensed",
+      "action"
+    ]
+  },
+  {
+    "id": "luxury-minimalist",
+    "name": "Luxury Minimalist",
+    "category": "Serif + Sans",
+    "heading": "Bodoni Moda",
+    "body": "Jost",
+    "mood": [
+      "luxury",
+      "minimalist",
+      "high-end",
+      "sophisticated",
+      "refined",
+      "premium"
+    ]
+  },
+  {
+    "id": "tech-hud-mono",
+    "name": "Tech/HUD Mono",
+    "category": "Mono + Mono",
+    "heading": "Share Tech Mono",
+    "body": "Fira Code",
+    "mood": [
+      "tech",
+      "futuristic",
+      "hud",
+      "sci-fi",
+      "data",
+      "monospaced",
+      "precise"
+    ]
+  },
+  {
+    "id": "pixel-retro",
+    "name": "Pixel Retro",
+    "category": "Display + Sans",
+    "heading": "Press Start 2P",
+    "body": "VT323",
+    "mood": [
+      "pixel",
+      "retro",
+      "gaming",
+      "8-bit",
+      "nostalgic",
+      "arcade"
+    ]
+  },
+  {
+    "id": "neubrutalist-bold",
+    "name": "Neubrutalist Bold",
+    "category": "Display + Sans",
+    "heading": "Lexend Mega",
+    "body": "Public Sans",
+    "mood": [
+      "bold",
+      "neubrutalist",
+      "loud",
+      "strong",
+      "geometric",
+      "quirky"
+    ]
+  },
+  {
+    "id": "academic-archival",
+    "name": "Academic/Archival",
+    "category": "Serif + Serif",
+    "heading": "EB Garamond",
+    "body": "Crimson Text",
+    "mood": [
+      "academic",
+      "old-school",
+      "university",
+      "research",
+      "serious",
+      "traditional"
+    ]
+  },
+  {
+    "id": "spatial-clear",
+    "name": "Spatial Clear",
+    "category": "Sans + Sans",
+    "heading": "Inter",
+    "body": "Inter",
+    "mood": [
+      "spatial",
+      "legible",
+      "glass",
+      "system",
+      "clean",
+      "neutral"
+    ]
+  },
+  {
+    "id": "kinetic-motion",
+    "name": "Kinetic Motion",
+    "category": "Display + Mono",
+    "heading": "Syncopate",
+    "body": "Space Mono",
+    "mood": [
+      "kinetic",
+      "motion",
+      "futuristic",
+      "speed",
+      "wide",
+      "tech"
+    ]
+  },
+  {
+    "id": "gen-z-brutal",
+    "name": "Gen Z Brutal",
+    "category": "Display + Sans",
+    "heading": "Anton",
+    "body": "Epilogue",
+    "mood": [
+      "brutal",
+      "loud",
+      "shouty",
+      "meme",
+      "internet",
+      "bold"
+    ]
+  },
+  {
+    "id": "bauhaus-geometric",
+    "name": "Bauhaus Geometric",
+    "category": "Geometric Sans + Single Weight",
+    "heading": "Outfit",
+    "body": "Outfit",
+    "mood": [
+      "bauhaus",
+      "geometric",
+      "constructivist",
+      "bold",
+      "uppercase",
+      "architectural",
+      "mechanical",
+      "poster",
+      "tactile"
+    ]
+  },
+  {
+    "id": "minimalist-monochrome-editorial",
+    "name": "Minimalist Monochrome Editorial",
+    "category": "Serif + Serif + Mono (Triple Stack)",
+    "heading": "Playfair Display",
+    "body": "Source Serif 4",
+    "mood": [
+      "monochrome",
+      "editorial",
+      "austere",
+      "typographic",
+      "pocket manifesto",
+      "luxury",
+      "high contrast",
+      "brutalist mobile"
+    ]
+  },
+  {
+    "id": "modern-dark-cinema-inter-system",
+    "name": "Modern Dark Cinema (Inter System)",
+    "category": "Sans + Mono",
+    "heading": "Inter",
+    "body": "Inter",
+    "mood": [
+      "dark",
+      "cinematic",
+      "technical",
+      "precision",
+      "clean",
+      "premium",
+      "developer",
+      "professional",
+      "high-end utility"
+    ]
+  },
+  {
+    "id": "saas-mobile-boutique-calistoga-inter",
+    "name": "SaaS Mobile Boutique (Calistoga + Inter)",
+    "category": "Display Serif + Sans + Mono",
+    "heading": "Calistoga",
+    "body": "Inter",
+    "mood": [
+      "saas",
+      "boutique",
+      "electric",
+      "warm",
+      "editorial",
+      "bold",
+      "premium",
+      "fintech",
+      "business",
+      "dual font",
+      "human warmth"
+    ]
+  },
+  {
+    "id": "terminal-cli-monospace",
+    "name": "Terminal CLI Monospace",
+    "category": "Mono + Mono (Single Family)",
+    "heading": "JetBrains Mono",
+    "body": "JetBrains Mono",
+    "mood": [
+      "terminal",
+      "cli",
+      "hacker",
+      "monospace",
+      "matrix",
+      "developer",
+      "retro-future",
+      "command line",
+      "precision",
+      "oled"
+    ]
+  },
+  {
+    "id": "kinetic-brutalism-space-grotesk",
+    "name": "Kinetic Brutalism (Space Grotesk)",
+    "category": "Geometric Sans (Single Dominant)",
+    "heading": "Space Grotesk",
+    "body": "Space Grotesk",
+    "mood": [
+      "kinetic",
+      "brutalist",
+      "aggressive",
+      "uppercase",
+      "oversized",
+      "display",
+      "motion",
+      "street",
+      "bold",
+      "high-energy",
+      "zine"
+    ]
+  },
+  {
+    "id": "flat-design-mobile-system-bold",
+    "name": "Flat Design Mobile (System Bold)",
+    "category": "Sans + Sans",
+    "heading": "Inter",
+    "body": "Inter",
+    "mood": [
+      "flat",
+      "clean",
+      "system",
+      "bold",
+      "geometric",
+      "cross-platform",
+      "icon",
+      "poster",
+      "minimal",
+      "functional",
+      "responsive"
+    ]
+  },
+  {
+    "id": "material-you-md3-roboto-system",
+    "name": "Material You MD3 (Roboto System)",
+    "category": "Sans (System Default)",
+    "heading": "Roboto",
+    "body": "Roboto",
+    "mood": [
+      "material design 3",
+      "md3",
+      "android",
+      "google",
+      "tonal",
+      "friendly",
+      "rounded",
+      "accessible",
+      "adaptive"
+    ]
+  },
+  {
+    "id": "neo-brutalism-mobile-space-grotesk-bold",
+    "name": "Neo Brutalism Mobile (Space Grotesk Bold)",
+    "category": "Geometric Sans (Bold-Only)",
+    "heading": "Space Grotesk",
+    "body": "Space Grotesk",
+    "mood": [
+      "neo brutalism",
+      "pop art",
+      "loud",
+      "bold",
+      "heavy",
+      "stickers",
+      "mechanical",
+      "high contrast",
+      "cream",
+      "gen-z"
+    ]
+  },
+  {
+    "id": "bold-typography-mobile-inter-poster",
+    "name": "Bold Typography Mobile (Inter Poster)",
+    "category": "Sans + Serif (Display) + Mono",
+    "heading": "Inter",
+    "body": "Playfair Display",
+    "mood": [
+      "bold typography",
+      "editorial",
+      "poster",
+      "near-black",
+      "vermillion",
+      "luxury",
+      "type-as-hero",
+      "manifesto",
+      "high-contrast"
+    ]
+  },
+  {
+    "id": "academia-mobile-cormorant-crimson-cinzel",
+    "name": "Academia Mobile (Cormorant + Crimson + Cinzel)",
+    "category": "Serif + Book Serif + Engraved (Triple Stack)",
+    "heading": "Cormorant Garamond",
+    "body": "Crimson Pro",
+    "mood": [
+      "academia",
+      "library",
+      "mahogany",
+      "parchment",
+      "brass",
+      "scholarly",
+      "prestige",
+      "antique",
+      "victorian",
+      "leather"
+    ]
+  },
+  {
+    "id": "cyberpunk-mobile-orbitron-jetbrains-mono",
+    "name": "Cyberpunk Mobile (Orbitron + JetBrains Mono)",
+    "category": "Tech Display + Mono",
+    "heading": "Orbitron",
+    "body": "JetBrains Mono",
+    "mood": [
+      "cyberpunk",
+      "neon",
+      "glitch",
+      "hud",
+      "sci-fi",
+      "dark",
+      "matrix green",
+      "magenta",
+      "chamfered",
+      "tactical"
+    ]
+  },
+  {
+    "id": "web3-bitcoin-defi-space-grotesk-inter-mono",
+    "name": "Web3 Bitcoin DeFi (Space Grotesk + Inter + Mono)",
+    "category": "Geometric Sans + Sans + Mono (Triple)",
+    "heading": "Space Grotesk",
+    "body": "Inter",
+    "mood": [
+      "web3",
+      "bitcoin",
+      "defi",
+      "digital gold",
+      "fintech",
+      "crypto",
+      "trustless",
+      "luminescent",
+      "precision",
+      "dark"
+    ]
+  },
+  {
+    "id": "claymorphism-mobile-nunito-dm-sans",
+    "name": "Claymorphism Mobile (Nunito + DM Sans)",
+    "category": "Display Rounded + Geometric Sans",
+    "heading": "Nunito",
+    "body": "DM Sans",
+    "mood": [
+      "claymorphism",
+      "clay",
+      "rounded",
+      "playful",
+      "candy",
+      "bubbly",
+      "soft",
+      "3d",
+      "children",
+      "education",
+      "tactile",
+      "spring",
+      "nunito",
+      "dm sans"
+    ]
+  },
+  {
+    "id": "enterprise-saas-mobile-plus-jakarta-sans",
+    "name": "Enterprise SaaS Mobile (Plus Jakarta Sans)",
+    "category": "Geometric Sans (Single Family)",
+    "heading": "Plus Jakarta Sans",
+    "body": "Plus Jakarta Sans",
+    "mood": [
+      "enterprise",
+      "saas",
+      "b2b",
+      "professional",
+      "indigo",
+      "modern",
+      "approachable",
+      "legible",
+      "ios dynamic type",
+      "android scaling"
+    ]
+  },
+  {
+    "id": "sketch-hand-drawn-mobile-kalam-patrick-hand",
+    "name": "Sketch Hand-Drawn Mobile (Kalam + Patrick Hand)",
+    "category": "Handwritten + Handwritten (Dual)",
+    "heading": "Kalam",
+    "body": "Patrick Hand",
+    "mood": [
+      "sketch",
+      "hand-drawn",
+      "handwriting",
+      "human",
+      "imperfect",
+      "organic",
+      "paper",
+      "kalam",
+      "patrick hand",
+      "education",
+      "journal",
+      "creative"
+    ]
+  },
+  {
+    "id": "neumorphism-mobile-plus-jakarta-sans-system",
+    "name": "Neumorphism Mobile (Plus Jakarta Sans + System)",
+    "category": "Geometric Sans (System Fallback)",
+    "heading": "Plus Jakarta Sans",
+    "body": "Plus Jakarta Sans",
+    "mood": [
+      "neumorphism",
+      "soft ui",
+      "monochromatic",
+      "cool grey",
+      "minimal",
+      "physical",
+      "depth",
+      "ceramic",
+      "system font",
+      "utility"
+    ]
+  }
+]

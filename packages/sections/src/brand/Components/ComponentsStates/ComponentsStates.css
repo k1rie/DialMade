@@ -1,0 +1,54 @@
+.dl-brand-states {
+  min-width: 0;
+  overflow-x: auto;
+  border: var(--dl-card-border, 1px solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--dl-card-shadow, none);
+}
+
+.dl-brand-states:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.dl-brand-states__table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.dl-brand-states__caption {
+  padding: var(--dl-space-4, 16px) var(--dl-space-4, 16px) var(--dl-space-2, 8px);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  text-align: start;
+}
+
+.dl-brand-states__table th,
+.dl-brand-states__table td {
+  padding: var(--dl-space-3, 12px) var(--dl-space-4, 16px);
+  border-top: 1px solid var(--border);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.dl-brand-states__table thead th {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dl-brand-states__table tbody th {
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.dl-brand-states__table td {
+  min-width: 112px;
+}

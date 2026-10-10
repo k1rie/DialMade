@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# tests
+coverage/
+
+# env
+.env*
+
+# vendored upstream repos (scripts/fetch-vendor.sh)
+vendor/
+
+# local tooling
+.claude/settings.local.json
+.vercel/
+*.pem
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+
+# os
+.DS_Store
+
+# env (keep the template)
+!.env.example
+
+# third-party skill with an ambiguous license (Apache-2.0 template vs MIT claim) — kept local, not redistributed
+.claude/skills/ui-styling/

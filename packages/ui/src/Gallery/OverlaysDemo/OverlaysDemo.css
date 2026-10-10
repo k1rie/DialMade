@@ -1,0 +1,20 @@
+.dl-gallery-tooltips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--dl-space-8, 40px) var(--dl-space-6, 24px);
+  padding: var(--dl-space-8, 40px) var(--dl-space-2, 8px) var(--dl-space-6, 24px);
+}
+
+.dl-gallery-toasts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-gallery-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-4, 16px);
+}

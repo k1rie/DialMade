@@ -1,0 +1,83 @@
+.dl-progress {
+  --_progress-tone: var(--primary);
+  --_progress-h: 0.5rem;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-2, 8px);
+  width: 100%;
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+}
+
+.dl-progress[data-size="sm"] { --_progress-h: 0.25rem; }
+.dl-progress[data-size="lg"] { --_progress-h: 0.75rem; }
+
+.dl-progress[data-variant="success"] { --_progress-tone: var(--success); }
+.dl-progress[data-variant="warning"] { --_progress-tone: var(--warning); }
+.dl-progress[data-variant="destructive"] { --_progress-tone: var(--destructive); }
+.dl-progress[data-variant="cta"] { --_progress-tone: var(--cta); }
+
+.dl-progress__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-progress__label {
+  font-weight: 550;
+}
+
+.dl-progress__value {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-progress__track {
+  position: relative;
+  height: var(--_progress-h);
+  border-radius: var(--dl-radius-full, 9999px);
+  background: color-mix(in oklab, var(--_progress-tone) 16%, var(--muted));
+  overflow: hidden;
+}
+
+.dl-progress__indicator {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--_progress-tone);
+  transition: width var(--dl-duration-slow, 320ms) var(--dl-ease, ease);
+}
+
+.dl-progress[data-indeterminate] .dl-progress__indicator {
+  position: absolute;
+  left: 0;
+  width: 40%;
+  animation: dl-progress-slide 1.4s ease-in-out infinite;
+}
+
+/* Transform only (no layout): the bar travels from fully left of the track to fully right of it. */
+@keyframes dl-progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-progress__indicator {
+    transition: none;
+  }
+
+  /* Still: a centered segment instead of an endless loop. */
+  .dl-progress[data-indeterminate] .dl-progress__indicator {
+    left: 30%;
+    animation: none;
+    opacity: 0.7;
+  }
+}

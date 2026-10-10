@@ -1,0 +1,11 @@
+.dl-radio-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-radio-group[data-orientation="horizontal"] .dl-radio-group__options {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--dl-space-3, 12px) var(--dl-space-5, 20px);
+}

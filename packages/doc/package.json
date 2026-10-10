@@ -1,0 +1,46 @@
+{
+  "name": "@dialmade/doc",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "DesignDoc v1 (Zod): esquema, parches RFC 6902, compilación de variables del tema y exportadores (CSS, DTCG, Figma, DESIGN.md, prompt packs).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dialmade/catalog": "workspace:*",
+    "@dialmade/palette": "workspace:*",
+    "fast-json-patch": "3.1.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@dialmade/ui": "workspace:*",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

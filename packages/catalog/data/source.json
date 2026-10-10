@@ -1,0 +1,38 @@
+{
+  "upstream": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+  "commit": "50d8a7de0900119855614541f15a1a616691eb33",
+  "license": "MIT",
+  "generator": "packages/catalog/scripts/etl.mjs",
+  "files": {
+    "products.csv": {
+      "sha256": "42473f75e8dde5987bdf89ce55d8c168091b80a356cae691dd60247d80720b70",
+      "rows": 192
+    },
+    "landing.csv": {
+      "sha256": "9a2edd3bb676c2a58f00ade7a062e285222d4297bfd847c8d5b056f0dbbf52d0",
+      "rows": 34
+    },
+    "styles.csv": {
+      "sha256": "a93a4d9d7025856575d7b7583bda020be9043013432c5af7c58af9dbdfb206b7",
+      "rows": 88
+    },
+    "typography.csv": {
+      "sha256": "321fc446e89024488ebae96dda93efc4d2307bd8bddb240857ad51364f6782c8",
+      "rows": 74
+    },
+    "motion.csv": {
+      "sha256": "381affe8df8ea1f66fbbda2598827f9f54299107bbe6a1b4e9b68f6b62091ceb",
+      "rows": 17
+    },
+    "google-fonts.csv": {
+      "sha256": "1c8c3b2ea1faf6a1012da463756def8b3889db33f2226f0343bb4daa80307d03",
+      "rows": 1934
+    }
+  },
+  "droppedColumns": {
+    "google-fonts.csv": [
+      "Popularity Rank",
+      "Trending Rank"
+    ]
+  }
+}

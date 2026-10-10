@@ -1,0 +1,18 @@
+.dl-gallery-state {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-gallery-state[data-stretch] {
+  align-items: stretch;
+  width: 100%;
+}
+
+.dl-gallery-state__label {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}

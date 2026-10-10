@@ -1,0 +1,100 @@
+"use client";
+
+// @dialmade/ui and @dialmade/sections components import their own CSS (only `dl-` classes), so it loads
+// with them — in the lazy design half — and never on the Home.
+import "./ThemeScope.css";
+
+import type { Locale, OutputKind, TypographyPairing } from "@dialmade/catalog";
+import type { DesignDoc } from "@dialmade/doc";
+import { ThemeStyles } from "@dialmade/sections";
+import { UiProvider } from "@dialmade/ui";
+import { useMemo, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
+import { useStore } from "zustand";
+import {
+  createDesignDocStore,
+  selectActivePageKind,
+  useOptionalDesignDocStore,
+  type ThemeVars,
+} from "@/hooks/useDesignDoc";
+import type { PreviewMode } from "@/hooks/usePaletteFlow";
+import { useI18n } from "@/i18n";
+import { cn } from "@/lib/cn";
+import { deriveDesign } from "@/lib/design-derived";
+
+export type ThemeScopeProps = Omit<HTMLAttributes<HTMLElement>, "style" | "children"> & {
+  /** Default: the store's `previewMode`. */
+  mode?: PreviewMode;
+  /** Page whose dials apply (e.g. the App page's density). Default: the active page; `null` = global dials. */
+  kind?: OutputKind | null;
+  /** Default: the store's doc. */
+  doc?: DesignDoc;
+  /** Explicit variables (e.g. a live Palette Lab theme without a doc). Win over `doc`. */
+  vars?: ThemeVars;
+  /** Fonts to link when `vars` is given without a doc. */
+  pairing?: Pick<TypographyPairing, "googleFontsUrl"> | null;
+  /** Links the pairing's Google Fonts (default true). */
+  fonts?: boolean;
+  /** Locale of @dialmade/ui's internal texts. Default: the doc's `brief.locale`, else the app's. */
+  locale?: Locale;
+  /** Color changes interpolate in ≤400 ms (150 ms with reduced motion). Default true. */
+  transition?: boolean;
+  as?: "div" | "section" | "main" | "article";
+  style?: CSSProperties;
+  children?: ReactNode;
+};
+
+/** Outside a DesignDocProvider ThemeScope still works with explicit `doc`/`vars`. */
+const detachedStore = createDesignDocStore();
+
+/**
+ * Applies the user's theme (DesignDoc → compileThemeVars) to its subtree through @dialmade/sections'
+ * ThemeStyles, in light or dark. The CSS of @dialmade/ui and @dialmade/sections only loads with this
+ * component and only matches `dl-` classes, so the app's `--app-*` look is untouched.
+ */
+export function ThemeScope({
+  mode: modeProp,
+  kind,
+  doc: docProp,
+  vars: varsProp,
+  pairing: pairingProp,
+  fonts = true,
+  locale: localeProp,
+  transition = true,
+  as,
+  className,
+  style,
+  children,
+  ...rest
+}: ThemeScopeProps) {
+  const store = useOptionalDesignDocStore() ?? detachedStore;
+  const storeDoc = useStore(store, (state) => state.doc);
+  const storeMode = useStore(store, (state) => state.previewMode);
+  const activeKind = useStore(store, selectActivePageKind);
+  const { locale: appLocale } = useI18n();
+
+  const doc = docProp ?? storeDoc ?? undefined;
+  const mode = modeProp ?? storeMode;
+  const pageKind = kind === undefined ? activeKind : kind;
+  const derived = useMemo(() => (doc ? deriveDesign(doc, pageKind) : null), [doc, pageKind]);
+
+  const vars = varsProp ?? derived?.vars[mode];
+  const pairing = fonts ? (pairingProp ?? derived?.pairing ?? null) : null;
+  const locale = localeProp ?? doc?.brief.locale ?? appLocale;
+
+  return (
+    <UiProvider locale={locale}>
+      <ThemeStyles
+        as={as}
+        vars={vars}
+        mode={mode}
+        pairing={pairing}
+        className={cn("app-theme-scope", className)}
+        data-transition={transition ? undefined : "off"}
+        style={style}
+        {...rest}
+      >
+        {children}
+      </ThemeStyles>
+    </UiProvider>
+  );
+}

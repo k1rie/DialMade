@@ -1,0 +1,57 @@
+.dl-landing-feature-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 9.5rem;
+  padding: var(--dl-space-4, 16px) var(--dl-space-4, 16px) 0;
+  overflow: hidden;
+  border-radius: var(--dl-radius-md, 10px);
+  background:
+    radial-gradient(80% 90% at 85% 0%, color-mix(in oklab, var(--brand) 20%, transparent), transparent 70%),
+    color-mix(in oklab, var(--muted) 60%, var(--card));
+}
+
+.dl-landing-feature-visual__pill {
+  position: absolute;
+  top: var(--dl-space-3, 12px);
+  left: var(--dl-space-3, 12px);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--dl-space-2, 8px);
+  padding: 6px 10px;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-badge-radius, var(--dl-radius-full, 9999px));
+  background: var(--card);
+  box-shadow: var(--dl-shadow-sm, none);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  line-height: 1.2;
+}
+
+.dl-landing-feature-visual__pill-label {
+  color: var(--muted-foreground);
+}
+
+.dl-landing-feature-visual__pill-value {
+  color: var(--card-foreground);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-landing-feature-visual__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 62%;
+}
+
+.dl-landing-feature-visual__bar {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: var(--dl-radius-sm, 4px) var(--dl-radius-sm, 4px) 0 0;
+  background: color-mix(in oklab, var(--brand) 34%, var(--card));
+}
+
+.dl-landing-feature-visual__bar[data-last] {
+  background: linear-gradient(to top, var(--brand), color-mix(in oklab, var(--brand) 70%, var(--cta)));
+}

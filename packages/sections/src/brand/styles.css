@@ -1,0 +1,21 @@
+/* Stylesheets of the brand sections (Guía de estilo). */
+@import "./BoardSection/BoardSection.css";
+@import "./BoardPanel/BoardPanel.css";
+@import "./BrandMark/BrandMark.css";
+@import "./Cover/Cover.css";
+@import "./Identity/Identity.css";
+@import "./Palette/Palette.css";
+@import "./Palette/PaletteChips/PaletteChips.css";
+@import "./Palette/PaletteScales/PaletteScales.css";
+@import "./Palette/RolesTable/RolesTable.css";
+@import "./Palette/ContrastTable/ContrastTable.css";
+@import "./Type/Type.css";
+@import "./Type/FontCard/FontCard.css";
+@import "./Type/TypeScale/TypeScale.css";
+@import "./Shape/Shape.css";
+@import "./Shape/DialMeter/DialMeter.css";
+@import "./Components/ComponentsShowcase/ComponentsShowcase.css";
+@import "./Components/ComponentsStates/ComponentsStates.css";
+@import "./ArtDirection/ArtMosaic/ArtMosaic.css";
+@import "./ArtDirection/DoDont/DoDont.css";
+@import "./ArtDirection/ArtApplications/ArtApplications.css";

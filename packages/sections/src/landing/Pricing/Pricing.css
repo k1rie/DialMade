@@ -1,0 +1,92 @@
+.dl-landing-pricing__layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-7, 48px);
+}
+
+.dl-landing-pricing__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--dl-space-5, 24px);
+  min-width: 0;
+}
+
+.dl-landing-pricing__intro[data-align="center"] {
+  align-items: center;
+  text-align: center;
+}
+
+.dl-landing-pricing__plans {
+  container: dl-landing-plans / inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans {
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.dl-landing-pricing__note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.dl-landing-pricing[data-variant="cards"][data-align="center"] .dl-landing-pricing__note {
+  text-align: center;
+}
+
+@container dl-landing (min-width: 46rem) {
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans {
+    gap: var(--dl-space-5, 20px);
+    max-width: none;
+  }
+
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans[data-count="2"],
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans[data-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans[data-count="2"] {
+    max-width: 52rem;
+  }
+
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans[data-count="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container dl-landing (min-width: 60rem) {
+  .dl-landing-pricing[data-variant="split"] .dl-landing-pricing__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr);
+    align-items: start;
+    gap: var(--dl-space-8, 64px);
+  }
+
+  .dl-landing-pricing[data-variant="split"] .dl-landing-pricing__intro {
+    align-items: flex-start;
+    text-align: start;
+  }
+
+  .dl-landing-pricing[data-variant="split"] .dl-landing-heading {
+    align-items: flex-start;
+    margin-inline: 0;
+    text-align: start;
+  }
+}
+
+@container dl-landing (min-width: 72rem) {
+  .dl-landing-pricing[data-variant="cards"] .dl-landing-pricing__plans[data-count="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

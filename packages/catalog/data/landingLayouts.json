@@ -1,0 +1,171 @@
+[
+  {
+    "id": "minimal",
+    "label": {
+      "es": "Minimal",
+      "en": "Minimal"
+    },
+    "description": {
+      "es": "Una columna: titular, tres beneficios y un CTA claro.",
+      "en": "One column: headline, three benefits and one clear CTA."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.features",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "minimal-single-column",
+    "patternIds": [
+      "minimal-single-column",
+      "hero-centric-design",
+      "hero-features-cta",
+      "waitlist-coming-soon",
+      "lead-magnet-form",
+      "faq-documentation-landing",
+      "newsletter-content-first",
+      "webinar-registration"
+    ]
+  },
+  {
+    "id": "product-demo",
+    "label": {
+      "es": "Demo de producto",
+      "en": "Product demo"
+    },
+    "description": {
+      "es": "El producto en el centro: mockup grande, logos de confianza y features una a una.",
+      "en": "Product first: a large mockup, trust logos and features one by one."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.socialProof",
+      "landing.features",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "product-demo-features",
+    "patternIds": [
+      "product-demo-features",
+      "video-first-hero",
+      "app-store-style-landing",
+      "immersive-interactive-experience",
+      "interactive-3d-configurator",
+      "ai-driven-dynamic-landing",
+      "real-time-operations-landing"
+    ]
+  },
+  {
+    "id": "social-proof",
+    "label": {
+      "es": "Prueba social",
+      "en": "Social proof"
+    },
+    "description": {
+      "es": "Confianza antes que nada: logos, testimonios y resultados antes del CTA.",
+      "en": "Trust comes first: logos, testimonials and results before the CTA."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.socialProof",
+      "landing.features",
+      "landing.testimonials",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "hero-testimonials-cta",
+    "patternIds": [
+      "hero-testimonials-cta",
+      "trust-authority-conversion",
+      "product-review-ratings-focused",
+      "community-forum-landing",
+      "ai-personalization-landing"
+    ]
+  },
+  {
+    "id": "storytelling",
+    "label": {
+      "es": "Narrativa",
+      "en": "Storytelling"
+    },
+    "description": {
+      "es": "Una historia por capítulos: el problema, el camino y la solución.",
+      "en": "A story in chapters: the problem, the journey and the solution."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.features",
+      "landing.testimonials",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "scroll-triggered-storytelling",
+    "patternIds": [
+      "scroll-triggered-storytelling",
+      "horizontal-scroll-journey",
+      "before-after-transformation",
+      "portfolio-grid"
+    ]
+  },
+  {
+    "id": "conversion",
+    "label": {
+      "es": "Conversión y precios",
+      "en": "Conversion & pricing"
+    },
+    "description": {
+      "es": "Pensada para convertir: beneficios, planes de precio y un CTA en cada paso.",
+      "en": "Built to convert: benefits, pricing plans and a CTA at every step."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.features",
+      "landing.pricing",
+      "landing.testimonials",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "pricing-focused-landing",
+    "patternIds": [
+      "pricing-focused-landing",
+      "pricing-page-cta",
+      "funnel-3-step-conversion",
+      "comparison-table-cta",
+      "comparison-table-focus"
+    ]
+  },
+  {
+    "id": "feature-rich",
+    "label": {
+      "es": "Escaparate completo",
+      "en": "Full showcase"
+    },
+    "description": {
+      "es": "Todas las secciones. Para cuando tienes mucho que contar y prefieres ocultar lo que sobre.",
+      "en": "Every section. For when you have a lot to show and would rather hide what you don't need."
+    },
+    "sections": [
+      "landing.navbar",
+      "landing.hero",
+      "landing.socialProof",
+      "landing.features",
+      "landing.testimonials",
+      "landing.pricing",
+      "landing.cta",
+      "landing.footer"
+    ],
+    "sourcePatternId": "feature-rich-showcase",
+    "patternIds": [
+      "feature-rich-showcase",
+      "bento-grid-showcase",
+      "enterprise-gateway",
+      "marketplace-directory",
+      "event-conference-landing"
+    ]
+  }
+]

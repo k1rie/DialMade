@@ -1,0 +1,50 @@
+.dl-landing-billing {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: calc(var(--dl-button-radius, var(--dl-radius-md, 8px)) + 4px);
+  background: var(--muted);
+}
+
+.dl-landing-billing__option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  min-height: calc(var(--dl-button-h-sm, 32px) + 2px);
+  margin: 0;
+  padding: 0 var(--dl-space-4, 16px);
+  border: 0;
+  border-radius: var(--dl-button-radius, var(--dl-radius-md, 8px));
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dl-duration-fast, 150ms) var(--dl-ease, ease),
+    color var(--dl-duration-fast, 150ms) var(--dl-ease, ease),
+    box-shadow var(--dl-duration-fast, 150ms) var(--dl-ease, ease);
+}
+
+.dl-landing-billing__option:hover {
+  color: var(--foreground);
+}
+
+.dl-landing-billing__option[aria-pressed="true"] {
+  background: var(--background);
+  box-shadow: var(--dl-shadow-sm, 0 1px 2px rgb(0 0 0 / 0.08));
+  color: var(--foreground);
+}
+
+.dl-landing-billing__option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-landing-billing__option {
+    transition: none;
+  }
+}

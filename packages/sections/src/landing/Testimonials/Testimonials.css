@@ -1,0 +1,109 @@
+.dl-landing-quotes {
+  --_quote-font: inherit;
+  --_quote-size: calc(var(--dl-fs-body, 1rem) * 1.0625);
+  --_quote-weight: 400;
+  --_quote-tracking: normal;
+  --_quote-lh: 1.6;
+}
+
+.dl-landing-quotes[data-emphasis="subtle"] {
+  --_quote-size: calc(var(--dl-fs-body, 1rem) * 0.9375);
+}
+
+.dl-landing-quotes[data-emphasis="bold"] {
+  --_quote-font: var(--dl-font-heading, inherit);
+  --_quote-size: calc(var(--dl-fs-body, 1rem) * 1.25);
+  --_quote-weight: 500;
+  --_quote-tracking: var(--dl-heading-tracking, -0.01em);
+  --_quote-lh: 1.45;
+}
+
+.dl-landing-quotes .dl-landing__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-7, 48px);
+}
+
+.dl-landing-quotes__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-landing-quotes__list[data-count="1"] {
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.dl-landing-quotes__spotlight {
+  --_quote-font: var(--dl-font-heading, inherit);
+  --_quote-size: min(calc(var(--dl-fs-h3, 1.5rem) * 1.1), 6.4cqi);
+  --_quote-weight: 500;
+  --_quote-tracking: var(--dl-heading-tracking, -0.02em);
+  --_quote-lh: 1.35;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dl-space-5, 24px);
+  width: 100%;
+  max-width: 54rem;
+  margin-inline: auto;
+}
+
+.dl-landing-quotes[data-emphasis="subtle"] .dl-landing-quotes__spotlight {
+  --_quote-size: min(var(--dl-fs-h3, 1.5rem), 6cqi);
+}
+
+.dl-landing-quotes[data-emphasis="bold"] .dl-landing-quotes__spotlight {
+  --_quote-size: min(var(--dl-fs-h2, 2rem), 7.5cqi);
+  --_quote-weight: var(--dl-heading-weight, 600);
+}
+
+.dl-landing-quotes__spotlight .dl-landing-quote__figure {
+  align-items: center;
+  text-align: center;
+}
+
+.dl-landing-quotes[data-align="start"] .dl-landing-quotes__spotlight {
+  align-items: flex-start;
+  margin-inline: 0;
+}
+
+.dl-landing-quotes[data-align="start"] .dl-landing-quotes__spotlight .dl-landing-quote__figure {
+  align-items: flex-start;
+  text-align: start;
+}
+
+.dl-landing-quotes__mark {
+  width: 2.75rem;
+  height: auto;
+  fill: color-mix(in oklab, var(--brand) 60%, transparent);
+}
+
+@container dl-landing (min-width: 40rem) {
+  .dl-landing-quotes__list:not([data-count="1"]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-landing-quotes__list[data-count="3"] > :last-child,
+  .dl-landing-quotes__list[data-count="5"] > :last-child {
+    grid-column: span 2;
+  }
+}
+
+@container dl-landing (min-width: 60rem) {
+  .dl-landing-quotes__list[data-count="3"],
+  .dl-landing-quotes__list[data-count="5"],
+  .dl-landing-quotes__list[data-count="6"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dl-landing-quotes__list[data-count="3"] > :last-child {
+    grid-column: auto;
+  }
+}

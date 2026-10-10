@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="solenne-gradient" x1="16" y1="104" x2="104" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8436B"/>
+      <stop offset="0.55" stop-color="#FF8A4C"/>
+      <stop offset="1" stop-color="#FFC94A"/>
+    </linearGradient>
+  </defs>
+  <path d="M60 14a46 46 0 1 0 46 46H82a22 22 0 1 1-22-22z" fill="url(#solenne-gradient)"/>
+  <circle cx="87" cy="33" r="12" fill="url(#solenne-gradient)"/>
+</svg>

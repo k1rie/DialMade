@@ -1,0 +1,94 @@
+.dl-app-activity {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.dl-app-activity__list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-app-activity__item {
+  --_tone: var(--muted-foreground);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--dl-space-3, 12px);
+  padding-bottom: var(--dl-space-4, 16px);
+}
+
+.dl-app-activity__item:last-child {
+  padding-bottom: 0;
+}
+
+.dl-app-activity__item[data-tone="success"] { --_tone: var(--success); }
+.dl-app-activity__item[data-tone="warning"] { --_tone: var(--warning); }
+.dl-app-activity__item[data-tone="info"] { --_tone: var(--info); }
+.dl-app-activity__item[data-tone="destructive"] { --_tone: var(--destructive); }
+
+.dl-app-activity[data-layout="timeline"] .dl-app-activity__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(2rem + var(--dl-space-1, 4px));
+  bottom: var(--dl-space-1, 4px);
+  left: calc(1rem - 0.5px);
+  width: 1px;
+  background: var(--border);
+}
+
+.dl-app-activity__node {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: color-mix(in oklab, var(--_tone) 14%, var(--card));
+  color: var(--_tone);
+  font-size: 0.95rem;
+}
+
+.dl-app-activity__avatar {
+  display: inline-flex;
+}
+
+.dl-app-activity[data-layout="list"] .dl-app-activity__item {
+  align-items: center;
+  padding-block: var(--dl-space-3, 12px);
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+.dl-app-activity[data-layout="list"] .dl-app-activity__item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dl-app-activity[data-layout="list"] .dl-app-activity__item:last-child {
+  padding-bottom: 0;
+}
+
+.dl-app-activity__body {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.dl-app-activity__text {
+  margin: 0;
+  color: var(--card-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.45;
+}
+
+.dl-app-activity__actor {
+  font-weight: 600;
+}
+
+.dl-app-activity__time {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}

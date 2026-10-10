@@ -1,0 +1,68 @@
+.dl-field {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+  font-family: var(--dl-font-body, inherit);
+  color: var(--foreground);
+}
+
+.dl-field__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dl-space-2, 8px);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--foreground);
+}
+
+.dl-field[data-disabled] .dl-field__label {
+  opacity: 0.6;
+}
+
+.dl-field__required {
+  color: var(--destructive);
+}
+
+.dl-field__optional {
+  font-weight: 400;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-field__hint,
+.dl-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dl-space-1, 4px);
+  margin: 0;
+  font-size: var(--dl-fs-caption, 0.8125rem);
+  line-height: var(--dl-lh-body, 1.5);
+}
+
+.dl-field__hint {
+  color: var(--muted-foreground);
+}
+
+.dl-field__error {
+  color: var(--destructive);
+  font-weight: 500;
+}
+
+.dl-field__error .dl-icon {
+  margin-top: 0.15em;
+}
+
+.dl-field--group {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.dl-field--group > legend {
+  padding: 0;
+  margin-bottom: var(--dl-space-2, 8px);
+}

@@ -1,0 +1,57 @@
+.dl-textarea {
+  --_ta-border: var(--input);
+  --_ta-ring: var(--ring);
+
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: calc(var(--dl-input-h, 40px) * 2.5);
+  padding: var(--dl-space-2, 8px) var(--dl-space-3, 12px);
+  margin: 0;
+  border: var(--dl-border-width, 1px) solid var(--_ta-border);
+  border-radius: var(--dl-input-radius, var(--dl-radius-md, 8px));
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: var(--dl-lh-body, 1.5);
+  resize: vertical;
+  outline: none;
+  transition:
+    border-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    box-shadow var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
+.dl-textarea:hover:not(:disabled),
+.dl-textarea[data-preview-state="hover"] {
+  --_ta-border: var(--border-strong);
+}
+
+.dl-textarea:focus-visible,
+.dl-textarea[data-preview-state="focus"] {
+  --_ta-border: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--_ta-ring) 25%, transparent);
+}
+
+.dl-textarea[aria-invalid="true"] {
+  --_ta-border: var(--destructive);
+  --_ta-ring: var(--destructive);
+}
+
+.dl-textarea:disabled {
+  cursor: not-allowed;
+  background: var(--muted);
+  opacity: 0.6;
+  resize: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-textarea {
+    transition: none;
+  }
+}

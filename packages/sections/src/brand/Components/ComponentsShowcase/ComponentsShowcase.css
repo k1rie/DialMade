@@ -1,0 +1,106 @@
+.dl-brand-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+}
+
+.dl-brand-showcase__panel {
+  min-width: 0;
+}
+
+.dl-brand-showcase__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-brand-showcase__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  align-items: start;
+  gap: var(--dl-space-4, 16px) var(--dl-space-5, 24px);
+}
+
+.dl-brand-showcase__card {
+  display: grid;
+}
+
+.dl-brand-showcase__card > * {
+  height: 100%;
+}
+
+.dl-brand-showcase__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dl-space-1, 4px);
+  margin: 0 0 var(--dl-space-4, 16px);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h2, 2rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, normal);
+  line-height: 1;
+}
+
+.dl-brand-showcase__period {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.dl-brand-showcase__features {
+  display: grid;
+  gap: var(--dl-space-2, 8px);
+  margin: 0;
+  padding: 0;
+  font-size: var(--dl-fs-small, 0.875rem);
+  list-style: none;
+}
+
+.dl-brand-showcase__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-brand-showcase__features svg {
+  flex: none;
+  margin-top: 0.15em;
+  color: var(--primary-text);
+}
+
+@container dl-board (min-width: 640px) {
+  .dl-brand-showcase {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-brand-showcase > [data-area="buttons"],
+  .dl-brand-showcase > [data-area="badges"],
+  .dl-brand-showcase > [data-area="table"] {
+    grid-column: 1 / -1;
+  }
+}
+
+@container dl-board (min-width: 960px) {
+  .dl-brand-showcase {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .dl-brand-showcase > [data-area="buttons"] {
+    grid-column: span 7;
+  }
+
+  .dl-brand-showcase > [data-area="badges"] {
+    grid-column: span 5;
+  }
+
+  .dl-brand-showcase > [data-area="form"] {
+    grid-column: span 7;
+  }
+
+  .dl-brand-showcase > [data-area="card"] {
+    grid-column: span 5;
+  }
+}

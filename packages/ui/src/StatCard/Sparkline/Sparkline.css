@@ -1,0 +1,25 @@
+.dl-sparkline {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  overflow: visible;
+  color: var(--chart-1);
+}
+
+.dl-sparkline[data-sentiment="negative"] {
+  color: var(--destructive);
+}
+
+.dl-sparkline__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.dl-sparkline__area {
+  fill: currentColor;
+  opacity: 0.12;
+}

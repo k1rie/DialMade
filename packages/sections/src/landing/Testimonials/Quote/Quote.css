@@ -1,0 +1,49 @@
+.dl-landing-quote__figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-4, 16px);
+  height: 100%;
+  margin: 0;
+  text-align: start;
+}
+
+.dl-landing-quote__text {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.dl-landing-quote__text p {
+  margin: 0;
+  color: inherit;
+  font-family: var(--_quote-font, inherit);
+  font-size: var(--_quote-size, 1.0625rem);
+  font-weight: var(--_quote-weight, 400);
+  letter-spacing: var(--_quote-tracking, normal);
+  line-height: var(--_quote-lh, 1.6);
+  text-wrap: pretty;
+}
+
+.dl-landing-quote__author {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+}
+
+.dl-landing-quote__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dl-landing-quote__name {
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dl-landing-quote__role {
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.4;
+}

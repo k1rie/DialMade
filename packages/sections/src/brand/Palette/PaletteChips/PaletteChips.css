@@ -1,0 +1,54 @@
+.dl-brand-palette-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 100px), 1fr));
+  gap: var(--dl-space-4, 16px) var(--dl-space-3, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-brand-palette-chips__chip {
+  --_palette-chip: var(--primary);
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dl-brand-palette-chips__color {
+  display: block;
+  aspect-ratio: 3 / 2;
+  margin-bottom: var(--dl-space-2, 8px);
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--_palette-chip);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+
+.dl-brand-palette-chips[data-tall] .dl-brand-palette-chips__color {
+  aspect-ratio: 3 / 4;
+}
+
+.dl-brand-palette-chips__name {
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dl-brand-palette-chips__var,
+.dl-brand-palette-chips__hex {
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  line-height: 1.5;
+}
+
+.dl-brand-palette-chips__var {
+  color: var(--muted-foreground);
+}
+
+.dl-brand-palette-chips__hex {
+  display: grid;
+}
+
+.dl-brand-palette-chips__alt {
+  color: var(--muted-foreground);
+}

@@ -1,0 +1,476 @@
+[
+  {
+    "id": "minimalism-and-swiss-style",
+    "name": "Minimalism & Swiss Style",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "neumorphism",
+    "name": "Neumorphism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "glassmorphism",
+    "name": "Glassmorphism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "brutalism",
+    "name": "Brutalism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "3d-and-hyperrealism",
+    "name": "3D & Hyperrealism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "vibrant-and-block-based",
+    "name": "Vibrant & Block-based",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "dark-mode-oled",
+    "name": "Dark Mode (OLED)",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "accessible-and-ethical",
+    "name": "Accessible & Ethical",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "claymorphism",
+    "name": "Claymorphism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "aurora-ui",
+    "name": "Aurora UI",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "retro-futurism",
+    "name": "Retro-Futurism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "flat-design",
+    "name": "Flat Design",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "skeuomorphism",
+    "name": "Skeuomorphism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "liquid-glass",
+    "name": "Liquid Glass",
+    "type": "Platform/Material",
+    "status": "active"
+  },
+  {
+    "id": "motion-driven",
+    "name": "Motion-Driven",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "micro-interactions",
+    "name": "Micro-interactions",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "inclusive-design",
+    "name": "Inclusive Design",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "zero-interface",
+    "name": "Zero Interface",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "soft-ui-evolution",
+    "name": "Soft UI Evolution",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "data-dense-dashboard",
+    "name": "Data-Dense Dashboard",
+    "type": "BI/Analytics",
+    "status": "active"
+  },
+  {
+    "id": "heat-map-and-heatmap-style",
+    "name": "Heat Map & Heatmap Style",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "executive-dashboard",
+    "name": "Executive Dashboard",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "real-time-monitoring",
+    "name": "Real-Time Monitoring",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "drill-down-analytics",
+    "name": "Drill-Down Analytics",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "comparative-analysis-dashboard",
+    "name": "Comparative Analysis Dashboard",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "predictive-analytics",
+    "name": "Predictive Analytics",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "user-behavior-analytics",
+    "name": "User Behavior Analytics",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "financial-dashboard",
+    "name": "Financial Dashboard",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "sales-intelligence-dashboard",
+    "name": "Sales Intelligence Dashboard",
+    "type": "BI/Analytics",
+    "status": "supplemental"
+  },
+  {
+    "id": "neubrutalism",
+    "name": "Neubrutalism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "bento-box-grid",
+    "name": "Bento Box Grid",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "y2k-aesthetic",
+    "name": "Y2K Aesthetic",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "cyberpunk-ui",
+    "name": "Cyberpunk UI",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "organic-biophilic",
+    "name": "Organic Biophilic",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "ai-native-ui",
+    "name": "AI-Native UI",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "memphis-design",
+    "name": "Memphis Design",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "vaporwave",
+    "name": "Vaporwave",
+    "type": "General",
+    "status": "supplemental"
+  },
+  {
+    "id": "dimensional-layering",
+    "name": "Dimensional Layering",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "exaggerated-minimalism",
+    "name": "Exaggerated Minimalism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "kinetic-typography",
+    "name": "Kinetic Typography",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "parallax-storytelling",
+    "name": "Parallax Storytelling",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "swiss-modernism-2-0",
+    "name": "Swiss Modernism 2.0",
+    "type": "General",
+    "status": "supplemental"
+  },
+  {
+    "id": "hud-sci-fi-fui",
+    "name": "HUD / Sci-Fi FUI",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "pixel-art",
+    "name": "Pixel Art",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "spatial-ui-visionos",
+    "name": "Spatial UI (VisionOS)",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "e-ink-paper",
+    "name": "E-Ink / Paper",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "gen-z-chaos-maximalism",
+    "name": "Gen Z Chaos / Maximalism",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "biomimetic-organic-2-0",
+    "name": "Biomimetic / Organic 2.0",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "anti-polish-raw-aesthetic",
+    "name": "Anti-Polish / Raw Aesthetic",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "tactile-digital-deformable-ui",
+    "name": "Tactile Digital / Deformable UI",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "nature-distilled",
+    "name": "Nature Distilled",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "interactive-cursor-design",
+    "name": "Interactive Cursor Design",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "voice-first-multimodal",
+    "name": "Voice-First Multimodal",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "3d-product-preview",
+    "name": "3D Product Preview",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "gradient-mesh-aurora-evolved",
+    "name": "Gradient Mesh / Aurora Evolved",
+    "type": "General",
+    "status": "supplemental"
+  },
+  {
+    "id": "editorial-grid-magazine",
+    "name": "Editorial Grid / Magazine",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "chromatic-aberration-rgb-split",
+    "name": "Chromatic Aberration / RGB Split",
+    "type": "General",
+    "status": "supplemental"
+  },
+  {
+    "id": "vintage-analog-retro-film",
+    "name": "Vintage Analog / Retro Film",
+    "type": "General",
+    "status": "active"
+  },
+  {
+    "id": "bauhaus",
+    "name": "Bauhaus (包豪斯)",
+    "type": "Mobile",
+    "status": "active"
+  },
+  {
+    "id": "minimalist-monochrome",
+    "name": "Minimalist Monochrome",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "modern-dark-cinema-mobile",
+    "name": "Modern Dark (Cinema Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "saas-mobile-high-tech-boutique",
+    "name": "SaaS Mobile (High-Tech Boutique)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "terminal-cli-mobile",
+    "name": "Terminal CLI (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "kinetic-brutalism-mobile",
+    "name": "Kinetic Brutalism (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "flat-design-mobile-touch-first",
+    "name": "Flat Design Mobile (Touch-First)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "material-you-md3-mobile",
+    "name": "Material 3 Expressive (Mobile)",
+    "type": "Mobile",
+    "status": "active"
+  },
+  {
+    "id": "neo-brutalism-mobile",
+    "name": "Neo Brutalism (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "bold-typography-mobile-poster",
+    "name": "Bold Typography (Mobile Poster)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "academia-scholarly-mobile",
+    "name": "Academia (Scholarly Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "cyberpunk-mobile-hud",
+    "name": "Cyberpunk Mobile HUD",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "bitcoin-defi-mobile",
+    "name": "Bitcoin DeFi (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "claymorphism-mobile",
+    "name": "Claymorphism (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "enterprise-saas-mobile",
+    "name": "Enterprise SaaS (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "sketch-hand-drawn-mobile",
+    "name": "Sketch Hand-Drawn (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "neumorphism-mobile",
+    "name": "Neumorphism (Mobile)",
+    "type": "Mobile",
+    "status": "supplemental"
+  },
+  {
+    "id": "fluent-2",
+    "name": "Fluent 2",
+    "type": "Platform/System",
+    "status": "active"
+  },
+  {
+    "id": "shopify-polaris",
+    "name": "Shopify Polaris",
+    "type": "Platform/System",
+    "status": "active"
+  },
+  {
+    "id": "spectrum-design-system",
+    "name": "Adobe Spectrum",
+    "type": "Platform/System",
+    "status": "active"
+  },
+  {
+    "id": "spectrum-2",
+    "name": "Spectrum 2",
+    "type": "Platform/System",
+    "status": "supplemental"
+  }
+]

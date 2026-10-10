@@ -1,0 +1,30 @@
+.dl-app-confirm {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.dl-app-confirm[data-layout="modal"] .dl-app-confirm__frame {
+  height: 100%;
+  min-height: 18rem;
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+}
+
+.dl-app-confirm[data-layout="panel"] {
+  display: grid;
+  place-items: center;
+  padding: var(--dl-space-5, 24px) 0;
+}
+
+.dl-app-confirm__subject {
+  margin: 0;
+  padding: var(--dl-space-3, 12px) var(--dl-space-4, 16px);
+  overflow-wrap: anywhere;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

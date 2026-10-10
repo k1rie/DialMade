@@ -1,0 +1,53 @@
+[
+  {
+    "id": "subtle",
+    "label": {
+      "es": "Sutil",
+      "en": "Subtle"
+    },
+    "description": {
+      "es": "Feedback discreto: opacidad y desplazamientos de 1–2 px. Para productos serios o con mucho dato.",
+      "en": "Quiet feedback: opacity and 1–2 px shifts. For serious or data-heavy products."
+    },
+    "durations": {
+      "fast": 150,
+      "base": 275,
+      "slow": 400
+    },
+    "ease": "cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+  },
+  {
+    "id": "standard",
+    "label": {
+      "es": "Estándar",
+      "en": "Standard"
+    },
+    "description": {
+      "es": "Transiciones claras: elevación en hover, revelado al hacer scroll y cambios de página suaves.",
+      "en": "Clear transitions: hover lift, scroll reveals and smooth page changes."
+    },
+    "durations": {
+      "fast": 200,
+      "base": 440,
+      "slow": 600
+    },
+    "ease": "cubic-bezier(0.215, 0.61, 0.355, 1)"
+  },
+  {
+    "id": "expressive",
+    "label": {
+      "es": "Expresivo",
+      "en": "Expressive"
+    },
+    "description": {
+      "es": "Movimiento con carácter: escalonados largos y curvas con inercia. Siempre respeta reduced motion.",
+      "en": "Motion with character: longer staggers and curves with momentum. Always honours reduced motion."
+    },
+    "durations": {
+      "fast": 300,
+      "base": 550,
+      "slow": 800
+    },
+    "ease": "cubic-bezier(0.16, 1, 0.3, 1)"
+  }
+]

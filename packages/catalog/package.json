@@ -1,0 +1,50 @@
+{
+  "name": "@dialmade/catalog",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Catálogo de diseño en datos puros: tipos de producto, recetas de estilo, tipografías, layouts de landing y tiers de motion.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./sources": {
+      "types": "./src/sources.ts",
+      "default": "./src/sources.ts"
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./sources": {
+        "types": "./dist/sources.d.ts",
+        "default": "./dist/sources.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "etl": "node scripts/etl.mjs",
+    "etl:check": "node scripts/etl.mjs --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsup": "8.5.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

@@ -1,0 +1,35 @@
+.dl-app-chart {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.dl-app-chart__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dl-app-chart__total-label {
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 500;
+}
+
+.dl-app-chart__total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dl-space-2, 8px) var(--dl-space-3, 12px);
+}
+
+.dl-app-chart__total-value {
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h2, 1.75rem);
+  font-weight: var(--dl-heading-weight, 650);
+  letter-spacing: var(--dl-heading-tracking, -0.02em);
+  line-height: var(--dl-lh-tight, 1.1);
+  font-variant-numeric: tabular-nums;
+}

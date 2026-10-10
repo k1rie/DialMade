@@ -1,0 +1,15 @@
+.dl-landing-stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--color-warning-400, var(--warning));
+}
+
+.dl-landing-stars svg {
+  width: 1rem;
+  height: 1rem;
+  fill: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+}
+
+.dl-landing-stars svg[data-filled] {
+  fill: currentColor;
+}

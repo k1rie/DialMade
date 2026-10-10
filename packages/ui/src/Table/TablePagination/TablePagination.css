@@ -1,0 +1,29 @@
+.dl-table-pagination {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dl-space-3, 12px);
+  padding: var(--dl-space-2, 8px) var(--dl-space-4, 16px);
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-caption, 0.8125rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-table-pagination__range {
+  margin: 0;
+}
+
+.dl-table-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-table-pagination__page {
+  min-width: 6ch;
+  text-align: center;
+  white-space: nowrap;
+}

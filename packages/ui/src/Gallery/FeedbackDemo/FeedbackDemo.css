@@ -1,0 +1,11 @@
+.dl-gallery-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-4, 16px);
+}
+
+.dl-gallery-skeleton__head {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+}

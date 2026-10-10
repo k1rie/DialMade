@@ -1,0 +1,61 @@
+.dl-skeleton {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 1rem;
+  border-radius: var(--dl-radius-sm, 6px);
+  background-color: var(--muted);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--background) 55%, transparent) 50%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  animation: dl-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+.dl-skeleton[data-shape="text"] {
+  height: 0.75em;
+  border-radius: var(--dl-radius-full, 9999px);
+}
+
+.dl-skeleton[data-shape="circle"] {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: var(--dl-radius-full, 9999px);
+}
+
+.dl-skeleton[data-shape="rect"] {
+  height: 6rem;
+  border-radius: var(--dl-radius-md, 8px);
+}
+
+.dl-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  width: 100%;
+}
+
+.dl-skeleton-lines > .dl-skeleton:last-child:not(:only-child) {
+  width: 62%;
+}
+
+@keyframes dl-skeleton-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-skeleton {
+    background-image: none;
+    animation: none;
+  }
+}

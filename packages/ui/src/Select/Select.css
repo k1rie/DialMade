@@ -1,0 +1,89 @@
+.dl-select {
+  --_select-h: var(--dl-input-h, 40px);
+  --_select-border: var(--input);
+  --_select-ring: var(--ring);
+
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: var(--foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+}
+
+.dl-select[data-size="sm"] {
+  --_select-h: calc(var(--dl-input-h, 40px) - 8px);
+  font-size: var(--dl-fs-caption, 0.8125rem);
+}
+
+.dl-select[data-size="lg"] {
+  --_select-h: calc(var(--dl-input-h, 40px) + 8px);
+  font-size: var(--dl-fs-body, 1rem);
+}
+
+.dl-select__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--_select-h);
+  padding: 0 calc(var(--dl-space-3, 12px) + 1.5em) 0 var(--dl-space-3, 12px);
+  margin: 0;
+  border: var(--dl-border-width, 1px) solid var(--_select-border);
+  border-radius: var(--dl-input-radius, var(--dl-radius-md, 8px));
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  line-height: 1.2;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    box-shadow var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-select__control option {
+  background: var(--popover);
+  color: var(--popover-foreground);
+}
+
+.dl-select[data-placeholder] .dl-select__control {
+  color: var(--muted-foreground);
+}
+
+.dl-select__control:hover:not(:disabled),
+.dl-select[data-preview-state="hover"] .dl-select__control {
+  --_select-border: var(--border-strong);
+}
+
+.dl-select__control:focus-visible,
+.dl-select[data-preview-state="focus"] .dl-select__control {
+  --_select-border: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--_select-ring) 25%, transparent);
+}
+
+.dl-select__control[aria-invalid="true"] {
+  --_select-border: var(--destructive);
+  --_select-ring: var(--destructive);
+}
+
+.dl-select__control:disabled {
+  cursor: not-allowed;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.dl-select__chevron {
+  position: absolute;
+  right: var(--dl-space-3, 12px);
+  pointer-events: none;
+  color: var(--muted-foreground);
+  font-size: 1.1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-select__control {
+    transition: none;
+  }
+}

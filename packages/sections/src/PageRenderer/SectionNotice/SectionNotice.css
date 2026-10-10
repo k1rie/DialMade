@@ -1,0 +1,29 @@
+.dl-section-notice {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--dl-space-1, 4px);
+  margin: var(--dl-space-4, 16px);
+  padding: var(--dl-space-5, 20px) var(--dl-space-6, 24px);
+  border: var(--dl-border-width, 1px) dashed var(--border-strong, var(--border));
+  border-radius: var(--dl-radius-lg, 12px);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: var(--dl-lh-body, 1.5);
+}
+
+.dl-section-notice[data-tone="error"] {
+  border-color: var(--destructive);
+  background: color-mix(in oklab, var(--destructive) 8%, var(--background));
+  color: var(--foreground);
+}
+
+.dl-section-notice__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.dl-section-notice__hint {
+  margin: 0;
+}

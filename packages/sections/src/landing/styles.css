@@ -1,0 +1,23 @@
+/* Stylesheets of the landing sections. */
+@import "./LandingSection/LandingSection.css";
+@import "./SectionHeading/SectionHeading.css";
+@import "./BrandMark/BrandMark.css";
+@import "./Navbar/Navbar.css";
+@import "./Hero/Hero.css";
+@import "./Hero/GalleryTile/GalleryTile.css";
+@import "./Hero/ProductMockup/ProductMockup.css";
+@import "./Hero/ProductMockup/DashboardScreen/DashboardScreen.css";
+@import "./Hero/ProductMockup/GalleryScreen/GalleryScreen.css";
+@import "./Hero/HeroCollage/HeroCollage.css";
+@import "./SocialProof/SocialProof.css";
+@import "./SocialProof/FictionalLogo/FictionalLogo.css";
+@import "./Features/Features.css";
+@import "./Features/FeatureVisual/FeatureVisual.css";
+@import "./Testimonials/Testimonials.css";
+@import "./Testimonials/Quote/Quote.css";
+@import "./Testimonials/RatingStars/RatingStars.css";
+@import "./Pricing/Pricing.css";
+@import "./Pricing/BillingToggle/BillingToggle.css";
+@import "./Pricing/PlanCard/PlanCard.css";
+@import "./Cta/Cta.css";
+@import "./Footer/Footer.css";

@@ -1,0 +1,94 @@
+.dl-input {
+  --_input-h: var(--dl-input-h, 40px);
+  --_input-px: var(--dl-space-3, 12px);
+  --_input-border: var(--input);
+  --_input-ring: var(--ring);
+
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  width: 100%;
+  min-height: var(--_input-h);
+  padding: 0 var(--_input-px);
+  border: var(--dl-border-width, 1px) solid var(--_input-border);
+  border-radius: var(--dl-input-radius, var(--dl-radius-md, 8px));
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  cursor: text;
+  transition:
+    border-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    box-shadow var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-input[data-size="sm"] {
+  --_input-h: calc(var(--dl-input-h, 40px) - 8px);
+  --_input-px: var(--dl-space-2, 8px);
+  font-size: var(--dl-fs-caption, 0.8125rem);
+}
+
+.dl-input[data-size="lg"] {
+  --_input-h: calc(var(--dl-input-h, 40px) + 8px);
+  --_input-px: var(--dl-space-4, 16px);
+  font-size: var(--dl-fs-body, 1rem);
+}
+
+.dl-input:hover:not([data-disabled]),
+.dl-input[data-preview-state="hover"] {
+  --_input-border: var(--border-strong);
+}
+
+.dl-input:focus-within,
+.dl-input[data-preview-state="focus"] {
+  --_input-border: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--_input-ring) 25%, transparent);
+}
+
+.dl-input[data-invalid] {
+  --_input-border: var(--destructive);
+  --_input-ring: var(--destructive);
+}
+
+.dl-input[data-disabled] {
+  cursor: not-allowed;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.dl-input__control {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--_input-h) - 2 * var(--dl-border-width, 1px));
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.dl-input__control::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
+.dl-input__control:disabled {
+  cursor: not-allowed;
+}
+
+.dl-input__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  font-size: 1.1em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-input {
+    transition: none;
+  }
+}

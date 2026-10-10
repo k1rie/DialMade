@@ -1,0 +1,290 @@
+/* Sizes are in em of a font that scales with the mini's width (2.8cqi ≈ 9px at 320px wide). */
+.dl-mini-app {
+  container-type: inline-size;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 10rem;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  border-radius: var(--dl-radius-lg, 12px);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+}
+
+.dl-mini-app__frame {
+  display: grid;
+  grid-template-columns: 27% minmax(0, 1fr);
+  height: 100%;
+  font-size: 2.8cqi;
+  line-height: 1.25;
+}
+
+.dl-mini-app__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  min-width: 0;
+  padding: 1.1em 0.7em;
+  border-right: max(1px, var(--dl-border-width, 1px)) solid var(--sidebar-border, var(--border));
+  background: var(--sidebar, var(--card));
+  color: var(--sidebar-foreground, var(--card-foreground));
+}
+
+.dl-mini-app__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  min-width: 0;
+  margin-bottom: 0.6em;
+}
+
+.dl-mini-app__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.9em;
+  height: 1.9em;
+  overflow: hidden;
+  border-radius: var(--dl-radius-sm, 4px);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.85em;
+  font-weight: 700;
+}
+
+.dl-mini-app__mark[data-logo] {
+  box-sizing: border-box;
+  padding: 0.15em;
+  background: var(--background);
+}
+
+.dl-mini-app__logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dl-mini-app__name {
+  overflow: hidden;
+  font-family: var(--dl-font-heading, inherit);
+  font-weight: var(--dl-heading-weight, 600);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-mini-app__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  padding: 0.4em 0.5em;
+  border-radius: var(--dl-radius-sm, 4px);
+  color: var(--muted-foreground);
+  font-size: 0.9em;
+}
+
+.dl-mini-app__nav-item[data-active] {
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.dl-mini-app__nav-icon {
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 0.2em;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.dl-mini-app__nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-mini-app__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  min-width: 0;
+  padding: 1em 1.1em;
+  background: color-mix(in oklab, var(--muted) 45%, var(--background));
+}
+
+.dl-mini-app__topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.dl-mini-app__title {
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 1.25em;
+  font-weight: var(--dl-heading-weight, 650);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+}
+
+.dl-mini-app__search {
+  flex: 1;
+  max-width: 9em;
+  height: 1.5em;
+  margin-left: auto;
+  border: max(1px, var(--dl-border-width, 1px)) solid var(--input);
+  border-radius: var(--dl-input-radius, var(--dl-radius-sm, 4px));
+  background: var(--background);
+}
+
+.dl-mini-app__avatar {
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: var(--chart-2);
+}
+
+.dl-mini-app__kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6em;
+}
+
+.dl-mini-app__kpi,
+.dl-mini-app__chart,
+.dl-mini-app__rows {
+  box-sizing: border-box;
+  min-width: 0;
+  border: var(--dl-card-border, 1px solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-md, 8px));
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--dl-shadow-sm, none);
+}
+
+.dl-mini-app__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  padding: 0.6em 0.7em;
+}
+
+.dl-mini-app__kpi-label {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.8em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-mini-app__kpi-value {
+  overflow: hidden;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 1.3em;
+  font-weight: var(--dl-heading-weight, 650);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-mini-app__kpi-delta {
+  align-self: flex-start;
+  padding: 0.1em 0.45em;
+  border-radius: var(--dl-badge-radius, var(--dl-radius-full, 9999px));
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  font-size: 0.75em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dl-mini-app__kpi-delta[data-good] {
+  background: color-mix(in oklab, var(--success) 14%, transparent);
+  color: var(--success);
+}
+
+.dl-mini-app__panels {
+  display: grid;
+  flex: 1;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.6em;
+  min-height: 0;
+}
+
+.dl-mini-app__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55em;
+  min-height: 0;
+  padding: 0.7em 0.8em 0;
+}
+
+.dl-mini-app__bar {
+  flex: 1;
+  border-radius: 0.3em 0.3em 0 0;
+  background: var(--chart-1);
+}
+
+.dl-mini-app__bar[data-series="2"] {
+  background: var(--chart-2);
+}
+
+.dl-mini-app__bar[data-series="3"] {
+  background: var(--chart-3);
+}
+
+.dl-mini-app__rows {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2em 0.8em;
+}
+
+.dl-mini-app__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  padding: 0.35em 0;
+}
+
+.dl-mini-app__row + .dl-mini-app__row {
+  border-top: max(1px, var(--dl-border-width, 1px)) solid var(--border);
+}
+
+.dl-mini-app__row-dot {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--chart-3) 35%, var(--card));
+}
+
+.dl-mini-app__row-label {
+  flex: 1;
+  overflow: hidden;
+  font-size: 0.85em;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-mini-app__badge {
+  flex: none;
+  padding: 0.15em 0.55em;
+  border-radius: var(--dl-badge-radius, var(--dl-radius-full, 9999px));
+  font-size: 0.75em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dl-mini-app__badge[data-tone="success"] {
+  background: color-mix(in oklab, var(--success) 15%, transparent);
+  color: var(--success);
+}
+
+.dl-mini-app__badge[data-tone="warning"] {
+  background: color-mix(in oklab, var(--warning) 16%, transparent);
+  color: var(--warning);
+}

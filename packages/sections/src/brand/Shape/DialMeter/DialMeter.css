@@ -1,0 +1,36 @@
+.dl-brand-dial {
+  display: grid;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-brand-dial__label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--dl-space-3, 12px);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+}
+
+.dl-brand-dial__label code {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-brand-dial__track {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.dl-brand-dial__segment {
+  height: 8px;
+  border-radius: var(--dl-radius-sm, 2px);
+  background: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.dl-brand-dial__segment[data-on] {
+  background: var(--primary);
+  box-shadow: none;
+}

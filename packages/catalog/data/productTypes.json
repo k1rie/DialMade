@@ -1,0 +1,6715 @@
+[
+  {
+    "id": "saas-general",
+    "label": {
+      "es": "SaaS (general)",
+      "en": "SaaS (General)"
+    },
+    "group": "software",
+    "landingPatternId": "hero-features-cta",
+    "dashboardStyle": "Data-Dense + Real-Time Monitoring",
+    "styleIds": [
+      "glassmorphism",
+      "flat-design",
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "claymorphism",
+      "retro-futurism",
+      "skeuomorphism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "organic-biophilic",
+      "memphis-design",
+      "vaporwave",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "app",
+      "b2b",
+      "cloud",
+      "general",
+      "saas",
+      "software",
+      "subscription"
+    ]
+  },
+  {
+    "id": "micro-saas",
+    "label": {
+      "es": "Micro SaaS",
+      "en": "Micro SaaS"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Executive Dashboard",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "motion-driven",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "indie",
+      "micro-saas",
+      "niche",
+      "solo",
+      "bootstrap",
+      "micro",
+      "side-project",
+      "solopreneur",
+      "small-team",
+      "indie-hacker",
+      "product-hunt"
+    ]
+  },
+  {
+    "id": "e-commerce",
+    "label": {
+      "es": "E-commerce",
+      "en": "E-commerce"
+    },
+    "group": "commerce",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "buy",
+      "commerce",
+      "e",
+      "ecommerce",
+      "products",
+      "retail",
+      "sell",
+      "shop",
+      "store"
+    ]
+  },
+  {
+    "id": "e-commerce-luxury",
+    "label": {
+      "es": "E-commerce de lujo",
+      "en": "E-commerce Luxury"
+    },
+    "group": "commerce",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "liquid-glass",
+      "glassmorphism",
+      "3d-and-hyperrealism",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [
+      "flat-design",
+      "neubrutalism",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine",
+      "flat-design-mobile-touch-first"
+    ],
+    "keywords": [
+      "buy",
+      "commerce",
+      "e",
+      "ecommerce",
+      "elegant",
+      "exclusive",
+      "high-end",
+      "luxury",
+      "premium",
+      "products",
+      "retail",
+      "sell",
+      "shop",
+      "store"
+    ]
+  },
+  {
+    "id": "b2b-service",
+    "label": {
+      "es": "Servicio B2B",
+      "en": "B2B Service"
+    },
+    "group": "services",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "bento-box-grid",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "claymorphism",
+      "retro-futurism",
+      "skeuomorphism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "b2b",
+      "enterprise",
+      "consulting",
+      "professional",
+      "solution",
+      "contract",
+      "corporate",
+      "strategy",
+      "advisory",
+      "roi",
+      "deliverable",
+      "whitepaper"
+    ]
+  },
+  {
+    "id": "financial-dashboard",
+    "label": {
+      "es": "Dashboard financiero",
+      "en": "Financial Dashboard"
+    },
+    "group": "data",
+    "dashboardStyle": "Financial Dashboard",
+    "styleIds": [
+      "dark-mode-oled",
+      "data-dense-dashboard",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "motion-driven",
+      "zero-interface",
+      "neubrutalism",
+      "bento-box-grid",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "portfolio",
+      "trading",
+      "pnl",
+      "budget",
+      "revenue",
+      "expense",
+      "cashflow",
+      "balance-sheet",
+      "investment",
+      "bank",
+      "accounting",
+      "fintech"
+    ]
+  },
+  {
+    "id": "analytics-dashboard",
+    "label": {
+      "es": "Dashboard de analítica",
+      "en": "Analytics Dashboard"
+    },
+    "group": "data",
+    "dashboardStyle": "Drill-Down Analytics + Comparative",
+    "styleIds": [
+      "data-dense-dashboard",
+      "heat-map-and-heatmap-style",
+      "minimalism-and-swiss-style",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "biomimetic-organic-2-0",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "bauhaus",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "kpi",
+      "metric",
+      "funnel",
+      "conversion",
+      "cohort",
+      "retention",
+      "segment",
+      "attribution",
+      "ab-test",
+      "dashboard-data",
+      "business-intelligence"
+    ]
+  },
+  {
+    "id": "healthcare-app",
+    "label": {
+      "es": "App de salud",
+      "en": "Healthcare App"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "neumorphism",
+      "accessible-and-ethical",
+      "soft-ui-evolution",
+      "claymorphism"
+    ],
+    "doNotUseStyles": [
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "app",
+      "clinic",
+      "health",
+      "healthcare",
+      "medical",
+      "patient"
+    ]
+  },
+  {
+    "id": "educational-app",
+    "label": {
+      "es": "App educativa",
+      "en": "Educational App"
+    },
+    "group": "education",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "claymorphism",
+      "micro-interactions",
+      "vibrant-and-block-based",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "app",
+      "course",
+      "education",
+      "educational",
+      "learning",
+      "school",
+      "training"
+    ]
+  },
+  {
+    "id": "creative-agency",
+    "label": {
+      "es": "Agencia creativa",
+      "en": "Creative Agency"
+    },
+    "group": "creative",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "brutalism",
+      "motion-driven",
+      "retro-futurism",
+      "editorial-grid-magazine"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "flat-design"
+    ],
+    "keywords": [
+      "branding",
+      "identity",
+      "portfolio",
+      "logo",
+      "visual",
+      "rebrand",
+      "creative-director",
+      "campaign",
+      "awards",
+      "award-winning",
+      "showreel"
+    ]
+  },
+  {
+    "id": "portfolio-personal",
+    "label": {
+      "es": "Portfolio personal",
+      "en": "Portfolio/Personal"
+    },
+    "group": "creative",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "motion-driven",
+      "minimalism-and-swiss-style",
+      "brutalism",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [
+      "flat-design"
+    ],
+    "keywords": [
+      "creative",
+      "personal",
+      "portfolio",
+      "projects",
+      "showcase",
+      "work"
+    ]
+  },
+  {
+    "id": "gaming",
+    "label": {
+      "es": "Videojuegos",
+      "en": "Gaming"
+    },
+    "group": "games",
+    "landingPatternId": "feature-rich-showcase",
+    "styleIds": [
+      "3d-and-hyperrealism",
+      "retro-futurism",
+      "motion-driven",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "entertainment",
+      "esports",
+      "game",
+      "gaming",
+      "play"
+    ]
+  },
+  {
+    "id": "government-public-service",
+    "label": {
+      "es": "Gobierno y servicio público",
+      "en": "Government/Public Service"
+    },
+    "group": "public",
+    "landingPatternId": "minimal-single-column",
+    "dashboardStyle": "Executive Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "inclusive-design"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "government",
+      "civic",
+      "municipal",
+      "federal",
+      "citizen",
+      "public",
+      "administration",
+      "permit",
+      "tax",
+      "voter",
+      "transparency",
+      "regulation"
+    ]
+  },
+  {
+    "id": "fintech-crypto",
+    "label": {
+      "es": "Fintech y cripto",
+      "en": "Fintech/Crypto"
+    },
+    "group": "finance",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Real-Time Monitoring + Predictive",
+    "styleIds": [
+      "glassmorphism",
+      "dark-mode-oled",
+      "retro-futurism",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "banking",
+      "blockchain",
+      "crypto",
+      "defi",
+      "finance",
+      "fintech",
+      "money",
+      "nft",
+      "payment",
+      "web3"
+    ]
+  },
+  {
+    "id": "social-media-app",
+    "label": {
+      "es": "Red social",
+      "en": "Social Media App"
+    },
+    "group": "community",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "aurora-ui",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "app",
+      "community",
+      "content",
+      "entertainment",
+      "media",
+      "network",
+      "sharing",
+      "social",
+      "streaming",
+      "users",
+      "video"
+    ]
+  },
+  {
+    "id": "productivity-tool",
+    "label": {
+      "es": "Herramienta de productividad",
+      "en": "Productivity Tool"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Drill-Down Analytics",
+    "styleIds": [
+      "flat-design",
+      "micro-interactions",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "collaboration",
+      "productivity",
+      "project",
+      "task",
+      "tool",
+      "workflow"
+    ]
+  },
+  {
+    "id": "design-system-component-library",
+    "label": {
+      "es": "Design system y librería de componentes",
+      "en": "Design System/Component Library"
+    },
+    "group": "developer",
+    "landingPatternId": "feature-rich-showcase",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "flat-design",
+      "zero-interface"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "component",
+      "design",
+      "library",
+      "system"
+    ]
+  },
+  {
+    "id": "ai-chatbot-platform",
+    "label": {
+      "es": "Plataforma de IA o chatbot",
+      "en": "AI/Chatbot Platform"
+    },
+    "group": "developer",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "AI/ML Analytics Dashboard",
+    "styleIds": [
+      "ai-native-ui",
+      "minimalism-and-swiss-style",
+      "zero-interface",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "claymorphism",
+      "retro-futurism",
+      "skeuomorphism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "organic-biophilic",
+      "memphis-design",
+      "vaporwave",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "ai",
+      "artificial-intelligence",
+      "automation",
+      "chatbot",
+      "machine-learning",
+      "ml",
+      "platform"
+    ]
+  },
+  {
+    "id": "nft-web3-platform",
+    "label": {
+      "es": "Plataforma NFT y Web3",
+      "en": "NFT/Web3 Platform"
+    },
+    "group": "finance",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Crypto/Blockchain Dashboard",
+    "styleIds": [
+      "cyberpunk-ui",
+      "glassmorphism",
+      "aurora-ui",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [
+      "vibrant-and-block-based",
+      "claymorphism",
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "memphis-design",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "nft",
+      "platform",
+      "web"
+    ]
+  },
+  {
+    "id": "creator-economy-platform",
+    "label": {
+      "es": "Plataforma para creadores",
+      "en": "Creator Economy Platform"
+    },
+    "group": "community",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "bento-box-grid",
+      "motion-driven",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "creator",
+      "economy",
+      "platform"
+    ]
+  },
+  {
+    "id": "remote-work-collaboration-tool",
+    "label": {
+      "es": "Trabajo remoto y colaboración",
+      "en": "Remote Work/Collaboration Tool"
+    },
+    "group": "software",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Drill-Down Analytics",
+    "styleIds": [
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "collaboration",
+      "remote",
+      "tool",
+      "work"
+    ]
+  },
+  {
+    "id": "mental-health-app",
+    "label": {
+      "es": "App de salud mental",
+      "en": "Mental Health App"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "neumorphism",
+      "accessible-and-ethical",
+      "claymorphism",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "app",
+      "health",
+      "mental"
+    ]
+  },
+  {
+    "id": "pet-tech-app",
+    "label": {
+      "es": "App para mascotas",
+      "en": "Pet Tech App"
+    },
+    "group": "personal",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "app",
+      "pet",
+      "tech"
+    ]
+  },
+  {
+    "id": "smart-home-iot-dashboard",
+    "label": {
+      "es": "Dashboard de hogar inteligente e IoT",
+      "en": "Smart Home/IoT Dashboard"
+    },
+    "group": "data",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Real-Time Monitoring",
+    "styleIds": [
+      "glassmorphism",
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "ai-native-ui"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "biomimetic-organic-2-0",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "bauhaus",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "admin",
+      "analytics",
+      "dashboard",
+      "data",
+      "home",
+      "iot",
+      "panel",
+      "smart"
+    ]
+  },
+  {
+    "id": "ev-charging-ecosystem",
+    "label": {
+      "es": "Coche eléctrico y puntos de recarga",
+      "en": "EV/Charging Ecosystem"
+    },
+    "group": "travel",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Energy/Utilities Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "aurora-ui",
+      "glassmorphism",
+      "organic-biophilic"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "charging",
+      "ecosystem",
+      "ev"
+    ]
+  },
+  {
+    "id": "subscription-box-service",
+    "label": {
+      "es": "Caja de suscripción",
+      "en": "Subscription Box Service"
+    },
+    "group": "commerce",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "E-commerce Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "claymorphism",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "subscription",
+      "box",
+      "recurring",
+      "membership",
+      "unboxing",
+      "curated",
+      "plan",
+      "monthly",
+      "surprise",
+      "product-box"
+    ]
+  },
+  {
+    "id": "podcast-platform",
+    "label": {
+      "es": "Plataforma de podcasts",
+      "en": "Podcast Platform"
+    },
+    "group": "media",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Media/Entertainment Dashboard",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "motion-driven",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "platform",
+      "podcast"
+    ]
+  },
+  {
+    "id": "dating-app",
+    "label": {
+      "es": "App de citas",
+      "en": "Dating App"
+    },
+    "group": "community",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "aurora-ui",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "app",
+      "dating"
+    ]
+  },
+  {
+    "id": "micro-credentials-badges-platform",
+    "label": {
+      "es": "Microcredenciales e insignias",
+      "en": "Micro-Credentials/Badges Platform"
+    },
+    "group": "education",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Education Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "accessible-and-ethical",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "badges",
+      "credentials",
+      "micro",
+      "platform"
+    ]
+  },
+  {
+    "id": "knowledge-base-documentation",
+    "label": {
+      "es": "Base de conocimiento y documentación",
+      "en": "Knowledge Base/Documentation"
+    },
+    "group": "developer",
+    "landingPatternId": "faq-documentation-landing",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "swiss-modernism-2-0",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "base",
+      "documentation",
+      "knowledge"
+    ]
+  },
+  {
+    "id": "hyperlocal-services",
+    "label": {
+      "es": "Servicios de barrio",
+      "en": "Hyperlocal Services"
+    },
+    "group": "services",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Drill-Down Analytics + Map",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "hyperlocal",
+      "local",
+      "neighborhood",
+      "nearby",
+      "community",
+      "zip",
+      "map",
+      "local-business",
+      "geo-target",
+      "city"
+    ]
+  },
+  {
+    "id": "beauty-spa-wellness-service",
+    "label": {
+      "es": "Belleza, spa y bienestar",
+      "en": "Beauty/Spa/Wellness Service"
+    },
+    "group": "services",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "soft-ui-evolution",
+      "neumorphism",
+      "glassmorphism",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "spa",
+      "beauty",
+      "salon",
+      "wellness",
+      "treatment",
+      "relaxation",
+      "massage",
+      "skincare",
+      "facial",
+      "aesthetic",
+      "self-care",
+      "pamper"
+    ]
+  },
+  {
+    "id": "luxury-premium-brand",
+    "label": {
+      "es": "Marca de lujo o premium",
+      "en": "Luxury/Premium Brand"
+    },
+    "group": "commerce",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "liquid-glass",
+      "glassmorphism",
+      "minimalism-and-swiss-style",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [
+      "flat-design",
+      "neubrutalism",
+      "flat-design-mobile-touch-first"
+    ],
+    "keywords": [
+      "brand",
+      "elegant",
+      "exclusive",
+      "high-end",
+      "luxury",
+      "premium"
+    ]
+  },
+  {
+    "id": "restaurant-food-service",
+    "label": {
+      "es": "Restaurante y comida",
+      "en": "Restaurant/Food Service"
+    },
+    "group": "services",
+    "landingPatternId": "funnel-3-step-conversion",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "claymorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "restaurant",
+      "menu",
+      "order",
+      "food",
+      "dining",
+      "reservation",
+      "delivery",
+      "cuisine",
+      "chef",
+      "table",
+      "takeaway",
+      "eatery"
+    ]
+  },
+  {
+    "id": "fitness-gym-app",
+    "label": {
+      "es": "App de fitness y gimnasio",
+      "en": "Fitness/Gym App"
+    },
+    "group": "health",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "dark-mode-oled",
+      "motion-driven",
+      "neumorphism"
+    ],
+    "doNotUseStyles": [
+      "e-ink-paper",
+      "nature-distilled"
+    ],
+    "keywords": [
+      "app",
+      "exercise",
+      "fitness",
+      "gym",
+      "health",
+      "workout"
+    ]
+  },
+  {
+    "id": "real-estate-property",
+    "label": {
+      "es": "Inmobiliaria",
+      "en": "Real Estate/Property"
+    },
+    "group": "services",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "glassmorphism",
+      "minimalism-and-swiss-style",
+      "motion-driven",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "buy",
+      "estate",
+      "housing",
+      "property",
+      "real",
+      "real-estate",
+      "rent"
+    ]
+  },
+  {
+    "id": "travel-tourism-agency",
+    "label": {
+      "es": "Agencia de viajes y turismo",
+      "en": "Travel/Tourism Agency"
+    },
+    "group": "travel",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Booking Analytics",
+    "styleIds": [
+      "aurora-ui",
+      "motion-driven",
+      "vibrant-and-block-based",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "travel",
+      "tourism",
+      "vacation",
+      "flight",
+      "hotel",
+      "destination",
+      "adventure",
+      "cruise",
+      "safari",
+      "backpacking",
+      "guided-tour",
+      "holiday-package"
+    ]
+  },
+  {
+    "id": "hotel-hospitality",
+    "label": {
+      "es": "Hotel y hostelería",
+      "en": "Hotel/Hospitality"
+    },
+    "group": "travel",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Revenue Management Dashboard",
+    "styleIds": [
+      "liquid-glass",
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "hospitality",
+      "hotel"
+    ]
+  },
+  {
+    "id": "wedding-event-planning",
+    "label": {
+      "es": "Bodas y organización de eventos",
+      "en": "Wedding/Event Planning"
+    },
+    "group": "events",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "soft-ui-evolution",
+      "aurora-ui",
+      "glassmorphism",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "conference",
+      "event",
+      "meetup",
+      "planning",
+      "registration",
+      "ticket",
+      "wedding"
+    ]
+  },
+  {
+    "id": "legal-services",
+    "label": {
+      "es": "Servicios legales",
+      "en": "Legal Services"
+    },
+    "group": "services",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Case Management Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "law",
+      "attorney",
+      "legal",
+      "case",
+      "compliance",
+      "contract",
+      "court",
+      "firm",
+      "counsel",
+      "litigation",
+      "practice-area",
+      "jurisdiction"
+    ]
+  },
+  {
+    "id": "insurance-platform",
+    "label": {
+      "es": "Plataforma de seguros",
+      "en": "Insurance Platform"
+    },
+    "group": "finance",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Claims Analytics Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "zero-interface",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "insurance",
+      "platform"
+    ]
+  },
+  {
+    "id": "banking-traditional-finance",
+    "label": {
+      "es": "Banca y finanzas tradicionales",
+      "en": "Banking/Traditional Finance"
+    },
+    "group": "finance",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Financial Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "swiss-modernism-2-0",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "banking",
+      "finance",
+      "traditional"
+    ]
+  },
+  {
+    "id": "online-course-e-learning",
+    "label": {
+      "es": "Cursos online y e-learning",
+      "en": "Online Course/E-learning"
+    },
+    "group": "education",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Education Dashboard",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "motion-driven",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "course",
+      "e",
+      "learning",
+      "online"
+    ]
+  },
+  {
+    "id": "non-profit-charity",
+    "label": {
+      "es": "ONG y causas solidarias",
+      "en": "Non-profit/Charity"
+    },
+    "group": "public",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Donation Analytics Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "organic-biophilic",
+      "minimalism-and-swiss-style",
+      "editorial-grid-magazine"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "charity",
+      "non",
+      "profit"
+    ]
+  },
+  {
+    "id": "music-streaming",
+    "label": {
+      "es": "Streaming de música",
+      "en": "Music Streaming"
+    },
+    "group": "media",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Media/Entertainment Dashboard",
+    "styleIds": [
+      "dark-mode-oled",
+      "vibrant-and-block-based",
+      "motion-driven",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "music",
+      "streaming"
+    ]
+  },
+  {
+    "id": "video-streaming-ott",
+    "label": {
+      "es": "Streaming de vídeo (OTT)",
+      "en": "Video Streaming/OTT"
+    },
+    "group": "media",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Media/Entertainment Dashboard",
+    "styleIds": [
+      "dark-mode-oled",
+      "motion-driven",
+      "glassmorphism",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "ott",
+      "streaming",
+      "video"
+    ]
+  },
+  {
+    "id": "job-board-recruitment",
+    "label": {
+      "es": "Portal de empleo y selección",
+      "en": "Job Board/Recruitment"
+    },
+    "group": "commerce",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "HR Analytics Dashboard",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "vibrant-and-block-based",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "board",
+      "job",
+      "recruitment"
+    ]
+  },
+  {
+    "id": "marketplace-p2p",
+    "label": {
+      "es": "Marketplace entre particulares (P2P)",
+      "en": "Marketplace (P2P)"
+    },
+    "group": "commerce",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "E-commerce Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "flat-design",
+      "micro-interactions",
+      "bento-box-grid"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "buyers",
+      "listings",
+      "marketplace",
+      "p",
+      "platform",
+      "sellers"
+    ]
+  },
+  {
+    "id": "logistics-delivery",
+    "label": {
+      "es": "Logística y reparto",
+      "en": "Logistics/Delivery"
+    },
+    "group": "industry",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Real-Time Monitoring + Route Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "dark-mode-oled",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic"
+    ],
+    "keywords": [
+      "delivery",
+      "logistics"
+    ]
+  },
+  {
+    "id": "agriculture-farm-tech",
+    "label": {
+      "es": "Agricultura y agrotech",
+      "en": "Agriculture/Farm Tech"
+    },
+    "group": "industry",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "IoT Sensor Dashboard",
+    "styleIds": [
+      "organic-biophilic",
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "agriculture",
+      "farm",
+      "tech"
+    ]
+  },
+  {
+    "id": "construction-architecture",
+    "label": {
+      "es": "Construcción y arquitectura",
+      "en": "Construction/Architecture"
+    },
+    "group": "industry",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Project Management Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "3d-and-hyperrealism",
+      "brutalism",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic"
+    ],
+    "keywords": [
+      "architecture",
+      "construction"
+    ]
+  },
+  {
+    "id": "automotive-car-dealership",
+    "label": {
+      "es": "Automoción y concesionario",
+      "en": "Automotive/Car Dealership"
+    },
+    "group": "services",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "motion-driven",
+      "3d-and-hyperrealism",
+      "dark-mode-oled",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic"
+    ],
+    "keywords": [
+      "automotive",
+      "car",
+      "dealership"
+    ]
+  },
+  {
+    "id": "photography-studio",
+    "label": {
+      "es": "Estudio de fotografía",
+      "en": "Photography Studio"
+    },
+    "group": "creative",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "motion-driven",
+      "minimalism-and-swiss-style",
+      "aurora-ui",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "flat-design"
+    ],
+    "keywords": [
+      "photography",
+      "studio"
+    ]
+  },
+  {
+    "id": "coworking-space",
+    "label": {
+      "es": "Espacio de coworking",
+      "en": "Coworking Space"
+    },
+    "group": "services",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Occupancy Dashboard",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "glassmorphism",
+      "minimalism-and-swiss-style",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "coworking",
+      "space"
+    ]
+  },
+  {
+    "id": "home-services-plumber-electrician",
+    "label": {
+      "es": "Servicios del hogar (fontanería, electricidad)",
+      "en": "Home Services (Plumber/Electrician)"
+    },
+    "group": "services",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Service Analytics",
+    "styleIds": [
+      "flat-design",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "plumber",
+      "electrician",
+      "hvac",
+      "handyman",
+      "repair",
+      "maintenance",
+      "home",
+      "emergency",
+      "leak",
+      "wiring",
+      "inspection",
+      "licensed"
+    ]
+  },
+  {
+    "id": "childcare-daycare",
+    "label": {
+      "es": "Guardería y cuidado infantil",
+      "en": "Childcare/Daycare"
+    },
+    "group": "services",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Parent Dashboard",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "soft-ui-evolution",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "cyberpunk-ui",
+      "swiss-modernism-2-0",
+      "vintage-analog-retro-film",
+      "modern-dark-cinema-mobile",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "bold-typography-mobile-poster"
+    ],
+    "keywords": [
+      "childcare",
+      "daycare"
+    ]
+  },
+  {
+    "id": "senior-care-elderly",
+    "label": {
+      "es": "Cuidado de personas mayores",
+      "en": "Senior Care/Elderly"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "accessible-and-ethical",
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "neumorphism"
+    ],
+    "doNotUseStyles": [
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "care",
+      "elderly",
+      "senior"
+    ]
+  },
+  {
+    "id": "medical-clinic",
+    "label": {
+      "es": "Clínica médica",
+      "en": "Medical Clinic"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "neumorphism",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "clinic",
+      "medical"
+    ]
+  },
+  {
+    "id": "pharmacy-drug-store",
+    "label": {
+      "es": "Farmacia",
+      "en": "Pharmacy/Drug Store"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Inventory Dashboard",
+    "styleIds": [
+      "flat-design",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "drug",
+      "pharmacy",
+      "store"
+    ]
+  },
+  {
+    "id": "dental-practice",
+    "label": {
+      "es": "Clínica dental",
+      "en": "Dental Practice"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Patient Analytics",
+    "styleIds": [
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "inclusive-design"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "dental",
+      "practice"
+    ]
+  },
+  {
+    "id": "veterinary-clinic",
+    "label": {
+      "es": "Clínica veterinaria",
+      "en": "Veterinary Clinic"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Pet Health Dashboard",
+    "styleIds": [
+      "claymorphism",
+      "accessible-and-ethical",
+      "soft-ui-evolution",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "clinic",
+      "veterinary"
+    ]
+  },
+  {
+    "id": "florist-plant-shop",
+    "label": {
+      "es": "Floristería y tienda de plantas",
+      "en": "Florist/Plant Shop"
+    },
+    "group": "services",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "E-commerce Analytics",
+    "styleIds": [
+      "organic-biophilic",
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "florist",
+      "plant",
+      "shop"
+    ]
+  },
+  {
+    "id": "bakery-cafe",
+    "label": {
+      "es": "Panadería y cafetería",
+      "en": "Bakery/Cafe"
+    },
+    "group": "services",
+    "landingPatternId": "funnel-3-step-conversion",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "soft-ui-evolution",
+      "claymorphism",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "bakery",
+      "cafe"
+    ]
+  },
+  {
+    "id": "brewery-winery",
+    "label": {
+      "es": "Cervecería y bodega",
+      "en": "Brewery/Winery"
+    },
+    "group": "services",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "motion-driven",
+      "vintage-analog-retro-film",
+      "dark-mode-oled",
+      "organic-biophilic"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "brewery",
+      "winery"
+    ]
+  },
+  {
+    "id": "airline",
+    "label": {
+      "es": "Aerolínea",
+      "en": "Airline"
+    },
+    "group": "travel",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Operations Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "motion-driven",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "3d-and-hyperrealism",
+      "zero-interface",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "interactive-cursor-design",
+      "voice-first-multimodal"
+    ],
+    "keywords": [
+      "airline",
+      "aviation",
+      "flight",
+      "travel",
+      "booking",
+      "airport",
+      "flying"
+    ]
+  },
+  {
+    "id": "news-media-platform",
+    "label": {
+      "es": "Medio de noticias",
+      "en": "News/Media Platform"
+    },
+    "group": "media",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Media Analytics Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "dark-mode-oled",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "swiss-modernism-2-0",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "e-ink-paper",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "claymorphism-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "content",
+      "entertainment",
+      "media",
+      "news",
+      "platform",
+      "streaming",
+      "video"
+    ]
+  },
+  {
+    "id": "magazine-blog",
+    "label": {
+      "es": "Revista y blog",
+      "en": "Magazine/Blog"
+    },
+    "group": "media",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Content Analytics",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "motion-driven",
+      "minimalism-and-swiss-style",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [
+      "liquid-glass",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "articles",
+      "blog",
+      "content",
+      "magazine",
+      "posts",
+      "writing"
+    ]
+  },
+  {
+    "id": "freelancer-platform",
+    "label": {
+      "es": "Plataforma de freelancers",
+      "en": "Freelancer Platform"
+    },
+    "group": "commerce",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Marketplace Analytics",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "vibrant-and-block-based",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "freelancer",
+      "platform"
+    ]
+  },
+  {
+    "id": "marketing-agency",
+    "label": {
+      "es": "Agencia de marketing",
+      "en": "Marketing Agency"
+    },
+    "group": "creative",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Campaign Analytics",
+    "styleIds": [
+      "brutalism",
+      "motion-driven",
+      "vibrant-and-block-based",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "campaign",
+      "ads",
+      "growth",
+      "roi",
+      "seo",
+      "sem",
+      "ppc",
+      "social-media",
+      "conversion-funnel",
+      "ab-test",
+      "attribution",
+      "performance-marketing"
+    ]
+  },
+  {
+    "id": "event-management",
+    "label": {
+      "es": "Gestión de eventos",
+      "en": "Event Management"
+    },
+    "group": "events",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Event Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "glassmorphism",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "conference",
+      "event",
+      "management",
+      "meetup",
+      "registration",
+      "ticket"
+    ]
+  },
+  {
+    "id": "membership-community",
+    "label": {
+      "es": "Membresías y comunidad",
+      "en": "Membership/Community"
+    },
+    "group": "community",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Community Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "soft-ui-evolution",
+      "bento-box-grid",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "community",
+      "membership"
+    ]
+  },
+  {
+    "id": "newsletter-platform",
+    "label": {
+      "es": "Plataforma de newsletters",
+      "en": "Newsletter Platform"
+    },
+    "group": "media",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Email Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "newsletter",
+      "platform"
+    ]
+  },
+  {
+    "id": "digital-products-downloads",
+    "label": {
+      "es": "Productos digitales y descargas",
+      "en": "Digital Products/Downloads"
+    },
+    "group": "commerce",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "E-commerce Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "glassmorphism",
+      "bento-box-grid"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "digital",
+      "downloads",
+      "products"
+    ]
+  },
+  {
+    "id": "church-religious-organization",
+    "label": {
+      "es": "Iglesia u organización religiosa",
+      "en": "Church/Religious Organization"
+    },
+    "group": "public",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "accessible-and-ethical",
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "inclusive-design"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "gradient-mesh-aurora-evolved",
+      "bauhaus",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "church",
+      "organization",
+      "religious"
+    ]
+  },
+  {
+    "id": "sports-team-club",
+    "label": {
+      "es": "Club o equipo deportivo",
+      "en": "Sports Team/Club"
+    },
+    "group": "community",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Performance Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "dark-mode-oled",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [
+      "e-ink-paper",
+      "nature-distilled"
+    ],
+    "keywords": [
+      "club",
+      "sports",
+      "team"
+    ]
+  },
+  {
+    "id": "museum-gallery",
+    "label": {
+      "es": "Museo y galería",
+      "en": "Museum/Gallery"
+    },
+    "group": "public",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Visitor Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "motion-driven",
+      "swiss-modernism-2-0",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [
+      "flat-design"
+    ],
+    "keywords": [
+      "gallery",
+      "museum"
+    ]
+  },
+  {
+    "id": "theater-cinema",
+    "label": {
+      "es": "Teatro y cine",
+      "en": "Theater/Cinema"
+    },
+    "group": "media",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Booking Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "motion-driven",
+      "vibrant-and-block-based",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "cinema",
+      "theater"
+    ]
+  },
+  {
+    "id": "language-learning-app",
+    "label": {
+      "es": "App para aprender idiomas",
+      "en": "Language Learning App"
+    },
+    "group": "education",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Learning Analytics",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "app",
+      "language",
+      "learning"
+    ]
+  },
+  {
+    "id": "coding-bootcamp",
+    "label": {
+      "es": "Bootcamp de programación",
+      "en": "Coding Bootcamp"
+    },
+    "group": "education",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Student Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "cyberpunk-ui",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "bootcamp",
+      "coding"
+    ]
+  },
+  {
+    "id": "cybersecurity-platform",
+    "label": {
+      "es": "Plataforma de ciberseguridad",
+      "en": "Cybersecurity Platform"
+    },
+    "group": "developer",
+    "landingPatternId": "real-time-operations-landing",
+    "dashboardStyle": "Real-Time Monitoring + Heat Map",
+    "styleIds": [
+      "cyberpunk-ui",
+      "dark-mode-oled",
+      "neubrutalism",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "cyber",
+      "security",
+      "platform"
+    ]
+  },
+  {
+    "id": "developer-tool-ide",
+    "label": {
+      "es": "Herramienta para desarrolladores o IDE",
+      "en": "Developer Tool / IDE"
+    },
+    "group": "developer",
+    "landingPatternId": "faq-documentation-landing",
+    "dashboardStyle": "Real-Time Monitor + Terminal",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "bento-box-grid"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "dev",
+      "developer",
+      "tool",
+      "ide"
+    ]
+  },
+  {
+    "id": "biotech-life-sciences",
+    "label": {
+      "es": "Biotecnología y ciencias de la vida",
+      "en": "Biotech / Life Sciences"
+    },
+    "group": "industry",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "dashboardStyle": "Data-Dense + Predictive",
+    "styleIds": [
+      "glassmorphism",
+      "biomimetic-organic-2-0",
+      "minimalism-and-swiss-style",
+      "organic-biophilic"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "biotech",
+      "biology",
+      "science"
+    ]
+  },
+  {
+    "id": "space-tech-aerospace",
+    "label": {
+      "es": "Tecnología espacial y aeroespacial",
+      "en": "Space Tech / Aerospace"
+    },
+    "group": "industry",
+    "landingPatternId": "immersive-interactive-experience",
+    "dashboardStyle": "Real-Time Monitoring + 3D",
+    "styleIds": [
+      "hud-sci-fi-fui",
+      "dark-mode-oled",
+      "glassmorphism",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "aerospace",
+      "space",
+      "tech"
+    ]
+  },
+  {
+    "id": "architecture-interior",
+    "label": {
+      "es": "Arquitectura e interiorismo",
+      "en": "Architecture / Interior"
+    },
+    "group": "creative",
+    "landingPatternId": "portfolio-grid",
+    "dashboardStyle": "Project Management + Gallery",
+    "styleIds": [
+      "exaggerated-minimalism",
+      "3d-and-hyperrealism",
+      "swiss-modernism-2-0",
+      "parallax-storytelling"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "architecture",
+      "design",
+      "interior"
+    ]
+  },
+  {
+    "id": "quantum-computing-interface",
+    "label": {
+      "es": "Interfaz de computación cuántica",
+      "en": "Quantum Computing Interface"
+    },
+    "group": "industry",
+    "landingPatternId": "immersive-interactive-experience",
+    "dashboardStyle": "3D Spatial Data + Real-Time Monitor",
+    "styleIds": [
+      "hud-sci-fi-fui",
+      "dark-mode-oled",
+      "glassmorphism",
+      "spatial-ui-visionos"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "quantum",
+      "computing",
+      "physics",
+      "qubit",
+      "future",
+      "science"
+    ]
+  },
+  {
+    "id": "biohacking-longevity-app",
+    "label": {
+      "es": "App de biohacking y longevidad",
+      "en": "Biohacking / Longevity App"
+    },
+    "group": "health",
+    "landingPatternId": "enterprise-gateway",
+    "dashboardStyle": "Real-Time Monitor + Biological Data",
+    "styleIds": [
+      "biomimetic-organic-2-0",
+      "minimalism-and-swiss-style",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "biohacking",
+      "health",
+      "longevity",
+      "tracking",
+      "wellness",
+      "science"
+    ]
+  },
+  {
+    "id": "autonomous-drone-fleet-manager",
+    "label": {
+      "es": "Gestión de flotas de drones autónomos",
+      "en": "Autonomous Drone Fleet Manager"
+    },
+    "group": "industry",
+    "landingPatternId": "real-time-operations-landing",
+    "dashboardStyle": "Geographic + Real-Time",
+    "styleIds": [
+      "hud-sci-fi-fui",
+      "real-time-monitoring",
+      "spatial-ui-visionos"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "organic-biophilic",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "biomimetic-organic-2-0",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "bauhaus",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "drone",
+      "autonomous",
+      "fleet",
+      "aerial",
+      "logistics",
+      "robotics"
+    ]
+  },
+  {
+    "id": "generative-art-platform",
+    "label": {
+      "es": "Plataforma de arte generativo",
+      "en": "Generative Art Platform"
+    },
+    "group": "creative",
+    "landingPatternId": "bento-grid-showcase",
+    "dashboardStyle": "Gallery / Portfolio",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "gen-z-chaos-maximalism",
+      "bento-box-grid",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "flat-design",
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "art",
+      "generative",
+      "ai",
+      "creative",
+      "platform",
+      "gallery"
+    ]
+  },
+  {
+    "id": "spatial-computing-os-app",
+    "label": {
+      "es": "Computación espacial (sistema o app)",
+      "en": "Spatial Computing OS / App"
+    },
+    "group": "industry",
+    "landingPatternId": "immersive-interactive-experience",
+    "dashboardStyle": "Spatial Dashboard",
+    "styleIds": [
+      "spatial-ui-visionos",
+      "glassmorphism",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "spatial",
+      "vr",
+      "ar",
+      "vision",
+      "os",
+      "immersive",
+      "mixed-reality"
+    ]
+  },
+  {
+    "id": "sustainable-energy-climate-tech",
+    "label": {
+      "es": "Energía sostenible y climate tech",
+      "en": "Sustainable Energy / Climate Tech"
+    },
+    "group": "industry",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Energy/Utilities Dashboard",
+    "styleIds": [
+      "organic-biophilic",
+      "e-ink-paper",
+      "data-dense-dashboard",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "climate",
+      "energy",
+      "sustainable",
+      "green",
+      "tech",
+      "carbon"
+    ]
+  },
+  {
+    "id": "personal-finance-tracker",
+    "label": {
+      "es": "Control de finanzas personales",
+      "en": "Personal Finance Tracker"
+    },
+    "group": "finance",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Financial Dashboard",
+    "styleIds": [
+      "glassmorphism",
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "vibrant-and-block-based",
+      "claymorphism",
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "memphis-design",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "budget",
+      "expense",
+      "money",
+      "finance",
+      "spending",
+      "savings",
+      "tracker",
+      "personal",
+      "wallet"
+    ]
+  },
+  {
+    "id": "chat-and-messaging-app",
+    "label": {
+      "es": "App de chat y mensajería",
+      "en": "Chat & Messaging App"
+    },
+    "group": "community",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "micro-interactions",
+      "glassmorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "chat",
+      "message",
+      "messenger",
+      "im",
+      "realtime",
+      "conversation",
+      "inbox",
+      "dm",
+      "whatsapp",
+      "telegram"
+    ]
+  },
+  {
+    "id": "notes-and-writing-app",
+    "label": {
+      "es": "App de notas y escritura",
+      "en": "Notes & Writing App"
+    },
+    "group": "personal",
+    "landingPatternId": "minimal-single-column",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "notes",
+      "memo",
+      "writing",
+      "editor",
+      "notebook",
+      "markdown",
+      "journal",
+      "notion",
+      "obsidian"
+    ]
+  },
+  {
+    "id": "habit-tracker",
+    "label": {
+      "es": "Seguimiento de hábitos",
+      "en": "Habit Tracker"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "habit",
+      "streak",
+      "routine",
+      "daily",
+      "tracker",
+      "goals",
+      "consistency",
+      "discipline"
+    ]
+  },
+  {
+    "id": "food-delivery-on-demand",
+    "label": {
+      "es": "Comida a domicilio y servicios bajo demanda",
+      "en": "Food Delivery / On-Demand"
+    },
+    "group": "services",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Real-Time Monitoring + Map",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "glassmorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "delivery",
+      "food",
+      "order",
+      "uber-eats",
+      "doordash",
+      "takeout",
+      "on-demand",
+      "courier"
+    ]
+  },
+  {
+    "id": "ride-hailing-transportation",
+    "label": {
+      "es": "Viajes con conductor y transporte",
+      "en": "Ride Hailing / Transportation"
+    },
+    "group": "travel",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Real-Time Monitoring + Map",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "dark-mode-oled",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "ride",
+      "taxi",
+      "uber",
+      "lyft",
+      "transport",
+      "carpool",
+      "driver",
+      "trip",
+      "fare"
+    ]
+  },
+  {
+    "id": "recipe-and-cooking-app",
+    "label": {
+      "es": "App de recetas y cocina",
+      "en": "Recipe & Cooking App"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-centric-design",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "soft-ui-evolution",
+      "organic-biophilic"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "recipe",
+      "cooking",
+      "food",
+      "kitchen",
+      "cookbook",
+      "meal",
+      "ingredient",
+      "chef"
+    ]
+  },
+  {
+    "id": "meditation-and-mindfulness",
+    "label": {
+      "es": "Meditación y mindfulness",
+      "en": "Meditation & Mindfulness"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "neumorphism",
+      "soft-ui-evolution",
+      "aurora-ui",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "meditation",
+      "mindfulness",
+      "calm",
+      "breathe",
+      "wellness",
+      "relaxation",
+      "sleep",
+      "headspace"
+    ]
+  },
+  {
+    "id": "weather-app",
+    "label": {
+      "es": "App del tiempo",
+      "en": "Weather App"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-centric-design",
+    "styleIds": [
+      "glassmorphism",
+      "aurora-ui",
+      "motion-driven",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "weather",
+      "forecast",
+      "temperature",
+      "climate",
+      "rain",
+      "sun",
+      "location",
+      "humidity"
+    ]
+  },
+  {
+    "id": "diary-and-journal-app",
+    "label": {
+      "es": "Diario personal",
+      "en": "Diary & Journal App"
+    },
+    "group": "personal",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "neumorphism",
+      "sketch-hand-drawn-mobile"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "diary",
+      "journal",
+      "personal",
+      "daily",
+      "reflection",
+      "mood",
+      "gratitude",
+      "writing"
+    ]
+  },
+  {
+    "id": "crm-and-client-management",
+    "label": {
+      "es": "CRM y gestión de clientes",
+      "en": "CRM & Client Management"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Sales Intelligence Dashboard",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "crm",
+      "client",
+      "customer",
+      "sales",
+      "pipeline",
+      "contact",
+      "lead",
+      "deal",
+      "hubspot"
+    ]
+  },
+  {
+    "id": "inventory-and-stock-management",
+    "label": {
+      "es": "Gestión de inventario y stock",
+      "en": "Inventory & Stock Management"
+    },
+    "group": "software",
+    "landingPatternId": "feature-rich-showcase",
+    "dashboardStyle": "Real-Time Monitoring + Data-Dense",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "inventory",
+      "stock",
+      "warehouse",
+      "product",
+      "barcode",
+      "supply",
+      "sku",
+      "management"
+    ]
+  },
+  {
+    "id": "flashcard-and-study-tool",
+    "label": {
+      "es": "Tarjetas de estudio (flashcards)",
+      "en": "Flashcard & Study Tool"
+    },
+    "group": "education",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Learning Analytics",
+    "styleIds": [
+      "claymorphism",
+      "micro-interactions",
+      "vibrant-and-block-based",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "flashcard",
+      "quiz",
+      "study",
+      "spaced-repetition",
+      "anki",
+      "learn",
+      "memory",
+      "exam"
+    ]
+  },
+  {
+    "id": "booking-and-appointment-app",
+    "label": {
+      "es": "Reservas y citas",
+      "en": "Booking & Appointment App"
+    },
+    "group": "software",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Drill-Down Analytics",
+    "styleIds": [
+      "soft-ui-evolution",
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "3d-and-hyperrealism",
+      "zero-interface",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "interactive-cursor-design",
+      "voice-first-multimodal"
+    ],
+    "keywords": [
+      "booking",
+      "appointment",
+      "schedule",
+      "calendar",
+      "reservation",
+      "slot",
+      "service"
+    ]
+  },
+  {
+    "id": "invoice-and-billing-tool",
+    "label": {
+      "es": "Facturación y cobros",
+      "en": "Invoice & Billing Tool"
+    },
+    "group": "finance",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Financial Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "retro-futurism",
+      "skeuomorphism",
+      "zero-interface",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "invoice",
+      "billing",
+      "payment",
+      "receipt",
+      "freelance",
+      "estimate",
+      "quote",
+      "accounting"
+    ]
+  },
+  {
+    "id": "grocery-and-shopping-list",
+    "label": {
+      "es": "Lista de la compra",
+      "en": "Grocery & Shopping List"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "grocery",
+      "shopping",
+      "list",
+      "supermarket",
+      "checklist",
+      "pantry",
+      "meal-plan",
+      "buy"
+    ]
+  },
+  {
+    "id": "timer-and-pomodoro",
+    "label": {
+      "es": "Temporizador y Pomodoro",
+      "en": "Timer & Pomodoro"
+    },
+    "group": "personal",
+    "landingPatternId": "minimal-single-column",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "neumorphism",
+      "dark-mode-oled",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "timer",
+      "pomodoro",
+      "countdown",
+      "stopwatch",
+      "focus",
+      "clock",
+      "productivity",
+      "interval"
+    ]
+  },
+  {
+    "id": "parenting-and-baby-tracker",
+    "label": {
+      "es": "Crianza y seguimiento del bebé",
+      "en": "Parenting & Baby Tracker"
+    },
+    "group": "personal",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "claymorphism",
+      "soft-ui-evolution",
+      "vibrant-and-block-based",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "cyberpunk-ui",
+      "swiss-modernism-2-0",
+      "vintage-analog-retro-film",
+      "modern-dark-cinema-mobile",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "bold-typography-mobile-poster"
+    ],
+    "keywords": [
+      "baby",
+      "parenting",
+      "child",
+      "feeding",
+      "sleep",
+      "diaper",
+      "milestone",
+      "family",
+      "newborn"
+    ]
+  },
+  {
+    "id": "scanner-and-document-manager",
+    "label": {
+      "es": "Escáner y gestor de documentos",
+      "en": "Scanner & Document Manager"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "dark-mode-oled",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "scanner",
+      "document",
+      "ocr",
+      "pdf",
+      "scan",
+      "camera",
+      "file",
+      "archive",
+      "digitize"
+    ]
+  },
+  {
+    "id": "calendar-and-scheduling-app",
+    "label": {
+      "es": "Calendario y planificación",
+      "en": "Calendar & Scheduling App"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "micro-interactions",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "calendar",
+      "scheduling",
+      "planner",
+      "agenda",
+      "events",
+      "reminder",
+      "appointment",
+      "organize",
+      "date",
+      "sync"
+    ]
+  },
+  {
+    "id": "password-manager",
+    "label": {
+      "es": "Gestor de contraseñas",
+      "en": "Password Manager"
+    },
+    "group": "personal",
+    "landingPatternId": "trust-authority-conversion",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "dark-mode-oled",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "password",
+      "security",
+      "vault",
+      "credentials",
+      "login",
+      "secure",
+      "encrypt",
+      "keychain",
+      "2fa",
+      "biometric"
+    ]
+  },
+  {
+    "id": "expense-splitter-bill-split",
+    "label": {
+      "es": "Dividir gastos",
+      "en": "Expense Splitter / Bill Split"
+    },
+    "group": "finance",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "minimalism-and-swiss-style",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "claymorphism",
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "memphis-design",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "split",
+      "expense",
+      "bill",
+      "aa",
+      "share",
+      "friends",
+      "group",
+      "settle",
+      "debt",
+      "payment",
+      "owe"
+    ]
+  },
+  {
+    "id": "voice-recorder-and-memo",
+    "label": {
+      "es": "Grabadora y notas de voz",
+      "en": "Voice Recorder & Memo"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "ai-native-ui",
+      "flat-design",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "voice",
+      "recorder",
+      "memo",
+      "audio",
+      "transcription",
+      "dictate",
+      "recording",
+      "microphone",
+      "note",
+      "otter"
+    ]
+  },
+  {
+    "id": "bookmark-and-read-later",
+    "label": {
+      "es": "Marcadores y leer más tarde",
+      "en": "Bookmark & Read-Later"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "editorial-grid-magazine",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "bookmark",
+      "read-later",
+      "save",
+      "article",
+      "pocket",
+      "link",
+      "reading",
+      "archive",
+      "collection",
+      "raindrop"
+    ]
+  },
+  {
+    "id": "translator-app",
+    "label": {
+      "es": "App de traducción",
+      "en": "Translator App"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "ai-native-ui",
+      "minimalism-and-swiss-style",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "translate",
+      "language",
+      "text",
+      "voice",
+      "ocr",
+      "dictionary",
+      "multilingual",
+      "real-time",
+      "detect",
+      "deepl"
+    ]
+  },
+  {
+    "id": "calculator-and-unit-converter",
+    "label": {
+      "es": "Calculadora y conversor de unidades",
+      "en": "Calculator & Unit Converter"
+    },
+    "group": "personal",
+    "landingPatternId": "minimal-single-column",
+    "styleIds": [
+      "neumorphism",
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "calculator",
+      "converter",
+      "unit",
+      "math",
+      "currency",
+      "measurement",
+      "scientific",
+      "formula",
+      "percentage"
+    ]
+  },
+  {
+    "id": "alarm-and-world-clock",
+    "label": {
+      "es": "Alarma y reloj mundial",
+      "en": "Alarm & World Clock"
+    },
+    "group": "personal",
+    "landingPatternId": "minimal-single-column",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "neumorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "alarm",
+      "clock",
+      "world",
+      "timezone",
+      "timer",
+      "wake",
+      "sleep",
+      "schedule",
+      "reminder",
+      "bedtime"
+    ]
+  },
+  {
+    "id": "file-manager-and-transfer",
+    "label": {
+      "es": "Gestor y envío de archivos",
+      "en": "File Manager & Transfer"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "file",
+      "manager",
+      "transfer",
+      "folder",
+      "document",
+      "storage",
+      "cloud",
+      "share",
+      "organize",
+      "compress"
+    ]
+  },
+  {
+    "id": "email-client",
+    "label": {
+      "es": "Cliente de correo",
+      "en": "Email Client"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "micro-interactions",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "email",
+      "mail",
+      "inbox",
+      "compose",
+      "thread",
+      "newsletter",
+      "filter",
+      "reply",
+      "gmail",
+      "spark",
+      "superhuman"
+    ]
+  },
+  {
+    "id": "casual-puzzle-game",
+    "label": {
+      "es": "Juego de puzles casual",
+      "en": "Casual Puzzle Game"
+    },
+    "group": "games",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "puzzle",
+      "casual",
+      "match",
+      "brain",
+      "game",
+      "relaxing",
+      "level",
+      "tiles",
+      "logic",
+      "block",
+      "three"
+    ]
+  },
+  {
+    "id": "trivia-and-quiz-game",
+    "label": {
+      "es": "Juego de trivia y preguntas",
+      "en": "Trivia & Quiz Game"
+    },
+    "group": "games",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Leaderboard Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "claymorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "trivia",
+      "quiz",
+      "knowledge",
+      "question",
+      "answer",
+      "challenge",
+      "leaderboard",
+      "fact",
+      "brain",
+      "compete"
+    ]
+  },
+  {
+    "id": "card-and-board-game",
+    "label": {
+      "es": "Juego de cartas y de mesa",
+      "en": "Card & Board Game"
+    },
+    "group": "games",
+    "landingPatternId": "feature-rich-showcase",
+    "styleIds": [
+      "3d-and-hyperrealism",
+      "flat-design",
+      "motion-driven",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "card",
+      "board",
+      "chess",
+      "checkers",
+      "poker",
+      "strategy",
+      "turn-based",
+      "multiplayer",
+      "classic",
+      "tabletop"
+    ]
+  },
+  {
+    "id": "idle-and-clicker-game",
+    "label": {
+      "es": "Juego idle o clicker",
+      "en": "Idle & Clicker Game"
+    },
+    "group": "games",
+    "landingPatternId": "feature-rich-showcase",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "claymorphism",
+      "3d-and-hyperrealism"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "idle",
+      "clicker",
+      "incremental",
+      "passive",
+      "cookie",
+      "adventure",
+      "progress",
+      "offline",
+      "collect",
+      "prestige"
+    ]
+  },
+  {
+    "id": "word-and-crossword-game",
+    "label": {
+      "es": "Juego de palabras y crucigramas",
+      "en": "Word & Crossword Game"
+    },
+    "group": "games",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "word",
+      "crossword",
+      "wordle",
+      "spelling",
+      "vocabulary",
+      "letters",
+      "grid",
+      "puzzle",
+      "dictionary",
+      "daily"
+    ]
+  },
+  {
+    "id": "arcade-and-retro-game",
+    "label": {
+      "es": "Juego arcade y retro",
+      "en": "Arcade & Retro Game"
+    },
+    "group": "games",
+    "landingPatternId": "hero-centric-design",
+    "styleIds": [
+      "pixel-art",
+      "retro-futurism",
+      "vibrant-and-block-based",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "arcade",
+      "retro",
+      "8bit",
+      "action",
+      "shoot",
+      "runner",
+      "tap",
+      "reflex",
+      "endless",
+      "pixel",
+      "classic",
+      "score"
+    ]
+  },
+  {
+    "id": "photo-editor-and-filters",
+    "label": {
+      "es": "Editor de fotos y filtros",
+      "en": "Photo Editor & Filters"
+    },
+    "group": "creative",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "motion-driven",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "photo",
+      "edit",
+      "filter",
+      "vsco",
+      "snapseed",
+      "enhance",
+      "crop",
+      "retouch",
+      "adjust",
+      "luts",
+      "preset"
+    ]
+  },
+  {
+    "id": "short-video-editor",
+    "label": {
+      "es": "Editor de vídeos cortos",
+      "en": "Short Video Editor"
+    },
+    "group": "creative",
+    "landingPatternId": "hero-centric-design",
+    "styleIds": [
+      "dark-mode-oled",
+      "motion-driven",
+      "vibrant-and-block-based",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "video",
+      "edit",
+      "capcut",
+      "inshot",
+      "clip",
+      "reel",
+      "tiktok",
+      "trim",
+      "effects",
+      "transitions",
+      "music",
+      "timeline"
+    ]
+  },
+  {
+    "id": "drawing-and-sketching-canvas",
+    "label": {
+      "es": "Lienzo de dibujo y bocetos",
+      "en": "Drawing & Sketching Canvas"
+    },
+    "group": "creative",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "anti-polish-raw-aesthetic",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "drawing",
+      "sketch",
+      "procreate",
+      "canvas",
+      "paint",
+      "illustration",
+      "digital",
+      "brush",
+      "layers",
+      "art",
+      "stylus"
+    ]
+  },
+  {
+    "id": "music-creation-and-beat-maker",
+    "label": {
+      "es": "Creación musical y beats",
+      "en": "Music Creation & Beat Maker"
+    },
+    "group": "creative",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "dark-mode-oled",
+      "motion-driven",
+      "cyberpunk-ui",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "music",
+      "beat",
+      "daw",
+      "garageband",
+      "create",
+      "loop",
+      "sample",
+      "instrument",
+      "track",
+      "compose",
+      "record",
+      "midi"
+    ]
+  },
+  {
+    "id": "meme-and-sticker-maker",
+    "label": {
+      "es": "Creador de memes y stickers",
+      "en": "Meme & Sticker Maker"
+    },
+    "group": "creative",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "flat-design",
+      "gen-z-chaos-maximalism",
+      "claymorphism"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "meme",
+      "sticker",
+      "maker",
+      "funny",
+      "caption",
+      "template",
+      "edit",
+      "share",
+      "viral",
+      "emoji",
+      "creator",
+      "reaction"
+    ]
+  },
+  {
+    "id": "ai-photo-and-avatar-generator",
+    "label": {
+      "es": "Generador de fotos y avatares con IA",
+      "en": "AI Photo & Avatar Generator"
+    },
+    "group": "creative",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "ai-native-ui",
+      "aurora-ui",
+      "glassmorphism",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "ai",
+      "photo",
+      "avatar",
+      "lensa",
+      "portrait",
+      "generate",
+      "selfie",
+      "style",
+      "filter",
+      "prisma",
+      "art"
+    ]
+  },
+  {
+    "id": "link-in-bio-page-builder",
+    "label": {
+      "es": "Página de enlaces (link in bio)",
+      "en": "Link-in-Bio Page Builder"
+    },
+    "group": "creative",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Analytics (click tracking)",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "bento-box-grid",
+      "minimalism-and-swiss-style",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "bio",
+      "link",
+      "linktree",
+      "personal",
+      "page",
+      "creator",
+      "social",
+      "portfolio",
+      "profile",
+      "landing",
+      "custom"
+    ]
+  },
+  {
+    "id": "wardrobe-and-outfit-planner",
+    "label": {
+      "es": "Armario y planificador de looks",
+      "en": "Wardrobe & Outfit Planner"
+    },
+    "group": "personal",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "motion-driven",
+      "aurora-ui",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "wardrobe",
+      "outfit",
+      "fashion",
+      "clothes",
+      "closet",
+      "style",
+      "wear",
+      "plan",
+      "capsule",
+      "ootd",
+      "lookbook"
+    ]
+  },
+  {
+    "id": "plant-care-tracker",
+    "label": {
+      "es": "Cuidado de plantas",
+      "en": "Plant Care Tracker"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "organic-biophilic",
+      "soft-ui-evolution",
+      "claymorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "plant",
+      "care",
+      "water",
+      "garden",
+      "tracker",
+      "reminder",
+      "species",
+      "photo",
+      "grow",
+      "health",
+      "planta"
+    ]
+  },
+  {
+    "id": "book-and-reading-tracker",
+    "label": {
+      "es": "Registro de lecturas",
+      "en": "Book & Reading Tracker"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "minimalism-and-swiss-style",
+      "e-ink-paper",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "book",
+      "reading",
+      "tracker",
+      "goodreads",
+      "library",
+      "shelf",
+      "progress",
+      "review",
+      "notes",
+      "goal",
+      "literature"
+    ]
+  },
+  {
+    "id": "couple-and-relationship-app",
+    "label": {
+      "es": "App para parejas",
+      "en": "Couple & Relationship App"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "aurora-ui",
+      "soft-ui-evolution",
+      "claymorphism",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "couple",
+      "relationship",
+      "partner",
+      "love",
+      "date",
+      "anniversary",
+      "memory",
+      "shared",
+      "intimate",
+      "between"
+    ]
+  },
+  {
+    "id": "family-calendar-and-chores",
+    "label": {
+      "es": "Calendario familiar y tareas de casa",
+      "en": "Family Calendar & Chores"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "flat-design",
+      "claymorphism",
+      "accessible-and-ethical",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "cyberpunk-ui",
+      "swiss-modernism-2-0",
+      "vintage-analog-retro-film",
+      "modern-dark-cinema-mobile",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile"
+    ],
+    "keywords": [
+      "family",
+      "calendar",
+      "chores",
+      "tasks",
+      "household",
+      "shared",
+      "kids",
+      "schedule",
+      "cozi",
+      "organize",
+      "member"
+    ]
+  },
+  {
+    "id": "mood-tracker",
+    "label": {
+      "es": "Registro del estado de ánimo",
+      "en": "Mood Tracker"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "soft-ui-evolution",
+      "minimalism-and-swiss-style",
+      "aurora-ui",
+      "neumorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "mood",
+      "emotion",
+      "feeling",
+      "mental",
+      "daily",
+      "journal",
+      "wellbeing",
+      "check-in",
+      "log",
+      "track",
+      "daylio"
+    ]
+  },
+  {
+    "id": "gift-and-wishlist",
+    "label": {
+      "es": "Regalos y lista de deseos",
+      "en": "Gift & Wishlist"
+    },
+    "group": "personal",
+    "landingPatternId": "funnel-3-step-conversion",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "soft-ui-evolution",
+      "claymorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "gift",
+      "wishlist",
+      "present",
+      "birthday",
+      "occasion",
+      "registry",
+      "idea",
+      "shop",
+      "list",
+      "share",
+      "surprise"
+    ]
+  },
+  {
+    "id": "running-and-cycling-gps",
+    "label": {
+      "es": "GPS para correr y pedalear",
+      "en": "Running & Cycling GPS"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Performance Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "vibrant-and-block-based",
+      "motion-driven",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "running",
+      "cycling",
+      "gps",
+      "strava",
+      "track",
+      "route",
+      "speed",
+      "distance",
+      "cadence",
+      "pace",
+      "workout",
+      "sport"
+    ]
+  },
+  {
+    "id": "yoga-and-stretching-guide",
+    "label": {
+      "es": "Guía de yoga y estiramientos",
+      "en": "Yoga & Stretching Guide"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "organic-biophilic",
+      "soft-ui-evolution",
+      "neumorphism",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "yoga",
+      "stretch",
+      "flexibility",
+      "pose",
+      "asana",
+      "guided",
+      "session",
+      "calm",
+      "routine",
+      "wellness",
+      "down-dog"
+    ]
+  },
+  {
+    "id": "sleep-tracker",
+    "label": {
+      "es": "Seguimiento del sueño",
+      "en": "Sleep Tracker"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "neumorphism",
+      "glassmorphism",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "sleep",
+      "tracker",
+      "alarm",
+      "cycle",
+      "quality",
+      "snore",
+      "analysis",
+      "rem",
+      "deep",
+      "smart",
+      "wake",
+      "insomnia"
+    ]
+  },
+  {
+    "id": "calorie-and-nutrition-counter",
+    "label": {
+      "es": "Contador de calorías y nutrición",
+      "en": "Calorie & Nutrition Counter"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "minimalism-and-swiss-style",
+      "claymorphism"
+    ],
+    "doNotUseStyles": [
+      "e-ink-paper",
+      "nature-distilled"
+    ],
+    "keywords": [
+      "calorie",
+      "nutrition",
+      "food",
+      "diet",
+      "macro",
+      "protein",
+      "carb",
+      "fat",
+      "log",
+      "fitness",
+      "myfitnesspal"
+    ]
+  },
+  {
+    "id": "period-and-cycle-tracker",
+    "label": {
+      "es": "Seguimiento del ciclo menstrual",
+      "en": "Period & Cycle Tracker"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "soft-ui-evolution",
+      "aurora-ui",
+      "accessible-and-ethical",
+      "claymorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "period",
+      "cycle",
+      "menstrual",
+      "fertility",
+      "ovulation",
+      "pms",
+      "log",
+      "women",
+      "health",
+      "flo",
+      "clue",
+      "hormone"
+    ]
+  },
+  {
+    "id": "medication-and-pill-reminder",
+    "label": {
+      "es": "Recordatorio de medicación",
+      "en": "Medication & Pill Reminder"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "styleIds": [
+      "accessible-and-ethical",
+      "flat-design",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "medication",
+      "pill",
+      "reminder",
+      "dose",
+      "schedule",
+      "prescription",
+      "drug",
+      "health",
+      "medisafe",
+      "refill"
+    ]
+  },
+  {
+    "id": "water-and-hydration-reminder",
+    "label": {
+      "es": "Recordatorio para beber agua",
+      "en": "Water & Hydration Reminder"
+    },
+    "group": "health",
+    "landingPatternId": "product-demo-features",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "flat-design",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "water",
+      "hydration",
+      "drink",
+      "reminder",
+      "daily",
+      "tracker",
+      "glasses",
+      "intake",
+      "health",
+      "cup",
+      "aqua"
+    ]
+  },
+  {
+    "id": "fasting-and-intermittent-timer",
+    "label": {
+      "es": "Ayuno intermitente",
+      "en": "Fasting & Intermittent Timer"
+    },
+    "group": "health",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "neumorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "fasting",
+      "intermittent",
+      "16:8",
+      "timer",
+      "fast",
+      "eating",
+      "window",
+      "keto",
+      "diet",
+      "zero",
+      "weight",
+      "protocol"
+    ]
+  },
+  {
+    "id": "anonymous-community-confession",
+    "label": {
+      "es": "Comunidad anónima y confesiones",
+      "en": "Anonymous Community / Confession"
+    },
+    "group": "community",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "anonymous",
+      "community",
+      "confess",
+      "whisper",
+      "secret",
+      "vent",
+      "share",
+      "safe",
+      "private",
+      "social",
+      "yikyak"
+    ]
+  },
+  {
+    "id": "local-events-and-discovery",
+    "label": {
+      "es": "Eventos y planes locales",
+      "en": "Local Events & Discovery"
+    },
+    "group": "events",
+    "landingPatternId": "hero-centric-design",
+    "dashboardStyle": "Event Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "glassmorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "local",
+      "events",
+      "discovery",
+      "meetup",
+      "nearby",
+      "social",
+      "city",
+      "activities",
+      "calendar",
+      "community",
+      "explore"
+    ]
+  },
+  {
+    "id": "study-together-virtual-coworking",
+    "label": {
+      "es": "Estudiar en compañía y coworking virtual",
+      "en": "Study Together / Virtual Coworking"
+    },
+    "group": "education",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "User Behavior Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution",
+      "flat-design",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "study",
+      "focus",
+      "cowork",
+      "pomodoro",
+      "virtual",
+      "together",
+      "session",
+      "accountability",
+      "live",
+      "stream",
+      "room"
+    ]
+  },
+  {
+    "id": "coding-challenge-and-practice",
+    "label": {
+      "es": "Retos y práctica de programación",
+      "en": "Coding Challenge & Practice"
+    },
+    "group": "education",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Student Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "cyberpunk-ui",
+      "minimalism-and-swiss-style",
+      "flat-design"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "coding",
+      "leetcode",
+      "challenge",
+      "algorithm",
+      "practice",
+      "programming",
+      "competitive",
+      "skill",
+      "interview",
+      "problem"
+    ]
+  },
+  {
+    "id": "kids-learning-abc-and-math",
+    "label": {
+      "es": "Aprendizaje infantil (letras y números)",
+      "en": "Kids Learning (ABC & Math)"
+    },
+    "group": "education",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Parent Dashboard",
+    "styleIds": [
+      "claymorphism",
+      "vibrant-and-block-based",
+      "micro-interactions",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "cyberpunk-ui",
+      "organic-biophilic",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "minimalist-monochrome",
+      "modern-dark-cinema-mobile",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "bitcoin-defi-mobile",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "kids",
+      "children",
+      "learning",
+      "abc",
+      "math",
+      "phonics",
+      "numbers",
+      "education",
+      "games",
+      "preschool",
+      "early"
+    ]
+  },
+  {
+    "id": "music-instrument-learning",
+    "label": {
+      "es": "Aprender a tocar un instrumento",
+      "en": "Music Instrument Learning"
+    },
+    "group": "education",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Learning Analytics",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "dark-mode-oled",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "music",
+      "instrument",
+      "piano",
+      "guitar",
+      "learn",
+      "lesson",
+      "tutorial",
+      "notes",
+      "play",
+      "chord",
+      "practice",
+      "simply"
+    ]
+  },
+  {
+    "id": "parking-finder",
+    "label": {
+      "es": "Buscador de aparcamiento",
+      "en": "Parking Finder"
+    },
+    "group": "travel",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Real-Time Monitoring + Map",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "flat-design",
+      "micro-interactions"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "parking",
+      "spot",
+      "finder",
+      "map",
+      "pay",
+      "meter",
+      "garage",
+      "location",
+      "car",
+      "reserve",
+      "spothero"
+    ]
+  },
+  {
+    "id": "public-transit-guide",
+    "label": {
+      "es": "Guía de transporte público",
+      "en": "Public Transit Guide"
+    },
+    "group": "travel",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Real-Time Monitoring + Map",
+    "styleIds": [
+      "flat-design",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "transit",
+      "bus",
+      "metro",
+      "subway",
+      "train",
+      "route",
+      "schedule",
+      "map",
+      "city",
+      "commute",
+      "trip",
+      "citymapper"
+    ]
+  },
+  {
+    "id": "road-trip-planner",
+    "label": {
+      "es": "Planificador de viajes por carretera",
+      "en": "Road Trip Planner"
+    },
+    "group": "travel",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "aurora-ui",
+      "organic-biophilic",
+      "motion-driven",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "road",
+      "trip",
+      "drive",
+      "route",
+      "planner",
+      "travel",
+      "stop",
+      "map",
+      "adventure",
+      "scenic",
+      "car",
+      "wanderlog"
+    ]
+  },
+  {
+    "id": "vpn-and-privacy-tool",
+    "label": {
+      "es": "VPN y privacidad",
+      "en": "VPN & Privacy Tool"
+    },
+    "group": "personal",
+    "landingPatternId": "trust-authority-conversion",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "cyberpunk-ui",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "vpn",
+      "privacy",
+      "secure",
+      "anonymous",
+      "encrypt",
+      "proxy",
+      "ip",
+      "protect",
+      "shield",
+      "network",
+      "nordvpn"
+    ]
+  },
+  {
+    "id": "emergency-sos-and-safety",
+    "label": {
+      "es": "Emergencias y seguridad personal",
+      "en": "Emergency SOS & Safety"
+    },
+    "group": "personal",
+    "landingPatternId": "trust-authority-conversion",
+    "styleIds": [
+      "accessible-and-ethical",
+      "flat-design",
+      "dark-mode-oled",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "neo-brutalism-mobile"
+    ],
+    "keywords": [
+      "emergency",
+      "sos",
+      "safety",
+      "alert",
+      "location",
+      "help",
+      "danger",
+      "crisis",
+      "first-aid",
+      "guard",
+      "bsafe"
+    ]
+  },
+  {
+    "id": "wallpaper-and-theme-app",
+    "label": {
+      "es": "Fondos de pantalla y temas",
+      "en": "Wallpaper & Theme App"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "glassmorphism",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0",
+      "e-ink-paper",
+      "minimalist-monochrome",
+      "saas-mobile-high-tech-boutique",
+      "enterprise-saas-mobile"
+    ],
+    "keywords": [
+      "wallpaper",
+      "theme",
+      "background",
+      "customize",
+      "aesthetic",
+      "home-screen",
+      "lock-screen",
+      "widget",
+      "design",
+      "zedge"
+    ]
+  },
+  {
+    "id": "white-noise-and-ambient-sound",
+    "label": {
+      "es": "Ruido blanco y sonido ambiente",
+      "en": "White Noise & Ambient Sound"
+    },
+    "group": "personal",
+    "landingPatternId": "hero-testimonials-cta",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "neumorphism",
+      "organic-biophilic"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "white noise",
+      "ambient",
+      "sound",
+      "sleep",
+      "focus",
+      "rain",
+      "nature",
+      "relax",
+      "concentration",
+      "background",
+      "noisli"
+    ]
+  },
+  {
+    "id": "home-decoration-and-interior-design",
+    "label": {
+      "es": "Decoración del hogar e interiorismo",
+      "en": "Home Decoration & Interior Design"
+    },
+    "group": "creative",
+    "landingPatternId": "scroll-triggered-storytelling",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "3d-product-preview",
+      "organic-biophilic",
+      "aurora-ui"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "home",
+      "interior",
+      "decor",
+      "design",
+      "furniture",
+      "room",
+      "renovation",
+      "ar",
+      "plan",
+      "inspire",
+      "3d",
+      "houzz"
+    ]
+  },
+  {
+    "id": "academic-journal-scholarly-publishing",
+    "label": {
+      "es": "Revista académica y publicación científica",
+      "en": "Academic Journal / Scholarly Publishing"
+    },
+    "group": "education",
+    "landingPatternId": "faq-documentation-landing",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "minimalism-and-swiss-style",
+      "editorial-grid-magazine",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "academic",
+      "journal",
+      "paper",
+      "research",
+      "peer-review",
+      "open-access",
+      "scholarly",
+      "publication",
+      "citation",
+      "manuscript",
+      "issn",
+      "doi"
+    ]
+  },
+  {
+    "id": "api-developer-portal",
+    "label": {
+      "es": "Portal de APIs para desarrolladores",
+      "en": "API Developer Portal"
+    },
+    "group": "developer",
+    "landingPatternId": "faq-documentation-landing",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "glassmorphism",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "api",
+      "developer",
+      "documentation",
+      "sdk",
+      "endpoint",
+      "integration",
+      "rest",
+      "graphql",
+      "webhook",
+      "reference",
+      "getting-started",
+      "auth"
+    ]
+  },
+  {
+    "id": "forum-discussion-board",
+    "label": {
+      "es": "Foro de debate",
+      "en": "Forum / Discussion Board"
+    },
+    "group": "community",
+    "landingPatternId": "community-forum-landing",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "forum",
+      "discussion",
+      "thread",
+      "post",
+      "reply",
+      "community",
+      "comment",
+      "moderation",
+      "subreddit",
+      "stackexchange",
+      "topic"
+    ]
+  },
+  {
+    "id": "directory-listing-site",
+    "label": {
+      "es": "Directorio y listados",
+      "en": "Directory / Listing Site"
+    },
+    "group": "commerce",
+    "landingPatternId": "marketplace-directory",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "minimalism-and-swiss-style",
+      "bento-box-grid"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "directory",
+      "listing",
+      "classifieds",
+      "catalogue",
+      "business-directory",
+      "yellow-pages",
+      "venue",
+      "find",
+      "search",
+      "filter",
+      "map"
+    ]
+  },
+  {
+    "id": "status-page-incident-management",
+    "label": {
+      "es": "Página de estado e incidencias",
+      "en": "Status Page / Incident Management"
+    },
+    "group": "developer",
+    "landingPatternId": "real-time-operations-landing",
+    "dashboardStyle": "Real-Time Monitoring + Timeline",
+    "styleIds": [
+      "data-dense-dashboard",
+      "real-time-monitoring",
+      "minimalism-and-swiss-style",
+      "dark-mode-oled"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "organic-biophilic",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "status",
+      "incident",
+      "outage",
+      "uptime",
+      "downtime",
+      "statuspage",
+      "monitoring",
+      "sla",
+      "maintenance",
+      "sev1",
+      "postmortem"
+    ]
+  },
+  {
+    "id": "wiki-encyclopedia",
+    "label": {
+      "es": "Wiki o enciclopedia",
+      "en": "Wiki / Encyclopedia"
+    },
+    "group": "education",
+    "landingPatternId": "faq-documentation-landing",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "wiki",
+      "encyclopedia",
+      "knowledge",
+      "article",
+      "reference",
+      "wikipedia",
+      "documentation",
+      "collaborative",
+      "edit",
+      "version",
+      "citation"
+    ]
+  },
+  {
+    "id": "auction-platform",
+    "label": {
+      "es": "Plataforma de subastas",
+      "en": "Auction Platform"
+    },
+    "group": "commerce",
+    "landingPatternId": "marketplace-directory",
+    "styleIds": [
+      "dark-mode-oled",
+      "motion-driven",
+      "vibrant-and-block-based",
+      "real-time-monitoring"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "auction",
+      "bid",
+      "hammer",
+      "lot",
+      "live-auction",
+      "bidding-war",
+      "estate-sale",
+      "proxibid",
+      "gavel",
+      "lot-number",
+      "reserve-price"
+    ]
+  },
+  {
+    "id": "changelog-release-notes",
+    "label": {
+      "es": "Changelog y notas de versión",
+      "en": "Changelog / Release Notes"
+    },
+    "group": "developer",
+    "landingPatternId": "newsletter-content-first",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "editorial-grid-magazine"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "organic-biophilic",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "spatial-ui-visionos",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "changelog",
+      "release-notes",
+      "version-history",
+      "whats-new",
+      "product-updates",
+      "semver",
+      "patch-notes",
+      "release-tracker"
+    ]
+  },
+  {
+    "id": "citizen-science-platform",
+    "label": {
+      "es": "Ciencia ciudadana",
+      "en": "Citizen Science Platform"
+    },
+    "group": "public",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Project Participation Dashboard",
+    "styleIds": [
+      "organic-biophilic",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic"
+    ],
+    "keywords": [
+      "citizen-science",
+      "zooniverse",
+      "crowdsourced-research",
+      "volunteer-science",
+      "public-participation",
+      "distributed-research",
+      "citizen-researcher"
+    ]
+  },
+  {
+    "id": "classifieds-buy-sell",
+    "label": {
+      "es": "Anuncios clasificados y compraventa",
+      "en": "Classifieds / Buy-Sell"
+    },
+    "group": "commerce",
+    "landingPatternId": "marketplace-directory",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "minimalism-and-swiss-style",
+      "bento-box-grid"
+    ],
+    "doNotUseStyles": [
+      "vaporwave",
+      "exaggerated-minimalism",
+      "parallax-storytelling",
+      "editorial-grid-magazine"
+    ],
+    "keywords": [
+      "classifieds",
+      "buy-sell",
+      "craigslist",
+      "secondhand",
+      "marketplace-listing",
+      "for-sale",
+      "trade",
+      "flea-market",
+      "thrift",
+      "resell"
+    ]
+  },
+  {
+    "id": "conference-symposium-landing-page",
+    "label": {
+      "es": "Congreso o simposio",
+      "en": "Conference / Symposium Landing Page"
+    },
+    "group": "events",
+    "landingPatternId": "event-conference-landing",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "minimalism-and-swiss-style",
+      "editorial-grid-magazine",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "conference",
+      "symposium",
+      "summit",
+      "cfp",
+      "call-for-papers",
+      "speaker-lineup",
+      "registration",
+      "venue",
+      "proceedings",
+      "keynote",
+      "track"
+    ]
+  },
+  {
+    "id": "crowdfunding-platform",
+    "label": {
+      "es": "Plataforma de crowdfunding",
+      "en": "Crowdfunding Platform"
+    },
+    "group": "finance",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Campaign Analytics Dashboard",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "claymorphism",
+      "editorial-grid-magazine"
+    ],
+    "doNotUseStyles": [
+      "retro-futurism",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "memphis-design",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "chromatic-aberration-rgb-split",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "crowdfunding",
+      "kickstarter",
+      "indiegogo",
+      "campaign",
+      "backer",
+      "pledge",
+      "funding-goal",
+      "stretch-goal",
+      "reward-tier",
+      "all-or-nothing"
+    ]
+  },
+  {
+    "id": "digital-signage-kiosk",
+    "label": {
+      "es": "Cartelería digital y quioscos",
+      "en": "Digital Signage / Kiosk"
+    },
+    "group": "industry",
+    "landingPatternId": "immersive-interactive-experience",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "dark-mode-oled",
+      "flat-design",
+      "motion-driven"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "digital-signage",
+      "kiosk",
+      "interactive-display",
+      "touchscreen",
+      "wayfinding",
+      "lobby-display",
+      "menu-board",
+      "point-of-sale-display"
+    ]
+  },
+  {
+    "id": "e-signature-document-workflow",
+    "label": {
+      "es": "Firma electrónica y flujo de documentos",
+      "en": "E-signature / Document Workflow"
+    },
+    "group": "software",
+    "landingPatternId": "funnel-3-step-conversion",
+    "dashboardStyle": "Document Pipeline Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "brutalism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "retro-futurism",
+      "skeuomorphism",
+      "zero-interface",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "esignature",
+      "e-sign",
+      "docusign",
+      "digital-signature",
+      "document-workflow",
+      "approval-chain",
+      "contract-signing",
+      "signing-ceremony"
+    ]
+  },
+  {
+    "id": "feature-flag-config-management",
+    "label": {
+      "es": "Feature flags y configuración",
+      "en": "Feature Flag / Config Management"
+    },
+    "group": "developer",
+    "landingPatternId": "feature-rich-showcase",
+    "styleIds": [
+      "dark-mode-oled",
+      "data-dense-dashboard",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "organic-biophilic",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "feature-flag",
+      "config",
+      "launchdarkly",
+      "feature-toggle",
+      "experiment",
+      "rollout",
+      "kill-switch",
+      "a-b-test-config",
+      "percentage-rollout"
+    ]
+  },
+  {
+    "id": "government-portal-civic-services",
+    "label": {
+      "es": "Portal de gobierno y trámites",
+      "en": "Government Portal / Civic Services"
+    },
+    "group": "public",
+    "landingPatternId": "marketplace-directory",
+    "styleIds": [
+      "accessible-and-ethical",
+      "inclusive-design",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "zero-interface",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "government-portal",
+      "civic-services",
+      "city-hall",
+      "permit-application",
+      "tax-payment",
+      "voter-registration",
+      "public-records",
+      "municipal-online"
+    ]
+  },
+  {
+    "id": "grant-funding-portal",
+    "label": {
+      "es": "Portal de ayudas y subvenciones",
+      "en": "Grant / Funding Portal"
+    },
+    "group": "public",
+    "landingPatternId": "marketplace-directory",
+    "dashboardStyle": "Application Tracking Dashboard",
+    "styleIds": [
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "swiss-modernism-2-0"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "zero-interface",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "neo-brutalism-mobile"
+    ],
+    "keywords": [
+      "grant",
+      "funding",
+      "rfp",
+      "proposal",
+      "research-grant",
+      "foundation",
+      "fellowship",
+      "award",
+      "application-portal",
+      "funding-opportunity"
+    ]
+  },
+  {
+    "id": "lms-learning-management-system",
+    "label": {
+      "es": "Plataforma de formación (LMS)",
+      "en": "LMS (Learning Management System)"
+    },
+    "group": "education",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Education Analytics Dashboard",
+    "styleIds": [
+      "flat-design",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "vibrant-and-block-based"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "lms",
+      "course-management",
+      "learning-management",
+      "canvas",
+      "moodle",
+      "blackboard",
+      "enrollment",
+      "gradebook",
+      "syllabus",
+      "assignment-submit"
+    ]
+  },
+  {
+    "id": "no-code-low-code-builder",
+    "label": {
+      "es": "Constructor no-code o low-code",
+      "en": "No-code / Low-code Builder"
+    },
+    "group": "developer",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "App Builder Workspace",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "bento-box-grid",
+      "motion-driven",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "no-code",
+      "low-code",
+      "builder",
+      "bubble",
+      "webflow",
+      "drag-drop",
+      "visual-builder",
+      "app-builder",
+      "workflow-builder",
+      "logic-blocks"
+    ]
+  },
+  {
+    "id": "open-source-project-landing",
+    "label": {
+      "es": "Proyecto open source",
+      "en": "Open Source Project Landing"
+    },
+    "group": "developer",
+    "landingPatternId": "hero-features-cta",
+    "dashboardStyle": "Contributor Analytics Dashboard",
+    "styleIds": [
+      "dark-mode-oled",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "organic-biophilic",
+      "pixel-art",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "nature-distilled",
+      "vintage-analog-retro-film",
+      "academia-scholarly-mobile"
+    ],
+    "keywords": [
+      "open-source",
+      "github-project",
+      "oss",
+      "contributor",
+      "star",
+      "fork",
+      "pull-request",
+      "maintainer",
+      "sponsoring",
+      "readme",
+      "repository"
+    ]
+  },
+  {
+    "id": "patient-portal-health-records",
+    "label": {
+      "es": "Portal del paciente e historial médico",
+      "en": "Patient Portal / Health Records"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "patient-portal",
+      "health-records",
+      "ehr",
+      "emr",
+      "mychart",
+      "lab-results",
+      "prescription-refill",
+      "medical-history",
+      "test-results",
+      "care-team"
+    ]
+  },
+  {
+    "id": "patent-ip-database",
+    "label": {
+      "es": "Base de datos de patentes y propiedad intelectual",
+      "en": "Patent / IP Database"
+    },
+    "group": "education",
+    "landingPatternId": "marketplace-directory",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "minimalism-and-swiss-style",
+      "editorial-grid-magazine",
+      "data-dense-dashboard"
+    ],
+    "doNotUseStyles": [
+      "claymorphism",
+      "retro-futurism",
+      "memphis-design",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "patent",
+      "intellectual-property",
+      "trademark",
+      "prior-art",
+      "uspto",
+      "wipo",
+      "invention",
+      "ip-portfolio",
+      "patent-search",
+      "claims"
+    ]
+  },
+  {
+    "id": "q-and-a-community-platform",
+    "label": {
+      "es": "Comunidad de preguntas y respuestas",
+      "en": "Q&A Community Platform"
+    },
+    "group": "community",
+    "landingPatternId": "community-forum-landing",
+    "dashboardStyle": "Community Analytics Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "dark-mode-oled",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "qa",
+      "stack-overflow",
+      "question-answer",
+      "knowledge-sharing",
+      "community-qa",
+      "expert-answer",
+      "upvote",
+      "accepted-answer",
+      "reputation"
+    ]
+  },
+  {
+    "id": "research-lab-university-department",
+    "label": {
+      "es": "Laboratorio o departamento universitario",
+      "en": "Research Lab / University Department"
+    },
+    "group": "education",
+    "landingPatternId": "portfolio-grid",
+    "styleIds": [
+      "swiss-modernism-2-0",
+      "minimalism-and-swiss-style",
+      "editorial-grid-magazine",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "aurora-ui",
+      "liquid-glass",
+      "motion-driven",
+      "bento-box-grid",
+      "dimensional-layering",
+      "kinetic-typography",
+      "hud-sci-fi-fui",
+      "spatial-ui-visionos",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "claymorphism-mobile"
+    ],
+    "keywords": [
+      "research-lab",
+      "university-department",
+      "academic-lab",
+      "principal-investigator",
+      "lab-members",
+      "publications",
+      "research-group",
+      "pi-page"
+    ]
+  },
+  {
+    "id": "resume-cv-builder",
+    "label": {
+      "es": "Creador de currículums",
+      "en": "Resume / CV Builder"
+    },
+    "group": "personal",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Template Selection Gallery",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "flat-design",
+      "swiss-modernism-2-0",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "3d-and-hyperrealism",
+      "zero-interface",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "interactive-cursor-design",
+      "voice-first-multimodal"
+    ],
+    "keywords": [
+      "resume",
+      "cv",
+      "builder",
+      "job-search",
+      "curriculum-vitae",
+      "portfolio-resume",
+      "cover-letter",
+      "career-builder",
+      "ats-friendly"
+    ]
+  },
+  {
+    "id": "review-platform",
+    "label": {
+      "es": "Plataforma de reseñas",
+      "en": "Review Platform"
+    },
+    "group": "community",
+    "landingPatternId": "product-review-ratings-focused",
+    "dashboardStyle": "Review Analytics Dashboard",
+    "styleIds": [
+      "flat-design",
+      "vibrant-and-block-based",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "review",
+      "rating",
+      "yelp",
+      "trustpilot",
+      "testimonial",
+      "customer-review",
+      "star-rating",
+      "verified-purchase",
+      "pros-cons"
+    ]
+  },
+  {
+    "id": "rpa-automation-dashboard",
+    "label": {
+      "es": "Dashboard de RPA y automatización",
+      "en": "RPA / Automation Dashboard"
+    },
+    "group": "data",
+    "landingPatternId": "real-time-operations-landing",
+    "dashboardStyle": "Real-Time Monitoring + Process Analytics",
+    "styleIds": [
+      "dark-mode-oled",
+      "data-dense-dashboard",
+      "minimalism-and-swiss-style",
+      "accessible-and-ethical"
+    ],
+    "doNotUseStyles": [
+      "neumorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "zero-interface",
+      "bento-box-grid",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "ai-native-ui",
+      "memphis-design",
+      "vaporwave",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "pixel-art",
+      "gen-z-chaos-maximalism",
+      "biomimetic-organic-2-0",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "nature-distilled",
+      "interactive-cursor-design",
+      "voice-first-multimodal",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "editorial-grid-magazine",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "saas-mobile-high-tech-boutique",
+      "terminal-cli-mobile",
+      "neo-brutalism-mobile",
+      "bold-typography-mobile-poster",
+      "academia-scholarly-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile",
+      "neumorphism-mobile"
+    ],
+    "keywords": [
+      "rpa",
+      "robotic-process-automation",
+      "uipath",
+      "automation-anywhere",
+      "bot-orchestrator",
+      "process-discovery",
+      "attended-bot",
+      "unattended-bot"
+    ]
+  },
+  {
+    "id": "survey-form-builder",
+    "label": {
+      "es": "Encuestas y formularios",
+      "en": "Survey / Form Builder"
+    },
+    "group": "software",
+    "landingPatternId": "product-demo-features",
+    "dashboardStyle": "Response Analytics Dashboard",
+    "styleIds": [
+      "minimalism-and-swiss-style",
+      "micro-interactions",
+      "claymorphism",
+      "flat-design"
+    ],
+    "doNotUseStyles": [
+      "3d-and-hyperrealism",
+      "zero-interface",
+      "ai-native-ui",
+      "exaggerated-minimalism",
+      "kinetic-typography",
+      "interactive-cursor-design",
+      "voice-first-multimodal"
+    ],
+    "keywords": [
+      "survey",
+      "form-builder",
+      "questionnaire",
+      "typeform",
+      "survey-monkey",
+      "poll",
+      "feedback-form",
+      "multi-step-form",
+      "nps-survey",
+      "logic-jump"
+    ]
+  },
+  {
+    "id": "telemedicine-platform",
+    "label": {
+      "es": "Telemedicina",
+      "en": "Telemedicine Platform"
+    },
+    "group": "health",
+    "landingPatternId": "trust-authority-conversion",
+    "dashboardStyle": "Healthcare Analytics",
+    "styleIds": [
+      "neumorphism",
+      "accessible-and-ethical",
+      "minimalism-and-swiss-style",
+      "soft-ui-evolution"
+    ],
+    "doNotUseStyles": [
+      "glassmorphism",
+      "brutalism",
+      "3d-and-hyperrealism",
+      "vibrant-and-block-based",
+      "claymorphism",
+      "aurora-ui",
+      "retro-futurism",
+      "skeuomorphism",
+      "motion-driven",
+      "micro-interactions",
+      "neubrutalism",
+      "y2k-aesthetic",
+      "cyberpunk-ui",
+      "memphis-design",
+      "vaporwave",
+      "kinetic-typography",
+      "parallax-storytelling",
+      "hud-sci-fi-fui",
+      "gen-z-chaos-maximalism",
+      "anti-polish-raw-aesthetic",
+      "tactile-digital-deformable-ui",
+      "interactive-cursor-design",
+      "3d-product-preview",
+      "gradient-mesh-aurora-evolved",
+      "chromatic-aberration-rgb-split",
+      "vintage-analog-retro-film",
+      "bauhaus",
+      "modern-dark-cinema-mobile",
+      "terminal-cli-mobile",
+      "kinetic-brutalism-mobile",
+      "neo-brutalism-mobile",
+      "cyberpunk-mobile-hud",
+      "claymorphism-mobile",
+      "sketch-hand-drawn-mobile"
+    ],
+    "keywords": [
+      "telemedicine",
+      "telehealth",
+      "virtual-visit",
+      "remote-consultation",
+      "video-doctor",
+      "remote-patient-monitoring",
+      "telehealth-app"
+    ]
+  },
+  {
+    "id": "testimonial-and-social-proof-widget",
+    "label": {
+      "es": "Widget de testimonios y prueba social",
+      "en": "Testimonial & Social Proof Widget"
+    },
+    "group": "software",
+    "landingPatternId": "hero-testimonials-cta",
+    "dashboardStyle": "Engagement Analytics Dashboard",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "flat-design",
+      "motion-driven",
+      "minimalism-and-swiss-style"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "testimonial",
+      "social-proof",
+      "wall-of-love",
+      "customer-quote",
+      "case-study",
+      "review-widget",
+      "trust-signal",
+      "user-story"
+    ]
+  },
+  {
+    "id": "ticketing-box-office",
+    "label": {
+      "es": "Venta de entradas y taquilla",
+      "en": "Ticketing / Box Office"
+    },
+    "group": "events",
+    "landingPatternId": "event-conference-landing",
+    "dashboardStyle": "Sales Analytics Dashboard",
+    "styleIds": [
+      "vibrant-and-block-based",
+      "motion-driven",
+      "dark-mode-oled",
+      "glassmorphism"
+    ],
+    "doNotUseStyles": [],
+    "keywords": [
+      "ticketing",
+      "box-office",
+      "eventbrite",
+      "ticket-sales",
+      "seat-selection",
+      "will-call",
+      "qr-ticket",
+      "venue-capacity",
+      "will-call-pickup"
+    ]
+  }
+]

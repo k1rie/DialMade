@@ -1,0 +1,467 @@
+{
+ "formats": {
+  "summary": "Propuesta de importación ($0, todo en navegador o worker) para que el usuario traiga su guía actual. El núcleo es un paquete nuevo, `@dialmade/import`, que corre en un `import.worker.ts` (mismo patrón que `palette.worker.ts`). Tiene un detector de formato por bytes mágicos y contenido, y un modelo normalizado `ImportResult` en el que cada valor lleva rol, confianza y procedencia. Antes de aplicar nada se muestra una hoja de revisión. Lo aceptado entra en el DesignDoc como JSON Patch, con locks.\n\n**v1 (mayor valor por menor esfuerzo para devs que ya tienen app):**\n1. Pegar hex o una URL de Coolors.\n2. CSS custom properties: `globals.css` de shadcn (oklch y el legacy de canales HSL), `@theme` de Tailwind v4 y su CSS compilado.\n3. Un solo recorredor tolerante para JSON de tokens: DTCG 2025.10, DTCG legacy, export nativo de Figma, REST de Figma, Style Dictionary y Tokens Studio.\n4. DESIGN.md.\n5. Capturas con `extractFromPixels`, más claro/oscuro y tinte de neutros.\n6. Mapeo de fuentes a `google-fonts.csv` con alias y una tabla curada de alternativas libres.\n\nPara que lo importado no se pierda hacen falta dos cambios en el motor:\n- `generateTheme` tiene que aceptar roles fijados.\n- `extractFromPixels` necesita un perfil `screenshot`, porque `MIN_COVERAGE = 0.015` elimina los CTA.\n\n**v1.1:**\n- `tailwind.config` v3 solo por AST, nunca se evalúa.\n- SCSS.\n- `.ase`, `.aco` y `.gpl`.\n- Brand book PDF con `pdfjs-dist`: primero texto, luego render.\n- Fuente subida con parecido por métricas de capsize.\n- «URL ligera» sin navegador, más dembrandt ejecutado por el usuario en local.\n- IA de visión opcional con créditos.\n\n**v2:**\n- Worker hospedado de dembrandt con Playwright.\n- Detección de muestras con OCR.\n- ZIP multiarchivo.\n\nVerifiqué con fuentes oficiales: DTCG 2025.10 (format, color, resolver), import/export de variables de Figma, REST Variables, Tailwind v4 (`@theme` y upgrade guide), `resolveConfig` de v3, shadcn, DESIGN.md, ACO (Adobe), GPL (GIMP), las opciones de pdf.js y versiones/licencias en npm.\n\nQuedan sin verificar:\n- La forma del export multimodo de Figma.\n- La escala LAB en ASE.\n- Los argumentos de color del operator list de pdf.js.\n- `$metadata.json` de Tokens Studio.\n- El JSON propio de dembrandt.\n- El formato `.colorset` de Xcode.",
+  "recommendations": [
+   {
+    "item": "Base común: paquete @dialmade/import + import.worker + detector de formato + hoja de revisión + aplicación con procedencia",
+    "detail": "Paquete TS puro `packages/import` (`@dialmade/import`, sin DOM salvo adaptadores). Corre en `apps/web/src/workers/import.worker.ts`, igual que `palette.worker.ts`.\n\nEntrada única:\n- Dropzone multiarchivo.\n- Cmd+V de texto e imágenes.\n- Campo «Pegar».\n\nDetección en dos pasos:\n1. Bytes mágicos:\n   - `%PDF-` → PDF.\n   - `ASEF` → ASE.\n   - PNG, JPEG, WebP, GIF o AVIF → imagen.\n   - `wOF2`, `wOFF`, `OTTO` o `00 01 00 00` → fuente.\n   - `PK\\x03\\x04` → zip (v2).\n   - .aco solo por extensión, con un uint16 BE de versión ∈ {1,2}.\n2. Texto UTF-8 sin BOM:\n   - `GIMP Palette` → GPL.\n   - Front matter `---` con claves colors/typography → DESIGN.md.\n   - JSON.parse correcto → clasificador JSON (ver tokens).\n   - `@theme` o `--x:` → CSS.\n   - `$x:` → SCSS.\n   - `module.exports`, `export default`, `defineConfig` o `satisfies Config` → tailwind.config.\n   - `coolors.co/` → Coolors.\n   - Resto → lista de colores.\n\nSalida `ImportResult`:\n- `source`: kind, format, version, fileName, sha256 y parser@versión.\n- `colors`: hex+oklch, alpha, name, path, mode light/dark, role (RoleKey de @dialmade/palette), roleConfidence y scale {grupo, paso}.\n- `fonts`: family, role heading/body/mono, weights y el match con Google Fonts.\n- También radii, spacing, shadows, typeScale, warnings y unresolved.\n\nConfianza:\n- **Alta:** token explícito con nombre de rol del vocabulario shadcn/Dialmade (background…ring, chart-1..5, sidebar-*), o un archivo exportado por la propia app.\n- **Media:** nombre heurístico (brand, main, bg, surface, text, danger, error, positive…) o color con nombre en una paleta o PDF.\n- **Baja:** píxeles, CMYK convertido o match difuso.\n\nUI «Esto encontramos»:\n- Swatches por rol con badge de confianza y de origen.\n- Check por valor y acciones «Usar como primario/secundario».\n- Pestañas claro/oscuro.\n- Nada se aplica sin confirmar.\n\n`applyImport(doc, selección)` produce JSON Patch (RFC 6902) sobre brand.seeds, tokens y system, con `provenance {sourceId, path, confidence}`. Los valores de confianza alta quedan con lock automático («tu guía manda»).\n\nCon varias fuentes, la precedencia es: tokens > CSS > tailwind.config > DESIGN.md > archivo de paleta > texto de PDF > píxeles > logo. Los duplicados se fusionan con ΔEok < 0.02 y se conserva la procedencia de ambos.\n\nSe guardan solo el resultado y el sha256, nunca el archivo. Cada parser se carga con `import()` dinámico solo cuando aparece su formato.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/workers/palette.worker.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/image.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/exporters.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/theme.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md §4.2",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md"
+    ]
+   },
+   {
+    "item": "Checklist de seguridad común a todos los parsers",
+    "detail": "**Ejecución:**\n- Todo corre en el worker, con terminate por timeout (15 s; PDF, 60 s) y botón de cancelar.\n- Nunca se usa eval, new Function ni import() sobre contenido del usuario. tailwind.config se lee solo por AST.\n\n**Nada del usuario llega al DOM ni al iframe:**\n- No se inyecta su CSS, SVG ni HTML.\n- Los valores se re-serializan desde colores y dimensiones ya parseados (culori → oklch() o hex) y se aplican con `style.setProperty`.\n- `url()`, `@import`, los `$ref` remotos y las URLs en `$extensions` se ignoran y nunca se piden por red.\n- El raster de SVG se hace con `<img>` desde un blob URL, como ya hace `lib/image.ts` (scripts inertes).\n\n**Prototype pollution:** se rechazan las claves `__proto__`, `constructor` y `prototype`, y se usan Map u Object.create(null).\n\n**Límites propuestos:**\n\n| Entrada | Límite |\n|---|---|\n| JSON de tokens | ≤5 MB, ≤20.000 tokens, profundidad ≤64 con recorrido iterativo, alias ≤32 saltos con detección de ciclos |\n| CSS/SCSS | ≤5 MB |\n| JS/TS config | ≤256 KB |\n| YAML | ≤1 MB, `maxAliasCount: 50` (yaml 2.9.1; default 100, frena el billion laughs) |\n| ASE, ACO y GPL | ≤2 MB y ≤2.000 colores |\n| Imágenes | ≤10 MB (igual que MAX_LOGO_BYTES), ≤50 MP leyendo la cabecera antes de decodificar, ≤12 por lote, reducidas a 1600 px |\n| PDF | ≤50 MB |\n| Fuentes | ≤10 MB |\n| Texto pegado | ≤1 MB |\n\n**ReDoS:** solo regex lineales, y las líneas se cortan a 10.000 caracteres antes de aplicarlas.\n\n**Nombres:** se quitan los caracteres de control y bidi (U+202A–202E, U+2066–2069) y se truncan a 64 caracteres. Al exportar a código se sanean a [a-z0-9-].",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "https://eemeli.org/yaml/",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/image.ts",
+     "https://github.com/advisories/GHSA-wgrm-67xf-hhpq"
+    ]
+   },
+   {
+    "item": "Pegar colores: lista de hex/CSS y URL de Coolors",
+    "detail": "**Detección:** texto sin estructura reconocible, o una URL `coolors.co/…`.\n\n**Parseo propio:**\n- Un tokenizer acepta #rgb, #rrggbb, #rrggbbaa, rgb(), hsl(), oklch(), lab() y nombres CSS, usando `parseColor` y culori 4.0.2, que ya están en @dialmade/palette.\n- Los hex sin `#` solo se aceptan dentro de una URL de Coolors o como string entre comillas tras `:` (exports «Code» y «Object»), para no confundirlos con números.\n- Patrones de URL: `/palette/264653-2a9d8f-…` y `/264653-2a9d8f-…`, con la regex `[0-9a-f]{6}(-[0-9a-f]{6}){1,9}`.\n- La URL no se pide por red: los hex ya vienen en ella.\n\n**Qué se extrae:**\n- Colores en orden.\n- El nombre, si la línea lo trae (`Primary: #…`, `--brand: …`, `brand = …`).\n\n**Rol:**\n- Si la línea nombra un rol → confianza media.\n- Si no, el primero queda como primario candidato con confianza baja, y el usuario elige.\n- El valor en sí siempre tiene confianza alta.\n\n**Coolors:** su menú de export (visto en coolors.co) ofrece URL, PDF, Image, CSS, ASE, SVG, Code, Tailwind y Embed.\n- URL, CSS, Code y Tailwind entran por este parser o por el de CSS.\n- El ASE, por el parser de paletas.\n- El PDF, por el de PDF.\n\n**Límites:** 64 colores, deduplicados con ΔEok < 0.02.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "https://coolors.co/palette/264653-2a9d8f-e9c46a-f4a261-e76f51",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/color.ts"
+    ]
+   },
+   {
+    "item": "CSS custom properties: globals.css de shadcn, @theme de Tailwind v4 y CSS compilado",
+    "detail": "**Detección:** archivo .css, o texto con `--[\\w-]+\\s*:` o `@theme`.\n\n**Parser:** postcss 8.5.28 (MIT). La 8.5.29 es del 2026-10-05, así que conviene esperar. Su doc dice que corre en navegador empaquetado con webpack o Browserify; hay que verificar el bundle con Turbopack en el spike. La alternativa es css-tree 3.2.1 (MIT). Los colores se leen con culori y las sombras, var() y calc() con postcss-value-parser 4.2.0 (MIT).\n\n**Modo:**\n- Claro: `:root`, `:root, :host`, `html` y `@theme`.\n- Oscuro: `.dark`, `:root.dark`, `html.dark`, `[data-theme=\"dark\"]`, `[data-mode=\"dark\"]` y `@media (prefers-color-scheme: dark)`.\n- `var(--x)` se resuelve dentro del archivo hasta 16 saltos, incluido `@theme inline` (`--color-primary: var(--primary)` → rol primary).\n\n**Qué se extrae:**\n- **(a)** Roles de shadcn 1:1 con ROLE_KEYS (background, foreground, card, popover, primary, secondary, muted, accent, destructive, border, input, ring, chart-1..5, sidebar-*), con confianza alta.\n- **(b)** Valores en oklch() (shadcn actual), hsl(), hex, rgb() y el formato legacy de shadcn con Tailwind v3 en canales sueltos (`--primary: 222.2 47.4% 11.2%`). Se detecta como tres números con % en el 2.º y el 3.º. Es un formato conocido, pero hay que confirmarlo con un fixture.\n- **(c)** Escalas `--color-<grupo>-<50..950>`.\n- **(d)** `--radius` (default de shadcn 0.625rem, que genera rounded-sm..4xl con factores ×0.6 a ×2.6) y `--radius-*`.\n- **(e)** `--font-sans`, `--font-serif`, `--font-mono`, `--font-heading` y `--font-display`, más el `font-family` de body y h1–h3. Se pasan al matcher de fuentes.\n- **(f)** `--spacing` (base, p. ej. 0.25rem) y `--spacing-*`.\n- **(g)** `--shadow-*`, `--text-*`, `--leading-*`, `--tracking-*` y `--ease-*`.\n\n**Filtros de valores por defecto:** se incluyen como datos estáticos el tema por defecto de tailwindcss 4.3.3 (paleta y stacks de sistema; `theme.css` trae `--font-sans: -apple-system, …`) y el tema base de shadcn. Lo que coincida se marca como «por defecto, no es tu marca».\n\n**CSS compilado:** el de Tailwind v4 emite las variables usadas en `:root, :host` (verificado en `tailwindcss@4.3.3/dist/lib.js`). Así que sirve también para el CSS de un sitio publicado copiado desde DevTools.\n\nConfianza alta en los nombres de rol y media en escalas y heurísticos.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "https://ui.shadcn.com/docs/theming",
+     "https://tailwindcss.com/docs/theme",
+     "/Users/diegoguerrero/Desktop/designApp/node_modules/.pnpm/tailwindcss@4.3.3/node_modules/tailwindcss/theme.css",
+     "https://github.com/postcss/postcss/blob/main/docs/README-cn.md",
+     "https://registry.npmjs.org/postcss"
+    ]
+   },
+   {
+    "item": "JSON de tokens: un recorredor tolerante para DTCG 2025.10, DTCG legacy, Figma (nativo y REST), Style Dictionary y Tokens Studio",
+    "detail": "**Por qué un parser propio** (JSON.parse más un recorrido iterativo):\n- @terrazzo/parser 2.7.1 (MIT) corre en el navegador, pero valida en estricto y lanza errores. Se puede usar en los tests como validador.\n- Style Dictionary 5.6.0 (Apache-2.0) todavía no cubre 2025.10 completo, según su propia doc.\n\n**Clasificador:**\n\n**(1) Resolver.** `version:\"2025.10\"` más `resolutionOrder` (archivo `.resolver.json`): sets y modifiers.contexts, p. ej. theme: light/dark → modos. Los `$ref` a otros archivos se resuelven solo contra archivos del mismo lote, nunca por red.\n\n**(2) DTCG.** Cualquier nodo con `$value`.\n- **color:** objeto `{colorSpace, components, alpha?, hex?}`. Admite 14 espacios de color y `none`. Se convierte con culori y, si no hay conversión, se usa `hex`. Un color en string (borradores previos) también se lee con culori.\n- **dimension:** `{value, unit:'px'|'rem'}` o el string `16px`.\n- **fontFamily:** string o array.\n- **fontWeight:** de 1 a 1000, o un alias (`bold`, `semi-bold`…).\n- **duration:** `{value, unit:'ms'|'s'}`.\n- **shadow:** color, offsetX, offsetY, blur, spread e inset.\n- **typography:** fontFamily, fontSize, fontWeight, letterSpacing y lineHeight.\n- `$type` se hereda del grupo.\n- Alias `{a.b}` y `$ref` JSON Pointer (`#/a/b/$value/components/0`, con escapes ~0 y ~1), además de `$extends` y `$root`. Un ciclo es un error.\n\n**(3) Export nativo de Figma.** Se reconoce por `$extensions[\"com.figma.*\"]`. Es DTCG con un archivo por modo (Import mode / Export mode(s) en el panel Variables). El nombre del archivo o del modo indica light o dark, y `com.figma.aliasData` trae los alias. La forma exacta del export multimodo (un archivo o varios) NO está verificada.\n\n**(4) REST de Figma (solo Enterprise).** Se reconoce por `meta.variables` y `meta.variableCollections`.\n- `valuesByMode[modeId]` con color `{r,g,b,a}` en 0–1.\n- Alias `{type:\"VARIABLE_ALIAS\", id}`.\n- `resolvedType`: BOOLEAN, FLOAT, STRING o COLOR.\n- Los nombres de modo vienen en `modes[]`.\n\n**(5) Style Dictionary v3 o Tokens Studio legacy.** Se reconoce por `value` sin `$`.\n- Style Dictionary usa la estructura CTI con `comment`.\n- Tokens Studio usa `type`, las claves `$themes` y `$metadata`, sets en el primer nivel y tipos no DTCG: sizing, spacing, borderRadius, fontFamilies, fontWeights, boxShadow con x/y, `rgba(#hex, 0.5)`, modificadores en `$extensions[\"studio.tokens\"].modify` y expresiones como `4*1.5px`.\n- Se aceptan literales y alias.\n- La aritmética simple (+ − × ÷) la evalúa un parser propio, nunca eval.\n- Los modificadores van a `unresolved`.\n\n**Roles por ruta** (`color.primary`, `semantic/bg/default`, `brand.500`):\n- `accent` es el accent de shadcn si el archivo tiene background, foreground y card.\n- Si no, es candidato a `cta`. El conflicto ya está anotado en INFORME §4.3.\n\n**Escalas:** se reconocen los sufijos 50–950 (Tailwind), 1–12 (Radix) y 0–100 (Material). Una escala completa se respeta tal cual.\n\n**Ida y vuelta:** nuestros propios `toDTCG` y `toFigmaTokens` (extensión `design.dialmade`) se reimportan sin pérdida y con confianza máxima.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "https://www.designtokens.org/tr/2025.10/format/",
+     "https://www.designtokens.org/tr/2025.10/color/",
+     "https://www.designtokens.org/tr/2025.10/resolver/",
+     "https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables",
+     "https://developers.figma.com/docs/rest-api/variables-endpoints/",
+     "https://docs.tokens.studio/manage-settings/token-format",
+     "https://github.com/tokens-studio/sd-transforms",
+     "https://styledictionary.com/info/dtcg/",
+     "https://terrazzo.app/docs/reference/js-api/"
+    ]
+   },
+   {
+    "item": "DESIGN.md (Google Labs) con front matter YAML",
+    "detail": "**Detección:** archivo llamado DESIGN.md, o front matter con las claves colors, typography, rounded, spacing o components.\n\n**Parseo:**\n- Se separa el front matter (entre `---`) y se lee con `yaml` 2.9.1 (ISC): schema core, maxAliasCount 50 y uniqueKeys.\n- Validación opcional con `lint` de `@google/design.md/linter` 0.4.0. El repo es Apache-2.0, pero el package.json de npm no declara licencia: hay que confirmarlo. Arrastra remark/unified, así que se carga solo si se valida.\n\n**Qué se extrae:**\n- `version`, `name` y `description`.\n- **colors:** cualquier color CSS, leído con culori.\n- **typography:** fontFamily, fontSize, fontWeight, lineHeight, letterSpacing, fontFeature y fontVariation. El rol sale de la clave (h1, body, label…).\n- **rounded** y **spacing**: dimensiones px/em/rem o números.\n- **components** → recetas de `system`: backgroundColor, textColor, typography, rounded, padding, size, height y width.\n- Referencias `{colors.primary}`.\n- Las secciones de texto (Overview, Do's and Don'ts) se guardan como nota del brief y no se interpretan sin IA.\n\nConfianza alta en los valores y media en los roles, porque las claves son libres.\n\nEl mismo parser sirve para la salida `--design-md` de dembrandt y para los DESIGN.md de Refero o Stitch.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "https://github.com/google-labs-code/design.md",
+     "https://eemeli.org/yaml/",
+     "https://registry.npmjs.org/@google/design.md"
+    ]
+   },
+   {
+    "item": "Capturas de su app y referencias: color determinista, claro/oscuro y tinte de neutros",
+    "detail": "Reutiliza `lib/image.ts` (decodificación, con SVG vía `<img>`) y `extractFromPixels` en el worker.\n\n**Cambio necesario en el motor** (no se toca ahora): `extractFromPixels` está pensado para logos. `MIN_COVERAGE = 0.015` y el tope de 8 swatches eliminan un CTA que ocupe <1 % de la captura. Propuesta: `ExtractOptions.profile: 'screenshot'`, con minCoverage ≈0.002, ranking por croma y sin quitar un fondo cromático.\n\n**Qué se extrae** (determinista, $0):\n- **Fondo y modo:** el fondo es el color mayoritario del borde. Con L oklch <0.35 es oscuro; con >0.75, claro; entre medias, «ambiguo». Confianza alta si más del 60 % de los píxeles cae de un lado.\n- **Tinte de neutros:** h y C medios de los clusters con C <0.04 («gris cálido/frío»). Confianza alta-media.\n- **Acento candidato:** el cluster con más croma y una cobertura de 0.2–10 %. Confianza media.\n- **Perfil de vibrancia:** C y L medios, comparados con PALETTE_STYLES para elegir el estilo más cercano. Confianza media-baja.\n- **Contraste texto/fondo aproximado:** confianza baja.\n\n**Marcado como «estimación»** (no es fiable sin IA): radios, densidad, sombras y tipografía. Como proxy opcional de «aire», el % de píxeles de fondo, con confianza baja.\n\n**Límites:**\n- ≤10 MB y ≤50 MP, leyendo las cabeceras IHDR/SOF/VP8 antes de decodificar.\n- Reducción a 1600 px y ≤12 imágenes por lote.\n- HEIC no se admite (solo Safari lo decodifica).\n\n**Legal** (INFORME §8): casilla de derechos, proceso efímero y solo se guarda el fingerprint. Las capturas de Mobbin no se analizan con IA.\n\nEl logo sigue mandando en Color, salvo que el usuario marque «mi app manda».",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/extract.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/styles.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/image.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md §3 y §8",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md (web:references)"
+    ]
+   },
+   {
+    "item": "Fuentes: nombre detectado → Google Fonts (google-fonts.csv) con alias, búsqueda difusa y alternativas libres curadas",
+    "detail": "**Normalización del nombre:**\n- Se parten los stacks por comas y se quitan comillas y genéricos (sans-serif, system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, emoji).\n- Se quita el prefijo de subconjunto de PDF `ABCDEF+`.\n- Se separa el nombre PostScript: `PlusJakartaSans-Bold` → «Plus Jakarta Sans», peso 700.\n- Se quitan los sufijos de estilo (Regular, Bold, Italic, Variable, VF, Std).\n- Se pasa a minúsculas sin espacios.\n\n**Matching en cuatro pasos:**\n1. **Exacto** contra las 1934 familias del CSV → confianza alta.\n2. **Alias curados** → confianza alta. Ejemplos: Source Sans Pro → Source Sans 3 (el CSV no tiene «Source Sans Pro»); InterVariable, Inter var e Inter Display → Inter; Geist Sans → Geist.\n3. **Difuso** con Damerau-Levenshtein o trigramas propios (son solo 1934 nombres, no hace falta dependencia), o fuse.js 7.5.0 (Apache-2.0). Solo se acepta solo si el score es ≥0.92 y único; si no, se ofrece un top-3 para confirmar. Confianza media o baja.\n4. **Propietarias:** tabla `proprietary-fonts.ts` de unas 40 entradas, con categoría y 2–3 alternativas.\n\n**Alternativas con métricas compatibles** (confianza alta, todas están en el CSV):\n- Arial/Helvetica → Arimo\n- Times New Roman → Tinos\n- Courier New → Cousine\n- Calibri → Carlito\n- Cambria → Caladea\n- Georgia → Gelasio\n\n**Alternativas de estilo** (confianza media; se etiquetan «sugerencia, no equivalente»):\n- SF Pro → Inter (decisión del DESIGN-BRIEF)\n- Futura → Jost\n- Gotham → Montserrat\n- Circular → Figtree o DM Sans\n- Proxima Nova → Figtree o Montserrat\n- Avenir → Nunito Sans\n- Segoe UI → Open Sans o Noto Sans\n- Menlo, SF Mono y Consolas → JetBrains Mono\n\n**Límite del CSV:** NO tiene métricas, y su columna Keywords es genérica por categoría (todas las sans dicen «geometric humanist grotesque»). No sirve para buscar «la más parecida» (ver la recomendación de fuente subida). De él se usan:\n- Category.\n- Styles: avisar si la marca usa el peso 300 y la alternativa no lo tiene.\n- Variable Axes.\n- Popularity Rank, para desempatar.\n\nLa licencia (OFL o Apache) sale de `google-font-licenses.json`.\n\n**Rol:** heading, body o mono según el contexto (h1, `--font-heading` o display → heading). Si el par heading/body coincide con uno de typography.csv (74 pares) o de los 10 TypographyPairing del catálogo, se selecciona ese par; si no, queda un par custom.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/google-fonts.csv",
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/typography.csv",
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/google-font-licenses.json",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md §3"
+    ]
+   },
+   {
+    "item": "Motor de paleta: respetar roles y escalas importados (requisito para que importar mejore el resultado)",
+    "detail": "**El problema:** `GenerateThemeInput` solo acepta primary, secondary, achromatic y style. Si se regenera desde semillas un globals.css completo, se pierden sus roles reales en claro y oscuro.\n\n**Propuesta** para @dialmade/palette (no se toca ahora): `fixed?: { light?: Partial<ThemeRoles>; dark?: Partial<ThemeRoles>; scales?: Partial<ThemeScales> }`.\n- Los roles fijados se copian tal cual y el resto se genera.\n- `contrast[]` (CONTRAST_PAIRS) sigue informando de los fallos, pero un valor bloqueado no se autoajusta. Para eso hay un botón explícito «Ajustar a AA».\n- Una escala importada completa se usa sin regenerarla.\n- Si falta el modo oscuro, se genera desde las semillas.\n\nCon esto, el DesignDoc compila los exports (toGlobalsCss, toDTCG, toFigmaTokens) con los valores del usuario.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/theme.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/exporters.ts"
+    ]
+   },
+   {
+    "item": "Fixtures y pruebas de ida y vuelta por formato",
+    "detail": "**Fixtures ficticios** (regla del repo: nada de marcas reales):\n- Generados con nuestros exporters (toDTCG, toFigmaTokens, toGlobalsCss, toTailwindTheme y DESIGN.md) y reimportados, exigiendo ΔEok <0.001 en la ida y vuelta.\n- Un globals.css de shadcn en oklch y otro en el legacy de canales HSL.\n- Tokens Studio legacy con $themes.\n- Un export real de variables de Figma, hecho con una cuenta propia, para fijar la forma multimodo.\n- ASE, ACO y GPL escritos por un script propio.\n- El PDF de una marca ficticia.\n- Capturas de la propia app.\n\n**Fuzz ligero:** archivos truncados, profundidad extrema, alias cíclicos, claves `__proto__` y líneas de 1 MB.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/testing/fixtures.ts"
+    ]
+   },
+   {
+    "item": "tailwind.config.js/ts (v3) por AST, sin ejecutar, con fallback de comando local",
+    "detail": "**Detección:** archivo `tailwind.config.(js|cjs|mjs|ts)`, o texto con module.exports / export default más `theme`. Nunca se evalúa.\n\n**Parser:**\n- acorn 8.18.0 (MIT) para JS. La 8.19.0 es del 2026-10-05.\n- @babel/parser 7.29.x con el plugin `typescript` (MIT) para .ts. La 8.0.x es una mayor nueva.\n\n**Evaluador de literales propio. Resuelve:**\n- ObjectExpression, ArrayExpression, literales, templates sin expresiones y `-n`.\n- Envoltorios `satisfies Config`, `as const` y `defineConfig()`.\n- `const X = <literal>` del mismo archivo y spreads ya resueltos.\n- `require('tailwindcss/colors')` o `import colors from 'tailwindcss/colors'`, contra una tabla estática de la paleta v3 (MIT, generada en build desde tailwindcss@3.4.x).\n- `tailwindcss/defaultTheme` para los fontFamily por defecto.\n\nTodo lo demás va a `unresolved` con su ruta («theme.extend.colors.brand es una función»): funciones `({theme}) =>`, `theme('…')`, require de otros archivos, plugins y presets.\n\n**Patrón shadcn con v3:** `primary: 'hsl(var(--primary))'` o `rgb(var(--x) / <alpha-value>)` se enlaza con las vars de globals.css si se sueltan juntos. Si no vienen, se piden.\n\n**Qué se extrae:** theme y theme.extend de colors, fontFamily, borderRadius, spacing, boxShadow y fontSize (`[size, {lineHeight}]`).\n\n**Fallback «hazlo en tu terminal»:** la v3 expone `resolveConfig` desde `tailwindcss/resolveConfig` (verificado). Se da un comando que el usuario ejecuta en SU proyecto para volcar `theme` a JSON y pegarlo; las funciones se pierden. El comando exacto para ESM/TS se valida en el spike.\n\nEn v4, resolveConfig no existe y un JS config solo se carga con `@config`: se pide el CSS o el compilado.\n\nConfianza alta en los literales.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://v3.tailwindcss.com/docs/configuration",
+     "https://tailwindcss.com/docs/upgrade-guide",
+     "https://registry.npmjs.org/acorn",
+     "https://registry.npmjs.org/@babel/parser"
+    ]
+   },
+   {
+    "item": "Variables SCSS (y Less) con postcss-scss, sin compilar Sass",
+    "detail": "**Parser:** postcss-scss 4.0.9 (MIT; última publicación 2023-09, estable) sobre postcss. Se reutiliza el pipeline del CSS.\n\n**Qué se detecta:**\n- `$var: valor;` (también con `!default`).\n- Mapas `$colors: (primary: #123, …)`, con un parser de mapas propio y anidación ≤4.\n- `@use … with (…)`.\n- Referencias `$a: $b`, que se resuelven.\n\n**Va a `unresolved`:** funciones de Sass (darken, lighten, mix, color.adjust), interpolación `#{}` y `@each`. Se ofrece «pega el CSS compilado».\n\n**Descartado:** dart-sass (MIT) compila en navegador, pero ejecutaría `@import` y funciones del usuario, y pesa mucho.\n\n**Less:** `@primary: #…` con la misma regex limitada.\n\n**Nombres de Bootstrap** (confianza alta): $primary, $secondary, $success, $danger, $warning, $info, $body-bg, $body-color, $border-radius y $font-family-sans-serif. El resto de nombres usa el vocabulario de roles común.",
+    "effort": "S",
+    "phase": "v1.1",
+    "sources": [
+     "https://registry.npmjs.org/postcss-scss",
+     "https://registry.npmjs.org/postcss"
+    ]
+   },
+   {
+    "item": "Archivos de paleta .ase, .aco y .gpl con parsers propios (DataView y texto)",
+    "detail": "**ASE** (Adobe no publica spec; está documentado por terceros en selapa.net):\n- Magic `ASEF`, versión 2×int16 y nº de bloques en int32.\n- Bloques: 0xC001 abre grupo, 0xC002 lo cierra y 0x0001 es un color.\n- Cada bloque lleva su longitud en int32.\n- El nombre es un uint16 con el nº de caracteres (terminador incluido) seguido de texto UTF-16BE.\n- Modelo en 4 caracteres: `RGB `, `CMYK`, `LAB ` o `Gray`.\n- Valores en float32 BE: RGB 0–1 (3), CMYK (4), LAB (3) y Gray (1).\n- Tipo en int16: 0 global, 1 spot y 2 normal.\n- La escala de LAB NO está verificada; hay que fijarla con un fixture.\n\n**ACO** (spec oficial en Adobe Photoshop File Formats):\n- Todo en uint16 BE.\n- v1: versión 1, count y count×10 bytes (id de espacio más 4×uint16).\n- v2 va a continuación y añade el nombre (longitud uint32 más UTF-16). Se prefiere el v2.\n- Espacios: 0 RGB (0–65535), 1 HSB, 2 CMYK (0 = 100 % de tinta), 7 Lab (L 0–10000; a y b de −12800 a 12700) y 8 Gris (0–10000).\n- 3 Pantone, 4 Focoltone, 5 Trumatch, 6 Toyo y 10 HKS tienen datos no públicos: solo se importa el nombre.\n\n**GPL** (spec oficial de GIMP, v2):\n- Primera línea `GIMP Palette`; `Name:` y `Columns:` (0–255) son opcionales.\n- `#` marca un comentario.\n- Cada color es `R G B nombre`, en 0–255 sRGB y UTF-8, sin alfa.\n- Se toleran CRLF y tabs.\n\n**Qué se extrae:** colores, nombres y grupos. Un grupo «Primary» o «Secondary» da rol con confianza media.\n\n**Conversiones:**\n- CMYK → sRGB sin perfil ICC es aproximado: confianza baja y aviso.\n- Spot y Pantone: solo el nombre. No se convierten porque las tablas Pantone son propietarias.\n\n**Límites:** 2 MB y 2.000 colores.",
+    "effort": "S",
+    "phase": "v1.1",
+    "sources": [
+     "https://www.selapa.net/swatches/colors/fileformats.php",
+     "https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/",
+     "https://developer.gimp.org/core/standards/gpl/"
+    ]
+   },
+   {
+    "item": "Brand book en PDF con pdfjs-dist: fase A texto y fuentes, fase B render y colores vectoriales",
+    "detail": "**Dependencia:** pdfjs-dist (Apache-2.0) fijado en 6.3.289 (2026-08-29). La 6.4.299 es del 2026-10-03.\n- Siempre ≥4.2.67, que corrigió el CVE-2024-4367 (JS arbitrario vía fuentes) quitando eval. En la API de v6 ya no aparece `isEvalSupported`.\n- Carga perezosa, con `GlobalWorkerOptions.workerSrc` servido desde nuestro origen (sin CDN).\n- Opciones: `enableXfa:false` (es el default), `maxImageSize` ≈25e6 px (el default −1 no pone límite) y `stopAtErrors:false`.\n- Un PDF cifrado no se procesa: se pide exportarlo sin contraseña.\n- La API no ejecuta el JS del PDF.\n\n**Fase A** (texto y fuentes):\n- `page.getTextContent()` en hasta 300 páginas, reconstruyendo líneas por la coordenada y.\n- Regex sobre esas líneas:\n  - HEX con `#`, o con la etiqueta HEX cerca.\n  - RGB (`R255 G0 B0`, `RGB 255/0/0`).\n  - CMYK (`C0 M100 Y100 K0`).\n  - Pantone/PMS: solo la mención.\n  - Nombres de fuente contra el diccionario del matcher, cerca de Typeface, Font, Tipografía o Fuente.\n- Agrupación por proximidad: un nombre más su HEX, RGB y CMYK forman una muestra.\n- Confianza: HEX y RGB coincidentes (ΔEok <0.01) → alta; solo CMYK → baja.\n- Fuentes embebidas del PDF (sin el prefijo `ABCDEF+`): el libro suele estar compuesto con la tipografía de marca, así que dan confianza media. Leerlas vía `commonObjs` después de `getOperatorList` NO está verificado.\n\n**Fase B** (render y colores vectoriales):\n- Render a 1024 px de las ≤12 páginas con más términos de color, y `extractFromPixels` con el perfil screenshot.\n- Fills vectoriales exactos desde `getOperatorList()`, ponderados por el área del path. Los argumentos de color NO están verificados.\n\n**Límites:** 50 MB, 60 s y cancelable. No se guarda el PDF ni su texto.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html",
+     "https://github.com/advisories/GHSA-wgrm-67xf-hhpq",
+     "https://registry.npmjs.org/pdfjs-dist"
+    ]
+   },
+   {
+    "item": "Fuente propietaria subida por el usuario + alternativa libre más parecida por métricas (capsize)",
+    "detail": "El usuario suelta su .ttf, .otf o .woff. Se procesa en local y nunca se sube, se re-hostea ni se exporta, por licencia: los exports solo nombran la familia y la alternativa.\n\n**Lectura de la fuente:** opentype.js 2.0.0 (MIT), que lee TTF, OTF y WOFF.\n- WOFF2 necesitaría descompresión (wawoff2 2.0.1, sin publicar desde 2022), así que se pide TTF u OTF.\n- Se leen la familia, los pesos, unitsPerEm, xHeight y capHeight (OS/2) y el ancho medio.\n\n**Métricas de referencia:** @capsizecss/metrics 4.3.0 (MIT) trae capHeight, xHeight, ascent, descent, unitsPerEm, xWidthAvg y category para 1969 familias. Incluye Google Fonts y fuentes de sistema: -apple-system/SF, Helvetica, Helvetica Neue, Arial, Segoe UI, Times New Roman y Georgia (verificado).\n- No se envía al cliente entera: pesa 27 MB desempaquetada y su README desaconseja entireMetricsCollection en cliente.\n- Un script de build genera `font-metrics.json` (familia, categoría, xH/upm, capH/upm y w/upm) solo para las familias del CSV. Unos 60–80 KB, estimado.\n\n**Matching:** vecino más cercano dentro de la misma categoría, filtrando por pesos disponibles y desempatando por popularidad. Se presenta como «más parecida en proporciones», con confianza media.\n\nSirve también, sin subir archivo, para las fuentes de sistema detectadas, y para generar un `@font-face` de fallback con `size-adjust`.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://github.com/opentypejs/opentype.js",
+     "https://github.com/seek-oss/capsize/tree/master/packages/metrics",
+     "https://registry.npmjs.org/@capsizecss/metrics"
+    ]
+   },
+   {
+    "item": "URL del sitio actual: «URL ligera» sin navegador + dembrandt ejecutado por el usuario",
+    "detail": "**(a) URL ligera.** Ruta serverless que reutiliza `/api/logo-from-url` y su anti-SSRF, ya previstos.\n- Hace GET del HTML, de hasta 5 hojas CSS del mismo sitio (≤2 MB cada una) y del manifest.\n- Extrae `<meta name=theme-color>`, `theme_color`, las CSS vars y `font-family` con el parser de CSS.\n- Los sitios con Tailwind v4 o shadcn exponen sus variables en `:root, :host`. Los que usan CSS-in-JS o generan vars en runtime fallan, y se avisa.\n- Coste $0 en Vercel Hobby: es una función normal.\n- Higiene legal:\n  - Solo a petición del usuario, con la casilla «es mi sitio o tengo permiso».\n  - Respeta robots.txt (robots-parser 3.0.1, MIT, de 2023).\n  - User-Agent identificable, 1 página, sin cookies ni login y con rate limit.\n\n**(b) Webs con JS o detrás de login.** Se dan instrucciones para ejecutar dembrandt 0.38.0 (MIT) en SU máquina y soltar el resultado:\n- `npx dembrandt <url> --dtcg`, `--design-md` o `--tailwind`.\n- Requiere `dembrandt install-browser` y Node 18+.\n- La salida entra por los parsers de tokens, DESIGN.md y CSS, sin infra ni scraping nuestro.\n- La ruta exacta del archivo de salida NO está verificada.\n\nNunca se usa `--stealth`, que dembrandt trae «solo para uso autorizado». dembrandt no comprueba robots.txt por sí mismo: solo pide al usuario que lo respete.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://github.com/dembrandt/dembrandt",
+     "https://registry.npmjs.org/dembrandt",
+     "https://registry.npmjs.org/robots-parser",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md §4.1 y §8"
+    ]
+   },
+   {
+    "item": "IA opcional (créditos / presupuesto) solo donde lo determinista no llega",
+    "detail": "Siempre con consentimiento por llamada, y descontando del presupuesto mensual o de los créditos del usuario.\n\n**(a) Visión** sobre 1–4 capturas reducidas (≤1568 px):\n- Devuelve un fingerprint con structured outputs, limitado a IDs de catálogo: radio (none/sm/md/lg/full), densidad, sombra, una de las 12 StyleRecipe y la categoría tipográfica.\n- Los hex SIEMPRE salen del extractor, nunca del modelo.\n\n**(b) Texto:** mapear a roles los nombres ambiguos (`blue-1`, `c7`) cuando la heurística da confianza baja.\n\n**(c) Brand book:** resumir el tono y los do's y don'ts.\n\nLas capturas de Mobbin quedan excluidas, por sus Terms.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md (web:references)",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md §8"
+    ]
+   },
+   {
+    "item": "Worker hospedado de dembrandt/Playwright para URL con JS",
+    "detail": "**Montaje:**\n- Contenedor con Chromium. dembrandt usa playwright-core, que no trae binarios.\n- Cola y timeout de 30–45 s.\n- Una sola página, sin `--crawl` y sin `--stealth`.\n- robots.txt comprobado antes de navegar.\n- IPs privadas bloqueadas también en las navegaciones del navegador, interceptando rutas.\n- La captura no se guarda: solo los tokens.\n\n**Coste:** no es $0. Vercel Hobby no está pensado para Chromium (límites no verificados), así que hace falta otra infra. La alternativa es el MCP de dembrandt dentro del Claude del usuario.\n\n**Legal:**\n- Se extraen atributos, no el layout: la UE protege las GUIs como diseño desde 2025 (INFORME §8).\n- La Brand API de Brandfetch, solo con key del usuario: $0.10 por consulta, y su CDN de logos es solo para mostrar.",
+    "effort": "L",
+    "phase": "v2",
+    "sources": [
+     "https://github.com/dembrandt/dembrandt",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md (web:palette, web:references)"
+    ]
+   },
+   {
+    "item": "Detección de muestras y OCR en imágenes/páginas de guía; ZIP multiarchivo",
+    "detail": "**Detección de muestras:** componentes conexas de color uniforme (ΔE OKLab <0.02), con área >0.5 % y rectangularidad >0.9 → swatches con confianza alta-media.\n\n**OCR de etiquetas HEX:**\n- tesseract.js 7.0.0 (Apache-2.0). Es pesado: wasm más datos de idioma.\n- Alternativa: la IA de visión.\n\n**ZIP multiarchivo** (exports de Tokens Studio o de Figma por modos):\n- fflate 0.8.3 (MIT), con ≤200 entradas, ≤20 MB descomprimido y un ratio ≤100:1.\n- Las rutas internas se ignoran.\n- Tokens Studio multiarchivo: `$themes.json` (selectedTokenSets) y `$metadata.json` (tokenSetOrder, no verificado).",
+    "effort": "L",
+    "phase": "v2",
+    "sources": [
+     "https://registry.npmjs.org/tesseract.js",
+     "https://registry.npmjs.org/fflate",
+     "https://github.com/tokens-studio/sd-transforms"
+    ]
+   }
+  ],
+  "risks": [
+   "Hay formatos sin spec oficial o sin verificar: ASE (solo documentación de terceros; la escala de LAB está sin confirmar), el export multimodo de Figma (¿un archivo o varios?), `$metadata.json` de Tokens Studio, el JSON propio de dembrandt y `.colorset` de Xcode. Sin fixtures reales pueden romperse en silencio.",
+   "Un tema importado puede fallar WCAG AA. Respetar «tu guía manda» choca con el autoajuste del motor. Si se corrige en silencio, el usuario ya no reconoce su marca; si no se avisa, exporta algo inaccesible.",
+   "El conflicto semántico de `accent`: en shadcn es la superficie de hover y en ui-ux-pro-max es el CTA. Un mapeo equivocado pinta mal los botones.",
+   "Falsos positivos de las regex: números de 6 dígitos tomados como hex, en PDF o en texto pegado. Además, CMYK → sRGB sin perfil ICC es impreciso, y Pantone no se puede convertir sin tablas propietarias.",
+   "El matching difuso de fuentes puede emparejar mal (una propietaria con una Google Font de nombre parecido). Además, google-fonts.csv no trae métricas y sus Keywords son genéricas, así que «la más parecida» exige capsize o una tabla curada.",
+   "Licencias de fuentes: el archivo propietario del usuario no se puede re-hostear ni exportar. Las alternativas son sugerencias, no equivalentes.",
+   "Capturas: la paleta queda dominada por fotos o ilustraciones, y el tope MIN_COVERAGE = 0.015 actual elimina los CTA. Radios, densidad y tipografía no son fiables sin IA.",
+   "Seguridad de parsers con entrada no confiable:\n- pdf.js ya tuvo ejecución de JS (CVE-2024-4367).\n- Bombas de descompresión en imágenes y ZIP.\n- Bombas de alias en YAML.\n- Prototype pollution al fusionar JSON.\n- ReDoS.\n- Inyección de CSS o SVG en la preview.\n- Caracteres bidi (Trojan Source) en nombres que acaban exportados a código.",
+   "Legal:\n- Las capturas de Mobbin no pueden pasar por IA sin permiso escrito.\n- La UE protege las GUIs como diseño desde 2025.\n- El scraping por URL debe respetar robots.txt y los ToS, y nunca usar `--stealth`.\n- La CDN de Brandfetch y logo.dev es solo para mostrar.",
+   "Privacidad: los brand books y las capturas de apps internas suelen ser confidenciales. Si algo se sube al servidor o a la IA sin consentimiento explícito, se rompe la promesa de «todo en tu navegador».",
+   "Bundle: pdfjs-dist, @babel/parser y postcss pesan. Sin carga perezosa por formato, la app inicial se infla.",
+   "Mantenimiento y frescura:\n- postcss-scss (2023), robots-parser (2023), wawoff2 (2022) y fontkit (2024) llevan tiempo sin publicar.\n- pdfjs-dist 6.4.299, postcss 8.5.29 y acorn 8.19.0 tienen menos de 2 semanas: hay que fijar la versión anterior.",
+   "@google/design.md 0.4.0 no declara licencia en su package.json de npm, aunque el repo es Apache-2.0. Hay que confirmarlo antes de añadirla como dependencia.",
+   "Coste: la URL con navegador (Playwright) no cabe en el presupuesto de $0. Si se ofrece hospedada, hace falta otra infra y un control de abuso."
+  ],
+  "open_questions": [
+   "Si hay logo y guía importada a la vez, ¿cuál manda? Propuesta: la guía importada manda en Color y el logo solo aporta semillas si falta el primario.",
+   "Con roles importados que fallan AA: ¿se respetan con aviso y botón «Ajustar a AA» (propuesta) o se autoajustan por defecto?",
+   "¿Se guarda alguna vez el archivo original, por ejemplo para re-importar? Propuesta: no; solo el resultado normalizado y el sha256.",
+   "¿Dónde aparece la importación? ¿Como alternativa al logo en Inicio («Ya tengo guía / app»), como botón en Palette Lab, en la bandeja de Referencias del Composer, o en los tres?",
+   "¿El brand book en PDF entra en v1 (solo la fase de texto, M) o se queda en v1.1?",
+   "¿«Si ya tienen una app» incluye apps móviles? Si es así, conviene añadir colors.xml de Android (`#AARRGGBB`, con el alfa delante, al revés que CSS) y los `.colorset` de Xcode. El formato de Xcode no está verificado aquí.",
+   "La IA de visión para capturas (radios, densidad y estilo): ¿la cubre el presupuesto mensual del proyecto o solo los créditos comprados y BYOK?",
+   "¿Se ofrece la «URL ligera» en v1.1, aunque aplique robots.txt y la casilla de permiso, o solo el camino de dembrandt en local, que no deja ninguna responsabilidad de scraping en nuestro servidor?",
+   "¿Hay acceso a una cuenta de Figma con modos (Professional o superior) para capturar un export real de «Export modes» y fijar el formato en un fixture?",
+   "¿Se aceptan tablas curadas de alternativas a fuentes propietarias como dato del repo (unas 40 entradas), con mantenimiento manual?"
+  ]
+ },
+ "ux": {
+  "summary": "Propuesta: «Trae tu marca». El usuario importa su guía actual, su app, sus capturas, colores, CSS, tokens y fuentes. Todo se procesa en su navegador y se revisa en una pantalla «Esto detectamos». La guía importada pasa a ser la fuente de verdad con candados: el motor solo completa los roles que faltan y avisa de AA sin tocar la marca. La IA (créditos o BYOK) solo clasifica capturas y páginas de PDF en IDs del catálogo y nunca produce hex. No he tocado código. Lo no verificado va marcado.\n\n1) UX: dónde entra\n- **Inicio (1B Higgsfield).** El único CTA sigue siendo «Subir logo». Abajo, enlaces secundarios: «Ya tengo marca o app» · «No tengo logo» · ejemplos. Propongo meter «Pegar URL» dentro del panel de importación (la URL de tu app también es una fuente), así quedan 3 enlaces y se respeta el máximo de 5.\n- **Drop inteligente.** El área del hero acepta de todo:\n  - Una imagen tipo logo → flujo actual (recorte).\n  - Varias imágenes, un PDF, JSON, CSS, `.md` o fuentes → abre el panel de importación con esos archivos ya cargados, en vez de dar el error «Formato no soportado».\n  - Una imagen grande y con muchos colores → pregunta con 2 botones: «¿Es tu logo o una captura de tu app?».\n- **Panel «Trae tu marca»:**\n  - Drop zone MÚLTIPLE con `glow-purple` y escala 1.01 al arrastrar.\n  - Botón «Elegir archivos» (`input multiple`), foco por teclado (Enter abre el selector) y Cmd+V para pegar imágenes o texto.\n  - Plegado «Pegar colores o código»: lista de hex, CSS o JSON, con autodetección.\n  - Lista de archivos con un chip de tipo editable, máximo 5 tipos: Mi logo · Mi guía/tokens · Captura de mi app · Referencia de otra app · Fuente.\n  - La casilla de derechos solo aparece para «Referencia de otra app».\n  - `aria-live`: «3 archivos: 1 CSS, 2 capturas».\n  - CTA: «Ver lo que detectamos →». La IA es un toggle apagado por defecto que muestra el coste antes («≈ $0,03 por captura»).\n- **«Esto detectamos».** Reutiliza el layout del Palette Lab (2D Recraft + preview Klaviyo).\n  - Izquierda: grupos de chips (Colores, Tipografía, Formas, Modo, Estilo, Referencias), máximo 5 visibles y «Ver N más».\n  - Cada chip lleva:\n    - valor (hex en mono, «Inter 600», «radio 8 px»);\n    - origen («globals.css:12 --primary», «PDF p.3», «captura 2 · IA»);\n    - confianza como texto, no solo color (Exacta/Alta/Media/Baja);\n    - acciones Editar · Descartar · Bloquear. Lo declarado viene bloqueado; lo inferido, desbloqueado.\n  - Los chips se arrastran a slots de rol (Primario, Secundario, Fondo, Texto, Acento). Alternativa por clic con menú «Usar como…» y por teclado con Space/flechas, reutilizando `DraggableItem` y `DropSlot`.\n  - Arriba, como mucho 1–2 tarjetas de conflicto y el aviso AA: «3 pares no pasan AA en tus colores. No los cambiamos; añadimos variantes accesibles para texto».\n  - Derecha: preview en vivo.\n  - Barra de estado: «Colores 8 ✓ · Tipos 2 ✓ · Formas ✓ · AA 3 avisos · Siguiente: Crear».\n  - Motion: los chips vuelan de la miniatura del archivo a su grupo (spring `smooth`, stagger 30 ms, ≤400 ms). Con reduced motion, fades de 150 ms. Mientras la IA analiza, se muestra el ETA («~6 s»), sin bucles.\n- **Cómo continúa (siempre 1 CTA primario):**\n  - Guía completa (primario + fondo + texto en ≥1 modo, y fuentes) → «Usar mi guía → Crear». Salta el Palette Lab, que sigue accesible desde el paso 1 del stepper.\n  - Parcial → «Completar en Palette Lab →». Los colores importados aparecen bloqueados en «Colores de tu marca» y los estilos de paleta solo afectan a los roles no bloqueados.\n  - Solo referencias de terceros → se guardan como referencias y el siguiente paso es «Subir logo».\n- **Referencias visuales sugeridas (decides tú):**\n  - 1B Higgsfield para el panel de drop (coherente con Inicio). Alternativa no elegida: 1C DoorDash, un modal con guía.\n  - 2D Recraft + 2A Klaviyo para «Esto detectamos».\n  - 6A Variant para el tablero de referencias.\n\n2) Modelo de datos\n- **Nuevo `DesignDoc.imported`:**\n  - `sources[]`: `{id, kind: css|dtcg|figma-dtcg|design-md|pdf|screenshot|logo|font|paste|url, name, sha256, mode?, ownership: own|third-party}`.\n  - `color.{light,dark}`: `Partial<Record<RoleKey, ImportedValue>>`, más `scales` y `extras`.\n  - `typography`, `shape` y `decisions`.\n  - `ImportedValue = {value, sourceId, locator, confidence: explicit|high|medium|low, method: declared|pixel|pdf-text|ai-role, locked}`.\n  - En los tokens DTCG, la procedencia va en `$extensions[\"design.dialmade\"]`. Esa constante ya existe en `exporters.ts`, y DTCG obliga a preservar las extensiones.\n- **Candados:**\n  - `applyPatch` rechaza parches sobre rutas bloqueadas salvo una acción explícita del usuario. Los parches de IA nunca desbloquean.\n  - `generateTheme` necesita una entrada nueva `pinned?: {light?, dark?: Partial<ThemeRoles>}`:\n    - `enforceContrast` no mueve los fg fijados (hoy los mueve, ver `theme.ts` `enforceContrast`);\n    - `checks` marca los fallos como avisos de la guía;\n    - se rellenan los roles derivados que ya existen (`primaryText`, `borderStrong`) para que el texto sí pase AA sin tocar `primary`;\n    - si se importa una escala 50–950 completa, se fija tal cual.\n- **Seeds:**\n  - `brand.seeds.primary` = `primary` importado del modo claro. Si es acromático (botones negros), `achromatic: true` y el acento sale de cta/accent/ring importado.\n  - `secondary` = secondary/cta importado si ΔH ≥30° o ΔEok ≥0.12, el mismo criterio que `extract.ts`.\n  - Los extras cromáticos (≥3) van a `chart2..5`.\n- **Mapeo de nombres por diccionario:**\n  - Ojo con `accent`: si la fuente es shadcn (tiene `--popover` y `--card-foreground`), accent→accent (superficie de hover). Si no, accent→cta, como avisa el INFORME §4.3.\n- **Precedencia ante conflictos:** código (CSS/JSON) > DESIGN.md > texto del PDF > píxeles del logo > píxeles de captura > IA.\n  - Si el logo y la guía no coinciden (ΔEok >0.06), sale una tarjeta con 3 opciones: «Usar la guía» (por defecto) · «Usar el logo» · «Guía primario + logo secundario».\n- **Multi-modo:**\n  - shadcn: `:root` → light, `.dark` → dark.\n  - Figma exporta un JSON por modo: el modo se detecta por el nombre del archivo o por la L del fondo.\n  - Si solo hay modo claro, el oscuro se genera desde los seeds y se marca «generado, revísalo».\n- **Tipografía:**\n  - `brief.typographyId = \"custom\"` con `{heading, body, mono}: {family, source: google|local|system|unknown, fallbackStack}`.\n  - Si la familia está en `google-fonts.csv` (1934 familias; licencias: 1894 OFL, 35 Apache, 5 UFL) se carga de Google Fonts.\n  - Si es comercial se exporta `\"Brand Sans\", <sustituto>, system-ui`, y el sustituto lo elige el usuario entre ≤5 sugerencias con preview.\n  - Hallazgo: las Keywords del CSV son casi idénticas para Inter, DM Sans y Geist, así que sirven poco para medir similitud. Hay que usar Category/Stroke/ejes variables y la elección del usuario.\n  - No usar las columnas Popularity ni Trending (licencia incierta, INFORME §7).\n- **Receta:**\n  - Distancia determinista sobre radio, sombra, borde y superficie frente a las 12 `StyleRecipe`.\n  - Si no hay una cercana, `custom` = `{basedOn, overrides}`, compilada a tokens de componente (`--button-radius`, `--card-shadow`).\n- **`references[]`:**\n  - Campos: `{id, kind: own-screenshot|third-party-upload|pdf-page|url|mobbin-link, contentHash, styleFingerprint, rights, usedFor[], thumb: local-idb|null}`.\n  - El serializador del link publicado sigue una whitelist sin bytes ni miniaturas, con un test que falla si aparece `data:`/`blob:`.\n\n3) IA (con créditos o BYOK)\n- Ruta `/api/ai/fingerprint` con la misma infraestructura que `/api/ai/copy`, o BYOK directo navegador → api.anthropic.com.\n- Llamada: `claude-opus-5-5` con `output_config: {effort: \"low\", format: {type: \"json_schema\", schema}}`.\n  - Sin parámetro `thinking`: en Opus 5.5 no se puede desactivar y su effort por defecto es medium, así que hay que fijar low.\n  - `max_tokens` ≈ 3000.\n- El schema tiene todos los campos `required` y solo enums:\n  - layoutId del catálogo, densidad, radio, elevación, borde, superficie, clase tipográfica, modo, tono[≤3];\n  - `recipeId` (enum de las 12) y `pairingId` (10 o «none»);\n  - variance como entero enum 1..10;\n  - `colorRoles[{swatchIndex: integer enum 0..N-1, role}]`: el modelo asigna roles a los swatches que extrajo `extractFromPixels` de esa misma captura. **No hay ningún campo libre para hex.**\n- Límites verificados de structured outputs: no admite `minimum/maximum/minLength/maxLength`, exige `additionalProperties: false`, tope de 24 parámetros opcionales y 16 de tipo unión, y el enum puede volver con otra capitalización (comparar sin distinguir mayúsculas). Se valida con Zod.\n- **Coste (fórmula verificada `⌈w/28⌉×⌈h/28⌉`):**\n  - Bajando la captura a 1280×800 en el cliente salen 1334 tokens. Sin bajarla, Opus 5.5 está en el tier de alta resolución (2576 px, hasta 4784 tokens).\n  - Opus 5.5 ($4 in / $20 out / caché $0,20): 1 captura ≈ $0,03–0,04; 4 capturas en una llamada ≈ $0,06. El output con thinking domina; los tokens de thinking a effort low son estimación propia, sin verificar.\n  - Haiku 5.5 ($0,10 / $0,50 con prompts ≤100K; $0,50 / $2,50 por encima): ≈ $0,001 por captura.\n- **PDF como document block (verificado):**\n  - Límites: 32 MB por request, 600 páginas (100 si la ventana de contexto es <1M), sin contraseña.\n  - Cada página cuenta texto (1500–3000 tokens) más imagen: 10 páginas en Opus ≈ $0,17–0,23.\n  - Recomendado por defecto: pdf.js en local extrae hex, RGB y nombres de fuente gratis, y a la IA solo van ≤4 páginas elegidas como imagen (≈ $0,05–0,07).\n  - Vercel limita el body de una función a 4,5 MB, así que un PDF grande solo cabe por BYOK.\n- **Presupuesto duro:**\n  1. Preflight: los tokens de imagen se calculan exactos con la fórmula y el texto con `count_tokens`, que es gratis y acepta imágenes y PDF en base64.\n  2. Reserva atómica en Postgres del peor caso (input + `max_tokens` × precio de output) contra el saldo del usuario y el tope mensual global.\n  3. Liquidación con `usage` y reembolso de la diferencia.\n  4. Kill switch al llegar al tope (sigue BYOK, o «sin IA»).\n  5. Caché por `contentHash` + versión del prompt, para no cobrar dos veces la misma imagen.\n  6. Límite de análisis por día.\n  - Alternativa a $0: «Analizar con mi Claude», que copia el prompt y el schema y luego se pega el JSON de vuelta.\n\n4) Privacidad y legal\n- Por defecto todo pasa en el navegador (worker + FontFace). En el DesignDoc solo se guardan valores derivados y el nombre y sha256 del archivo, nunca el archivo.\n- «Recordar en este dispositivo» es opt-in y va a IndexedDB.\n- Las fuentes subidas no salen nunca del navegador (licencias comerciales).\n- **A la IA:**\n  - Solo imágenes reducidas y re-codificadas (sin EXIF), con consentimiento y coste mostrados antes.\n  - No se usa la Files API (retiene los archivos hasta que se borran y no entra en ZDR).\n  - Según las docs de Anthropic, el contenido no se retiene por defecto (salvo los Covered Models: Fable y Mythos) y las imágenes no se usan para entrenar.\n- **Capturas de terceros:**\n  - Coherente con INFORME §8: los Terms de Mobbin (efectivos el 16-may-2026) prohíben usar IA para obras derivadas y cachear o re-hostear. Por eso un link de Mobbin es una tarjeta sin imagen y sin IA.\n  - Otras imágenes de terceros solo se analizan con la casilla de derechos marcada, y siempre como atributos, nunca como plantilla.\n  - Nunca aparecen en links compartidos.\n  - El texto dentro de imágenes o PDF es dato, no instrucciones.\n\n**Conflicto que hay que resolver:** `CLAUDE.md` todavía dice «No se usan servicios de pago ni IA pagada por el proyecto», y eso choca con la ruta hosted y los créditos.",
+  "recommendations": [
+   {
+    "item": "Entrada «Ya tengo marca o app» y drop inteligente en Inicio",
+    "detail": "Añadir el enlace secundario en `HomeHero`. El CTA único sigue siendo «Subir logo». «Pegar URL» se mueve dentro del panel para que Inicio quede en 3 enlaces más los ejemplos. El drop del hero clasifica lo que entra:\n- 1 imagen tipo logo (SVG, alfa o pocos colores) → recorte actual.\n- Varias imágenes, PDF, `.json`, `.css`, `.md`, `.woff2/.ttf/.otf` → abre `ImportPanel` con los archivos ya cargados.\n- Imagen grande con muchos colores → pregunta «¿Logo o captura de tu app?».\n\nHoy `HomeHero.onDrop` solo toma `files[0]` y el resto se pierde. Textos en `src/i18n`.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/HomeHero/HomeHero.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Panel de importación con drop múltiple y alternativas de clic y teclado",
+    "detail": "Componente `src/components/ImportPanel/`, con un folder por componente según CLAUDE.md: `ImportDropzone/`, `FileRow/` y `useImportFiles.ts`. Incluye:\n- Drop múltiple; botón «Elegir archivos» (`input multiple`); dropzone enfocable donde Enter abre el selector; Cmd+V para imágenes y texto.\n- Textarea plegable «Pegar colores o código» con autodetección de hex, CSS o JSON.\n- Chip de tipo editable con 5 opciones: Mi logo · Mi guía/tokens · Captura de mi app · Referencia de otra app · Fuente.\n- Casilla de derechos solo para referencias de terceros.\n- `aria-live` con el resumen de lo que entró.\n- Motion: `glow-purple` + escala 1.01 al arrastrar; filas que entran con spring `snappy`.\n- Límites en cliente: ≤20 archivos y PDF ≤25 MB (cifras propias).\n- El toggle de IA va apagado y muestra el coste estimado antes de activarse.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "/Users/diegoguerrero/Desktop/designApp/.claude/skills/i-have-adhd/SKILL.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/referencias-mobbin.md"
+    ]
+   },
+   {
+    "item": "Paquete `@dialmade/import` con parsers deterministas en TS puro, ejecutados en un worker",
+    "detail": "Funciones:\n- `classifyFile`.\n- `parseCss`: shadcn `:root`/`.dark`, Tailwind v4 `@theme`, custom properties, `font-family`, `--radius`, `box-shadow`.\n- `parseDtcg`: 2025.10 con color `{colorSpace, components, hex}`, `dimension {value, unit px|rem}`, `fontFamily` string|array, `shadow` objeto|array, `typography`, aliases `{a.b}` y `$ref`. Tolera el formato legacy `value`/`type` sin `$` (Style Dictionary/Tokens Studio, no verificado).\n- `parseDesignMd`: front matter YAML `colors/typography/rounded/spacing/components`, formato alpha.\n- `parseColorList` y `mapRoleName`, este último con la regla shadcn-accent vs cta.\n\nLos colores se normalizan con `parseColor` de `@dialmade/palette`. Nunca se ejecuta `tailwind.config.js`: se pide pegar el objeto de colores como JSON, o se extraen hex por regex con confianza baja. Figma exporta modos a JSON DTCG (verificado), pero la forma exacta del archivo exportado no está verificada: hace falta un spike con muestras reales.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "https://www.designtokens.org/tr/2025.10/format/",
+     "https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables",
+     "https://github.com/google-labs-code/design.md",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/color.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/svg.ts"
+    ]
+   },
+   {
+    "item": "Pantalla «Esto detectamos»: chips con confianza, Editar/Descartar/Bloquear y conflictos",
+    "detail": "Estructura: `DetectedReview/` con `DetectedChip/`, `ConflictCard/` y `AaNotice/`. Reutiliza el layout del Palette Lab: panel izquierdo tipo 2D Recraft y preview en vivo tipo 2A Klaviyo.\n- **Grupos:** Colores, Tipografía, Formas, Modo, Estilo y Referencias, con máximo 5 chips visibles cada uno.\n- **Cada chip:** valor; origen (archivo:línea, página del PDF, captura N · IA); confianza en texto; candado (bloqueado por defecto si `method = declared`).\n- **Drag a slots de rol** con alternativa por clic «Usar como…» y por teclado (Space/flechas/Esc). Reutiliza `DraggableItem`, `DropSlot` y `DndAnnouncer`.\n- **Conflictos:** máximo 2 tarjetas visibles, con precedencia código > DESIGN.md > PDF > logo > captura > IA.\n- **CTA único según completitud:** «Usar mi guía → Crear» (salta el Palette Lab) o «Completar en Palette Lab →».\n- **Barra de estado** con la siguiente acción.\n- **Motion:** chips que vuelan con spring `smooth`, stagger 30 ms, ≤400 ms; fade de 150 ms con reduced motion.",
+    "effort": "L",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/dnd/DraggableItem/DraggableItem.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/dnd/DropSlot/DropSlot.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/referencias-mobbin.md"
+    ]
+   },
+   {
+    "item": "`DesignDoc.imported` como fuente de verdad, con procedencia en DTCG y candados en `applyPatch`",
+    "detail": "Esquema Zod nuevo:\n- `imported = {version: 1, sources[], color: {light, dark?, scales?, extras[]}, typography, shape, spacing?, decisions: {conflicts, dismissed}}`.\n- `ImportedValue = {value, sourceId, locator, confidence: explicit|high|medium|low, method: declared|pixel|pdf-text|ai-role, locked}`.\n\nReglas:\n- `compileThemeVars` fusiona en este orden: importado bloqueado → generado → derivado.\n- `toDTCG` escribe la procedencia en `$extensions[\"design.dialmade\"] = {source: \"imported\", sourceId, locator, locked}`. DTCG obliga a preservar las extensiones.\n- `applyPatch` rechaza ops sobre rutas bloqueadas salvo `actor: user` con `unlock` explícito. Los parches de IA nunca desbloquean.\n- Export opcional `import-map.json` con nombre original → rol Dialmade, para volver a mapear en la app del usuario.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/output-type-critique.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/exporters.ts",
+     "https://www.designtokens.org/tr/2025.10/format/"
+    ]
+   },
+   {
+    "item": "`generateTheme` con roles fijados (`pinned`) y AA en modo aviso",
+    "detail": "Añadir `pinned?: {light?: Partial<ThemeRoles>; dark?: Partial<ThemeRoles>; scales?}` a `GenerateThemeInput`.\n- `buildRoles` sobrescribe las claves fijadas.\n- `enforceContrast` no mueve un fg fijado. Si el bg está fijado y el fg es generado, el fg sí se ajusta.\n- `ContrastCheck` gana `source: imported|generated` y `blocking: false` en los pares fijados.\n- Se rellenan `primaryText`/`borderStrong` para que el texto de marca pase 4.5:1 sin tocar `primary`.\n- Una escala 50–950 importada se fija tal cual. Si no, `buildScale` ya ancla el hex exacto.\n\nSeeds:\n- `primary` = primario importado del modo claro.\n- Si es acromático (C<0.04): `achromatic = true` y el acento sale de cta/accent/ring.\n- `secondary` solo si ΔH ≥30° o ΔEok ≥0.12.\n- Extras cromáticos → `chart2..5`.\n- Si solo se importó el modo claro, el oscuro se genera y se marca «generado».\n\nCon el primario bloqueado, los estilos de paleta solo afectan a neutros y estados, o se fuerza el estilo «brand».",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/theme.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/extract.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/styles.ts"
+    ]
+   },
+   {
+    "item": "Tipografía importada: pairing custom, match con Google Fonts y fuente local solo en el navegador",
+    "detail": "`brief.typographyId = \"custom\"` con `{heading, body, mono}: {family, source: google|local|system|unknown, fallbackStack, basedOn?}`.\n- **Match** por nombre exacto contra `google-fonts.csv` (1934 familias; según `google-font-licenses.json`: 1894 OFL, 35 Apache, 5 UFL) → carga desde Google Fonts css2.\n- **Familia comercial o no encontrada:** export con `\"Brand Sans\", <sustituto>, system-ui`. El sustituto lo elige el usuario entre ≤5 sugerencias filtradas por Category/Stroke/Variable Axes, con preview.\n- **Hallazgo:** las Keywords del CSV no sirven para medir similitud (Inter, DM Sans y Geist comparten las mismas).\n- **Fuente subida** (`.woff2/.ttf/.otf`): se lee el nombre de la tabla `name` y se usa con `new FontFace(...)` solo en la preview local. Nunca se sube ni se publica (licencias comerciales).\n- No usar Popularity ni Trending Rank (INFORME §7).\n- Mejora futura: métricas de capsize para `size-adjust` (no verificado).",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/google-fonts.csv",
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/google-font-licenses.json",
+     "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/typography.csv",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Receta más cercana determinista o «custom recipe» derivada",
+    "detail": "`nearestRecipe(tokens)`: vector con radio en px (escala log), tier de sombra (0–3 según blur y alfa del `box-shadow` o de la shadow DTCG), ancho y alfa del borde, y superficie (solid/glass), comparado con las 12 `StyleRecipe` de `@dialmade/catalog`.\n- Si la similitud es menor que un umbral calibrado → `{id: \"custom\", basedOn, overrides: {radius, shadow, border}}`.\n- Se compila por la misma vía que `system`: `--button-radius`, `--card-shadow`, etc. (output-type-critique §4).\n- En el Composer, la carta «Tu estilo (importado)» va la primera y bloqueada; las 2–3 recetas más cercanas quedan como alternativas.\n- Con capturas sin tokens, la receta viene del fingerprint de IA como sugerencia no bloqueada.",
+    "effort": "M",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/output-type-critique.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/output-type-step.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md"
+    ]
+   },
+   {
+    "item": "Capturas de la propia app sin IA: color determinista y roles manuales",
+    "detail": "Cada captura pasa por `extractFromPixels` en `palette.worker`. Salen swatches con su cobertura y una heurística propia: el swatch acromático de mayor cobertura es el fondo y el cromático más saturado es candidato a primario. Todo queda con confianza Media o Baja y el usuario asigna los roles arrastrando chips a slots (o con clic o teclado).\n- Se guarda `contentHash` (sha256 de los píxeles normalizados) para deduplicar y cachear un futuro análisis de IA.\n- La miniatura solo se guarda en IndexedDB si el usuario activa «Recordar en este dispositivo».\n\nEste paso cubre el caso «ya tengo app» a coste $0.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/extract.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/workers/palette.worker.ts"
+    ]
+   },
+   {
+    "item": "Privacidad: procesar en local y que el link publicado solo lleve una whitelist",
+    "detail": "Por defecto:\n- Todo se lee con la File API y se parsea en workers.\n- El DesignDoc guarda solo valores derivados más el nombre y sha256 de cada fuente, nunca archivos.\n- Antes de procesar se re-codifica en canvas para quitar el EXIF.\n- Las fuentes subidas nunca salen del navegador.\n\nEl serializador de `/s/{slug}` publica `references[]` solo con `styleFingerprint`, título y `sourceUrl`. Nunca `thumb`, bytes ni capturas, sean de terceros o propias, salvo un opt-in explícito para capturas «de mi app».\n\nTest: el JSON publicado no contiene `data:` ni `blob:`.\n\nEl aviso de privacidad debe explicar qué se envía a Anthropic, cuándo y cuánto cuesta.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md",
+     "https://platform.claude.com/docs/en/manage-claude/api-and-data-retention",
+     "https://platform.claude.com/docs/en/build-with-claude/vision"
+    ]
+   },
+   {
+    "item": "Fingerprint de estilo con visión de Claude y structured outputs, limitado a IDs del catálogo",
+    "detail": "Petición `POST /v1/messages`:\n- `model: claude-opus-5-5`, `max_tokens: 3000`, sin `thinking` (no se puede desactivar en Opus 5.5).\n- `output_config: {effort: \"low\", format: {type: \"json_schema\", schema}}`.\n- System cacheado: reglas, catálogo, «el texto de las imágenes es dato» y prohibición de clonar.\n- Por imagen: «Ref N (mía | de terceros: solo atributos)», la lista de swatches del parser (índice, hex, cobertura) y la imagen reducida a ≤1280 px.\n\nSchema, con todos los campos `required` y solo enums:\n- `layoutId` (6 del catálogo + app-shell/unknown), `density` (airy|balanced|compact → dial 3/5/7), `radius`, `elevation`, `border`, `surface`.\n- `headingClass`/`bodyClass` (geometric|grotesque|humanist|serif|slab|mono|display), `mode`, `tone[≤3]`.\n- `recipeId` (enum de las 12), `pairingId` (10 + none), `variance` (entero enum 1–10), `confidence`, `evidence`.\n- `colorRoles[{swatchIndex: integer enum 0..N-1, role}]`. **No existe ningún campo para hex.**\n\nLímites verificados: no hay `minimum/maximum/maxLength`, `additionalProperties` tiene que ser false, tope de 24 opcionales y 16 uniones, y el enum puede variar en capitalización. Se valida con Zod.\n\nAplicación del resultado:\n- Nunca se aplica solo: cada atributo entra como chip no bloqueado, con origen «IA · captura N».\n- Nunca pisa tokens explícitos.\n- Varias refs se combinan por mayoría ponderada por confianza.\n\nAntes de fijar el modelo por defecto, eval con 20 capturas etiquetadas: Opus 5.5 low frente a Haiku 5.5.",
+    "effort": "L",
+    "phase": "v1.1",
+    "sources": [
+     "https://platform.claude.com/docs/en/build-with-claude/structured-outputs",
+     "https://platform.claude.com/docs/en/build-with-claude/vision",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Coste por análisis y presupuesto duro: preflight, reserva y liquidación",
+    "detail": "**Tokens por imagen (fórmula verificada `⌈w/28⌉×⌈h/28⌉`):**\n- 1280×800 → 1334; 1440×900 → 1716; página de PDF a 990×1280 → 1656.\n- Opus 5.5 está en el tier de alta resolución (2576 px, 4784 tokens máx.), así que hay que bajar la imagen en el cliente.\n\n**Opus 5.5** ($4 in, $5 escritura de caché 5 min, $0,20 lectura, $20 out), estimación propia con system de ~3000 tokens y ~1000 tokens de output a effort low (sin verificar):\n- 1 captura ≈ $0,042 en la primera llamada y $0,028 con caché.\n- 4 capturas en una llamada ≈ $0,064.\n\n**Haiku 5.5** ($0,10/$0,50 con prompts ≤100K; $0,50/$2,50 por encima):\n- ≈ $0,001 por captura y ≈ $0,002 por 4.\n\n**Flujo de presupuesto:**\n1. Los tokens de imagen se calculan exactos en el cliente; el texto con `count_tokens`, que es gratis, es una estimación y acepta imágenes y PDF solo en base64.\n2. Reserva atómica en Postgres (`reserve_ai_cost`) del peor caso, input + `max_tokens` × precio de output (≈ $0,10 con 1 captura en Opus), contra el saldo del usuario y el tope mensual global.\n3. Liquidación con `usage` (`input`, `cache_creation`, `cache_read`, `output`) y reembolso de la diferencia.\n4. Kill switch al llegar al tope → solo BYOK o «sin IA».\n5. Máximo 4 imágenes por llamada y límite diario por usuario.\n6. Caché del resultado por `contentHash` + versión del prompt.\n7. Spend limit en la Console de Anthropic como segunda valla (no verificado).\n\nBYOK va directo desde el navegador a la API: requiere el header `anthropic-dangerous-direct-browser-access`, confirmado solo por fuentes de 2024 (no verificado hoy).",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://platform.claude.com/docs/en/about-claude/pricing",
+     "https://platform.claude.com/docs/en/build-with-claude/token-counting",
+     "https://platform.claude.com/docs/en/build-with-claude/vision",
+     "https://simonwillison.net/2024/Aug/23/anthropic-dangerous-direct-browser-access"
+    ]
+   },
+   {
+    "item": "Guía de marca en PDF: extracción local primero y páginas elegidas a la IA",
+    "detail": "Primero `pdfjs-dist` en un worker, sin coste:\n- Extrae texto y busca hex, `rgb()` y valores CMYK.\n- CMYK se convierte de forma aproximada y se marca «confírmalo». Pantone no se convierte.\n- Nombres de fuente embebidos (BaseFont sin el prefijo de subset `ABCDEF+`). La API concreta de pdf.js para esto está por verificar en un spike.\n- Miniaturas de página para que el usuario elija ≤4 páginas clave, que van a la IA como imagen (≈ 1656 tokens cada una, ≈ $0,05–0,07 en Opus).\n\nPDF como document block (verificado): máximo 32 MB por request, 600 páginas (100 si la ventana de contexto es <1M), sin contraseña ni cifrado. Cada página se procesa como imagen + texto, con 1500–3000 tokens de texto por página más los de imagen. 10 páginas en Opus salen por ≈ $0,17–0,23.\n\nLimitaciones:\n- La ruta hosted pasa por una función de Vercel con límite de 4,5 MB de body, así que hay que recortar el PDF con las páginas elegidas o usar BYOK.\n- Las citations son incompatibles con `output_config.format` (según la skill claude-api): para referenciar páginas se pide un campo `page` en el schema.\n- Seguridad pdf.js: `isEvalSupported: false` y una versión parcheada contra CVE-2024-4367 (versión exacta no verificada).",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://platform.claude.com/docs/en/build-with-claude/pdf-support",
+     "https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions",
+     "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
+    ]
+   },
+   {
+    "item": "«Analizar con mi Claude»: vía a $0 con copiar y pegar",
+    "detail": "El botón copia el prompt, el schema JSON, los swatches de cada captura y las instrucciones. El usuario adjunta sus capturas en su propio Claude, pega el JSON de vuelta y se valida con el mismo Zod del fingerprint. No gasta créditos ni presupuesto del proyecto y es coherente con el principio del INFORME de que la IA la ponga el usuario.",
+    "effort": "S",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md"
+    ]
+   },
+   {
+    "item": "Importar desde la URL de la app del usuario",
+    "detail": "**v1.1:** función serverless con protección anti-SSRF (IPs privadas bloqueadas, timeout de 5 s, máximo 2 MB, INFORME §11). Lee el HTML, `theme-color` y el manifest, y descarga las hojas CSS enlazadas para pasarlas por `parseCss` (custom properties, `@font-face`, `--radius`). Respeta robots.txt.\n\n**v2:** worker con dembrandt 0.38 (MIT; Playwright con estilos computados, DTCG y DESIGN.md), sin stealth.\n\nNo usar Brandfetch ni logo.dev para procesar píxeles (sus Logo API son solo para `<img>`).",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/round1-digest.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Referencias de terceros: casilla de derechos, sin Mobbin con IA y tablero 6A Variant",
+    "detail": "- Un link de mobbin.com se guarda como tarjeta sin imagen y sin IA. Los Terms efectivos del 16-may-2026 prohíben usar IA para obras derivadas y cachear o re-hostear.\n- Otras imágenes de terceros solo pasan por IA o extracción con la casilla «Tengo derecho a usar esta imagen» marcada. Se usan como atributos (`usedFor`: layout|density|shape|type|tone) y nunca como plantilla.\n- Nunca aparecen en links.\n- El tablero completo de referencias (vista 6, ref. 6A Variant) sigue en «Más adelante». En v1 basta con contarlas y guardarlas.\n- v2: control de similitud con pHash local o embeddings, y Mobbin in-app solo con permiso escrito.",
+    "effort": "S",
+    "phase": "v1",
+    "sources": [
+     "https://mobbin.com/terms.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/referencias-mobbin.md"
+    ]
+   }
+  ],
+  "risks": [
+   "Contradicción de política: CLAUDE.md dice «No se usan servicios de pago ni IA pagada por el proyecto», e INFORME §15 elimina la prueba hosted. La ruta /api/ai/* con key del proyecto y créditos comprados choca con ambos. Hay que actualizar esos documentos antes de construirla.",
+   "El thinking no se puede desactivar en Opus 5.5 y se cobra como output. A effort low, el coste real por captura puede alejarse de la estimación de $0,03 en un sentido u otro. Mitigación: reservar el peor caso con max_tokens y liquidar con `usage`.",
+   "Los colores importados bloqueados pueden fallar AA. Avisar sin cambiar la marca deja un producto con pares inaccesibles si el usuario ignora el aviso. Mitigación: rellenar los roles derivados (primaryText, borderStrong) y mantener el aviso visible en la barra de estado y en los exports.",
+   "Los candados reducen el efecto «wow» del Palette Lab y del Composer: los estilos de paleta no pueden transformar un primario bloqueado. Hay que comunicarlo con el texto «Bloqueado por tu guía» y la opción de desbloquear.",
+   "Formatos heterogéneos: la forma exacta del JSON que exporta Figma, el formato legacy de Tokens Studio/Style Dictionary y la API de pdf.js para leer nombres de fuente están sin verificar. Sin un spike con archivos reales, el parser puede fallar en silencio.",
+   "Vercel limita a 4,5 MB el body de las funciones, también en planes de pago. En la ruta hosted no caben PDFs grandes ni muchas imágenes sin recortar ni reducir en el cliente.",
+   "Prompt injection: una captura o un PDF puede contener texto dirigido al modelo. Mitigación: el schema solo admite enums, la salida es solo una sugerencia que nunca pisa tokens bloqueados y el system prompt trata ese texto como dato.",
+   "Seguridad al parsear archivos no confiables: PDF (CVE-2024-4367 en pdf.js; versión parcheada no verificada), SVG (sanear con svgo), JSON y CSS enormes y fuentes. Nunca ejecutar tailwind.config.js.",
+   "Legal: las capturas de Mobbin no pueden analizarse con IA sin permiso escrito (Terms del 16-may-2026). En la UE las GUIs están protegidas como diseño, y la casilla de derechos depende de que el usuario diga la verdad.",
+   "Fuentes comerciales: si una fuente subida se sirviera en el link o en los exports podría violar su licencia. El diseño la mantiene solo en el navegador, pero un export que la nombre sin fallback se vería mal en otros equipos.",
+   "La sustitución de fuentes con google-fonts.csv será mediocre: las Keywords son casi iguales en familias distintas y faltan métricas.",
+   "Los structured outputs no admiten minimum/maximum/maxLength, tienen tope de 24 parámetros opcionales y 16 uniones, y el enum puede cambiar de capitalización. Un schema mal diseñado da error 400 o valores fuera de rango si no se valida con Zod.",
+   "Alcance: importar añade, según estimación propia, 3–5 semanas a un MVP de 12–15 semanas para 1 dev si entra todo lo marcado como v1."
+  ],
+  "open_questions": [
+   "¿Confirmas la IA hosted con créditos comprados y tope mensual? Si es así, ¿cuál es el tope global en USD y el máximo por análisis? Hay que actualizar CLAUDE.md e INFORME §15.",
+   "¿Qué modelo por defecto para el fingerprint: Opus 5.5 a effort low (≈ $0,03 por captura) o Haiku 5.5 (≈ $0,001)? Propongo decidirlo tras una eval con 20 capturas etiquetadas.",
+   "Referencias visuales: ¿1B Higgsfield para el panel de drop, 2D Recraft + 2A Klaviyo para «Esto detectamos» y 6A Variant para el tablero de referencias? ¿O prefieres 1C DoorDash (modal con guía) para importar?",
+   "¿Movemos «Pegar URL» de Inicio al panel de importación para dejar Inicio con 3 enlaces secundarios?",
+   "Con una guía completa importada, ¿se salta el Palette Lab por defecto o se muestra una vez para revisar?",
+   "Si el usuario solo importa el modo claro, ¿generamos el oscuro automáticamente (marcado como «generado») o lo dejamos vacío hasta que lo pida?",
+   "¿Las capturas de la propia app pueden aparecer en el link publicado con opt-in, o nunca?",
+   "¿Los exports conservan los nombres de variables originales del usuario (vía import-map.json) o pasan a los nombres de Dialmade (--primary, --brand, --cta)?",
+   "¿Ya se envió el email a Mobbin pidiendo permiso escrito? Hasta que respondan, ¿basta la casilla de derechos para imágenes de terceros que no son de Mobbin?",
+   "¿Qué entra en el MVP: solo la importación determinista (CSS, DTCG/Figma, DESIGN.md, hex, capturas sin IA) y la IA y el PDF en v1.1, como propongo?"
+  ]
+ }
+}

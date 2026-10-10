@@ -1,0 +1,7 @@
+.dl-radio .dl-choice__input {
+  border-radius: var(--dl-radius-full, 9999px);
+}
+
+.dl-radio .dl-choice__input:checked {
+  background-image: radial-gradient(circle, var(--primary-foreground) 0 30%, transparent 34%);
+}

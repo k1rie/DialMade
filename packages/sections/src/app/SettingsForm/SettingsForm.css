@@ -1,0 +1,95 @@
+.dl-app-settings {
+  container: dl-app-settings / inline-size;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.dl-app-settings__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-5, 24px);
+  min-width: 0;
+}
+
+.dl-app-settings__group {
+  display: grid;
+  gap: var(--dl-space-4, 16px);
+  min-width: 0;
+  padding-top: var(--dl-space-5, 24px);
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+.dl-app-settings__group-head {
+  min-width: 0;
+}
+
+.dl-app-settings__group-title {
+  margin: 0;
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, 0);
+}
+
+.dl-app-settings__group-hint {
+  margin: 2px 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  line-height: 1.45;
+}
+
+.dl-app-settings__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+  min-width: 0;
+}
+
+.dl-app-settings__toggles {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-app-settings__toggle + .dl-app-settings__toggle {
+  padding-top: var(--dl-space-3, 12px);
+  margin-top: var(--dl-space-3, 12px);
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+.dl-app-settings .dl-app-settings__switch {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dl-app-settings__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--dl-space-2, 8px);
+  padding-top: var(--dl-space-4, 16px);
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+@container dl-app-settings (min-width: 30rem) {
+  .dl-app-settings__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-app-settings__wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@container dl-app-settings (min-width: 44rem) {
+  .dl-app-settings[data-layout="split"] .dl-app-settings__group {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--dl-space-6, 32px);
+  }
+}

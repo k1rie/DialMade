@@ -1,0 +1,69 @@
+.dl-landing {
+  --_lp-py: var(--dl-section-py, 96px);
+  --_lp-k: 1;
+
+  container: dl-landing / inline-size;
+  position: relative;
+  box-sizing: border-box;
+  isolation: isolate;
+  min-width: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+  font-size: var(--dl-fs-body, 1rem);
+  line-height: var(--dl-lh-body, 1.5);
+}
+
+.dl-landing *,
+.dl-landing *::before,
+.dl-landing *::after {
+  box-sizing: border-box;
+}
+
+.dl-landing[data-spacing="compact"] {
+  --_lp-k: 0.6;
+}
+
+.dl-landing[data-spacing="roomy"] {
+  --_lp-k: 1.4;
+}
+
+.dl-landing[data-padding="none"] {
+  --_lp-k: 0;
+}
+
+.dl-landing[data-bg="subtle"] {
+  background: color-mix(in oklab, var(--muted) 62%, var(--background));
+}
+
+.dl-landing[data-bg="brand-gradient"] {
+  background:
+    radial-gradient(72% 62% at 50% 0%, color-mix(in oklab, var(--brand) 22%, transparent), transparent 72%),
+    radial-gradient(42% 52% at 100% 24%, color-mix(in oklab, var(--cta) 14%, transparent), transparent 70%),
+    radial-gradient(40% 48% at 0% 78%, color-mix(in oklab, var(--brand) 10%, transparent), transparent 70%),
+    var(--background);
+}
+
+.dl-landing__inner {
+  --_lp-scale: 0.62;
+  --_lp-gutter: var(--dl-space-5, 20px);
+
+  width: 100%;
+  max-width: calc(var(--dl-container, 1200px) + 2 * var(--_lp-gutter));
+  margin-inline: auto;
+  padding: calc(var(--_lp-py) * var(--_lp-k) * var(--_lp-scale)) var(--_lp-gutter);
+}
+
+@container dl-landing (min-width: 45rem) {
+  .dl-landing__inner {
+    --_lp-scale: 0.82;
+    --_lp-gutter: var(--dl-space-6, 32px);
+  }
+}
+
+@container dl-landing (min-width: 64rem) {
+  .dl-landing__inner {
+    --_lp-scale: 1;
+    --_lp-gutter: var(--dl-space-7, 48px);
+  }
+}

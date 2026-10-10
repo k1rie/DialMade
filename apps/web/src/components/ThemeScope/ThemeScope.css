@@ -1,0 +1,153 @@
+/* The user's theme inside the app (previews, minis, cards). Every rule is scoped to .app-theme-scope.
+   The 35 role colors are registered in globals.css; the palette scales are registered here so the
+   brand board's swatches interpolate too. */
+@property --color-brand-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-brand-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-cta-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-neutral-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-success-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-warning-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-error-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-50 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-100 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-200 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-300 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-400 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-500 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-600 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-700 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-800 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-900 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --color-info-950 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+
+.app-theme-scope {
+  transition-property:
+    --background, --foreground, --card, --card-foreground, --popover, --popover-foreground,
+    --primary, --primary-foreground, --secondary, --secondary-foreground, --muted,
+    --muted-foreground, --accent, --accent-foreground, --destructive, --destructive-foreground,
+    --border, --input, --ring, --chart-1, --chart-2, --chart-3, --chart-4, --chart-5, --brand,
+    --cta, --cta-foreground, --primary-text, --border-strong, --success, --success-foreground,
+    --warning, --warning-foreground, --info, --info-foreground, --color-brand-50,
+    --color-brand-100, --color-brand-200, --color-brand-300, --color-brand-400, --color-brand-500,
+    --color-brand-600, --color-brand-700, --color-brand-800, --color-brand-900, --color-brand-950,
+    --color-cta-50, --color-cta-100, --color-cta-200, --color-cta-300, --color-cta-400,
+    --color-cta-500, --color-cta-600, --color-cta-700, --color-cta-800, --color-cta-900,
+    --color-cta-950, --color-neutral-50, --color-neutral-100, --color-neutral-200,
+    --color-neutral-300, --color-neutral-400, --color-neutral-500, --color-neutral-600,
+    --color-neutral-700, --color-neutral-800, --color-neutral-900, --color-neutral-950,
+    --color-success-50, --color-success-100, --color-success-200, --color-success-300,
+    --color-success-400, --color-success-500, --color-success-600, --color-success-700,
+    --color-success-800, --color-success-900, --color-success-950, --color-warning-50,
+    --color-warning-100, --color-warning-200, --color-warning-300, --color-warning-400,
+    --color-warning-500, --color-warning-600, --color-warning-700, --color-warning-800,
+    --color-warning-900, --color-warning-950, --color-error-50, --color-error-100,
+    --color-error-200, --color-error-300, --color-error-400, --color-error-500, --color-error-600,
+    --color-error-700, --color-error-800, --color-error-900, --color-error-950, --color-info-50,
+    --color-info-100, --color-info-200, --color-info-300, --color-info-400, --color-info-500,
+    --color-info-600, --color-info-700, --color-info-800, --color-info-900, --color-info-950;
+  transition-duration: 400ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-theme-scope[data-transition="off"] {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-theme-scope {
+    transition-duration: 150ms;
+  }
+}
+
+/* The preview must match the HTML export, which has no Tailwind preflight: inside the scope the app's
+   base layer is reverted to browser defaults. @dialmade/ui and @dialmade/sections are unlayered and win
+   anyway; app chrome placed inside (overlays, badges) opts out with .app-chrome. */
+@layer base {
+  .app-theme-scope :where(*:not(.app-chrome, .app-chrome *)),
+  .app-theme-scope :where(*:not(.app-chrome, .app-chrome *))::before,
+  .app-theme-scope :where(*:not(.app-chrome, .app-chrome *))::after,
+  .app-theme-scope :where(*:not(.app-chrome, .app-chrome *))::placeholder,
+  .app-theme-scope :where(*:not(.app-chrome, .app-chrome *))::file-selector-button {
+    all: revert-layer;
+  }
+}
+
+/* Edit mode: looping demos (spinners, skeletons, indeterminate progress) hold still on the canvas.
+   `!important` because the kit's own `animation` shorthands have the same specificity. */
+.app-theme-scope .dl-page[data-dl-interactive] *,
+.app-theme-scope .dl-page[data-dl-interactive] *::before,
+.app-theme-scope .dl-page[data-dl-interactive] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Edit mode (PageRenderer interactive): @dialmade/sections only sets attributes; the app paints them. */
+.app-theme-scope .dl-page[data-dl-interactive] .dl-el:hover:not([data-dl-selected]) {
+  outline: 1px dashed oklch(0.68 0.2 296 / 0.55);
+  outline-offset: -1px;
+}
+
+.app-theme-scope .dl-page[data-dl-interactive] .dl-el:focus-visible,
+.app-theme-scope .dl-el[data-dl-selected] {
+  outline: 2px solid var(--app-accent);
+  outline-offset: -2px;
+  box-shadow: 0 0 32px -6px var(--app-glow-purple);
+}

@@ -1,0 +1,29 @@
+.dl-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dl-space-1, 4px) var(--dl-space-4, 16px);
+  padding: 0;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  list-style: none;
+}
+
+.dl-chart-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dl-space-2, 6px);
+}
+
+.dl-chart-legend__swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+.dl-chart-legend__swatch[data-series="1"] { color: var(--chart-1); }
+.dl-chart-legend__swatch[data-series="2"] { color: var(--chart-2); }
+.dl-chart-legend__swatch[data-series="3"] { color: var(--chart-3); }
+.dl-chart-legend__swatch[data-series="4"] { color: var(--chart-4); }
+.dl-chart-legend__swatch[data-series="5"] { color: var(--chart-5); }

@@ -1,0 +1,288 @@
+.dl-brand-cover {
+  container: dl-cover / inline-size;
+  padding-block: calc(var(--dl-section-py, 96px) * 0.5) calc(var(--dl-section-py, 96px) * 0.25);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.dl-brand-cover__inner {
+  max-width: var(--dl-container, 1200px);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 5cqi, 56px);
+}
+
+.dl-brand-cover__frame {
+  --_cover-rule: var(--border-strong);
+  --_cover-muted: var(--muted-foreground);
+  --_cover-accent: var(--primary-text);
+  display: grid;
+  gap: clamp(var(--dl-space-6, 32px), 6cqi, var(--dl-space-8, 64px));
+}
+
+.dl-brand-cover__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--dl-space-2, 8px) var(--dl-space-5, 24px);
+  padding-bottom: var(--dl-space-3, 12px);
+  border-bottom: 1px solid var(--_cover-rule);
+  color: var(--_cover-muted);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.dl-brand-cover__main {
+  display: grid;
+  align-items: end;
+  gap: var(--dl-space-6, 32px);
+}
+
+.dl-brand-cover__text {
+  display: grid;
+  align-content: end;
+  gap: var(--dl-space-4, 16px);
+  min-width: 0;
+}
+
+.dl-brand-cover__name {
+  margin: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: clamp(var(--dl-fs-h1, 2.5rem), 10cqi, calc(var(--dl-fs-display, 3.5rem) * 1.6));
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, normal);
+  line-height: 0.98;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.dl-brand-cover__tagline {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--_cover-muted);
+  font-size: var(--dl-fs-h3, 1.5rem);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.dl-brand-cover__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 11;
+  overflow: hidden;
+  border-radius: var(--dl-radius-xl, 24px);
+  background:
+    radial-gradient(90% 90% at 100% 0%, color-mix(in oklab, var(--color-brand-300, var(--primary-foreground)) 60%, transparent), transparent 62%),
+    radial-gradient(70% 70% at 0% 100%, color-mix(in oklab, var(--color-brand-900, var(--primary)) 55%, transparent), transparent 70%),
+    var(--primary);
+  color: var(--primary-foreground);
+  font-size: clamp(36px, 8cqi, 84px);
+}
+
+.dl-brand-cover__art::before {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in oklab, var(--primary-foreground) 30%, transparent) 1px, transparent 1.6px);
+  background-size: 20px 20px;
+  content: "";
+  mask-image: radial-gradient(closest-side, transparent 35%, #000);
+  pointer-events: none;
+}
+
+.dl-brand-cover__art[data-image] {
+  background: var(--color-neutral-50, #fafafa);
+}
+
+.dl-brand-cover__art[data-image]::before {
+  background-image: radial-gradient(color-mix(in oklab, var(--color-brand-500, var(--primary)) 30%, transparent) 1px, transparent 1.6px);
+}
+
+.dl-brand-cover__mark {
+  position: relative;
+}
+
+.dl-brand-cover__art[data-image] .dl-brand-cover__mark {
+  width: 62%;
+  justify-content: center;
+}
+
+.dl-brand-cover__art[data-image] .dl-brand-cover__mark img {
+  height: auto;
+  max-height: 2.6em;
+}
+
+.dl-brand-cover__meta {
+  display: grid;
+  gap: var(--dl-space-5, 24px);
+  padding-top: var(--dl-space-4, 16px);
+  border-top: 1px solid var(--_cover-rule);
+}
+
+.dl-brand-cover__index ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dl-space-2, 8px) var(--dl-space-5, 24px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-brand-cover__index a,
+.dl-brand-cover__index li > span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--dl-space-2, 8px);
+  color: inherit;
+  font-size: var(--dl-fs-small, 0.875rem);
+  text-decoration: none;
+}
+
+.dl-brand-cover__index a {
+  border-radius: var(--dl-radius-sm, 4px);
+  transition: color var(--dl-duration-fast, 150ms) var(--dl-ease, ease);
+}
+
+.dl-brand-cover__index a:hover {
+  color: var(--_cover-accent);
+}
+
+.dl-brand-cover__index a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.dl-brand-cover__index-number {
+  color: var(--_cover-accent);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 600;
+}
+
+.dl-brand-cover__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dl-space-4, 16px) var(--dl-space-5, 24px);
+  margin: 0;
+}
+
+.dl-brand-cover__fact {
+  min-width: 0;
+}
+
+.dl-brand-cover__fact dt {
+  margin-bottom: var(--dl-space-1, 4px);
+  color: var(--_cover-muted);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dl-brand-cover__fact dd {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  margin: 0;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.dl-brand-cover__swatch {
+  flex: none;
+  width: 0.875em;
+  height: 0.875em;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: var(--primary);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+/* Centered: the whole cover sits on the brand color. */
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__frame {
+  --_cover-rule: color-mix(in oklab, var(--primary-foreground) 35%, transparent);
+  --_cover-muted: var(--primary-foreground);
+  --_cover-accent: var(--primary-foreground);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(20px, 6cqi, 72px);
+  border-radius: var(--dl-radius-xl, 24px);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__frame::before {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in oklab, var(--primary-foreground) 22%, transparent) 1px, transparent 1.6px);
+  background-size: 22px 22px;
+  content: "";
+  mask-image: radial-gradient(70% 60% at 50% 45%, transparent 40%, #000);
+  pointer-events: none;
+}
+
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__frame > * {
+  position: relative;
+}
+
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__text {
+  justify-items: center;
+  padding-block: clamp(var(--dl-space-5, 24px), 6cqi, var(--dl-space-8, 64px));
+  text-align: center;
+}
+
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__tagline {
+  opacity: 0.92;
+}
+
+.dl-brand-cover[data-variant="centered"] .dl-brand-cover__swatch {
+  box-shadow: 0 0 0 1.5px var(--primary-foreground);
+}
+
+.dl-brand-cover__emblem {
+  display: inline-grid;
+  margin-bottom: var(--dl-space-3, 12px);
+  font-size: clamp(28px, 5cqi, 52px);
+}
+
+.dl-brand-cover__emblem[data-image] {
+  padding: 0.35em 0.6em;
+  border-radius: var(--dl-radius-lg, 12px);
+  background: var(--color-neutral-50, #fafafa);
+}
+
+@container dl-cover (min-width: 560px) {
+  .dl-brand-cover__index ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dl-brand-cover__facts {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container dl-cover (min-width: 860px) {
+  .dl-brand-cover__main {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: var(--dl-space-7, 48px);
+  }
+
+  .dl-brand-cover[data-variant="centered"] .dl-brand-cover__main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dl-brand-cover__art {
+    aspect-ratio: 1 / 1;
+  }
+
+  .dl-brand-cover__meta {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+    gap: var(--dl-space-7, 48px);
+  }
+
+  .dl-brand-cover__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

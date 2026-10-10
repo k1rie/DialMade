@@ -1,0 +1,1 @@
+export { MiniBrand } from "./MiniBrand";

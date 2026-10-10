@@ -1,0 +1,92 @@
+.dl-dialog-panel {
+  --_dp-pad: var(--dl-space-6, 24px);
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-4, 16px);
+  width: 100%;
+  max-width: 28rem;
+  max-height: 100%;
+  padding: var(--_dp-pad);
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-xl, 16px);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--dl-shadow-lg, 0 24px 48px -16px rgb(0 0 0 / 0.35));
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: var(--dl-lh-body, 1.5);
+  text-align: start;
+}
+
+.dl-dialog-panel[data-size="sm"] {
+  max-width: 22rem;
+}
+
+.dl-dialog-panel[data-size="lg"] {
+  max-width: 40rem;
+}
+
+.dl-dialog-panel__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-dialog-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary-text);
+  font-size: 1.25rem;
+}
+
+.dl-dialog-panel[data-tone="destructive"] .dl-dialog-panel__icon {
+  background: color-mix(in oklab, var(--destructive) 12%, transparent);
+  color: var(--destructive);
+}
+
+.dl-dialog-panel__heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--dl-space-1, 4px);
+  min-width: 0;
+}
+
+.dl-dialog-panel__title {
+  margin: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h3, 1.125rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: var(--dl-lh-tight, 1.25);
+}
+
+.dl-dialog-panel__description {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.dl-dialog-panel__close {
+  margin: calc(-1 * var(--dl-space-2, 8px)) calc(-1 * var(--dl-space-2, 8px)) 0 0;
+}
+
+.dl-dialog-panel__body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.dl-dialog-panel__footer {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: var(--dl-space-2, 8px);
+  padding-top: var(--dl-space-2, 8px);
+}

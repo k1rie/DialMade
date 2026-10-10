@@ -1,0 +1,10 @@
+/* @dialmade/sections: one stylesheet per component, plus one entry per kind for the sections. */
+@import "./ThemeStyles/ThemeStyles.css";
+@import "./PageRenderer/PageRenderer.css";
+@import "./PageRenderer/SectionNotice/SectionNotice.css";
+@import "./minis/MiniBrand/MiniBrand.css";
+@import "./minis/MiniLanding/MiniLanding.css";
+@import "./minis/MiniApp/MiniApp.css";
+@import "./brand/styles.css";
+@import "./landing/styles.css";
+@import "./app/styles.css";

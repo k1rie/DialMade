@@ -1,0 +1,54 @@
+{
+  "name": "@dialmade/ui",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "UI kit tematizable para las páginas del usuario: React 19 y CSS plano con clases dl- que solo lee las variables del tema.",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./contract": {
+      "types": "./src/lib/contract.ts",
+      "default": "./src/lib/contract.ts"
+    },
+    "./styles.css": "./src/styles.css",
+    "./dialmade-ui.css": "./dist/dialmade-ui.css"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "node scripts/build-css.mjs",
+    "build:css": "node scripts/build-css.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dialmade/catalog": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "29.1.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

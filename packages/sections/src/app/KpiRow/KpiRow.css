@@ -1,0 +1,127 @@
+.dl-app-kpis {
+  container: dl-app-kpis / inline-size;
+  min-width: 0;
+}
+
+.dl-app-kpis__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.5rem), 1fr));
+  gap: var(--_app-gap, var(--dl-space-5, 24px));
+}
+
+/* Each card is a container so long values («2 min 51 s») shrink instead of wrapping. */
+.dl-app-kpis .dl-app-kpis__card {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+/* Fits the value to the card by its length (≈0.62em per glyph); short values keep the full size. */
+.dl-app-kpis__value-text {
+  --_kpi-chars: 6;
+
+  display: block;
+  font-size: min(1em, calc(100cqi / (var(--_kpi-chars) * 0.62)));
+  white-space: nowrap;
+}
+
+/* Strip: one surface, dividers drawn with shadows so they survive any wrap. */
+.dl-app-kpis__strip {
+  --_kpi-line: max(1px, var(--dl-border-width, 1px));
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  overflow: hidden;
+  border: var(--dl-card-border, var(--dl-border-width, 1px) solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--dl-card-shadow, none);
+}
+
+.dl-app-kpis__cell {
+  container-type: inline-size;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+  padding: var(--dl-card-padding, var(--dl-space-5, 24px));
+  box-shadow:
+    calc(-1 * var(--_kpi-line)) 0 0 var(--border),
+    0 calc(-1 * var(--_kpi-line)) 0 var(--border);
+}
+
+.dl-app-kpis__label {
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-app-kpis__value {
+  margin: 0;
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h3, 1.5rem);
+  font-weight: var(--dl-heading-weight, 650);
+  letter-spacing: var(--dl-heading-tracking, -0.02em);
+  line-height: var(--dl-lh-tight, 1.15);
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-app-kpis__change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  margin: 0;
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-app-kpis__comparison {
+  color: var(--muted-foreground);
+}
+
+/* Phones: a 2×2 grid of compact cards. */
+@container dl-app-kpis (max-width: 34rem) {
+  .dl-app-kpis__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--dl-space-3, 12px);
+  }
+
+  .dl-app-kpis .dl-app-kpis__card {
+    gap: var(--dl-space-2, 8px);
+    padding: var(--dl-space-4, 16px);
+  }
+
+  .dl-app-kpis__card :is(.dl-stat__icon, .dl-sparkline, .dl-stat__delta-label) {
+    display: none;
+  }
+
+  .dl-app-kpis__card .dl-stat__header {
+    min-height: 0;
+  }
+
+  .dl-app-kpis__card .dl-stat__label {
+    font-size: var(--dl-fs-caption, 0.75rem);
+  }
+
+  .dl-app-kpis__card .dl-stat__value {
+    font-size: calc(var(--dl-fs-h3, 1.5rem) * 0.9);
+  }
+
+  .dl-app-kpis__strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-app-kpis__cell {
+    padding: var(--dl-space-4, 16px);
+  }
+
+  .dl-app-kpis__comparison {
+    display: none;
+  }
+}

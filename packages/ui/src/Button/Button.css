@@ -1,0 +1,172 @@
+.dl-button {
+  --_btn-bg: var(--primary);
+  --_btn-fg: var(--primary-foreground);
+  --_btn-border: transparent;
+  /* Hover/active fills come from @dialmade/doc, moved away from the text so contrast never drops. */
+  --_btn-hover-bg: var(--primary-hover, color-mix(in oklab, var(--_btn-bg), var(--foreground) 14%));
+  --_btn-hover-fg: var(--_btn-fg);
+  --_btn-shadow: var(--dl-button-shadow, none);
+  --_btn-h: var(--dl-button-h-md, 40px);
+  --_btn-px: var(--dl-button-px, var(--dl-space-4, 16px));
+  --_btn-fs: var(--dl-fs-small, 0.875rem);
+  --_btn-gap: var(--dl-space-2, 8px);
+
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--_btn-gap);
+  min-height: var(--_btn-h);
+  padding: 0 var(--_btn-px);
+  margin: 0;
+  border: var(--dl-border-width, 1px) solid var(--_btn-border);
+  border-radius: var(--dl-button-radius, var(--dl-radius-md, 8px));
+  background: var(--_btn-bg);
+  color: var(--_btn-fg);
+  box-shadow: var(--_btn-shadow);
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--_btn-fs);
+  font-weight: var(--dl-button-weight, 600);
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    border-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    box-shadow var(--dl-duration-fast, 120ms) var(--dl-ease, ease),
+    transform var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-button[data-size="sm"] {
+  --_btn-h: var(--dl-button-h-sm, 32px);
+  --_btn-px: calc(var(--dl-button-px, var(--dl-space-4, 16px)) * 0.75);
+  --_btn-fs: var(--dl-fs-caption, 0.8125rem);
+  --_btn-gap: var(--dl-space-1, 6px);
+}
+
+.dl-button[data-size="lg"] {
+  --_btn-h: var(--dl-button-h-lg, 48px);
+  --_btn-px: calc(var(--dl-button-px, var(--dl-space-4, 16px)) * 1.25);
+  --_btn-fs: var(--dl-fs-body, 1rem);
+}
+
+.dl-button[data-variant="secondary"] {
+  --_btn-bg: var(--secondary);
+  --_btn-fg: var(--secondary-foreground);
+  --_btn-hover-bg: var(--secondary-hover, color-mix(in oklab, var(--_btn-bg), var(--foreground) 14%));
+}
+
+.dl-button[data-variant="outline"] {
+  --_btn-bg: transparent;
+  --_btn-fg: var(--foreground);
+  --_btn-border: var(--input);
+  --_btn-hover-bg: var(--accent);
+  --_btn-hover-fg: var(--accent-foreground);
+  --_btn-shadow: none;
+}
+
+.dl-button[data-variant="ghost"] {
+  --_btn-bg: transparent;
+  --_btn-fg: var(--foreground);
+  --_btn-hover-bg: var(--accent);
+  --_btn-hover-fg: var(--accent-foreground);
+  --_btn-shadow: none;
+}
+
+.dl-button[data-variant="cta"] {
+  --_btn-bg: var(--cta);
+  --_btn-fg: var(--cta-foreground);
+  --_btn-hover-bg: var(--cta-hover, color-mix(in oklab, var(--_btn-bg), var(--foreground) 14%));
+}
+
+.dl-button[data-variant="destructive"] {
+  --_btn-bg: var(--destructive);
+  --_btn-fg: var(--destructive-foreground);
+  --_btn-hover-bg: var(--destructive-hover, color-mix(in oklab, var(--_btn-bg), var(--foreground) 14%));
+}
+
+.dl-button[data-full-width] {
+  display: flex;
+  width: 100%;
+}
+
+.dl-button:where(:not(:disabled, [aria-disabled="true"])):hover,
+.dl-button[data-preview-state="hover"] {
+  background: var(--_btn-hover-bg);
+  color: var(--_btn-hover-fg);
+}
+
+.dl-button:focus-visible,
+.dl-button[data-preview-state="focus"] {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.dl-button:where(:not(:disabled, [aria-disabled="true"])):active,
+.dl-button[data-preview-state="active"] {
+  background: var(--_btn-hover-bg);
+  color: var(--_btn-hover-fg);
+  transform: scale(0.98);
+}
+
+.dl-button:disabled,
+.dl-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.dl-button[data-loading] {
+  cursor: progress;
+  opacity: 1;
+}
+
+.dl-button[data-loading] .dl-button__label,
+.dl-button[data-loading] .dl-button__icon {
+  opacity: 0;
+}
+
+.dl-button__icon {
+  display: inline-flex;
+  font-size: 1.15em;
+}
+
+.dl-button__spinner {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15em;
+}
+
+.dl-button__spinner .dl-icon {
+  animation: dl-button-spin 800ms linear infinite;
+}
+
+@keyframes dl-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-button {
+    transition: none;
+  }
+
+  .dl-button:active,
+  .dl-button[data-preview-state="active"] {
+    transform: none;
+  }
+
+  .dl-button__spinner .dl-icon {
+    animation-duration: 2400ms;
+  }
+}

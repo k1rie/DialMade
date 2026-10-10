@@ -1,0 +1,65 @@
+.dl-brand-type-font {
+  display: grid;
+  align-content: space-between;
+  gap: var(--dl-space-5, 24px);
+  min-width: 0;
+  min-height: 260px;
+  padding: var(--dl-card-padding, 24px);
+  border: var(--dl-card-border, 1px solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--dl-card-shadow, none);
+}
+
+.dl-brand-type-font[data-role="heading"] {
+  background:
+    linear-gradient(160deg, color-mix(in oklab, var(--primary) 9%, transparent), transparent 55%),
+    var(--card);
+}
+
+.dl-brand-type-font__glyph {
+  font-family: var(--dl-font-body, inherit);
+  font-size: clamp(88px, 16cqi, 168px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+.dl-brand-type-font[data-role="heading"] .dl-brand-type-font__glyph {
+  color: var(--primary-text);
+  font-family: var(--dl-font-heading, inherit);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, normal);
+}
+
+.dl-brand-type-font__meta {
+  display: grid;
+  gap: 2px;
+}
+
+.dl-brand-type-font__role,
+.dl-brand-type-font__details {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-brand-type-font__role {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dl-brand-type-font__family {
+  margin: 0;
+  font-family: var(--dl-font-body, inherit);
+  font-size: var(--dl-fs-h3, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.dl-brand-type-font[data-role="heading"] .dl-brand-type-font__family {
+  font-family: var(--dl-font-heading, inherit);
+}

@@ -1,0 +1,101 @@
+.dl-tooltip {
+  --_tt-gap: 8px;
+
+  position: relative;
+  display: inline-flex;
+  font-family: var(--dl-font-body, inherit);
+}
+
+.dl-tooltip__bubble {
+  position: absolute;
+  z-index: 10;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 16rem;
+  padding: var(--dl-space-1, 4px) var(--dl-space-2, 8px);
+  border-radius: var(--dl-radius-sm, 6px);
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: var(--dl-shadow-sm, 0 2px 8px rgb(0 0 0 / 0.15));
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+  display: none;
+}
+
+.dl-tooltip__bubble::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.dl-tooltip[data-side="top"] .dl-tooltip__bubble {
+  bottom: calc(100% + var(--_tt-gap));
+  left: 50%;
+  translate: -50% 0;
+}
+
+.dl-tooltip[data-side="top"] .dl-tooltip__bubble::after {
+  top: calc(100% - 4px);
+  left: calc(50% - 4px);
+}
+
+.dl-tooltip[data-side="bottom"] .dl-tooltip__bubble {
+  top: calc(100% + var(--_tt-gap));
+  left: 50%;
+  translate: -50% 0;
+}
+
+.dl-tooltip[data-side="bottom"] .dl-tooltip__bubble::after {
+  bottom: calc(100% - 4px);
+  left: calc(50% - 4px);
+}
+
+.dl-tooltip[data-side="left"] .dl-tooltip__bubble {
+  top: 50%;
+  right: calc(100% + var(--_tt-gap));
+  translate: 0 -50%;
+}
+
+.dl-tooltip[data-side="left"] .dl-tooltip__bubble::after {
+  top: calc(50% - 4px);
+  left: calc(100% - 4px);
+}
+
+.dl-tooltip[data-side="right"] .dl-tooltip__bubble {
+  top: 50%;
+  left: calc(100% + var(--_tt-gap));
+  translate: 0 -50%;
+}
+
+.dl-tooltip[data-side="right"] .dl-tooltip__bubble::after {
+  top: calc(50% - 4px);
+  right: calc(100% - 4px);
+}
+
+.dl-tooltip[data-open] .dl-tooltip__bubble,
+.dl-tooltip:not([data-dismissed]):hover .dl-tooltip__bubble,
+.dl-tooltip:not([data-dismissed]):focus-within .dl-tooltip__bubble {
+  display: block;
+}
+
+.dl-tooltip:not([data-open]) .dl-tooltip__bubble {
+  animation: dl-tooltip-in var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+@keyframes dl-tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-tooltip__bubble {
+    animation: none;
+  }
+}

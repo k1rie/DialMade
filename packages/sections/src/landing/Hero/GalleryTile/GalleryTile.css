@@ -1,0 +1,121 @@
+.dl-landing-tile {
+  --_tile-tone: var(--chart-1);
+  --_tile-tone-2: var(--chart-2);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+  margin: 0;
+}
+
+.dl-landing-tile[data-art="2"] {
+  --_tile-tone: var(--chart-2);
+  --_tile-tone-2: var(--chart-3);
+}
+
+.dl-landing-tile[data-art="3"] {
+  --_tile-tone: var(--chart-3);
+  --_tile-tone-2: var(--chart-5);
+}
+
+.dl-landing-tile[data-art="4"] {
+  --_tile-tone: var(--chart-4);
+  --_tile-tone-2: var(--chart-1);
+}
+
+.dl-landing-tile[data-art="5"] {
+  --_tile-tone: var(--chart-5);
+  --_tile-tone-2: var(--chart-2);
+}
+
+.dl-landing-tile[data-art="6"] {
+  --_tile-tone: var(--brand);
+  --_tile-tone-2: var(--cta);
+}
+
+.dl-landing-tile__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background:
+    radial-gradient(90% 70% at 18% 8%, color-mix(in oklab, var(--_tile-tone-2) 34%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in oklab, var(--_tile-tone) 20%, var(--card)), color-mix(in oklab, var(--_tile-tone) 42%, var(--card)));
+}
+
+.dl-landing-tile__art::after {
+  content: "";
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(150deg, color-mix(in oklab, var(--_tile-tone) 82%, var(--background)), color-mix(in oklab, var(--_tile-tone) 72%, var(--foreground)));
+  box-shadow: 0 18px 30px -14px color-mix(in oklab, var(--_tile-tone) 70%, transparent);
+}
+
+.dl-landing-tile[data-art="2"] .dl-landing-tile__art::after {
+  width: 40%;
+  aspect-ratio: 3 / 4;
+  border-radius: 50% 50% 14% 14% / 36% 36% 10% 10%;
+}
+
+.dl-landing-tile[data-art="3"] .dl-landing-tile__art::after {
+  border-radius: 24%;
+  transform: rotate(-9deg);
+}
+
+.dl-landing-tile[data-art="4"] .dl-landing-tile__art::after {
+  width: 32%;
+  aspect-ratio: 5 / 8;
+  border-radius: 999px;
+}
+
+.dl-landing-tile[data-art="5"] .dl-landing-tile__art::after {
+  border: 14px solid color-mix(in oklab, var(--_tile-tone) 78%, var(--foreground));
+  background: transparent;
+}
+
+.dl-landing-tile[data-art="6"] .dl-landing-tile__art::after {
+  width: 52%;
+  border-radius: 0;
+  clip-path: polygon(50% 6%, 96% 92%, 4% 92%);
+}
+
+.dl-landing-tile[data-icon] .dl-landing-tile__art {
+  aspect-ratio: 4 / 3;
+}
+
+.dl-landing-tile[data-icon] .dl-landing-tile__art::after {
+  display: none;
+}
+
+.dl-landing-tile__icon {
+  width: 38%;
+  height: 38%;
+  color: color-mix(in oklab, var(--_tile-tone) 80%, var(--foreground));
+}
+
+.dl-landing-tile__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dl-landing-tile__title {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-landing-tile__meta {
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  line-height: 1.3;
+}

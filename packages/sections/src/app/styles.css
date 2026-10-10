@@ -1,0 +1,19 @@
+/* Stylesheets of the app sections (Dashboard y componentes). */
+@import "./WidgetHeader/WidgetHeader.css";
+@import "./Shell/Shell.css";
+@import "./KpiRow/KpiRow.css";
+@import "./ChartCard/ChartCard.css";
+@import "./Activity/Activity.css";
+@import "./DataTable/DataTable.css";
+@import "./SettingsForm/SettingsForm.css";
+@import "./EmptyState/EmptyState.css";
+@import "./ConfirmDialog/ConfirmDialog.css";
+@import "./ComponentGallery/ComponentGallery.css";
+
+/* Widgets placed straight on the page (outside app.shell) get the page gutters. */
+.dl-page[data-dl-kind="app"] > .dl-el:not([data-dl-type="app.shell"]) {
+  box-sizing: border-box;
+  max-width: calc(var(--dl-container, 1200px) + 2 * var(--dl-space-5, 24px));
+  padding: var(--dl-space-5, 24px) var(--dl-space-4, 16px);
+  margin-inline: auto;
+}

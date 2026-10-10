@@ -1,0 +1,27 @@
+.dl-avatar-group {
+  --_ag-overlap: 0.6rem;
+
+  display: inline-flex;
+  align-items: center;
+  padding-left: var(--_ag-overlap);
+}
+
+.dl-avatar-group[data-size="xs"],
+.dl-avatar-group[data-size="sm"] {
+  --_ag-overlap: 0.4rem;
+}
+
+.dl-avatar-group > .dl-avatar {
+  margin-left: calc(-1 * var(--_ag-overlap));
+}
+
+.dl-avatar-group > .dl-avatar .dl-avatar__image,
+.dl-avatar-group > .dl-avatar .dl-avatar__fallback {
+  box-shadow: 0 0 0 2px var(--background);
+}
+
+.dl-avatar-group__more .dl-avatar__fallback {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: calc(var(--_avatar-size) * 0.32);
+}

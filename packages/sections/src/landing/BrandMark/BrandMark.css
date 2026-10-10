@@ -1,0 +1,52 @@
+.dl-landing-brand {
+  --_mark-size: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+  color: inherit;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: calc(var(--_mark-size) * 0.62);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: 1;
+}
+
+.dl-landing-brand[data-size="sm"] {
+  --_mark-size: 22px;
+}
+
+.dl-landing-brand[data-size="lg"] {
+  --_mark-size: 36px;
+}
+
+.dl-landing-brand__mark {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: var(--_mark-size);
+  height: var(--_mark-size);
+  border-radius: min(var(--dl-radius-md, 8px), calc(var(--_mark-size) * 0.3));
+  background: linear-gradient(140deg, var(--primary), color-mix(in oklab, var(--primary) 70%, var(--cta)));
+  color: var(--primary-foreground);
+  /* Room for a two-letter monogram («NP»). */
+  font-size: calc(var(--_mark-size) * 0.44);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dl-landing-brand__logo {
+  display: block;
+  flex-shrink: 0;
+  width: auto;
+  max-width: calc(var(--_mark-size) * 4);
+  height: var(--_mark-size);
+  object-fit: contain;
+}
+
+.dl-landing-brand__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

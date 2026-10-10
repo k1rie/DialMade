@@ -1,0 +1,69 @@
+.dl-switch {
+  --_switch-w: 2.25rem;
+  --_switch-h: 1.25rem;
+  --_switch-pad: 2px;
+}
+
+.dl-switch[data-size="sm"] {
+  --_switch-w: 1.75rem;
+  --_switch-h: 1rem;
+}
+
+.dl-switch .dl-switch__box {
+  width: var(--_switch-w);
+  height: var(--_switch-h);
+}
+
+.dl-switch .dl-choice__input {
+  border: 0;
+  border-radius: var(--dl-radius-full, 9999px);
+  background-color: var(--input);
+}
+
+.dl-switch .dl-choice__input:checked {
+  background-color: var(--primary);
+}
+
+.dl-switch:hover .dl-choice__input:not(:disabled):not(:checked),
+.dl-switch .dl-choice__input[data-preview-state="hover"]:not(:checked) {
+  background-color: var(--border-strong);
+}
+
+.dl-switch:hover .dl-choice__input:not(:disabled):checked,
+.dl-switch .dl-choice__input[data-preview-state="hover"]:checked {
+  background-color: color-mix(in oklab, var(--primary), var(--foreground) 10%);
+}
+
+.dl-switch__thumb {
+  position: absolute;
+  top: var(--_switch-pad);
+  left: var(--_switch-pad);
+  width: calc(var(--_switch-h) - 2 * var(--_switch-pad));
+  height: calc(var(--_switch-h) - 2 * var(--_switch-pad));
+  border-radius: var(--dl-radius-full, 9999px);
+  background: var(--background);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 25%, transparent);
+  pointer-events: none;
+  transition: transform var(--dl-duration-base, 200ms) var(--dl-ease, ease);
+}
+
+.dl-choice__input:checked + .dl-switch__thumb {
+  background: var(--primary-foreground);
+  transform: translateX(calc(var(--_switch-w) - var(--_switch-h)));
+}
+
+.dl-switch .dl-choice__input:active:not(:disabled) + .dl-switch__thumb,
+.dl-switch .dl-choice__input[data-preview-state="active"] + .dl-switch__thumb {
+  width: calc(var(--_switch-h) - 2 * var(--_switch-pad) + 3px);
+}
+
+.dl-switch .dl-choice__input:checked:active:not(:disabled) + .dl-switch__thumb,
+.dl-switch .dl-choice__input:checked[data-preview-state="active"] + .dl-switch__thumb {
+  transform: translateX(calc(var(--_switch-w) - var(--_switch-h) - 3px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-switch__thumb {
+    transition: none;
+  }
+}

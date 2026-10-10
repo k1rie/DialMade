@@ -1,0 +1,238 @@
+.dl-brand-identity__surfaces {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-brand-identity__surface {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-brand-identity__stage {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  padding: var(--dl-space-5, 24px);
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  font-size: clamp(18px, 3cqi, 30px);
+}
+
+.dl-brand-identity__surface[data-surface="light"] .dl-brand-identity__stage {
+  background: var(--color-neutral-50, #fafafa);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-neutral-950, #111) 10%, transparent);
+}
+
+.dl-brand-identity__surface[data-surface="dark"] .dl-brand-identity__stage {
+  background: var(--color-neutral-950, #111);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-neutral-50, #fff) 12%, transparent);
+}
+
+.dl-brand-identity__surface[data-surface="brand"] .dl-brand-identity__stage {
+  background:
+    radial-gradient(80% 90% at 100% 100%, color-mix(in oklab, var(--primary-foreground) 10%, transparent), transparent 70%),
+    var(--primary);
+}
+
+.dl-brand-identity__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dl-space-1, 4px) var(--dl-space-3, 12px);
+  margin: 0;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+}
+
+.dl-brand-identity__caption code {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 400;
+}
+
+.dl-brand-identity__rules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--dl-space-4, 16px);
+}
+
+.dl-brand-identity__note {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  text-wrap: pretty;
+}
+
+.dl-brand-identity__clearspace {
+  --_identity-x: 0.9em;
+  display: grid;
+  place-items: center;
+  min-height: 168px;
+  padding: var(--dl-space-5, 24px) var(--dl-space-3, 12px);
+  overflow: hidden;
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: clamp(14px, 1.9cqi, 24px);
+}
+
+.dl-brand-identity__clearspace[data-kind="image"] {
+  --_identity-x: 0.6em;
+}
+
+.dl-brand-identity__safe {
+  position: relative;
+  max-width: 100%;
+  padding: var(--_identity-x);
+  outline: 1px dashed var(--border-strong);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, var(--primary) 22%, transparent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+.dl-brand-identity__bounds {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+  outline: 1px solid color-mix(in oklab, var(--primary) 60%, transparent);
+  background: var(--muted);
+}
+
+.dl-brand-identity__x {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  color: var(--primary-text);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1;
+}
+
+.dl-brand-identity__x[data-side="top"],
+.dl-brand-identity__x[data-side="bottom"] {
+  left: 50%;
+  height: var(--_identity-x);
+  translate: -50% 0;
+}
+
+.dl-brand-identity__x[data-side="top"] {
+  top: 0;
+}
+
+.dl-brand-identity__x[data-side="bottom"] {
+  bottom: 0;
+}
+
+.dl-brand-identity__x[data-side="left"],
+.dl-brand-identity__x[data-side="right"] {
+  top: 50%;
+  width: var(--_identity-x);
+  translate: 0 -50%;
+}
+
+.dl-brand-identity__x[data-side="left"] {
+  left: 0;
+}
+
+.dl-brand-identity__x[data-side="right"] {
+  right: 0;
+}
+
+.dl-brand-identity__sizes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dl-space-4, 16px) var(--dl-space-5, 24px);
+  min-height: 168px;
+  margin: 0;
+  padding: var(--dl-space-5, 24px) var(--dl-space-4, 16px);
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--muted);
+  color: var(--foreground);
+  list-style: none;
+}
+
+.dl-brand-identity__size {
+  --_identity-h: 32px;
+  display: grid;
+  justify-items: start;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-brand-identity__size .dl-brand-mark {
+  font-size: calc(var(--_identity-h) / 1.8);
+}
+
+.dl-brand-identity__size[data-kind="image"] .dl-brand-mark {
+  font-size: calc(var(--_identity-h) / 2.4);
+}
+
+.dl-brand-identity__size-label {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-brand-identity__versions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dl-space-3, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-brand-identity__version {
+  display: grid;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-brand-identity__version-stage {
+  display: grid;
+  place-items: center;
+  min-height: 76px;
+  padding: var(--dl-space-3, 12px);
+  overflow: hidden;
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 14px;
+}
+
+@container dl-board (min-width: 640px) {
+  .dl-brand-identity__surfaces {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dl-brand-identity__surfaces[data-layout="spotlight"] {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .dl-brand-identity__surfaces[data-layout="spotlight"] .dl-brand-identity__surface[data-surface="brand"] {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+
+  .dl-brand-identity__surfaces[data-layout="spotlight"] .dl-brand-identity__surface[data-surface="brand"] .dl-brand-identity__stage {
+    aspect-ratio: auto;
+    min-height: 100%;
+    font-size: clamp(24px, 5cqi, 52px);
+  }
+
+  .dl-brand-identity__surfaces[data-layout="spotlight"] .dl-brand-identity__surface:not([data-surface="brand"]) .dl-brand-identity__stage {
+    aspect-ratio: 16 / 9;
+  }
+}

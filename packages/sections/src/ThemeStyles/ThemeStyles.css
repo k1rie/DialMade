@@ -1,0 +1,24 @@
+.dl-theme {
+  box-sizing: border-box;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+  font-size: var(--dl-fs-body, 1rem);
+  line-height: var(--dl-lh-body, 1.5);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.dl-theme *,
+.dl-theme *::before,
+.dl-theme *::after {
+  box-sizing: border-box;
+}
+
+.dl-theme :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--dl-font-heading, inherit);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, normal);
+  line-height: var(--dl-lh-tight, 1.15);
+}

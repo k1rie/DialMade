@@ -1,0 +1,169 @@
+.dl-landing-cta {
+  --_cta-muted: var(--muted-foreground);
+}
+
+.dl-landing-cta__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--dl-space-6, 32px);
+  padding: var(--dl-space-7, 40px) var(--dl-space-5, 24px);
+  overflow: hidden;
+  border: var(--dl-border-width, 1px) solid color-mix(in oklab, var(--brand) 18%, var(--border));
+  border-radius: var(--dl-radius-xl, 20px);
+  background:
+    radial-gradient(70% 120% at 100% 0%, color-mix(in oklab, var(--brand) 14%, transparent), transparent 70%),
+    color-mix(in oklab, var(--brand) 6%, var(--card));
+  color: var(--card-foreground);
+  text-align: start;
+}
+
+.dl-landing-cta[data-align="center"] .dl-landing-cta__panel {
+  align-items: center;
+  text-align: center;
+}
+
+.dl-landing-cta[data-emphasis="subtle"] .dl-landing-cta__panel {
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.dl-landing-cta[data-emphasis="bold"] {
+  --_cta-muted: var(--primary-foreground-muted, var(--primary-foreground));
+}
+
+.dl-landing-cta[data-emphasis="bold"] .dl-landing-cta__panel {
+  border-color: transparent;
+  background:
+    radial-gradient(60% 130% at 100% 0%, var(--primary-hover, transparent), transparent 62%),
+    radial-gradient(55% 110% at 0% 100%, color-mix(in oklab, var(--cta) 26%, transparent), transparent 70%),
+    var(--primary);
+  box-shadow: var(--dl-shadow-lg, none);
+  color: var(--primary-foreground);
+}
+
+.dl-landing-cta[data-emphasis="bold"] .dl-button[data-variant="cta"] {
+  --_btn-bg: var(--primary-foreground);
+  --_btn-fg: var(--primary);
+  --_btn-hover-bg: var(--primary-foreground-hover, var(--primary-foreground));
+  --_btn-hover-fg: var(--primary);
+}
+
+.dl-landing-cta[data-emphasis="bold"] .dl-button[data-variant="outline"] {
+  --_btn-fg: var(--primary-foreground);
+  --_btn-border: color-mix(in oklab, var(--primary-foreground) 48%, transparent);
+  --_btn-hover-bg: color-mix(in oklab, var(--primary-foreground) 14%, transparent);
+  --_btn-hover-fg: var(--primary-foreground);
+}
+
+.dl-landing-cta[data-emphasis="bold"] .dl-landing-cta__panel :focus-visible {
+  outline-color: var(--primary-foreground);
+}
+
+.dl-landing-cta__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  max-width: 40rem;
+  min-width: 0;
+}
+
+.dl-landing-cta__title {
+  margin: 0;
+  color: inherit;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: min(var(--dl-fs-h2, 2rem), 8.5cqi);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.02em);
+  line-height: var(--dl-lh-tight, 1.15);
+  text-wrap: balance;
+}
+
+.dl-landing-cta__subtitle,
+.dl-landing-cta__note {
+  margin: 0;
+  color: var(--_cta-muted);
+  text-wrap: pretty;
+}
+
+.dl-landing-cta__subtitle {
+  font-size: calc(var(--dl-fs-body, 1rem) * 1.0625);
+  line-height: var(--dl-lh-body, 1.55);
+}
+
+.dl-landing-cta__note {
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.45;
+}
+
+.dl-landing-cta__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  align-self: stretch;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+}
+
+.dl-landing-cta__buttons,
+.dl-landing-cta__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-2, 8px);
+  width: 100%;
+}
+
+.dl-landing-cta__field {
+  flex: 1 1 auto;
+}
+
+@container dl-landing (min-width: 34rem) {
+  .dl-landing-cta__panel {
+    padding: var(--dl-space-8, 56px) var(--dl-space-7, 40px);
+  }
+
+  .dl-landing-cta__actions {
+    align-self: auto;
+  }
+
+  .dl-landing-cta__buttons,
+  .dl-landing-cta__form {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .dl-landing-cta[data-align="center"] .dl-landing-cta__buttons {
+    justify-content: center;
+  }
+
+  .dl-landing-cta__form {
+    flex-wrap: nowrap;
+    width: min(100%, 28rem);
+  }
+}
+
+@container dl-landing (min-width: 56rem) {
+  .dl-landing-cta[data-variant="split"] .dl-landing-cta__panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--dl-space-8, 56px);
+    padding: var(--dl-space-8, 56px);
+    text-align: start;
+  }
+
+  .dl-landing-cta[data-variant="split"] .dl-landing-cta__actions {
+    align-items: flex-end;
+    text-align: end;
+  }
+
+  .dl-landing-cta[data-variant="split"] .dl-landing-cta__form {
+    width: 100%;
+  }
+
+  .dl-landing-cta[data-variant="banner"] .dl-landing-cta__panel {
+    padding-block: var(--dl-space-9, 80px);
+  }
+}

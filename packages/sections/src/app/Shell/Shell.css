@@ -1,0 +1,716 @@
+/* Dashboard frame. Breakpoints are container queries on the shell: < 48rem phone (menu button), 48–64rem
+   tablet (sidebar collapses to a rail), ≥ 64rem desktop. Widgets read --_app-gap for their own gaps. */
+
+.dl-app-shell {
+  container: dl-app-shell / inline-size;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+}
+
+.dl-app-shell__frame {
+  --_canvas: color-mix(in oklab, var(--muted) 55%, var(--background));
+  --_panel: var(--_canvas);
+  --_topbar-bg: var(--_canvas);
+  --_app-gap: var(--dl-space-5, 24px);
+  --_app-pad: var(--dl-space-6, 32px);
+  --_side-w: var(--dl-sidebar-w, 256px);
+  --_side-bg: var(--sidebar, var(--card));
+  --_side-fg: var(--sidebar-foreground, var(--card-foreground));
+  --_side-muted: var(--muted-foreground);
+  --_side-border: var(--sidebar-border, var(--border));
+  --_side-hover: var(--sidebar-accent, var(--accent));
+  --_side-active-bg: color-mix(in oklab, var(--primary) 12%, transparent);
+  --_side-active-fg: var(--primary-text);
+  --_side-indicator: var(--primary);
+
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: var(--_side-w) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--_canvas);
+}
+
+.dl-app-shell[data-mode="dark"] .dl-app-shell__frame {
+  --_canvas: var(--background);
+}
+
+.dl-app-shell[data-mode="dark"] .dl-app-shell__frame[data-tone="default"] {
+  --_side-bg: var(--background);
+}
+
+.dl-app-shell__frame[data-density="compact"] {
+  --_app-gap: var(--dl-space-4, 16px);
+  --_app-pad: var(--dl-space-5, 24px);
+}
+
+.dl-app-shell__frame[data-density="spacious"] {
+  --_app-gap: var(--dl-space-6, 32px);
+  --_app-pad: var(--dl-space-7, 48px);
+}
+
+/* ── tones of the navigation surface ─────────────────────────────────────── */
+
+.dl-app-shell__frame[data-tone="inverted"] {
+  --_side-bg: var(--color-neutral-950, oklch(0.18 0.01 270));
+  --_side-fg: var(--color-neutral-50, oklch(0.98 0 0));
+  --_side-muted: var(--color-neutral-400, oklch(0.71 0.01 270));
+  --_side-border: color-mix(in oklab, var(--color-neutral-50, white) 10%, transparent);
+  --_side-hover: color-mix(in oklab, var(--color-neutral-50, white) 8%, transparent);
+  --_side-active-bg: color-mix(in oklab, var(--color-neutral-50, white) 13%, transparent);
+  --_side-active-fg: var(--color-neutral-50, white);
+  --_side-indicator: var(--color-brand-400, var(--primary));
+}
+
+.dl-app-shell[data-mode="dark"] .dl-app-shell__frame[data-tone="inverted"] {
+  --_side-bg: color-mix(in oklab, var(--color-neutral-950, black), black 45%);
+}
+
+.dl-app-shell__frame[data-tone="brand"] {
+  --_side-bg: var(--primary);
+  --_side-fg: var(--primary-foreground);
+  /* Text stays AA on the brand: quieter text and active/hover fills come from @dialmade/doc. */
+  --_side-muted: var(--primary-foreground-muted, var(--primary-foreground));
+  --_side-border: color-mix(in oklab, var(--primary-foreground) 16%, transparent);
+  --_side-hover: var(--primary-hover, var(--primary));
+  --_side-active-bg: var(--primary-hover, var(--primary));
+  --_side-active-fg: var(--primary-foreground);
+  --_side-indicator: var(--primary-foreground);
+}
+
+/* ── sidebar ─────────────────────────────────────────────────────────────── */
+
+.dl-app-shell__sidebar {
+  min-width: 0;
+  border-right: var(--dl-border-width, 1px) solid var(--_side-border);
+  background: var(--_side-bg);
+  color: var(--_side-fg);
+}
+
+.dl-app-shell__sidebar-inner {
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-5, 24px);
+  height: min(100%, 100vh);
+  padding: var(--dl-space-4, 16px) var(--dl-space-3, 12px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.dl-app-shell__switcher {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  width: 100%;
+  padding: var(--dl-space-2, 8px);
+  margin: 0;
+  border: 0;
+  border-radius: var(--dl-radius-md, 8px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-app-shell__switcher:hover {
+  background: var(--_side-hover);
+}
+
+.dl-app-shell__switcher:focus-visible {
+  outline: 2px solid var(--sidebar-ring, var(--ring));
+  outline-offset: 1px;
+}
+
+.dl-app-shell__switcher-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--_side-muted);
+}
+
+.dl-app-shell__brand {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-app-shell__mark {
+  box-sizing: border-box;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.dl-app-shell__mark[data-logo] {
+  padding: 3px;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  background: var(--background);
+}
+
+.dl-app-shell__frame[data-tone="brand"] .dl-app-shell__sidebar .dl-app-shell__mark:not([data-logo]),
+.dl-app-shell__frame[data-variant="topnav"][data-tone="brand"] .dl-app-shell__topbar .dl-app-shell__mark:not([data-logo]) {
+  background: var(--primary-foreground);
+  color: var(--primary);
+}
+
+.dl-app-shell__logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dl-app-shell__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.dl-app-shell__brand-name {
+  overflow: hidden;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  letter-spacing: var(--dl-heading-tracking, 0);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-app-shell__brand-meta,
+.dl-app-shell__user-role {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-app-shell__sidebar .dl-app-shell__brand-meta,
+.dl-app-shell__sidebar .dl-app-shell__user-role {
+  color: var(--_side-muted);
+}
+
+.dl-app-shell__nav {
+  min-width: 0;
+}
+
+.dl-app-shell__nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-app-shell__sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  margin-top: auto;
+}
+
+.dl-app-shell__user {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+  padding: var(--dl-space-3, 12px) var(--dl-space-1, 4px) 0;
+  border-top: var(--dl-border-width, 1px) solid var(--_side-border);
+}
+
+.dl-app-shell__user-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.dl-app-shell__user-name {
+  overflow: hidden;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Navigation and icon buttons on a dark or brand surface. */
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item {
+  background: transparent;
+  color: var(--_side-muted);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item:hover {
+  background: var(--_side-hover);
+  color: var(--_side-fg);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item[aria-current="page"] {
+  background: var(--_side-active-bg);
+  color: var(--_side-active-fg);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item[aria-current="page"]::before {
+  background: var(--_side-indicator);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item:focus-visible {
+  outline-color: var(--_side-fg);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__nav .dl-nav-item__count {
+  background: color-mix(in oklab, var(--_side-fg) 16%, transparent);
+  color: var(--_side-fg);
+}
+
+.dl-app-shell__frame:not([data-tone="default"]) .dl-app-shell__sidebar .dl-button[data-variant="ghost"],
+.dl-app-shell__frame[data-variant="topnav"]:not([data-tone="default"]) .dl-app-shell__topbar .dl-button[data-variant="ghost"] {
+  --_btn-fg: var(--_side-muted);
+  --_btn-hover-bg: var(--_side-hover);
+  --_btn-hover-fg: var(--_side-fg);
+}
+
+/* ── main column and top bar ─────────────────────────────────────────────── */
+
+.dl-app-shell__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--_panel);
+}
+
+.dl-app-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+  min-height: var(--dl-nav-h, 60px);
+  padding: 0 var(--_app-pad);
+  border-bottom: var(--dl-border-width, 1px) solid var(--border);
+  background: color-mix(in oklab, var(--_topbar-bg) 86%, transparent);
+  color: var(--foreground);
+  backdrop-filter: blur(12px);
+}
+
+.dl-app-shell__frame[data-variant="topnav"] .dl-app-shell__topbar {
+  --_topbar-bg: var(--_side-bg);
+
+  border-bottom-color: var(--_side-border);
+  background: var(--_side-bg);
+  color: var(--_side-fg);
+  backdrop-filter: none;
+}
+
+.dl-app-shell__topbar-start {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+}
+
+.dl-app-shell__topbar-end {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  margin-left: auto;
+}
+
+.dl-app-shell__topbar :is(.dl-app-shell__menu-button, .dl-app-shell__topbar-brand, .dl-app-shell__search-button, .dl-app-shell__topbar-avatar) {
+  display: none;
+}
+
+.dl-app-shell__frame[data-variant="topnav"] .dl-app-shell__topbar :is(.dl-app-shell__topbar-brand, .dl-app-shell__topbar-avatar) {
+  display: inline-flex;
+}
+
+.dl-app-shell__topbar-brand {
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 14rem;
+}
+
+.dl-app-shell__search {
+  flex: 1;
+  min-width: 0;
+  max-width: 24rem;
+}
+
+.dl-app-shell__topbar-end .dl-app-shell__search {
+  flex: none;
+  width: 14rem;
+}
+
+.dl-app-shell__kbd {
+  padding: 1px 5px;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-sm, 4px);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.dl-app-shell__bell {
+  position: relative;
+  display: inline-flex;
+}
+
+.dl-app-shell__bell-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--_topbar-bg);
+  pointer-events: none;
+}
+
+.dl-app-shell__frame[data-variant="topnav"][data-tone="brand"] .dl-app-shell__bell-dot {
+  background: var(--primary-foreground);
+}
+
+.dl-app-shell__topnav {
+  display: flex;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dl-app-shell__topnav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-1, 4px);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-app-shell__topnav-list > li {
+  display: flex;
+}
+
+/* ── page ────────────────────────────────────────────────────────────────── */
+
+.dl-app-shell__page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--_app-gap);
+  width: 100%;
+  max-width: calc(var(--dl-container, 1200px) + 2 * var(--_app-pad));
+  padding: calc(var(--_app-pad) * 0.85) var(--_app-pad) var(--_app-pad);
+  margin-inline: auto;
+}
+
+.dl-app-shell__page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--dl-space-3, 12px) var(--dl-space-5, 24px);
+}
+
+.dl-app-shell__heading {
+  min-width: 0;
+}
+
+.dl-app-shell__title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h3, 1.5rem);
+  font-weight: var(--dl-heading-weight, 650);
+  letter-spacing: var(--dl-heading-tracking, -0.02em);
+  line-height: var(--dl-lh-tight, 1.2);
+}
+
+.dl-app-shell__subtitle {
+  margin: var(--dl-space-1, 4px) 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.45;
+}
+
+.dl-app-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-app-shell__content {
+  container: dl-app-content / inline-size;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--_app-gap);
+  align-items: stretch;
+  min-width: 0;
+}
+
+.dl-app-shell__content > * {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@container dl-app-content (min-width: 52rem) {
+  .dl-app-shell__content > [data-dl-type="app.chartCard"] {
+    grid-column: span 8;
+  }
+
+  .dl-app-shell__content > [data-dl-type="app.activity"] {
+    grid-column: span 4;
+  }
+
+  .dl-app-shell__content > [data-dl-type="app.settingsForm"] {
+    grid-column: span 7;
+  }
+
+  .dl-app-shell__content > [data-dl-type="app.confirmDialog"] {
+    grid-column: span 5;
+  }
+}
+
+/* ── topnav: the navigation moves into the top bar ───────────────────────── */
+
+.dl-app-shell__frame[data-variant="topnav"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ── inset: the page floats as a panel next to the navigation ─────────────── */
+
+.dl-app-shell__frame[data-variant="inset"] {
+  --_panel: var(--background);
+  --_topbar-bg: var(--_panel);
+
+  background: var(--_side-bg);
+}
+
+.dl-app-shell__frame[data-variant="inset"][data-tone="default"] {
+  --_side-bg: var(--_canvas);
+}
+
+.dl-app-shell[data-mode="dark"] .dl-app-shell__frame[data-variant="inset"] {
+  --_panel: color-mix(in oklab, var(--card) 45%, var(--background));
+}
+
+.dl-app-shell__frame[data-variant="inset"] .dl-app-shell__sidebar {
+  border-right: 0;
+  background: transparent;
+}
+
+.dl-app-shell__frame[data-variant="inset"] .dl-app-shell__main {
+  margin: var(--dl-space-2, 8px) var(--dl-space-2, 8px) var(--dl-space-2, 8px) 0;
+  overflow: clip;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-xl, 16px);
+  box-shadow: var(--dl-shadow-sm, none);
+}
+
+.dl-app-shell__frame[data-variant="inset"] .dl-app-shell__topbar {
+  border-radius: var(--dl-radius-xl, 16px) var(--dl-radius-xl, 16px) 0 0;
+}
+
+/* ── rail: icons only ────────────────────────────────────────────────────── */
+
+.dl-app-shell__frame[data-variant="rail"] {
+  --_side-w: 4.5rem;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar-inner {
+  align-items: center;
+  padding-inline: var(--dl-space-2, 8px);
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar :is(.dl-app-shell__brand-text, .dl-app-shell__user-text, .dl-nav-item__label) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar :is(.dl-app-shell__switcher-icon, .dl-app-shell__user-menu) {
+  display: none;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__switcher {
+  justify-content: center;
+  width: auto;
+  padding: var(--dl-space-1, 4px);
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar .dl-nav-item {
+  justify-content: center;
+  width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar .dl-nav-item__end {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__sidebar .dl-nav-item__count {
+  min-width: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.dl-app-shell__frame[data-variant="rail"] .dl-app-shell__user {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* ── tablet: the sidebar collapses to the rail ───────────────────────────── */
+
+@container dl-app-shell (min-width: 48rem) and (max-width: 63.99rem) {
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) {
+    --_side-w: 4.5rem;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__sidebar-inner {
+    align-items: center;
+    padding-inline: var(--dl-space-2, 8px);
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"])
+    .dl-app-shell__sidebar
+    :is(.dl-app-shell__brand-text, .dl-app-shell__user-text, .dl-nav-item__label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"])
+    .dl-app-shell__sidebar
+    :is(.dl-app-shell__switcher-icon, .dl-app-shell__user-menu) {
+    display: none;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__switcher {
+    justify-content: center;
+    width: auto;
+    padding: var(--dl-space-1, 4px);
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__sidebar .dl-nav-item {
+    justify-content: center;
+    width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__sidebar .dl-nav-item__end {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__sidebar .dl-nav-item__count {
+    min-width: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    font-size: 0;
+    line-height: 0;
+  }
+
+  .dl-app-shell__frame:is([data-variant="sidebar"], [data-variant="inset"]) .dl-app-shell__user {
+    justify-content: center;
+    padding-inline: 0;
+  }
+}
+
+/* ── phone: no sidebar, the top bar carries brand, menu and account ──────── */
+
+@container dl-app-shell (max-width: 47.99rem) {
+  .dl-app-shell__frame[data-density] {
+    --_app-pad: var(--dl-space-4, 16px);
+    --_app-gap: var(--dl-space-4, 16px);
+
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dl-app-shell__frame .dl-app-shell__sidebar {
+    display: none;
+  }
+
+  .dl-app-shell__frame .dl-app-shell__topbar :is(.dl-app-shell__menu-button, .dl-app-shell__topbar-brand, .dl-app-shell__search-button, .dl-app-shell__topbar-avatar) {
+    display: inline-flex;
+  }
+
+  .dl-app-shell__frame .dl-app-shell__topbar :is(.dl-app-shell__search, .dl-app-shell__topnav) {
+    display: none;
+  }
+
+  .dl-app-shell__topbar-start {
+    gap: var(--dl-space-2, 8px);
+  }
+
+  .dl-app-shell__topbar-end {
+    gap: var(--dl-space-1, 4px);
+  }
+
+  .dl-app-shell__frame[data-variant="inset"] .dl-app-shell__main {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .dl-app-shell__frame[data-variant="inset"] .dl-app-shell__topbar {
+    border-radius: 0;
+  }
+
+  .dl-app-shell__actions {
+    width: 100%;
+  }
+
+  .dl-app-shell__actions > .dl-button {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-app-shell__switcher {
+    transition: none;
+  }
+}

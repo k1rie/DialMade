@@ -1,0 +1,89 @@
+.dl-brand-type__fonts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+}
+
+.dl-brand-type__pairing {
+  margin: 0;
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-small, 0.875rem);
+}
+
+.dl-brand-type__extras {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+}
+
+.dl-brand-type__weights {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr));
+  gap: var(--dl-space-4, 16px) var(--dl-space-3, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dl-brand-type__weight {
+  display: grid;
+  gap: var(--dl-space-1, 4px);
+}
+
+.dl-brand-type__weight-glyph {
+  --_type-weight: 400;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: clamp(var(--dl-fs-h2, 2rem), 5cqi, var(--dl-fs-display, 3.5rem));
+  font-weight: var(--_type-weight);
+  letter-spacing: var(--dl-heading-tracking, normal);
+  line-height: 1;
+}
+
+.dl-brand-type__weight-name {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-brand-type__glyphs {
+  display: grid;
+  gap: var(--dl-space-1, 4px);
+  font-size: var(--dl-fs-h3, 1.5rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dl-brand-type__glyphs p {
+  margin: 0;
+}
+
+.dl-brand-type__mono {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dl-space-1, 4px) var(--dl-space-3, 12px);
+  margin: 0;
+  padding-top: var(--dl-space-3, 12px);
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+}
+
+.dl-brand-type__mono code {
+  color: var(--card-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-small, 0.875rem);
+}
+
+@container dl-board (min-width: 640px) {
+  .dl-brand-type__fonts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container dl-board (min-width: 860px) {
+  .dl-brand-type__extras {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

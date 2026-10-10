@@ -1,0 +1,60 @@
+.dl-dialog-preview {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  min-height: 20rem;
+  padding: var(--dl-space-6, 24px) var(--dl-space-4, 16px);
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-lg, 12px);
+  background: var(--background);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dl-dialog-preview__page {
+  position: absolute;
+  inset: var(--dl-space-5, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  z-index: -2;
+}
+
+.dl-dialog-preview__line {
+  height: 0.75rem;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: var(--muted);
+}
+
+.dl-dialog-preview__line:nth-child(1) {
+  width: 40%;
+  height: 1.25rem;
+}
+
+.dl-dialog-preview__line:nth-child(2) {
+  width: 85%;
+}
+
+.dl-dialog-preview__line:nth-child(3) {
+  width: 70%;
+}
+
+.dl-dialog-preview__line:nth-child(4) {
+  flex: 1;
+  width: 100%;
+  border-radius: var(--dl-radius-lg, 12px);
+}
+
+.dl-dialog-preview__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: oklch(0 0 0 / 0.45);
+}
+
+.dl-dialog-preview__surface {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}

@@ -1,0 +1,42 @@
+.dl-brand-roles__role {
+  display: grid;
+  gap: 1px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.dl-brand-roles__role code,
+.dl-brand-roles__value code {
+  color: var(--muted-foreground);
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 400;
+}
+
+.dl-brand-roles__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-brand-roles__swatches {
+  display: inline-flex;
+}
+
+.dl-brand-roles__swatch {
+  --_roles-swatch: var(--muted);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--dl-radius-sm, 4px);
+  background: var(--_roles-swatch);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+
+.dl-brand-roles__swatch + .dl-brand-roles__swatch {
+  margin-left: -4px;
+  outline: 2px solid var(--card);
+}
+
+.dl-brand-roles__value code {
+  color: var(--card-foreground);
+}

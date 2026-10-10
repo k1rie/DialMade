@@ -1,0 +1,204 @@
+.dl-chart {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  width: 100%;
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-body, inherit);
+}
+
+.dl-chart__title {
+  margin: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-body, 1rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, 0);
+}
+
+.dl-chart__canvas {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.dl-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.dl-chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  shape-rendering: crispEdges;
+}
+
+.dl-chart__baseline {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.dl-chart__tick {
+  fill: var(--muted-foreground);
+  font-family: var(--dl-font-body, inherit);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-chart__series[data-series="1"] { color: var(--chart-1); }
+.dl-chart__series[data-series="2"] { color: var(--chart-2); }
+.dl-chart__series[data-series="3"] { color: var(--chart-3); }
+.dl-chart__series[data-series="4"] { color: var(--chart-4); }
+.dl-chart__series[data-series="5"] { color: var(--chart-5); }
+
+.dl-chart__stop[data-series="1"] { stop-color: var(--chart-1); }
+.dl-chart__stop[data-series="2"] { stop-color: var(--chart-2); }
+.dl-chart__stop[data-series="3"] { stop-color: var(--chart-3); }
+.dl-chart__stop[data-series="4"] { stop-color: var(--chart-4); }
+.dl-chart__stop[data-series="5"] { stop-color: var(--chart-5); }
+
+.dl-chart__bar {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: dl-chart-grow var(--dl-duration-slow, 320ms) var(--dl-ease, ease) both;
+  transition: opacity var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-chart__bar[data-negative] {
+  transform-origin: top;
+}
+
+.dl-chart[data-active] .dl-chart__bar:not([data-active]) {
+  opacity: 0.55;
+}
+
+.dl-chart__band {
+  fill: var(--muted);
+  opacity: 0.6;
+}
+
+.dl-chart__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: dl-chart-draw var(--dl-duration-slow, 320ms) var(--dl-ease, ease) both;
+}
+
+.dl-chart__area {
+  animation: dl-chart-fade var(--dl-duration-slow, 320ms) var(--dl-ease, ease) both;
+}
+
+.dl-chart__point {
+  fill: var(--card);
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.dl-chart__point[data-active] {
+  fill: currentColor;
+  stroke: var(--card);
+}
+
+.dl-chart__guide {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.dl-chart__tooltip {
+  position: absolute;
+  top: var(--dl-space-5, 20px);
+  z-index: 2;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 8rem;
+  padding: var(--dl-space-2, 8px) var(--dl-space-3, 10px);
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-radius-md, 8px);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--dl-shadow-md, 0 8px 24px -8px rgb(0 0 0 / 0.25));
+  font-size: var(--dl-fs-caption, 0.75rem);
+  line-height: 1.4;
+  pointer-events: none;
+  translate: -50% 0;
+}
+
+.dl-chart__tooltip[data-align="start"] {
+  translate: 0 0;
+}
+
+.dl-chart__tooltip[data-align="end"] {
+  translate: -100% 0;
+}
+
+.dl-chart__tooltip-title {
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.dl-chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-space-2, 6px);
+}
+
+.dl-chart__tooltip-swatch {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.dl-chart__tooltip-name {
+  flex: 1;
+  color: var(--muted-foreground);
+}
+
+.dl-chart__tooltip-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes dl-chart-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes dl-chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dl-chart-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-chart__bar,
+  .dl-chart__line,
+  .dl-chart__area {
+    animation: none;
+    transition: none;
+  }
+}

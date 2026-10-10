@@ -1,0 +1,17 @@
+.dl-button.dl-icon-button {
+  width: var(--_btn-h);
+  min-width: var(--_btn-h);
+  padding: 0;
+}
+
+.dl-button.dl-icon-button[data-round] {
+  border-radius: var(--dl-radius-full, 9999px);
+}
+
+.dl-icon-button .dl-button__icon {
+  font-size: 1.25em;
+}
+
+.dl-button.dl-icon-button[data-size="sm"] .dl-button__icon {
+  font-size: 1.15em;
+}

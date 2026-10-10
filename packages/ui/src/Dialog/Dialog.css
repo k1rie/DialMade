@@ -1,0 +1,56 @@
+.dl-dialog {
+  box-sizing: border-box;
+  width: min(100% - 2 * var(--dl-space-4, 16px), 40rem);
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--dl-space-4, 16px));
+  padding: 0;
+  margin: auto;
+  border: 0;
+  background: transparent;
+  color: var(--popover-foreground);
+  overflow: visible;
+}
+
+.dl-dialog[data-size="sm"] {
+  width: min(100% - 2 * var(--dl-space-4, 16px), 22rem);
+}
+
+.dl-dialog[data-size="md"] {
+  width: min(100% - 2 * var(--dl-space-4, 16px), 28rem);
+}
+
+.dl-dialog > .dl-dialog-panel {
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--dl-space-4, 16px));
+}
+
+.dl-dialog::backdrop {
+  background: oklch(0 0 0 / 0.5);
+}
+
+.dl-dialog[open] {
+  animation: dl-dialog-in var(--dl-duration-base, 200ms) var(--dl-ease, ease) both;
+}
+
+.dl-dialog[open]::backdrop {
+  animation: dl-dialog-fade var(--dl-duration-base, 200ms) var(--dl-ease, ease) both;
+}
+
+@keyframes dl-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes dl-dialog-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-dialog[open] {
+    animation-name: dl-dialog-fade;
+  }
+}

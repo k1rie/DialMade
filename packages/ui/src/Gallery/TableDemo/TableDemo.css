@@ -1,0 +1,10 @@
+.dl-gallery-customer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+}
+
+.dl-gallery-mono {
+  font-family: var(--dl-font-mono, ui-monospace, monospace);
+  font-size: var(--dl-fs-caption, 0.8125rem);
+}

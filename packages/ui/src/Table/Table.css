@@ -1,0 +1,117 @@
+.dl-table-wrap {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--dl-border-width, 1px) solid var(--border);
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  color: var(--card-foreground);
+  font-family: var(--dl-font-body, inherit);
+  overflow: hidden;
+}
+
+/* Positioned so visually hidden (absolute) cell text stays inside the scroller instead of widening the page. */
+.dl-table-scroll {
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.dl-table-scroll:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.dl-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.dl-table__caption {
+  padding: var(--dl-space-4, 16px) var(--dl-space-4, 16px) var(--dl-space-3, 12px);
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-body, 1rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, 0);
+  text-align: start;
+}
+
+.dl-table th,
+.dl-table td {
+  height: var(--dl-table-row-h, 48px);
+  padding: 0 var(--dl-space-4, 16px);
+  border-bottom: var(--dl-border-width, 1px) solid var(--border);
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dl-table[data-density="compact"] th,
+.dl-table[data-density="compact"] td {
+  height: calc(var(--dl-table-row-h, 48px) * 0.75);
+  padding: 0 var(--dl-space-3, 12px);
+}
+
+.dl-table thead th {
+  height: calc(var(--dl-table-row-h, 48px) * 0.8);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dl-table tbody th {
+  font-weight: 550;
+  color: var(--card-foreground);
+}
+
+.dl-table [data-align="center"] {
+  text-align: center;
+}
+
+.dl-table [data-align="end"] {
+  text-align: end;
+}
+
+.dl-table tbody tr {
+  transition: background-color var(--dl-duration-fast, 120ms) var(--dl-ease, ease);
+}
+
+.dl-table tbody tr:hover,
+.dl-table tbody tr[data-preview-state="hover"] {
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+}
+
+.dl-table tbody tr[aria-selected="true"] {
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+}
+
+.dl-table[data-striped] tbody tr:nth-child(even) {
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+}
+
+.dl-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.dl-table__empty {
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.dl-table-wrap > .dl-table-pagination {
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-table tbody tr {
+    transition: none;
+  }
+}

@@ -1,0 +1,799 @@
+{
+ "clusters": {
+  "ai-policy-pricing": [
+   {
+    "claim": "Precios: claude-sonnet-5-5 $2/$10 por MTok, claude-opus-5-5 $4/$20, Batch −50%; las imágenes cuestan ⌈w/28⌉×⌈h/28⌉ tokens visuales.",
+    "why_it_matters": "Base de la estimación de ~$1–4 por corrida del juez visual y del costo por turno del asistente.",
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing ; https://platform.claude.com/docs/en/build-with-claude/vision",
+    "from": "repo:adhd",
+    "id": 5
+   },
+   {
+    "claim": "Haiku 5.5 cuesta $0.10/$0.50 por millón de tokens y Sonnet 5.5 $2/$10; los modelos 4.7+ procesan imágenes de hasta 2576 px (4784 tokens).",
+    "why_it_matters": "Determina el costo por fingerprint y la elección de modelo.",
+    "source": "claude-api skill SKILL.md (cache 2026-10-06) y https://platform.claude.com/docs/en/build-with-claude/vision.md",
+    "from": "web:references",
+    "id": 57
+   },
+   {
+    "claim": "Anthropic prohíbe a desarrolladores de terceros ofrecer login de Claude.ai o enrutar peticiones con credenciales Free/Pro/Max, y no existe un OAuth o 'Sign in with Claude' oficial para apps de terceros.",
+    "why_it_matters": "Define si la integración 'usa tu suscripción' puede ser directa (no) o tiene que pasar por MCP connector, plugin o BYOK (sí). Es la decisión arquitectónica central.",
+    "source": "https://code.claude.com/docs/en/legal-and-compliance ; https://code.claude.com/docs/en/agent-sdk/overview ; https://platform.claude.com/docs/en/manage-claude/authentication",
+    "from": "web:ai-integration",
+    "id": 61
+   },
+   {
+    "claim": "El artículo de soporte del Agent SDK (actualizado el 7-oct-2026) dice que las 'third-party apps' siguen consumiendo los límites de la suscripción. No está claro qué apps califican ni cómo se autentican.",
+    "why_it_matters": "Si existiera una vía aprobada de 'third-party app con límites de suscripción' (por ejemplo, partners aprobados), cambiaría la recomendación de BYOK. Hoy parece referirse a apps aprobadas o a Claude Code hospedado.",
+    "source": "https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan",
+    "from": "web:ai-integration",
+    "id": 62
+   },
+   {
+    "claim": "Créditos API mensuales desde el 7-oct-2026: Max 5x $100, Max 20x $200, Team $20/$100 por seat (tope $500). Pro no es elegible. Se usan con API key de la organización de Console vinculada.",
+    "why_it_matters": "Es el argumento de onboarding 'usa lo que ya pagas' para BYOK y define cuántas generaciones gratuitas tendría un usuario Max.",
+    "source": "https://support.claude.com/en/articles/17154008-monthly-api-credits-for-max-and-team-plans",
+    "from": "web:ai-integration",
+    "id": 63
+   },
+   {
+    "claim": "Precios: Opus 5.5 $4/$20 (cache read $0.20), Sonnet 5.5 $2/$10 (cache read $0.10), Haiku 5.5 $0.10/$0.50 con prompts de hasta 100K tokens ($0.50/$2.50 por encima).",
+    "why_it_matters": "Las estimaciones de costo por generación y la elección de modelo por paso dependen de esto. Haiku 5.5 es ~10x más barato que Haiku 4.5, lo que es inusual y conviene confirmarlo.",
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "from": "web:ai-integration",
+    "id": 64
+   },
+   {
+    "claim": "MCP Apps en Claude funciona en todos los planes (incluido Free) y en móvil, admite el modo fullscreen y permite que la UI llame a sendMessage y updateModelContext para disparar la generación del Claude del usuario.",
+    "why_it_matters": "Determina si el tablero de arrastrar puede vivir dentro de Claude con el modelo y el plan del usuario (pieza clave de v2).",
+    "source": "https://claude.com/blog/interactive-tools-in-claude ; https://claude.com/docs/connectors/building/mcp-apps/design-guidelines ; https://apps.extensions.modelcontextprotocol.io/api/classes/app.App.html",
+    "from": "web:ai-integration",
+    "id": 65
+   },
+   {
+    "claim": "El drag-and-drop con pointer events y las animaciones (GSAP o Motion) funcionan dentro del iframe sandbox de Claude (web y desktop) y en WKWebView/WebView en móvil.",
+    "why_it_matters": "La propuesta de valor es 'arrastrar para generar' con motion graphics; si el host lo limita, el tablero dentro de Claude tendría que simplificarse.",
+    "source": "No documentado; inferido de https://claude.com/docs/connectors/building/mcp-apps/design-guidelines (requiere prueba)",
+    "from": "web:ai-integration",
+    "id": 66
+   },
+   {
+    "claim": "ontoolinputpartial entrega en Claude los argumentos de la herramienta en streaming, lo que permite un preview 'que se construye en vivo' mientras Claude escribe el HTML.",
+    "why_it_matters": "Es el efecto 'wow' de motion dentro de Claude sin costo adicional.",
+    "source": "https://apps.extensions.modelcontextprotocol.io/api/classes/app.App.html",
+    "from": "web:ai-integration",
+    "id": 67
+   },
+   {
+    "claim": "Cualquier plan pago puede enviar connectors y plugins al directorio, y el escaneo automático lista el connector como 'Community' sin revisión humana.",
+    "why_it_matters": "Impacta en el tiempo de salida al mercado y en la estrategia de distribución.",
+    "source": "https://claude.com/docs/connectors/building/submission ; https://claude.com/docs/plugins/submit",
+    "from": "web:ai-integration",
+    "id": 68
+   },
+   {
+    "claim": "MCP 2026-07-28 deprecó Sampling, Roots y Logging, y también DCR a favor de CIMD.",
+    "why_it_matters": "Impide depender de sampling para usar el LLM del usuario y define el flujo OAuth del servidor MCP.",
+    "source": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+    "from": "web:ai-integration",
+    "id": 72
+   },
+   {
+    "claim": "ChatGPT implementa el estándar MCP Apps y sus plugins (skills más MCP) corren en ChatGPT y Codex.",
+    "why_it_matters": "Permite reutilizar el mismo servidor y la misma UI para el canal OpenAI sin reescribir con window.openai.",
+    "source": "https://developers.openai.com/apps-sdk/llms-full.txt",
+    "from": "web:ai-integration",
+    "id": 73
+   },
+   {
+    "claim": "Precios de terceros: GPT-5.5 $5/$30, Gemini 3 Pro $2/$12 y Gemini 3 Flash $0.50/$3. Los MCP personalizados en la app de Gemini solo están en AI Ultra.",
+    "why_it_matters": "Afecta el plan multi-proveedor; las fuentes son agregadores secundarios y se contradicen.",
+    "source": "https://morphllm.com/openai-api-pricing ; https://benchlm.ai/blog/posts/gemini-api-pricing ; https://harvv.com/install/gemini",
+    "from": "web:ai-integration",
+    "id": 74
+   },
+   {
+    "claim": "MCP Apps funciona en Claude web y Desktop con servidores MCP remotos de terceros añadidos como conectores personalizados, en planes Pro y Max.",
+    "why_it_matters": "Es la vía principal para usar la IA del usuario sin pedirle una API key.",
+    "source": "https://modelcontextprotocol.io/docs/extensions/apps",
+    "from": "web:preview-export",
+    "id": 102
+   }
+  ],
+  "claude-code-plugins": [
+   {
+    "claim": "Instalada como plugin, la skill se invoca con `/i-have-adhd` (README), mientras que la doc de Claude Code indica que las skills de plugins aparecen como `/<plugin>:<skill>`.",
+    "why_it_matters": "Determina el comando real y si convive o choca con la copia local.",
+    "source": "https://code.claude.com/docs/en/discover-plugins ; /Users/diegoguerrero/Desktop/designApp/vendor/i-have-adhd/INSTALL.md:116-126",
+    "from": "repo:adhd",
+    "id": 2
+   },
+   {
+    "claim": "Las skills invocadas se re-adjuntan tras la auto-compactación (primeros 5.000 tokens de cada una, con un presupuesto de 25.000).",
+    "why_it_matters": "Decide si la skill local basta o si hace falta un output style o hook para sesiones largas.",
+    "source": "https://code.claude.com/docs/en/skills",
+    "from": "repo:adhd",
+    "id": 3
+   },
+   {
+    "claim": "Los output styles de proyecto (.claude/output-styles) con keep-coding-instructions se envían con cada request; el estilo 'Concise' requiere v2.1.237 o posterior.",
+    "why_it_matters": "Es la vía recomendada para always-on limitado al repo; no pude comprobar la versión de Claude Code instalada (el CLI no está en el PATH).",
+    "source": "https://code.claude.com/docs/en/output-styles",
+    "from": "repo:adhd",
+    "id": 4
+   },
+   {
+    "claim": "Un plugin de Claude Code puede incluir `.mcp.json` hacia un MCP remoto y `userConfig` con `sensitive: true` guardado en secure storage; `claude plugin install` no pide userConfig salvo con `--config`",
+    "why_it_matters": "Base del plan de integración con el Claude del usuario mediante un plugin propio de la app",
+    "source": "https://code.claude.com/docs/en/plugins/components",
+    "from": "repo:uupm-ecosystem",
+    "id": 20
+   },
+   {
+    "claim": "La subida de skills a Claude.ai limita el zip a 200 archivos (según el README del repo)",
+    "why_it_matters": "Afecta a cómo empaquetar una skill de la app para usuarios de claude.ai (no Claude Code)",
+    "source": "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/README.md (Troubleshooting: 'Zip contains too many files (maximum 200)')",
+    "from": "repo:uupm-ecosystem",
+    "id": 22
+   },
+   {
+    "claim": "El id de instalación correcto del plugin oficial frontend-design es `frontend-design@claude-plugins-official`, no `frontend-design@anthropics/claude-code` como dice stack/",
+    "why_it_matters": "Si la app recomienda la capa de 'taste' de Anthropic, el comando debe ser correcto",
+    "source": "https://claudemarketplaces.com/skills/anthropics/claude-plugins-official/frontend-design",
+    "from": "repo:uupm-ecosystem",
+    "id": 23
+   }
+  ],
+  "figma": [
+   {
+    "claim": "El MCP remoto de Figma (`https://mcp.figma.com/mcp`) expone `generate_figma_design` (code to canvas) para Claude Code y otros clientes, solo en el server remoto, y cualquier seat puede usarlo en drafts",
+    "why_it_matters": "Es la vía más barata para 'pasárselo al diseñador en Figma' sin construir una integración propia",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/code-to-canvas/",
+    "from": "repo:uupm-ecosystem",
+    "id": 17
+   },
+   {
+    "claim": "Figma soporta import/export nativo de variables en JSON alineado con DTCG, en qué planes, y con qué fidelidad en el round-trip",
+    "why_it_matters": "Define si el export DTCG de la app se puede importar directo en Figma o si hace falta plugin propio o Tokens Studio",
+    "source": "https://forum.figma.com/ask-the-community-7/native-variable-export-feature-47831",
+    "from": "repo:uupm-ecosystem",
+    "id": 18
+   },
+   {
+    "claim": "La importación nativa de variables de Figma acepta DTCG solo con colores sRGB o HSL, un archivo por modo; no está claro qué planes pueden importar y exportar",
+    "why_it_matters": "Determina el formato exacto del archivo 'para tu diseñador' y si un usuario free puede tener claro y oscuro",
+    "source": "https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables",
+    "from": "web:palette",
+    "id": 40
+   },
+   {
+    "claim": "Modos por colección en Figma: Professional 10, Organization 20, Enterprise ilimitado con extended collections; Starter posiblemente 1",
+    "why_it_matters": "Con un solo modo no caben claro y oscuro en la misma colección",
+    "source": "https://forum.figma.com/suggest-a-feature-11/launched-all-plans-should-offer-more-than-4-variable-modes-13979 ; https://www.figma.com/pricing/",
+    "from": "web:palette",
+    "id": 41
+   },
+   {
+    "claim": "La REST API de Variables de Figma (GET y POST /v1/files/:key/variables) requiere plan Enterprise y seat Full",
+    "why_it_matters": "Descarta empujar variables a Figma por servidor para la mayoría de usuarios; obliga a usar plugin o importación manual",
+    "source": "https://developers.figma.com/docs/rest-api/variables",
+    "from": "web:palette",
+    "id": 42
+   },
+   {
+    "claim": "La herramienta use_figma (write-to-canvas) del MCP remoto de Figma está soportada en Claude Desktop y Claude Code, requiere seat Full fuera de drafts y será de pago por uso tras la beta.",
+    "why_it_matters": "Define si 'push_to_figma' se delega al Claude del usuario o hay que construir un plugin propio de Figma.",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/write-to-canvas ; https://help.figma.com/hc/en-us/articles/39252411778583-Figma-MCP-server-FAQs",
+    "from": "web:ai-integration",
+    "id": 70
+   },
+   {
+    "claim": "Code to Canvas (generate_figma_design) produce capas planas sin auto layout (FAQ oficial), frente a capas con auto layout (pruebas de Codeminer42 y otras crónicas).",
+    "why_it_matters": "Define si Code to Canvas basta como export 'editable' o si hace falta use_figma o un plugin propio para entregar auto layout real al diseñador.",
+    "source": "https://help.figma.com/hc/en-us/articles/39252411778583-Figma-MCP-server-FAQs vs https://blog.codeminer42.com/figma-code-to-canvas-what-the-demo-didnt-show-you/",
+    "from": "web:figma",
+    "id": 86
+   },
+   {
+    "claim": "use_figma puede ser usado por usuarios Starter o sin Full seat dentro de sus drafts (el FAQ dice 'Full Seat required to write outside of drafts').",
+    "why_it_matters": "Si los devs gratuitos pueden escribir en drafts, el modo 'trae tu Claude' sirve para la mayoría de nuestros usuarios sin pagar Figma.",
+    "source": "https://help.figma.com/hc/en-us/articles/39252411778583-Figma-MCP-server-FAQs; https://developers.figma.com/docs/figma-mcp-server/write-to-canvas",
+    "from": "web:figma",
+    "id": 87
+   },
+   {
+    "claim": "El límite del MCP para Starter/View/Collab es de 20 llamadas al mes (página actual) y no de 6 (foro y docs anteriores), y generate_figma_design y use_figma están exentos de rate limit.",
+    "why_it_matters": "Afecta a la viabilidad de flujos con lectura de contexto (get_design_context) para usuarios gratuitos.",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/rate-limits-access/",
+    "from": "web:figma",
+    "id": 88
+   },
+   {
+    "claim": "use_figma no soporta imágenes ni assets (página de write-to-canvas), aunque la lista de tools ya incluye upload_assets.",
+    "why_it_matters": "Los diseños con fotos o logos dependen de esto; si no está soportado hay que insertar las imágenes con el plugin o con el portapapeles.",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/write-to-canvas vs https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/",
+    "from": "web:figma",
+    "id": 89
+   },
+   {
+    "claim": "El MCP remoto de Figma sigue aplicando la lista blanca por client_name en octubre de 2026 y no hay programa de partners para apps web de terceros.",
+    "why_it_matters": "Si se abriera (por ejemplo con OAuth para apps), podríamos escribir en Figma desde nuestro backend sin pedir al usuario que use Claude Code.",
+    "source": "https://workos.com/blog/figma-mcp-403-forbidden-client-name",
+    "from": "web:figma",
+    "id": 90
+   },
+   {
+    "claim": "@figit/dom-to-figma genera auto layout nativo y texto editable con buena fidelidad y es estable con la versión actual de Figma.",
+    "why_it_matters": "Es la base propuesta para el botón 'Copy to Figma' del MVP sin coste; si falla, toca pagar code.to.design.",
+    "source": "https://github.com/figitdesign/web-to-figma",
+    "from": "web:figma",
+    "id": 91
+   },
+   {
+    "claim": "El precio por crédito de la API code.to.design y si existe un tier gratuito o de prueba para la API.",
+    "why_it_matters": "Determina el coste unitario por exportación si se elige la opción B.",
+    "source": "https://divriots.com/api/pricing",
+    "from": "web:figma",
+    "id": 92
+   },
+   {
+    "claim": "La importación nativa de JSON DTCG en el panel de Variables está disponible en todos los planes (rollout completo) y cómo se comporta en Starter (sin modos).",
+    "why_it_matters": "Es la pieza 'cero código' para entregar la paleta como variables; si Starter no la tiene, habría que crear las variables con el plugin.",
+    "source": "https://help.figma.com/hc/en-us/articles/15343816063383-Modes-for-variables; https://help.figma.com/hc/en-us/articles/360040328273",
+    "from": "web:figma",
+    "id": 93
+   },
+   {
+    "claim": "El MCP de html.to.design (mcp.to.design) puede importar a Figma sin que el plugin esté abierto, y permite uso headless con client_credentials.",
+    "why_it_matters": "Si es así, nuestro backend podría empujar diseños a Figma vía html.to.design sin pasar por el Claude del usuario.",
+    "source": "https://html.to.design/docs/mcp-tab",
+    "from": "web:figma",
+    "id": 95
+   },
+   {
+    "claim": "generate_figma_design (Code to Canvas) puede capturar una URL pública de producción (p. ej. tuapp-usercontent.com/s/{slug}) desde Claude Code con cualquier seat de Figma en drafts.",
+    "why_it_matters": "Es la base del 'Enviar a Figma' del MVP sin plugin propio.",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/code-to-canvas/",
+    "from": "web:preview-export",
+    "id": 96
+   },
+   {
+    "claim": "Solo los clientes listados en el Figma MCP Catalog pueden conectarse al MCP remoto de Figma; generate_figma_design y use_figma son tools de escritura remote-only",
+    "why_it_matters": "Decide si la app puede escribir en Figma directamente o debe hacerlo vía plugin propio o el Claude del usuario",
+    "source": "https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/",
+    "from": "web:competitors",
+    "id": 110
+   }
+  ],
+  "claude-design": [
+   {
+    "claim": "Claude Design (actualización del 2026-06-17) importa design systems desde repos de GitHub, archivos o uploads, y hace handoff a Claude Code",
+    "why_it_matters": "Si es cierto, el paquete exportado por la app puede ser input directo de Claude Design ('compatible con Claude Design')",
+    "source": "https://techrepublic.com/article/news-anthropic-claude-design-overhaul-enterprise-teams",
+    "from": "repo:uupm-ecosystem",
+    "id": 19
+   },
+   {
+    "claim": "El MCP de Claude Design está en https://api.anthropic.com/v1/design/mcp, se activa con `/design-consent` y expone ~23 tools (proyectos, archivos .dc.html, sharing, comentarios, previews).",
+    "why_it_matters": "Define si la IA del usuario puede crear o leer proyectos de Claude Design desde Claude Code con nuestro paquete. Es el puente más potente sin API pública.",
+    "source": "https://wmedia.es/en/tips/claude-code-claude-design-mcp-connect (tercero, ago-2026; no aparece en documentación oficial)",
+    "from": "web:claude-design-framer",
+    "id": 24
+   },
+   {
+    "claim": "/design-sync solo acepta librerías React (dist/ o Storybook); Vue, Svelte y Angular no.",
+    "why_it_matters": "Determina el stack del paquete de componentes que debemos exportar.",
+    "source": "https://wmedia.es/en/tips/claude-code-design-sync-your-components (tercero)",
+    "from": "web:claude-design-framer",
+    "id": 25
+   },
+   {
+    "claim": "El tokens.json del tipo 'Design System' de Claude usa formato lista {name,value,usage} y no lee DTCG.",
+    "why_it_matters": "Si exportamos DTCG directamente, los tokens no aparecen en Claude.",
+    "source": "Artifact tool, read type_url https://claude.ai/artifact/5M7UeXXcx16TP3vzVFNDzd, release 1791558544-c1cf (observado en sesión; interno)",
+    "from": "web:claude-design-framer",
+    "id": 26
+   },
+   {
+    "claim": "Claude Design acepta .fig y/o links de Figma como fuente de design system.",
+    "why_it_matters": "Afecta a si el flujo 'Figma del diseñador → Claude Design' es viable o hay que pasar siempre por código.",
+    "source": "https://uxplanet.org/can-ai-follow-a-real-design-system-c30330ad6dd1 (tercero); no aparece en las fuentes oficiales",
+    "from": "web:claude-design-framer",
+    "id": 27
+   },
+   {
+    "claim": "Los destinos 'Send to' de Claude Design (Lovable, v0, Vercel, etc.) son conectores MCP, y existe o existirá un proceso para que terceros se registren como destino.",
+    "why_it_matters": "Si existe, nuestra app podría aparecer como destino nativo en el botón Share/Export de Claude Design.",
+    "source": "https://claude.com/blog/claude-design-stays-on-brand-for-daily-work (menciona 'Claude Design MCP integration' de Replit); proceso no documentado",
+    "from": "web:claude-design-framer",
+    "id": 28
+   },
+   {
+    "claim": "Claude Design, Slides y Docs están disponibles en el plan Free desde oct-2026.",
+    "why_it_matters": "Amplía el público al que el handoff a Claude Design le sirve sin coste extra.",
+    "source": "https://support.claude.com/en/articles/14604416-get-started-with-claude-design ; https://claude.com/product/claude-design",
+    "from": "web:claude-design-framer",
+    "id": 33
+   },
+   {
+    "claim": "Claude Design comparte conectores con Claude web/desktop y aceptaría un conector MCP custom de nuestra app.",
+    "why_it_matters": "Es clave para la integración 'abre tu tablero en Claude Design'; solo se confirmó para el conector verificado de Mobbin.",
+    "source": "https://docs.mobbin.com/mcp/clients/claude-design.md",
+    "from": "web:references",
+    "id": 54
+   },
+   {
+    "claim": "Claude Design no tiene API pública de import o integración; los design systems se importan desde GitHub, archivos o codebase con /design-sync, y el standalone cierra el 14-dic-2026.",
+    "why_it_matters": "Define qué significa en la práctica 'compatible con Claude Design'.",
+    "source": "https://support.claude.com/en/articles/14604416-get-started-with-claude-design ; https://www.anthropic.com/news/claude-design-anthropic-labs",
+    "from": "web:ai-integration",
+    "id": 71
+   },
+   {
+    "claim": "Claude Design no tiene export nativo a Figma (fuentes de abr-may 2026; una fuente dice lo contrario).",
+    "why_it_matters": "El usuario quiere compatibilidad con Claude Design. Si ya exporta a Figma, podríamos encadenar nuestra app, Claude Design y Figma.",
+    "source": "https://html.to.design/blog/from-claude-design-to-figma; https://claudeforoperators.com/platform/claude-design/",
+    "from": "web:figma",
+    "id": 94
+   },
+   {
+    "claim": "Claude Design ingiere un repo de GitHub o un zip con DESIGN.md + tokens y lo usa como design system; no hay API pública.",
+    "why_it_matters": "Define qué significa en la práctica 'compatible con Claude Design'.",
+    "source": "https://www.datacamp.com/blog/claude-design",
+    "from": "web:preview-export",
+    "id": 101
+   },
+   {
+    "claim": "Claude Design no exporta a Figma (formatos: .zip, PDF, PPTX, Google Slides, HTML, integraciones Canva/Gamma/HubSpot/Miro/Lovable/Netlify/Replit/v0/Vercel/Wix/Adobe y handoff a Claude Code)",
+    "why_it_matters": "Si Claude Design añadiera export a Figma, el 'handoff al diseñador' deja de ser un diferenciador del producto",
+    "source": "https://support.claude.com/en/articles/14604416-get-started-with-claude-design",
+    "from": "web:competitors",
+    "id": 106
+   },
+   {
+    "claim": "Claude Design está disponible en el plan Free, ahora es una plantilla de artifact dentro de Claude y el standalone claude.ai/design cierra el 14-dic-2026",
+    "why_it_matters": "Define cuántos usuarios pueden usar el puente 'Direction Pack → Claude Design' sin pagar, y cómo cambia la integración",
+    "source": "https://support.claude.com/en/articles/17440474",
+    "from": "web:competitors",
+    "id": 107
+   },
+   {
+    "claim": "Relume ofrece 'Claude Design Export' de un clic de su design system (tokens + más de 1,000 componentes + logos)",
+    "why_it_matters": "Es el competidor directo del concepto 'dirección previa → Claude Design'; hay que entender su mecanismo de import para replicarlo",
+    "source": "https://www.relume.ai/claude-design-export",
+    "from": "web:competitors",
+    "id": 108
+   }
+  ],
+  "framer-handoff-competitors": [
+   {
+    "claim": "La Framer Server API permite crear nodos de layout (createFrameNode, setText) en headless, no solo styles, CMS y publish.",
+    "why_it_matters": "Decide si podemos empujar diseños editables a Framer desde nuestro backend sin plugin ni agente.",
+    "source": "https://www.framer.com/developers/server-api-reference ('shares most methods', sin lista de exclusiones)",
+    "from": "web:claude-design-framer",
+    "id": 29
+   },
+   {
+    "claim": "El setup de Framer external agents es `npx @framer/agent setup`, instala skills en ~/.claude/skills, y su uso no consume AI credits de Framer.",
+    "why_it_matters": "Afecta a las instrucciones que daríamos en el botón 'Enviar a Framer' y al coste para el usuario.",
+    "source": "Resumen de búsqueda sobre https://www.framer.com/agents/external/ y blogs de terceros (jo.works, humblytics); la página oficial de setup no mostraba el comando",
+    "from": "web:claude-design-framer",
+    "id": 30
+   },
+   {
+    "claim": "Lovable Build with URL sigue autoenviando con `autosubmit=true` (la documentación nueva dice que el destinatario pulsa enviar).",
+    "why_it_matters": "Cambia la UX del botón 'Build in Lovable'.",
+    "source": "https://docs.lovable.dev/integrations/build-with-url vs https://docs.lovable.dev/integrations/lovable-api",
+    "from": "web:claude-design-framer",
+    "id": 31
+   },
+   {
+    "claim": "Open in v0 no soporta cssVars ni css en registry items.",
+    "why_it_matters": "Obliga a incrustar los tokens en los componentes o en el prompt para no perder la paleta.",
+    "source": "https://ui.shadcn.com/docs/registry/open-in-v0",
+    "from": "web:claude-design-framer",
+    "id": 32
+   },
+   {
+    "claim": "Las API keys de la Framer Server API no requieren plan de pago.",
+    "why_it_matters": "Si exigen plan de pago, la opción servidor queda fuera para usuarios free.",
+    "source": "https://supergood.ai/api-report-card/framer (dice que hace falta plan de pago) vs las páginas oficiales (no lo mencionan)",
+    "from": "web:claude-design-framer",
+    "id": 34
+   },
+   {
+    "claim": "Framer Server API (framer-api 5.1.0) expone createCodeFile y createWebPage, y sigue gratis en beta.",
+    "why_it_matters": "Determina si la integración con Framer v2 es automatizable.",
+    "source": "https://www.framer.com/updates/server-api",
+    "from": "web:preview-export",
+    "id": 100
+   },
+   {
+    "claim": "El Stitch SDK (@google/stitch-sdk) permite que apps de terceros generen pantallas y design systems con una STITCH_API_KEY, y Stitch sigue siendo gratis con ~350 generaciones estándar/mes",
+    "why_it_matters": "Habilitaría generación in-app gratuita; si los términos lo prohíben o se cobra, cambia el plan v2",
+    "source": "https://github.com/google-labs-code/stitch-sdk",
+    "from": "web:competitors",
+    "id": 111
+   },
+   {
+    "claim": "Subframe deja 'use your own Claude or Codex subscription' (mecanismo exacto: ¿Claude Code local?)",
+    "why_it_matters": "Valida o invalida técnica y legalmente el modelo BYO-AI con suscripción, que es la base del COGS ≈ 0",
+    "source": "https://www.subframe.com/pricing",
+    "from": "web:competitors",
+    "id": 112
+   },
+   {
+    "claim": "Los external agents de Framer (Claude Code/Codex/Cursor) son gratis durante la preview en Basic/Pro",
+    "why_it_matters": "Permite 'Send to Framer' vía el Claude del usuario sin construir un plugin",
+    "source": "https://www.framer.com/pricing",
+    "from": "web:competitors",
+    "id": 116
+   },
+   {
+    "claim": "El `export --format css-tailwind` y `dtcg` de @google/design.md 0.4.0 producen salidas válidas para Tailwind v4 y DTCG 2025.10 (colores en formato objeto).",
+    "why_it_matters": "Si funciona, se puede usar DESIGN.md como paso intermedio y delegar parte de la conversión.",
+    "source": "https://github.com/google-labs-code/design.md",
+    "from": "web:preview-export",
+    "id": 99
+   },
+   {
+    "claim": "Google Stitch (mar 2026) tiene canvas infinito con iteraciones, MCP hacia Claude Code y 'Paste to Figma'",
+    "why_it_matters": "Es el competidor directo más cercano y referente de UX; la info viene de fuentes secundarias",
+    "source": "https://tech-insider.org/google-stitch-ai-design-tool-march-2026-update/",
+    "from": "web:motion-ux",
+    "id": 83
+   },
+   {
+    "claim": "Motiff fue discontinuado y la exportación de datos está disponible hasta el 31-oct-2026",
+    "why_it_matters": "Señal de consolidación del mercado y del riesgo de ser 'otro generador'",
+    "source": "https://www.motiff.com/",
+    "from": "web:competitors",
+    "id": 113
+   }
+  ],
+  "references-mobbin": [
+   {
+    "claim": "Los Terms de Mobbin (efectivos 16-05-2026) prohíben usar IA o ML para crear obras derivadas del contenido y limitan la API/MCP a 'uso personal o interno del negocio', sin cache, mirror ni re-host.",
+    "why_it_matters": "Determina si el panel Mobbin in-app y el procesamiento de capturas de Mobbin con IA son legales para nuestro producto.",
+    "source": "https://tostracker.app/document/mobbincom-tos (archivo de terceros; mobbin.com/terms devolvió 403)",
+    "from": "web:references",
+    "id": 48
+   },
+   {
+    "claim": "Mobbin permite integradores de terceros por DCR sin aprobación manual y sin fee, con el OAuth de cada usuario.",
+    "why_it_matters": "Es la base técnica del modelo BYO-suscripción; hay que confirmar que no lo contradicen los Terms ni una política aparte para integradores.",
+    "source": "https://docs.mobbin.com/mcp/build-an-integration.md",
+    "from": "web:references",
+    "id": 49
+   },
+   {
+    "claim": "Las image URLs de Mobbin MCP/API expiran a los 30 días.",
+    "why_it_matters": "Afecta al diseño de almacenamiento (guardar id y pedir la imagen en vivo en vez de guardar la URL).",
+    "source": "https://docs.mobbin.com/mcp/features.md",
+    "from": "web:references",
+    "id": 50
+   },
+   {
+    "claim": "Mobbin Pro cuesta $10/mes (anual) o $15/mes (trimestral) e incluye MCP; la REST API solo está en Team ($16/miembro/mes anual).",
+    "why_it_matters": "Coste que asume el usuario en el modelo BYO y viabilidad del onboarding.",
+    "source": "https://mobbin.com/pricing.md (snapshot 2026-09-11)",
+    "from": "web:references",
+    "id": 51
+   },
+   {
+    "claim": "Refero Business ofrece $0.001/request con un compromiso mínimo de $2,000, y sus términos permiten mostrar resultados a usuarios finales.",
+    "why_it_matters": "Es la vía licenciada para una búsqueda de referencias embebida en v2; los términos de display y cache no están publicados.",
+    "source": "https://doc.refero.design/mcp/business.md",
+    "from": "web:references",
+    "id": 52
+   },
+   {
+    "claim": "Los términos de A1 Gallery prohíben enviar datos de A1 dentro de otro producto y entrenar modelos.",
+    "why_it_matters": "Descarta integrarlo en el backend; solo vale vía el Claude del usuario.",
+    "source": "https://www.a1.gallery/mcp",
+    "from": "web:references",
+    "id": 53
+   },
+   {
+    "claim": "La API de Dribbble v2 solo permite leer los shots del usuario autenticado y prohíbe guardar o almacenar datos.",
+    "why_it_matters": "Descarta Dribbble como fuente de inspiración pública.",
+    "source": "https://developer.dribbble.com/v2/ y https://developer.dribbble.com/terms/",
+    "from": "web:references",
+    "id": 55
+   },
+   {
+    "claim": "El formato branding de Firecrawl no tiene recargo de créditos (1 crédito por página).",
+    "why_it_matters": "Estimación de costos para la captura por URL hosted.",
+    "source": "https://docs.firecrawl.dev/features/scrape",
+    "from": "web:references",
+    "id": 56
+   },
+   {
+    "claim": "La fase II de la reforma de diseño UE (representación de diseños animados) entró en vigor el 1-07-2026.",
+    "why_it_matters": "Alcance de la protección de animaciones y motion de UI de terceros en la UE.",
+    "source": "https://www.hsfkramer.com/notes/ip/2025-05/eu-design-reform-begins-key-provisions-of-eu-regulation-2024-2822-effective-from-1-may",
+    "from": "web:references",
+    "id": 58
+   },
+   {
+    "claim": "dembrandt es MIT, incluye un MCP server con get_design_tokens y generate_design_md, y exporta DESIGN.md, DTCG, Tailwind y shadcn.",
+    "why_it_matters": "Es la pieza central de captura por URL en el MVP.",
+    "source": "https://github.com/dembrandt/dembrandt",
+    "from": "web:references",
+    "id": 59
+   },
+   {
+    "claim": "Lazyweb ofrece MCP gratis (con reportes completos solo en Pro) y más de 281k screens.",
+    "why_it_matters": "Puede ser la opción gratuita que recomendar a usuarios sin Mobbin; hay fuentes con precios contradictorios ($39/mes).",
+    "source": "https://www.lazyweb.com y https://www.lazyweb.com/compare/mobbin-vs-refero",
+    "from": "web:references",
+    "id": 60
+   },
+   {
+    "claim": "El MCP oficial de Mobbin (https://api.mobbin.com/mcp) expone search_screens, search_flows y search_sections con image_url de alta resolución, y sus términos permiten usar esas imágenes como contexto para generación con IA.",
+    "why_it_matters": "Es la mitad del workflow del usuario (referencias). Si los términos lo prohíben o exigen un plan pago, cambia el diseño del producto y el riesgo legal.",
+    "source": "https://docs.mobbin.com/mcp/features ; https://github.com/mobbin/mobbin-mcp-server",
+    "from": "web:ai-integration",
+    "id": 69
+   },
+   {
+    "claim": "Mobbin MCP (search_screens/search_flows/search_sections) está disponible desde Pro, con 60 req/60 s, y la REST API solo en Team/Enterprise",
+    "why_it_matters": "Determina si las referencias se obtienen vía el Claude del usuario o vía integración directa, y su legalidad",
+    "source": "https://mobbin.com/mcp",
+    "from": "web:competitors",
+    "id": 109
+   }
+  ],
+  "libs-licenses": [
+   {
+    "claim": "La GSAP Standard 'No Charge' License (efectiva 2025-04-30, actualizada 2025-05-30) prohíbe usar GSAP en herramientas no-code de animación visual que compitan con el builder de animaciones de Webflow, salvo consentimiento escrito.",
+    "why_it_matters": "Decide si el preview y el selector de motion de la app pueden usar GSAP, o si hay que usar Motion/CSS y exportar GSAP solo como código del usuario.",
+    "source": "https://gsap.com/community/standard-license/",
+    "from": "repo:uupm-engine",
+    "id": 8
+   },
+   {
+    "claim": "La licencia de GSAP prohíbe herramientas no-code de animación visual que compitan con Webflow, pero permite código GSAP generado por IA",
+    "why_it_matters": "Determina si se puede exportar GSAP desde la app y si un futuro editor de motion sería legal sin consentimiento escrito",
+    "source": "https://gsap.com/standard-license",
+    "from": "web:motion-ux",
+    "id": 77
+   },
+   {
+    "claim": "Las columnas Popularity Rank y Trending Rank de google-fonts.csv vienen de la Google Fonts Developer API (requiere API key) y su redistribución en un producto comercial puede estar sujeta a los Google APIs Terms of Service.",
+    "why_it_matters": "Determina si se pueden incluir esos datos en el catálogo o hay que quitarlos.",
+    "source": "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/scripts/refresh-google-fonts.py:20,91 ; https://developers.google.com/fonts/terms",
+    "from": "repo:uupm-engine",
+    "id": 9
+   },
+   {
+    "claim": "Los CSV (datos) están cubiertos por la licencia MIT del repo y no hay licencias de datos separadas ni restricciones en data-provenance.json.",
+    "why_it_matters": "Base legal para redistribuir el catálogo en una app comercial. Conviene confirmarlo con los mantenedores, dado que existe una versión Premium y la procedencia de la mayoría de filas no está documentada.",
+    "source": "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/LICENSE ; /Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/data/data-provenance.json",
+    "from": "repo:uupm-engine",
+    "id": 10
+   },
+   {
+    "claim": "El DTCG Design Tokens Format Module 2025.10 es estable (Final CG Report del 2025-10-28) y es un formato adecuado de intercambio hacia Figma y otras herramientas.",
+    "why_it_matters": "Define el formato de exportación central de la app. Hay que verificar el soporte real de importación DTCG en Figma, Framer y Claude Design en 2026.",
+    "source": "https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/",
+    "from": "repo:uupm-engine",
+    "id": 13
+   },
+   {
+    "claim": "DTCG 2025.10 es la primera versión estable y exige objetos {colorSpace, components} para color y {value, unit} para dimension/duration; un string hex no es válido",
+    "why_it_matters": "Decide el formato de export de tokens y descarta reutilizar el starter del repo",
+    "source": "https://www.designtokens.org/tr/2025.10/format/",
+    "from": "repo:uupm-ecosystem",
+    "id": 21
+   },
+   {
+    "claim": "Style Dictionary v5 usa DTCG 2025.10 como formato base, incluido el color como objeto colorSpace + components",
+    "why_it_matters": "Decide si se usa SD v5 o Terrazzo para generar las salidas desde tokens.json",
+    "source": "https://help.zeroheight.com/hc/en-us/articles/48049028236187 (fuente secundaria)",
+    "from": "web:palette",
+    "id": 47
+   },
+   {
+    "claim": "motion@14.1.0 se publicó el 2026-10-09 y AnimateView es gratis vía 'motion/react-animate-view' (requiere React 19.3+)",
+    "why_it_matters": "Define si la transición de preview por View Transitions puede hacerse sin pagar Motion+ y qué versión de React es obligatoria",
+    "source": "https://registry.npmjs.org/motion ; https://motion.dev/docs/react-animate-view",
+    "from": "web:motion-ux",
+    "id": 75
+   },
+   {
+    "claim": "React 19.3 (2026-09-09) estabilizó <ViewTransition> (import directo desde 'react', sin unstable_)",
+    "why_it_matters": "Base de las transiciones grandes del preview; la página de referencia de react.dev aún podría decir Canary",
+    "source": "https://react.dev/blog/2026/09/09/react-19-3",
+    "from": "web:motion-ux",
+    "id": 76
+   },
+   {
+    "claim": "@dnd-kit/react 0.5.0 es la API 'Latest' recomendada y Feedback.configure({ dropAnimation: null }) desactiva la animación de drop",
+    "why_it_matters": "La arquitectura propuesta depende de delegar el snap final a Motion",
+    "source": "https://dndkit.com/extend/plugins ; https://dndkit.com/react/quickstart",
+    "from": "web:motion-ux",
+    "id": 78
+   },
+   {
+    "claim": "Cross-document View Transitions: soporte parcial en Firefox 144-150; Chrome/Edge 126+, Safari 18.2+",
+    "why_it_matters": "Si se usan para navegar entre el builder y el link compartible del preview, Firefox degradará",
+    "source": "https://caniuse.com/cross-document-view-transitions",
+    "from": "web:motion-ux",
+    "id": 79
+   },
+   {
+    "claim": "Motion+ cuesta ~$299 pago único y podría requerir otra licencia para empresas de generación de código",
+    "why_it_matters": "Afecta el presupuesto y si se pueden usar sus componentes premium en el output",
+    "source": "https://motion.dev/pricing ; https://motion.dev/plus",
+    "from": "web:motion-ux",
+    "id": 80
+   },
+   {
+    "claim": "tldraw requiere license key comercial para producción sin watermark (precio no publicado)",
+    "why_it_matters": "Descarta o encarece la opción de canvas basada en tldraw",
+    "source": "https://tldraw.dev/sdk-features/license-key",
+    "from": "web:motion-ux",
+    "id": 84
+   },
+   {
+    "claim": "Las transforms independientes de Motion (x, scale) no se aceleran por WAAPI; hace falta un string transform completo",
+    "why_it_matters": "Impacta directamente en lograr 120 fps durante el drag con el main thread ocupado (por ejemplo, recalculando el preview)",
+    "source": "https://motion.dev/docs/performance",
+    "from": "web:motion-ux",
+    "id": 85
+   },
+   {
+    "claim": "json-render admite ediciones incrementales con RFC 6902 / RFC 7396 / diff desde la 0.14 y sigue igual en la 0.21.",
+    "why_it_matters": "Define si el modelo 'drag = parche' se apoya en la librería o hay que implementarlo aparte.",
+    "source": "https://infoq.com/news/2026/03/vercel-json-render",
+    "from": "web:preview-export",
+    "id": 97
+   },
+   {
+    "claim": "La exportación de json-render a un proyecto Next.js standalone 'sin dependencias de runtime' funciona con el catálogo shadcn.",
+    "why_it_matters": "Reduciría mucho el trabajo del exportador React/shadcn.",
+    "source": "https://json-render.dev",
+    "from": "web:preview-export",
+    "id": 98
+   },
+   {
+    "claim": "Cloudflare Browser Rendering sigue a $0.09/browser-hour con 10 h incluidas en Workers Paid (posible renombre a 'Browser Run').",
+    "why_it_matters": "Coste de thumbnails y OG reales en v2.",
+    "source": "https://developers.cloudflare.com/browser-rendering/pricing/",
+    "from": "web:preview-export",
+    "id": 104
+   },
+   {
+    "claim": "Puck AI 0.8 solo admite modelos de OpenAI y BYOK en ciertos planes.",
+    "why_it_matters": "Si añaden Anthropic, Puck AI podría reemplazar parte de la generación en un modo de layout.",
+    "source": "https://puckeditor.com/blog/puck-ai-08",
+    "from": "web:preview-export",
+    "id": 105
+   },
+   {
+    "claim": "`gemini-3-pro-image-preview` ya fue apagado (shutdown programado el 2026-06-25) y `gemini-2.5-flash-image` tiene shutdown el 2027-03-15 con acceso limitado a usuarios previos; un resultado de búsqueda daba el 2026-10-02",
+    "why_it_matters": "Determina si los scripts de logo y CIP de la design skill funcionan hoy para un usuario nuevo y si vale la pena integrarlos",
+    "source": "https://ai.google.dev/gemini-api/docs/deprecations",
+    "from": "repo:uupm-ecosystem",
+    "id": 15
+   },
+   {
+    "claim": "La versión npm latest de ui-ux-pro-max-cli es 2.15.0 (aprox. 2026-08-13), mayor que la 2.13.0 de skill.json y plugin.json del repo clonado",
+    "why_it_matters": "Saber si el clon refleja lo que instala `npx ui-ux-pro-max-cli init` y qué versión portar o fijar",
+    "source": "https://registry.npmjs.org/ui-ux-pro-max-cli/latest",
+    "from": "repo:uupm-ecosystem",
+    "id": 16
+   }
+  ],
+  "palette-color-repo": [
+   {
+    "claim": "Brandfetch: Free = 100 fetches de Brand API una sola vez; Growth $99/mes anual ($129/mes mensual) con hasta 2,500 fetches al mes; overage $0.10 por fetch; Logo API gratis hasta 1M al mes",
+    "why_it_matters": "Define si el enriquecimiento con colores y fuentes de marca entra en el MVP o en un plan de pago, y el costo por usuario",
+    "source": "https://brandfetch.com/developers/pricing (las fuentes de terceros no coinciden: PricingSaaS lista Growth Starter a $129)",
+    "from": "web:palette",
+    "id": 35
+   },
+   {
+    "claim": "La Logo API de Brandfetch prohíbe el acceso programático (scraping) y exige Referer; solo sirve para <img>",
+    "why_it_matters": "Si se usa su CDN para extraer píxeles, se puede bloquear la cuenta. Obliga a usar la Brand API o la subida del usuario",
+    "source": "https://docs.brandfetch.com/logo-api/overview",
+    "from": "web:palette",
+    "id": 36
+   },
+   {
+    "claim": "La Brand API de Brandfetch acepta el query param palette=true, que añade un objeto palette a la respuesta",
+    "why_it_matters": "Podría ahorrar el paso de generar la paleta para marcas conocidas",
+    "source": "https://docs.brandfetch.com/reference/brand-api (lo indicó WebFetch de la doc oficial, pero ninguna otra fuente lo confirma)",
+    "from": "web:palette",
+    "id": 37
+   },
+   {
+    "claim": "logo.dev: Community gratis con 500K requests de CDN al mes, $5 de créditos y atribución obligatoria en uso comercial; Brand API a $0.05 por request; prohibido descargar imágenes del CDN",
+    "why_it_matters": "Es la alternativa barata a Brandfetch para obtener colores; la atribución afecta a la UI",
+    "source": "https://www.logo.dev/pricing ; https://www.logo.dev/docs",
+    "from": "web:palette",
+    "id": 38
+   },
+   {
+    "claim": "La Logo API de Clearbit cerró el 1 o el 8 de diciembre de 2025 (las fuentes no coinciden); logo.clearbit.com no resuelve DNS el 2026-10-09",
+    "why_it_matters": "No hay que construir sobre Clearbit; algunas librerías viejas todavía la usan como fallback",
+    "source": "https://community.hubspot.com/t/clearbit-logo-api-will-be-sunset-on-december-1-2025/134244 ; https://docs.logo.dev/migrations/clearbit ; curl local exit 6",
+    "from": "web:palette",
+    "id": 39
+   },
+   {
+    "claim": "WCAG 3 (editor's draft del 8 de abril de 2026): el algoritmo de contraste sigue 'por determinar'; APCA no es normativo",
+    "why_it_matters": "Define que el bloqueo de contraste sea WCAG 2.2 y no APCA",
+    "source": "https://adrianroselli.com/2026/04/wcag3-contrast-as-of-april-2026.html (fuente secundaria; verificar en w3.org)",
+    "from": "web:palette",
+    "id": 43
+   },
+   {
+    "claim": "La API de Huemint es solo para aplicaciones no comerciales",
+    "why_it_matters": "Impide usarla en un producto de pago",
+    "source": "https://huemint.com/about/",
+    "from": "web:palette",
+    "id": 44
+   },
+   {
+    "claim": "La licencia 'Limited W3 License' de apca-w3 restringe usos fuera del contenido web; colorjs.io incluye APCA 0.0.98G",
+    "why_it_matters": "Riesgo legal si se muestra o vende APCA como funcionalidad",
+    "source": "https://github.com/Myndex/apca-w3 ; registry.npmjs.org/apca-w3",
+    "from": "web:palette",
+    "id": 45
+   },
+   {
+    "claim": "MCU 0.4.0 usa por defecto la spec '2021'; solo TonalSpot, Vibrant, Expressive y Neutral admiten '2025'",
+    "why_it_matters": "Sin pasar '2025' se obtienen colores de Material You antiguos",
+    "source": "node_modules @material/material-color-utilities@0.4.0 dynamiccolor/dynamic_scheme.js:31-48,347",
+    "from": "web:palette",
+    "id": 46
+   },
+   {
+    "claim": "La API de Huemint (api.huemint.com/color) es gratuita solo para uso no comercial",
+    "why_it_matters": "Si se quiere usar Huemint para expandir paletas desde el logo en un producto de pago, hace falta licencia o implementación propia",
+    "source": "https://huemint.com/about/",
+    "from": "web:competitors",
+    "id": 114
+   },
+   {
+    "claim": "Visily ofrece 'Image to Theme' y 'URL to Theme' (Magic Theme)",
+    "why_it_matters": "Es el competidor más cercano al paso logo → tema; hay que probar la calidad con logos reales",
+    "source": "https://support.visily.ai/portal/en/kb/articles/how-to-generate-a-theme-with-ai",
+    "from": "web:competitors",
+    "id": 115
+   },
+   {
+    "claim": "Todas las parejas on-color/fondo de colors.csv pasan WCAG 4.5:1. Solo verifiqué 7 parejas por paleta; no comprobé el contraste no textual (Border/Ring vs Background, 3:1).",
+    "why_it_matters": "Permite vender 'paletas accesibles por defecto'. Hay que completar la verificación de contraste no textual.",
+    "source": "/private/tmp/claude-501/-Users-diegoguerrero-Desktop-designApp/88c239ae-3a41-46dc-8964-3309634dd9b9/scratchpad/quality.py",
+    "from": "repo:uupm-engine",
+    "id": 12
+   },
+   {
+    "claim": "El dial variance en los tramos 4-7 vacía el estilo (sale 'Minimalism' sin campos) cuando el BM25 de style se abstiene, porque _select_best_match devuelve {} antes de resolver la prioridad canónica.",
+    "why_it_matters": "Si se reutilizan los dials como sliders de la app, generarían resultados vacíos o incoherentes.",
+    "source": "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/design_system.py:433-436,497-505 (reproducido con scratchpad/v5.py)",
+    "from": "repo:uupm-engine",
+    "id": 11
+   },
+   {
+    "claim": "Portar el BM25 con una librería JS (p.ej. variantes BM25+) cambiaría los scores y rompería los floors calibrados (style 4.3, product 6.0, etc.).",
+    "why_it_matters": "Si se porta la búsqueda, conviene una implementación propia fiel o recalibrar los umbrales.",
+    "source": "/Users/diegoguerrero/Desktop/designApp/vendor/ui-ux-pro-max-skill/src/ui-ux-pro-max/scripts/core.py:203-211,320-321",
+    "from": "repo:uupm-engine",
+    "id": 14
+   }
+  ]
+ },
+ "skipped_ids": [
+  1,
+  6,
+  7,
+  81,
+  82,
+  103,
+  117
+ ]
+}
