@@ -146,6 +146,96 @@ export function offDirection(block: ReturnType<typeof styleFingerprint>, others:
   return novel >= 3;
 }
 
+// ── gate 4b: a visible focus indicator ──────────────────────────────────────────
+
+const INTERACTIVE = new Set(["a", "button", "input", "select", "textarea"]);
+const REMOVES_OUTLINE = /^(?:outline-none|outline-hidden|outline-0)$/;
+const FOCUS_VARIANTS = new Set(["focus", "focus-visible", "focus-within", "group-focus-visible", "group-focus-within"]);
+
+/** Classes that draw a focus indicator under a focus variant: a ring, an outline, a border, an underline, a fill. */
+const FOCUS_INDICATOR = /^(?:ring(?:-\d)?|ring-[a-z]|outline(?:-\d)?|outline-[a-z]|border|underline|bg-|shadow)/;
+
+/**
+ * Interactive elements whose classes remove the browser's focus outline (`outline-none`, also only on focus) and draw
+ * nothing instead under `focus:`/`focus-visible:` (WCAG 2.4.7). Their visible text, for the warning. Whether a drawn
+ * ring CONTRASTS is gate 4 (./contrast); this is about having one at all.
+ */
+export function missingFocusIndicators(root: AiElement): string[] {
+  const out: string[] = [];
+  for (const element of elements([root])) {
+    const focusable = INTERACTIVE.has(element.tag) || attr(element, "tabindex") === "0";
+    if (!focusable) continue;
+    let removed = false;
+    let drawn = false;
+    for (const token of (attr(element, "class") ?? "").split(/\s+/).filter(Boolean)) {
+      const { variants, utility } = splitClass(token);
+      const onFocus = variants.some((variant) => FOCUS_VARIANTS.has(variant));
+      if (REMOVES_OUTLINE.test(utility)) removed = true;
+      else if (onFocus && FOCUS_INDICATOR.test(utility)) drawn = true;
+    }
+    if (removed && !drawn) out.push(snippet(element.children) || element.tag);
+  }
+  return out;
+}
+
+// ── gate 9: writing system ──────────────────────────────────────────────────────
+
+const LETTER = /\p{L}/u;
+const LATIN = /\p{Script=Latin}/u;
+
+/**
+ * Words with letters outside the Latin script (the alphabet of every language the app writes, es and en) that are
+ * not in `known` either (the draft, labels, notes, brand). The spike saw Haiku write «sin配置» in a Spanish sentence
+ * (spec §15.1): a warning, never a fix.
+ */
+export function foreignScript(root: AiElement, known: readonly string[]): string[] {
+  const allowed = new Set([...known.join("")].filter((char) => LETTER.test(char) && !LATIN.test(char)));
+  const found = new Set<string>();
+  for (const word of textOf([root]).split(/\s+/)) {
+    if ([...word].some((char) => LETTER.test(char) && !LATIN.test(char) && !allowed.has(char))) found.add(word.slice(0, 40));
+  }
+  return [...found];
+}
+
+/** The warnings of gates 4b (focus indicator) and 9 (writing system) for a processed block. */
+export function extraGateWarnings(root: AiElement, known: readonly string[]): AiGateWarning[] {
+  return [
+    ...missingFocusIndicators(root).slice(0, 2).map((text) => warning("focus-ring", text)),
+    ...foreignScript(root, known).slice(0, 3).map((word) => warning("foreign-script", word)),
+  ];
+}
+
+// ── gate 5: responsive (measured in the island) ─────────────────────────────────
+
+export type Device = "desktop" | "tablet" | "mobile";
+export const DEVICES: readonly Device[] = ["desktop", "tablet", "mobile"];
+
+/** One measurement of a block at the width of its cell on a device (the island's `measure` message). */
+export type DeviceMeasure = { device: Device; width: number; overflowX: boolean; smallTargets: number; clipped: number; height?: number };
+
+/** Spec §7: in an `app` screen, a block taller than 1.25 × its height in the layout is flagged. */
+export const APP_HEIGHT_TOLERANCE = 1.25;
+
+/**
+ * Gate 5's verdict from the measurements at the 3 widths (`DEVICE_WIDTHS`): horizontal overflow and clipped text
+ * («overflow»), interactive targets under 24×24 px (WCAG 2.5.8, «small-target») and, when `layoutHeightPx` is given
+ * (app screens), a desktop height over 1.25 × the layout's. Warnings name the device; a warning, never a fix.
+ */
+export function responsiveGate(measures: readonly DeviceMeasure[], options: { layoutHeightPx?: number } = {}): { responsive: "ok" | "warn"; warnings: AiGateWarning[] } {
+  const warnings: AiGateWarning[] = [];
+  const sorted = [...measures].sort((a, b) => DEVICES.indexOf(a.device) - DEVICES.indexOf(b.device));
+  for (const measure of sorted) {
+    if (measure.overflowX) warnings.push(warning("overflow", `${measure.device} · ${Math.round(measure.width)}px`));
+    if (measure.clipped > 0) warnings.push(warning("overflow", `${measure.device} · clipped ${measure.clipped}`));
+    if (measure.smallTargets > 0) warnings.push(warning("small-target", `${measure.device} · ${measure.smallTargets}`));
+  }
+  const desktop = sorted.find((measure) => measure.device === "desktop");
+  if (options.layoutHeightPx && desktop?.height && desktop.height > options.layoutHeightPx * APP_HEIGHT_TOLERANCE) {
+    warnings.push(warning("overflow", `desktop · ${Math.round(desktop.height)}/${Math.round(options.layoutHeightPx)}px`));
+  }
+  return { responsive: warnings.length > 0 ? "warn" : "ok", warnings };
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────────
 
 export const warning = (code: AiGateWarning["code"], detail?: string): AiGateWarning => ({ code, ...(detail && { detail: detail.slice(0, 160) }) });

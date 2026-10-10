@@ -75,7 +75,7 @@ function styleOf(element: AiElement): ElementStyle {
     } else if (variants.length === 1 && variants[0] === "hover") {
       if (color.prefix === "text") style.hoverText = paint;
       else if (color.prefix === "bg") style.hoverBg = paint;
-    } else if (variants.length === 1 && variants[0] === "focus-visible" && (color.prefix === "outline" || color.prefix === "ring")) {
+    } else if (variants.length === 1 && (variants[0] === "focus-visible" || variants[0] === "focus") && (color.prefix === "outline" || color.prefix === "ring")) {
       style.focus = { token, paint };
     }
   }
@@ -251,8 +251,8 @@ export function fixContrast(root: AiElement, theme: ThemeColors): ContrastResult
         const swap = (color: string) =>
           classes.map((token) => {
             const { variants, utility } = splitClass(token);
-            const paint = variants.length === 1 && variants[0] === "focus-visible" ? colorOfClass(utility) : null;
-            return paint && (paint.prefix === "outline" || paint.prefix === "ring") ? `focus-visible:${paint.prefix}-${color}` : token;
+            const paint = variants.length === 1 && (variants[0] === "focus-visible" || variants[0] === "focus") ? colorOfClass(utility) : null;
+            return paint && (paint.prefix === "outline" || paint.prefix === "ring") ? `${variants[0]}:${paint.prefix}-${color}` : token;
           });
         if (tryClasses(element, "focus", ["foreground", "primary", "background"].map(swap))) fixed++;
         continue;

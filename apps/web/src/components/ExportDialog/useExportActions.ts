@@ -1,7 +1,7 @@
 "use client";
 
 import { outputKindOptions, type Locale, type OutputKind } from "@dialmade/catalog";
-import { EXPORT_FILES, toPromptPack, type DesignDoc, type PageElement, type PromptTarget } from "@dialmade/doc";
+import { EXPORT_FILES, hasAiDesign, toPromptPack, type DesignDoc, type PageElement, type PromptTarget } from "@dialmade/doc";
 import { visibleProps } from "@dialmade/sections";
 import { useCallback, useState, type RefObject } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,17 @@ type Options = {
 };
 
 const toastOptions = { toasterId: EXPORT_TOASTER_ID };
+
+/**
+ * «Diseño con IA»: the CSS of the document's AI blocks, compiled by Tailwind in the AI render worker (scoped, so the
+ * base sections keep the kit's styles). `null` without AI blocks.
+ */
+async function aiBlocksCss(doc: DesignDoc): Promise<string | null> {
+  if (!hasAiDesign(doc)) return null;
+  const [{ aiClassTokens, aiExportBlocks }, { compileCssOffThread }] = await Promise.all([import("./aiBlocks"), import("@/lib/ai/render/worker")]);
+  const blocks = aiExportBlocks(doc);
+  return blocks.length > 0 ? compileCssOffThread(aiClassTokens(blocks), { scoped: true }) : null;
+}
 
 /** Heavy packs (react-dom/server, fflate, kit CSS) load on first use. */
 export const preloadPacks = () => Promise.all([import("./exportPack"), import("./kitCss")]).catch(() => {});
@@ -65,10 +76,11 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
       if (!doc || !derived || busy) return;
       setBusy(pack);
       try {
-        const [{ buildClaudeDesignPack, buildCodePack }, { kitCss }, logo] = await Promise.all([
+        const [{ buildClaudeDesignPack, buildCodePack }, { kitCss }, logo, aiCss] = await Promise.all([
           import("./exportPack"),
           import("./kitCss"),
           readLogo(logoUrl),
+          aiBlocksCss(doc),
         ]);
         const kindLabel = (kind: OutputKind) => outputKindOptions.find((option) => option.id === kind)?.label[locale] ?? kind;
         const input = {
@@ -80,6 +92,7 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
           texts: texts.files,
           css: kitCss,
           ...(logo && { logo }),
+          ...(aiCss !== null && { ai: { css: aiCss, texts: texts.aiExport.files } }),
         };
         const built = pack === "code" ? buildCodePack(input) : buildClaudeDesignPack(input);
         downloadFile(built.bytes.slice().buffer, built.filename, built.type, dialog.current);

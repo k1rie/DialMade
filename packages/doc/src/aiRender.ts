@@ -37,6 +37,10 @@ export const AI_GATE_CODES = [
   "classes-dropped",
   "unknown-icon",
   "off-direction",
+  // Track D: a focus indicator removed and not replaced, or one that does not show (gate 4); letters outside the
+  // language's writing system (gate 9, spec §15.1).
+  "focus-ring",
+  "foreign-script",
 ] as const;
 
 /** Spec §2.1: 16 KB of sanitized HTML per block. */

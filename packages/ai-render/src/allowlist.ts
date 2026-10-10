@@ -18,3 +18,16 @@ export const ALLOWED_ATTRS: ReadonlySet<string> = new Set([
 ]);
 
 export const isAllowedAttr = (name: string): boolean => ALLOWED_ATTRS.has(name) || /^aria-[a-z]+$/.test(name);
+
+/** `input type` values an AI block may use (anything else becomes `text`; `image`, `file`, `submit` never pass). */
+export const INPUT_TYPES: ReadonlySet<string> = new Set(["text", "email", "search", "checkbox", "radio", "password", "tel", "number", "url", "date"]);
+
+/**
+ * Tags that may carry `name`. On `img` (and `form`, `embed`, `object`, `iframe`) a `name` becomes a named property of
+ * `document`, which overrides its built-ins (`<img name="importNode">` breaks `document.importNode`): DOM clobbering.
+ * Form controls are not exposed that way.
+ */
+export const NAMED_TAGS: ReadonlySet<string> = new Set(["input", "select", "textarea", "button"]);
+
+/** `isAllowedAttr`, plus the rules that depend on the tag. */
+export const isAllowedAttrFor = (tag: string, name: string): boolean => (name === "name" ? NAMED_TAGS.has(tag) : isAllowedAttr(name));

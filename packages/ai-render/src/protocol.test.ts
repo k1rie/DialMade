@@ -18,4 +18,12 @@ describe("island protocol", () => {
     expect(IslandMessageSchema.safeParse({ type: "size", blockId: "b", height: 99_999 }).success).toBe(false);
     expect(IslandMessageSchema.safeParse({ type: "eval", code: "x" }).success).toBe(false);
   });
+
+  it("gate 5: measure at up to 3 widths, answered with the height", () => {
+    expect(ParentMessageSchema.safeParse({ type: "measure", v: 1 }).success).toBe(true);
+    expect(ParentMessageSchema.safeParse({ type: "measure", v: 1, widths: [1440, 768, 390] }).success).toBe(true);
+    expect(ParentMessageSchema.safeParse({ type: "measure", v: 1, widths: [1, 2, 3, 4] }).success).toBe(false);
+    expect(ParentMessageSchema.safeParse({ type: "measure", v: 1, widths: [100_000] }).success).toBe(false);
+    expect(IslandMessageSchema.safeParse({ type: "measure", blockId: "b", width: 390, overflowX: true, smallTargets: 1, clipped: 0, height: 812 }).success).toBe(true);
+  });
 });

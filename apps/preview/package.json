@@ -4,9 +4,9 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "description": "Preview origin of «Diseño con IA»: a static page and runtime that paint one AI block per sandboxed iframe, under a strict CSP. Never served from the app's origin.",
+  "description": "Preview origin of \u00abDise\u00f1o con IA\u00bb: a static page and runtime that paint one AI block per sandboxed iframe, under a strict CSP. Never served from the app's origin.",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && node scripts/build-output.ts",
     "dev": "vite build && node scripts/serve.mjs",
     "start": "node scripts/serve.mjs",
     "test": "vitest run",
@@ -19,8 +19,11 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@dialmade/doc": "workspace:*",
+    "@dialmade/sections": "workspace:*",
     "@types/node": "24.19.2",
     "jsdom": "29.1.1",
+    "playwright": "1.63.0",
     "typescript": "5.9.3",
     "vite": "8.3.4",
     "vitest": "5.0.3"

@@ -19,9 +19,11 @@ import {
   type PageElement,
   type ThemeInputs,
 } from "@dialmade/doc";
+import { exportThemeCss } from "@dialmade/ai-render";
 import { renderStaticPage, visibleProps } from "@dialmade/sections";
 import { strToU8, zipSync, type Zippable } from "fflate";
 import type { ExportDictionary, PackReadmeInfo, PackReadmeScreen } from "@/i18n/export";
+import { aiExportBlocks, aiPageParts, type AiExportBlock } from "./aiBlocks";
 import { bytesToBase64, slugify } from "./files";
 import { layoutJson, linkResolver, relativeHref, screenPages, screenPath, type PackScreen } from "./screenPages";
 import { figmaTokensJson } from "./tokens";
@@ -41,7 +43,16 @@ export type PackInput = {
   texts: ExportDictionary["files"];
   css: KitCss;
   logo?: LogoFile;
+  /**
+   * «Diseño con IA»: the CSS of the document's AI blocks (`compileAiCss(aiClassTokens(…), { scoped: true })`, built
+   * off the main thread by the caller) and the README lines about them. Without it, AI blocks export as their base
+   * design.
+   */
+  ai?: { css: string; texts: ExportDictionary["aiExport"]["files"] };
 };
+
+/** Files of «Diseño con IA» in the packs. */
+export const AI_FILES = { css: "assets/dialmade-ai.css", theme: "ai-theme.css" } as const;
 
 export type BuiltFile = { bytes: Uint8Array; filename: string; type: string; skippedSections: number };
 
@@ -125,7 +136,7 @@ type RenderTarget = {
   links?: Readonly<Record<string, string>>;
 };
 
-type RenderOptions = { logoUrl?: string; css?: string[]; stylesheets?: string[] };
+type RenderOptions = { logoUrl?: string; css?: string[]; stylesheets?: string[]; ai?: { aiBlocks: Record<string, string>; aiSurfaces: Record<string, string> } };
 
 function renderPage(input: PackInput, target: RenderTarget, options: RenderOptions) {
   const { doc, inputs, mode } = input;
@@ -141,12 +152,17 @@ function renderPage(input: PackInput, target: RenderTarget, options: RenderOptio
     ...(options.logoUrl && { logoUrl: options.logoUrl }),
     ...(options.css && { css: options.css }),
     ...(options.stylesheets && { stylesheets: options.stylesheets }),
+    ...(options.ai && Object.keys(options.ai.aiBlocks).length > 0 && { aiBlocks: options.ai.aiBlocks }),
+    ...(options.ai && Object.keys(options.ai.aiSurfaces).length > 0 && { aiSurfaces: options.ai.aiSurfaces }),
     onSectionError: () => {
       skipped++;
     },
   });
   return { html, skipped };
 }
+
+/** The AI blocks a pack exports: none without the compiled AI CSS (they would render unstyled). */
+const aiBlocksFor = (input: PackInput): AiExportBlock[] => (input.ai ? aiExportBlocks(input.doc) : []);
 
 const kindTarget = (input: PackInput, kind: OutputKind): RenderTarget => ({ kind, label: input.kindLabel(kind) });
 
@@ -190,11 +206,18 @@ export function buildCodePack(input: PackInput): BuiltFile {
   const options = exportOptions(inputs);
   for (const target of PROMPT_TARGETS) files[`prompts/${target}.md`] = toPromptPack(doc, target, input.locale, options);
 
+  const aiBlocks = aiBlocksFor(input);
+  if (aiBlocks.length > 0) {
+    files[AI_FILES.css] = input.ai!.css;
+    files[AI_FILES.theme] = exportThemeCss();
+  }
+
   let skippedSections = 0;
-  const render = (target: RenderTarget, base: string, extraCss: string[] = [], count = true) => {
+  const render = (target: RenderTarget, base: string, extraCss: string[] = [], count = true, ai?: RenderOptions["ai"]) => {
     const result = renderPage(input, target, {
       ...(input.logo && { logoUrl: `${base}assets/logo.png` }),
       stylesheets: [`${base}assets/dialmade-ui.css`, `${base}assets/dialmade-sections.css`, ...extraCss],
+      ...(ai && { ai }),
     });
     if (count) skippedSections += result.skipped;
     return result.html;
@@ -205,9 +228,12 @@ export function buildCodePack(input: PackInput): BuiltFile {
   if (screens.length > 0) {
     for (const screen of screens) {
       const folder = screen.dir ? `${screen.dir}/` : "";
+      const base = screen.dir ? "../" : "";
       const linkHref = linkResolver(screens, (to) => relativeHref(screen, to));
+      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, ...(input.logo && { logoUrl: `${base}assets/logo.png` }) });
+      const aiCss = Object.keys(ai.aiBlocks).length + Object.keys(ai.aiSurfaces).length > 0 ? [`${base}${AI_FILES.css}`] : [];
       // layout.css sits next to the page and loads after the kit CSS (the names DESIGN.md and the prompts use).
-      files[`${folder}index.html`] = render(screenTarget(screen, linkHref), screen.dir ? "../" : "", [SCREEN_EXPORT_FILES.layoutCss]);
+      files[`${folder}index.html`] = render(screenTarget(screen, linkHref), base, [SCREEN_EXPORT_FILES.layoutCss, ...aiCss], true, ai);
       files[`${folder}${SCREEN_EXPORT_FILES.layoutCss}`] = screen.css;
       files[`${folder}${SCREEN_EXPORT_FILES.layoutJson}`] = json(layoutJson(screen, linkHref));
     }
@@ -232,8 +258,9 @@ export function buildCodePack(input: PackInput): BuiltFile {
     );
   }
 
+  const aiReadme = aiBlocks.length > 0 ? input.ai!.texts.codeReadme(aiBlocks.filter((block) => block.html).length) : "";
   return {
-    bytes: zip(`${slug}-dialmade`, { "README.md": input.texts.codeReadme(readme), ...files }),
+    bytes: zip(`${slug}-dialmade`, { "README.md": `${input.texts.codeReadme(readme)}${aiReadme}`, ...files }),
     filename: `${slug}-dialmade.zip`,
     type: "application/zip",
     skippedSections,
@@ -256,9 +283,12 @@ export function buildClaudeDesignPack(input: PackInput): BuiltFile {
   };
   if (input.logo) files["logo.png"] = input.logo.bytes;
 
+  const aiBlocks = aiBlocksFor(input);
+  if (aiBlocks.length > 0) files[AI_FILES.theme] = exportThemeCss();
+
   let skippedSections = 0;
-  const render = (target: RenderTarget, extraCss: string[] = []) => {
-    const result = renderPage(input, target, { ...(logoUrl && { logoUrl }), css: [input.css.ui, input.css.sections, ...extraCss] });
+  const render = (target: RenderTarget, extraCss: string[] = [], ai?: RenderOptions["ai"]) => {
+    const result = renderPage(input, target, { ...(logoUrl && { logoUrl }), css: [input.css.ui, input.css.sections, ...extraCss], ...(ai && { ai }) });
     skippedSections += result.skipped;
     return result.html;
   };
@@ -269,7 +299,11 @@ export function buildClaudeDesignPack(input: PackInput): BuiltFile {
     const first = screens[0]!;
     const previewOf = (screen: PackScreen) => (screen === first ? "preview.html" : `preview-${screen.slug}.html`);
     const linkHref = linkResolver(screens, previewOf);
-    for (const screen of screens) files[previewOf(screen)] = render(screenTarget(screen, linkHref), [screen.css]);
+    for (const screen of screens) {
+      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, ...(logoUrl && { logoUrl }) });
+      const aiCss = Object.keys(ai.aiBlocks).length + Object.keys(ai.aiSurfaces).length > 0 ? [input.ai!.css] : [];
+      files[previewOf(screen)] = render(screenTarget(screen, linkHref), [screen.css, ...aiCss], ai);
+    }
     if (doc.pages.brand) files["preview-brand.html"] = render(kindTarget(input, "brand"));
     const pages = [
       ...screens.map((screen) => ({ path: previewOf(screen), label: mdText(screen.name) })),
@@ -288,8 +322,9 @@ export function buildClaudeDesignPack(input: PackInput): BuiltFile {
     );
   }
 
+  const aiReadme = aiBlocks.length > 0 ? input.ai!.texts.claudeDesignReadme(aiBlocks.filter((block) => block.html).length) : "";
   return {
-    bytes: zip(`${slug}-claude-design`, { "README.md": input.texts.claudeDesignReadme(readme), ...files }),
+    bytes: zip(`${slug}-claude-design`, { "README.md": `${input.texts.claudeDesignReadme(readme)}${aiReadme}`, ...files }),
     filename: `${slug}-claude-design.zip`,
     type: "application/zip",
     skippedSections,

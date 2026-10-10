@@ -3,13 +3,10 @@
 // sanitized HTML, the CSS compiled for it and the theme variables. The runtime paints it, reports its height, and in
 // Ajustar sends the selection and inline text edits back. It accepts messages only from the app origin it was given
 // (`?parent=`), which the CSP's `frame-ancestors` already pins, and validates every message with the shared schemas.
+import "./zodConfig";
 import { ISLAND_BLEED, IslandMessageSchema, MAX_ISLAND_HEIGHT, ParentMessageSchema, type IslandMessage, type ParentMessage } from "@dialmade/ai-render/protocol";
-import { z } from "zod";
 import { insertBlock } from "./insert";
-
-// No `new Function` fast paths: the island's CSP (Trusted Types, no unsafe-eval) forbids them.
-z.config({ jitless: true });
-import { measureBlock } from "./measure";
+import { measureAtWidths, measureBlock } from "./measure";
 
 const params = new URLSearchParams(location.search);
 const parentOrigin = (() => {
@@ -68,10 +65,11 @@ function reportSize() {
   send({ type: "size", blockId, height });
 }
 
-function reportMeasure() {
+function reportMeasure(widths?: readonly number[]) {
   const root = host.firstElementChild;
   if (!blockId || !root) return;
-  send({ type: "measure", blockId, ...measureBlock(root) });
+  const measurements = widths && widths.length > 0 ? measureAtWidths(host, root, widths) : [measureBlock(root)];
+  for (const measurement of measurements) send({ type: "measure", blockId, ...measurement });
 }
 
 new ResizeObserver(() => reportSize()).observe(host);
@@ -84,7 +82,7 @@ window.addEventListener("message", (event) => {
   const message = parsed.data;
   if (message.type === "render") render(message);
   else if (message.type === "theme") setTheme(message.vars, message.mode, message.fontsHref);
-  else reportMeasure();
+  else reportMeasure(message.widths);
 });
 
 // Links never navigate (the sandbox forbids it anyway): `#screen:<id>` asks the app to open that screen.

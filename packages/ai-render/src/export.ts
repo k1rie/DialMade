@@ -2,6 +2,7 @@
 // draws are inlined here as SVG. Works on CANONICAL html (what ./tree serializes after ./sanitize): attributes are
 // always double-quoted and escaped, so the patterns below cannot be fooled by the model's own text.
 import { iconSvg, placeholderSvg } from "./assets";
+import { elements, parseSanitized, serialize } from "./tree";
 
 const ATTR = (name: string) => new RegExp(`\\s${name}="([^"]*)"`);
 const attrOf = (tag: string, name: string) => ATTR(name).exec(tag)?.[1];
@@ -33,3 +34,26 @@ export function inlineAssets(html: string, options: InlineAssetsOptions = {}): s
 /** Provenance comment before an AI block in the export («ai: claude-haiku-5-5 · 2026-10-10»). */
 export const provenanceComment = (model: string | undefined, createdAt: string): string =>
   `<!-- Dialmade «Diseño con IA»: ${(model ?? "unknown").replace(/--/g, "")} · ${createdAt.slice(0, 10)} -->`;
+
+export type ExportBlockOptions = InlineAssetsOptions & {
+  /** `#screen:<id>` → that screen's file in the export (`null`: the screen is not exported, the link stays `#`). */
+  hrefOf?: (screenId: string) => string | null;
+};
+
+/**
+ * A stored AI block (sanitized, canonical HTML) as it goes into an exported page or the clipboard: the inline-edit
+ * handles (`data-dl-t`) go, `#screen:` links point at the exported screens, and icons and placeholders are inlined
+ * as SVG (no scripts in the export). Re-sanitize HTML that comes from a document you did not just build.
+ */
+export function exportBlockHtml(html: string, options: ExportBlockOptions = {}): string {
+  const nodes = parseSanitized(html);
+  for (const element of elements(nodes)) {
+    element.attrs = element.attrs
+      .filter(([name]) => name !== "data-dl-t")
+      .map(([name, value]): [string, string] => {
+        const screen = name === "href" ? /^#screen:([\w-]+)$/.exec(value)?.[1] : undefined;
+        return screen ? [name, options.hrefOf?.(screen) ?? "#"] : [name, value];
+      });
+  }
+  return inlineAssets(serialize(nodes), options);
+}

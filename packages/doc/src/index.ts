@@ -269,6 +269,7 @@ export { normalizeTokenColor, opaqueRoles, tokenColorCss } from "./color";
 export { toFigmaNumberVars, type FigmaNumberGroup, type FigmaNumberToken, type FigmaScope } from "./exporters/figma";
 export { toDesignMd, type DesignMdOptions } from "./exporters/designMd";
 export { PROMPT_TARGETS, toPromptPack, type PromptTarget } from "./exporters/promptPack";
+export { MAX_AI_HTML_PER_PACK, aiBlockSummary, aiDesignLines, aiReferenceLines, hasAiDesign } from "./exporters/aiRender";
 export {
   AI_AXES,
   AI_AXIS_NAMES,

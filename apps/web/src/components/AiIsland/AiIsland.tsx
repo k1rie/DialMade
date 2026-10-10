@@ -1,9 +1,11 @@
 "use client";
 
+import { pinViewportUnits } from "@dialmade/ai-render";
 import { ISLAND_BLEED, ParentMessageSchema, type IslandMessage, type ParentMessage } from "@dialmade/ai-render/protocol";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { islandUrl, previewOrigin } from "@/lib/ai/render/preview";
 import { useIslandMessages } from "./useIslandMessages";
+import { useViewportWidth } from "./useViewportWidth";
 
 export type AiIslandProps = {
   blockId: string;
@@ -24,6 +26,12 @@ export type AiIslandProps = {
   onTextEdit?: (t: number, text: string) => void;
   onNavigate?: (screenId: string) => void;
   onMeasure?: (measure: Extract<IslandMessage, { type: "measure" }>) => void;
+  /**
+   * Gate 5: the widths of the block's cell on each device (`measureWidths(cellWidths(…))` of
+   * src/lib/ai/render/responsive). After every render the island measures the block at each one and answers one
+   * `onMeasure` per width (`useResponsiveGate` turns them into the verdict).
+   */
+  measureWidths?: readonly number[];
   className?: string;
 };
 
@@ -34,7 +42,7 @@ export type AiIslandProps = {
  * height, and keeps a compensated 24 px margin so shadows are not clipped. Renders nothing when there is no preview
  * origin (the feature is then not offered at all).
  */
-export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, className }: AiIslandProps) {
+export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, measureWidths, className }: AiIslandProps) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [height, setHeight] = useState(0);
@@ -56,18 +64,25 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
     else if (message.type === "measure") onMeasure?.(message);
   });
 
-  // Content: on ready and whenever the block changes.
+  // Fluid type (`vw`) sized like the page around the island, not like the iframe (the cell): see pinViewportUnits.
+  const viewportWidth = useViewportWidth();
+  const pinned = useMemo(() => pinViewportUnits(vars, viewportWidth), [vars, viewportWidth]);
+
+  // Content: on ready and whenever the block changes (then gate 5's measurement, when asked for).
+  const widthsKey = measureWidths?.join(",") ?? "";
   useEffect(() => {
-    if (ready) post({ type: "render", v: 1, blockId, html, css, vars: { ...vars }, mode, fontsHref, editable, lang });
+    if (!ready) return;
+    post({ type: "render", v: 1, blockId, html, css, vars: pinned, mode, fontsHref, editable, lang });
+    if (widthsKey) post({ type: "measure", v: 1, widths: widthsKey.split(",").map(Number) });
     // `vars`/`mode`/`fontsHref` are sent by the theme effect below without re-inserting the HTML.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, blockId, html, css, editable, lang]);
+  }, [ready, blockId, html, css, editable, lang, widthsKey]);
 
   // Theme: palette, recipe tokens and light/dark repaint live.
   useEffect(() => {
-    if (ready) post({ type: "theme", v: 1, vars: { ...vars }, mode, fontsHref });
+    if (ready) post({ type: "theme", v: 1, vars: pinned, mode, fontsHref });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, vars, mode, fontsHref]);
+  }, [ready, pinned, mode, fontsHref]);
 
   if (!src) return null;
   return (

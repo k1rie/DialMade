@@ -129,6 +129,43 @@ export const exportDialog = defineDictionary({
       skippedSections: (count: number) =>
         count === 1 ? "Una sección no se pudo exportar a HTML y se omitió." : `${count} secciones no se pudieron exportar a HTML y se omitieron.`,
     },
+    aiExport: {
+      name: "Bloques de IA",
+      description: "Copia el HTML o el componente TSX de cada bloque que diseñó Claude. Usan Tailwind v4 con theme.css y ai-theme.css.",
+      blockLabel: "Bloque",
+      option: (screen: string, block: string) => `${screen} · ${block}`,
+      copyHtml: "Copiar HTML",
+      copyTsx: "Copiar TSX",
+      copyTheme: "Copiar ai-theme.css",
+      copyAssets: "Copiar Icon y Placeholder",
+      loading: "Preparando…",
+      toasts: {
+        copied: (what: string) => `${what} copiado`,
+        copyFailed: "No pudimos copiar al portapapeles. Revisa los permisos del navegador.",
+      },
+      files: {
+        codeReadme: (count: number) =>
+          [
+            "## Diseño con IA",
+            "",
+            `${count === 1 ? "Un bloque lo diseñó" : `${count} bloques los diseñó`} Claude dentro de tu layout. Su HTML está saneado, sin scripts, y va dentro de cada página con un comentario de procedencia.`,
+            "",
+            list([
+              "`assets/dialmade-ai.css`: el CSS compilado de esos bloques (Tailwind v4 con solo los tokens del tema). Las páginas ya lo cargan.",
+              "`ai-theme.css`: el vocabulario de Tailwind de los bloques de IA. Impórtalo después de `@import \"tailwindcss\";` y de `theme.css` para usar su HTML o su TSX en tu proyecto.",
+              "`DESIGN.md` y `prompts/`: la dirección de arte y el HTML de referencia de cada bloque.",
+            ]),
+            "",
+          ].join("\n"),
+        claudeDesignReadme: (count: number) =>
+          [
+            "## Diseño con IA",
+            "",
+            `Las previews incluyen ${count === 1 ? "un bloque diseñado" : `${count} bloques diseñados`} por Claude. \`ai-theme.css\` es su vocabulario de Tailwind; \`DESIGN.md\` y \`prompt.md\` llevan la dirección de arte y su HTML de referencia.`,
+            "",
+          ].join("\n"),
+      },
+    },
     files: {
       layout: LAYOUT_ES,
       codeReadme: (info: PackReadmeInfo) =>
@@ -255,6 +292,43 @@ export const exportDialog = defineDictionary({
       failed: "We couldn't prepare the download. Try again.",
       skippedSections: (count: number) =>
         count === 1 ? "One section couldn't be exported to HTML and was left out." : `${count} sections couldn't be exported to HTML and were left out.`,
+    },
+    aiExport: {
+      name: "AI blocks",
+      description: "Copy the HTML or the TSX component of each block Claude designed. They use Tailwind v4 with theme.css and ai-theme.css.",
+      blockLabel: "Block",
+      option: (screen: string, block: string) => `${screen} · ${block}`,
+      copyHtml: "Copy HTML",
+      copyTsx: "Copy TSX",
+      copyTheme: "Copy ai-theme.css",
+      copyAssets: "Copy Icon and Placeholder",
+      loading: "Getting ready…",
+      toasts: {
+        copied: (what: string) => `${what} copied`,
+        copyFailed: "We couldn't copy to the clipboard. Check the browser's permissions.",
+      },
+      files: {
+        codeReadme: (count: number) =>
+          [
+            "## AI design",
+            "",
+            `${count === 1 ? "One block was" : `${count} blocks were`} designed by Claude inside your layout. Their HTML is sanitized, has no scripts, and sits inside each page with a provenance comment.`,
+            "",
+            list([
+              "`assets/dialmade-ai.css`: the compiled CSS of those blocks (Tailwind v4 with only the theme's tokens). The pages already load it.",
+              "`ai-theme.css`: the Tailwind vocabulary of the AI blocks. Import it after `@import \"tailwindcss\";` and `theme.css` to use their HTML or TSX in your project.",
+              "`DESIGN.md` and `prompts/`: the art direction and the reference HTML of each block.",
+            ]),
+            "",
+          ].join("\n"),
+        claudeDesignReadme: (count: number) =>
+          [
+            "## AI design",
+            "",
+            `The previews include ${count === 1 ? "one block" : `${count} blocks`} designed by Claude. \`ai-theme.css\` is their Tailwind vocabulary; \`DESIGN.md\` and \`prompt.md\` carry the art direction and their reference HTML.`,
+            "",
+          ].join("\n"),
+      },
     },
     files: {
       layout: LAYOUT_EN,

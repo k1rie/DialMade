@@ -1,8 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
-    "allowImportingTsExtensions": true
+    "types": [
+      "node"
+    ],
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx"
   },
-  "include": ["src", "scripts", "*.config.ts"]
+  "include": [
+    "src",
+    "scripts",
+    "*.config.ts"
+  ]
 }

@@ -4,6 +4,7 @@ import type { DesignDoc } from "../schema";
 import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, fontsUrlFor, type DimensionRef, type ResolvedTokens } from "../tokens";
 import { shadowCss } from "../compile";
 import { renderTargets, type RenderTarget } from "../screens";
+import { aiDesignLines } from "./aiRender";
 import { plainText, screensLayoutLines } from "./layoutBlock";
 import {
   SPACE_NAMES,
@@ -392,6 +393,9 @@ export function toDesignMd(doc: DesignDoc, options: DesignMdOptions = {}): strin
       out.push("");
     }
   }
+
+  // «Diseño con IA»: the art direction and the AI blocks of each screen (only when the document has them).
+  out.push(...aiDesignLines(doc, locale));
 
   out.push(
     "## Do's and Don'ts",
