@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_AI_BLOCK_BYTES, MAX_AI_RENDER_BYTES, type AiBlock, type AiDirection } from "./aiRender";
+import { MAX_AI_BLOCK_BYTES, MAX_AI_RENDER_BYTES, MAX_AI_STASHED_BLOCKS, aiRenderBytes, type AiBlock, type AiDirection } from "./aiRender";
 import { safeParseDesignDoc } from "./doc";
 import { applyPatch } from "./patch";
 import { screensDoc } from "./testing/fixtures";
@@ -64,5 +64,40 @@ describe("«Diseño con IA» storage (additive, versioned, with provenance)", ()
     const result = safeParseDesignDoc({ ...doc, screens: { ...doc.screens, "s-home": { ...doc.screens["s-home"]!, aiRender: { version: 1, blocks } } } });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.issues[0]!.path).toEqual(["aiRender"]);
+  });
+
+  it("keeps the recipe a block was designed with, and the AI blocks of removed layout blocks (the stash)", () => {
+    const doc = screensDoc();
+    const designed = { ...block(), provenance: { ...provenance, recipeId: "soft-ui" } };
+    const result = applyPatch(doc, [{ op: "add", path: "/screens/s-home/aiRender", value: { version: 1, blocks: { "b-hero": designed }, stash: { "b-old": block() } } }]);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.doc.screens["s-home"]!.aiRender!.blocks["b-hero"]!.provenance.recipeId).toBe("soft-ui");
+    expect(Object.keys(result.doc.screens["s-home"]!.aiRender!.stash!)).toEqual(["b-old"]);
+    const tooMany = Object.fromEntries(Array.from({ length: MAX_AI_STASHED_BLOCKS + 1 }, (_, i) => [`b-${i}`, block()]));
+    expect(applyPatch(doc, [{ op: "add", path: "/screens/s-home/aiRender", value: { version: 1, blocks: {}, stash: tooMany } }]).ok).toBe(false);
+  });
+
+  it("counts the AI blocks of stashed screens toward the 1 MB cap", () => {
+    const render = { version: 1, blocks: { "b-hero": block() } };
+    const one = aiRenderBytes({ screens: { a: { aiRender: render } } });
+    expect(aiRenderBytes({ screens: { a: { aiRender: render } }, screenStash: { b: { aiRender: render } } })).toBe(2 * one);
+  });
+
+  it("a block edit is one immutable update: the other blocks and screens keep their identity (cheap undo history)", () => {
+    const doc = screensDoc();
+    const seeded = applyPatch(doc, [{ op: "add", path: "/screens/s-home/aiRender", value: { version: 1, blocks: { "b-hero": block(), "b-other": block() } } }]);
+    expect(seeded.ok).toBe(true);
+    if (!seeded.ok) return;
+    const before = seeded.doc;
+    const edited = applyPatch(before, [{ op: "replace", path: "/screens/s-home/aiRender/blocks/b-hero/html", value: '<section class="@container" data-block-id="b-hero"><h1 data-dl-t="0">Adiós</h1></section>' }]);
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    const after = edited.doc;
+    expect(after.screens["s-home"]!.aiRender!.blocks["b-hero"]!.html).toContain("Adiós");
+    expect(before.screens["s-home"]!.aiRender!.blocks["b-hero"]!.html).toContain("Hola");
+    expect(after.screens["s-home"]!.aiRender!.blocks["b-other"]).toBe(before.screens["s-home"]!.aiRender!.blocks["b-other"]);
+    expect(after.screens["s-dashboard"]).toBe(before.screens["s-dashboard"]);
+    expect(after.brand).toBe(before.brand);
   });
 });

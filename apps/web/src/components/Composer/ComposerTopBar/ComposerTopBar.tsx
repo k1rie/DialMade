@@ -10,6 +10,7 @@ import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { ArrowLeftIcon, ExportIcon, PaletteIcon, RedoIcon, UndoIcon } from "../icons";
+import { AiScreenBar } from "../AiScreenBar";
 import type { PageTarget } from "../pageOps";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { AiCopyMenu } from "./AiCopyMenu";
@@ -112,6 +113,7 @@ export function ComposerTopBar({
           onClick={history.redo}
         />
         <span aria-hidden className="mx-1 h-5 w-px bg-white/10" />
+        <AiScreenBar doc={doc} target={target} />
         <AiCopyMenu
           open={aiMenuOpen}
           onOpenChange={onAiMenuOpenChange}

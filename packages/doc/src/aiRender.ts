@@ -44,6 +44,11 @@ export const MAX_AI_BLOCK_BYTES = 16 * 1024;
 /** Spec §8.3: 1 MB of `aiRender` in the whole document. */
 export const MAX_AI_RENDER_BYTES = 1024 * 1024;
 export const MAX_AI_REQUEST_LENGTH = 500;
+/**
+ * AI blocks of removed layout blocks kept per screen (spec §8.3: «el stash lo trae de vuelta, como las props»):
+ * a Layout undo that brings the block back brings its AI design back too. Oldest first out.
+ */
+export const MAX_AI_STASHED_BLOCKS = 12;
 
 const Text = (max: number) => z.string().max(max);
 
@@ -61,6 +66,12 @@ export const AiProvenanceSchema = z.strictObject({
   seed: z.number().int().min(0).max(0xffffffff),
   /** «Pedir cambio»: what the user asked (data, never instructions). */
   request: Text(MAX_AI_REQUEST_LENGTH).optional(),
+  /**
+   * Style recipe (`brief.recipeId`) the block was designed with. When the document's recipe changes, the tokens
+   * still repaint the block, but its composition is the old style's: the UI offers «El estilo cambió · ¿Rehacer con
+   * IA?» (spec §8.1), never automatically. Absent on blocks made before it existed (no notice for them).
+   */
+  recipeId: Text(48).optional(),
 });
 
 const AxesSchema = z.strictObject({
@@ -112,6 +123,14 @@ export const AiBlockSchema = z.strictObject({
 export const AiScreenRenderSchema = z.strictObject({
   version: z.literal(1),
   blocks: z.record(z.string().regex(ELEMENT_ID), AiBlockSchema),
+  /**
+   * AI blocks of layout blocks a «Generar» removed, by their id (at most `MAX_AI_STASHED_BLOCKS`, oldest first):
+   * when the block comes back (a Layout undo), its AI block comes back with it. Never rendered.
+   */
+  stash: z
+    .record(z.string().regex(ELEMENT_ID), AiBlockSchema)
+    .refine((stash) => Object.keys(stash).length <= MAX_AI_STASHED_BLOCKS, `At most ${MAX_AI_STASHED_BLOCKS} stashed AI blocks`)
+    .optional(),
 });
 
 export const DocAiRenderSchema = z.strictObject({
@@ -129,12 +148,16 @@ export type DocAiRender = z.output<typeof DocAiRenderSchema>;
 export type AiRenderPath = (typeof AI_RENDER_PATHS)[number];
 export type AiRenderKind = (typeof AI_RENDER_KINDS)[number];
 
-/** UTF-8 bytes of the `aiRender` members of a stored document (top level and every screen). */
-export function aiRenderBytes(input: { aiRender?: unknown; screens?: unknown }): number {
+/**
+ * UTF-8 bytes of the `aiRender` members of a stored document: top level, every screen and every stashed screen
+ * (`screenStash`), so the 1 MB cap holds for all the AI HTML the document carries, wherever it sits.
+ */
+export function aiRenderBytes(input: { aiRender?: unknown; screens?: unknown; screenStash?: unknown }): number {
   const encoder = new TextEncoder();
   let bytes = input.aiRender === undefined ? 0 : encoder.encode(JSON.stringify(input.aiRender)).length;
-  if (input.screens && typeof input.screens === "object") {
-    for (const screen of Object.values(input.screens as Record<string, unknown>)) {
+  for (const record of [input.screens, input.screenStash]) {
+    if (!record || typeof record !== "object") continue;
+    for (const screen of Object.values(record as Record<string, unknown>)) {
       const render = screen && typeof screen === "object" ? (screen as { aiRender?: unknown }).aiRender : undefined;
       if (render !== undefined) bytes += encoder.encode(JSON.stringify(render)).length;
     }
