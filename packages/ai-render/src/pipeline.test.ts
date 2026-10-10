@@ -59,7 +59,7 @@ describe("inputs", () => {
 describe("export", () => {
   it("inlines icons and placeholders as SVG (no scripts in the export)", () => {
     const html = inlineAssets('<div><i class="size-4" data-icon="check" aria-hidden="true"></i><img class="w-full" alt="Panel" data-placeholder="screenshot"><img alt="Brisa" data-asset="logo"></div>', { logoUrl: "assets/logo.png" });
-    expect(html).toContain("<svg viewBox=\"0 0 24 24\"");
+    expect(html).toContain("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"");
     expect(html).toContain('<svg class="w-full" aria-label="Panel" data-placeholder="screenshot"');
     expect(html).toContain('<img src="assets/logo.png" alt="Brisa">');
   });

@@ -30,7 +30,7 @@ describe("AI blocks in the renderer", () => {
 
   it("PageRenderer takes any node (the app's island) and does not make it inert in edit mode", () => {
     const markup = renderToStaticMarkup(
-      <PageRenderer doc={doc} kind="landing" page={page} registry={testRegistry} interactive replace={new Map([[first!, <iframe title="isla" />]])} />,
+      <PageRenderer doc={doc} kind="landing" page={page} registry={testRegistry} interactive replace={new Map([[first!, <iframe key="isla" title="isla" />]])} />,
     );
     const frame = markup.slice(markup.indexOf(`data-dl-id="${first}"`) - 200, markup.indexOf("<iframe"));
     expect(markup).toContain('<iframe title="isla">');

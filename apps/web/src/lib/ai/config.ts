@@ -38,3 +38,10 @@ export const MAX_COPY_SCREENS = 24;
 export const MAX_INSTRUCTIONS_LENGTH = 500;
 /** Fields sent to the model in one request (a full landing page has ~80). */
 export const MAX_COPY_FIELDS = 160;
+
+/** «Diseño con IA» (spec §5.2, user decision 2): what one free use opens. */
+export const AI_SESSION_SCREENS = 3;
+export const AI_SESSION_ACTIONS = 10;
+/** A generate may redo its art direction once («Otra versión» of the direction). */
+export const AI_SESSION_DIRECTIONS = 2;
+export const AI_SESSION_TTL_SECONDS = 24 * 60 * 60;

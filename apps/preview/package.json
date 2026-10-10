@@ -1,0 +1,28 @@
+{
+  "name": "preview",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "description": "Preview origin of «Diseño con IA»: a static page and runtime that paint one AI block per sandboxed iframe, under a strict CSP. Never served from the app's origin.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build && node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "test": "vitest run",
+    "lint": "eslint src scripts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dialmade/ai-render": "workspace:*",
+    "@dialmade/ui": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "jsdom": "29.1.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

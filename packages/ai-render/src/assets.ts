@@ -9,7 +9,7 @@ const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&q
 export function iconSvg(name: string): string {
   const paths = (ICONS as Record<string, readonly string[]>)[name];
   const body = paths ? paths.map((d) => `<path d="${escape(d)}"/>`).join("") : `<circle cx="12" cy="12" r="2.5" fill="currentColor"/>`;
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
 }
 
 const VIEW: Record<string, { w: number; h: number }> = {

@@ -18,6 +18,14 @@
     "./anthropic": {
       "types": "./src/anthropic.ts",
       "default": "./src/anthropic.ts"
+    },
+    "./protocol": {
+      "types": "./src/protocol.ts",
+      "default": "./src/protocol.ts"
+    },
+    "./runtime": {
+      "types": "./src/runtimeShared.ts",
+      "default": "./src/runtimeShared.ts"
     }
   },
   "publishConfig": {
@@ -33,6 +41,14 @@
       "./anthropic": {
         "types": "./dist/anthropic.d.ts",
         "default": "./dist/anthropic.js"
+      },
+      "./protocol": {
+        "types": "./dist/protocol.d.ts",
+        "default": "./dist/protocol.js"
+      },
+      "./runtime": {
+        "types": "./dist/runtimeShared.d.ts",
+        "default": "./dist/runtimeShared.js"
       }
     }
   },

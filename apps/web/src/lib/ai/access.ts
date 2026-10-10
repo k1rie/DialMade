@@ -156,7 +156,7 @@ export function aiFailureFromError(error: unknown): AiFailure {
 }
 
 /** The API answered with an error status: the request was not billed. */
-const isHttpError = (error: unknown) =>
+export const isHttpError = (error: unknown) =>
   error instanceof Anthropic.APIError && !(error instanceof Anthropic.APIUserAbortError) && !(error instanceof Anthropic.APIConnectionError);
 
 const secondsToUtcMidnight = (now: Date) => {
@@ -169,7 +169,7 @@ const freeCounters = (usage: AiLedgerUsage, config: AiServerConfig) => ({
   freeUsesTotal: config.freeUsesPerMonth,
 });
 
-function limitFailure(reason: AiLimitReason, usage: AiLedgerUsage, config: AiServerConfig, now: Date, amountUsd?: number): AiFailure {
+export function limitFailure(reason: AiLimitReason, usage: AiLedgerUsage, config: AiServerConfig, now: Date, amountUsd?: number): AiFailure {
   const counters = freeCounters(usage, config);
   if (reason === "free-tier-exhausted") {
     return aiFailure(402, "free-tier-exhausted", "This device used its free AI uses this month", { ...counters, remaining: 0, freeUsesRemaining: 0 });
@@ -186,7 +186,7 @@ function limitFailure(reason: AiLimitReason, usage: AiLedgerUsage, config: AiSer
 }
 
 /** Settling must never turn a paid answer into an error: an unsettled reservation expires and is charged in full. */
-async function closeSafely(close: () => Promise<AiLedgerUsage | null>): Promise<AiLedgerUsage | null> {
+export async function closeSafely(close: () => Promise<AiLedgerUsage | null>): Promise<AiLedgerUsage | null> {
   try {
     return await close();
   } catch (error) {
@@ -195,7 +195,7 @@ async function closeSafely(close: () => Promise<AiLedgerUsage | null>): Promise<
   }
 }
 
-function hostedOff(config: AiServerConfig, ledger: AiLedger | null, caller: AiCaller | null): AiFailure | null {
+export function hostedOff(config: AiServerConfig, ledger: AiLedger | null, caller: AiCaller | null): AiFailure | null {
   if (!config.apiKey) return aiFailure(503, "ai-not-configured", "ANTHROPIC_API_KEY is not set");
   if (!ledger) {
     console.error("[ai] Hosted AI is off: outside development it needs the Supabase ledger (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY)");

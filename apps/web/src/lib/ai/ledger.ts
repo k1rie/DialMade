@@ -35,8 +35,69 @@ export type AiReserveOutcome =
   | { ok: true; reservationId: string; usage: AiLedgerUsage }
   | { ok: false; reason: AiLimitReason; usage: AiLedgerUsage };
 
+// ── «Diseño con IA»: design sessions (docs/design/diseno-con-ia-spec.md §5.2, user decision 2) ──────────────
+// One free use opens a session: 1 «Generar con IA» of up to `screens` screens (plus its art direction) and up to
+// `actions` block actions (Otra versión / Pedir cambio) for `ttl`. Each paid call inside it reserves its own worst
+// case against the global budget WITHOUT another free use or IP request, and is settled like any other call.
+
+export const AI_SESSION_KINDS = ["direction", "screen", "action"] as const;
+export type AiSessionKind = (typeof AI_SESSION_KINDS)[number];
+
+export type AiSessionCounters = {
+  directionsUsed: number;
+  directionsMax: number;
+  screensUsed: number;
+  screensMax: number;
+  actionsUsed: number;
+  actionsMax: number;
+  /** ISO time. */
+  expiresAt: string;
+};
+
+export type AiSessionOpenRequest = AiLedgerKey &
+  AiLedgerLimits & {
+    model: string;
+    /** Worst case of the session's generate (direction + screens): it must fit the budget now. Not reserved. */
+    amountUsd: number;
+    ttlSeconds: number;
+    directions: number;
+    screens: number;
+    actions: number;
+  };
+
+export type AiSessionOpenOutcome =
+  | { ok: true; sessionId: string; session: AiSessionCounters; usage: AiLedgerUsage }
+  | { ok: false; reason: AiLimitReason; usage: AiLedgerUsage };
+
+export type AiSessionRefusal = "not-found" | "expired" | "directions-exhausted" | "screens-exhausted" | "actions-exhausted";
+
+export type AiSessionReserveRequest = {
+  sessionId: string;
+  deviceId: string;
+  kind: AiSessionKind;
+  model: string;
+  amountUsd: number;
+  monthlyBudgetUsd: number;
+  now?: Date;
+};
+
+export type AiSessionReserveOutcome =
+  | { ok: true; reservationId: string; session: AiSessionCounters; usage: AiLedgerUsage }
+  | { ok: false; reason: AiSessionRefusal | "budget-exceeded"; session?: AiSessionCounters; usage?: AiLedgerUsage };
+
+export interface AiSessionLedger {
+  /** Atomic: the device's free uses, the IP's daily limit and the budget, then one free use, one IP request and the session. */
+  openSession(request: AiSessionOpenRequest): Promise<AiSessionOpenOutcome>;
+  /** Atomic: counts one `kind` of the session (same device, not expired, under its max) and reserves `amountUsd`. */
+  reserveInSession(request: AiSessionReserveRequest): Promise<AiSessionReserveOutcome>;
+  /** A screen or action that FAILED (API error, refusal, 0 valid blocks) gives its slot back: the retry is free. */
+  refundSession(sessionId: string, deviceId: string, kind: AiSessionKind, now?: Date): Promise<AiSessionCounters | null>;
+}
+
 export interface AiLedger {
   readonly kind: "supabase" | "memory";
+  /** «Diseño con IA» sessions. Absent: the render routes answer 503. */
+  readonly sessions?: AiSessionLedger;
   usage(key: AiLedgerKey): Promise<AiLedgerUsage>;
   /**
    * Atomic: checks the free uses, the IP's daily requests and the budget, then reserves `amountUsd`,
@@ -45,7 +106,7 @@ export interface AiLedger {
   reserve(request: AiReserveRequest): Promise<AiReserveOutcome>;
   /** The call was billed: charges `costUsd` and frees the rest of the reservation. Idempotent. */
   settle(reservationId: string, costUsd: number, now?: Date): Promise<AiLedgerUsage | null>;
-  /** The call was not billed: frees the reservation and gives the free use back. Idempotent. */
+  /** The call was not billed: frees the reservation and gives the free use back (not inside a session). Idempotent. */
   release(reservationId: string, now?: Date): Promise<AiLedgerUsage | null>;
 }
 

@@ -3,16 +3,10 @@
 // the first wall; the real guarantee is the sandboxed iframe on the preview origin and its CSP.
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
+import { ALLOWED_TAGS, ROOT_TAGS } from "./allowlist";
 import { checkClass, type ClassRejection } from "./vocabulary";
 
-export const ROOT_TAGS: ReadonlySet<string> = new Set(["section", "header", "footer", "nav", "aside", "div"]);
-
-export const ALLOWED_TAGS: ReadonlySet<string> = new Set([
-  "section", "header", "footer", "nav", "aside", "div", "main", "article", "ul", "ol", "li", "dl", "dt", "dd", "p",
-  "span", "strong", "em", "small", "h1", "h2", "h3", "h4", "h5", "h6", "a", "button", "img", "figure", "figcaption",
-  "blockquote", "cite", "hr", "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "label", "input",
-  "textarea", "select", "option", "time", "mark", "abbr", "i", "br", "b", "u", "s", "sub", "sup", "q", "address",
-]);
+export { ALLOWED_TAGS, ROOT_TAGS };
 
 /** Dropped with everything inside (their content is code, another namespace or never visible). */
 const DROP_WITH_CONTENT: ReadonlySet<string> = new Set([
