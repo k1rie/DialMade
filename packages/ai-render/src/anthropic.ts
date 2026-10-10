@@ -122,6 +122,11 @@ export async function createDirection(client: Anthropic, params: Params, candida
 }
 
 export type StreamCallbacks = {
+  /**
+   * The response began (`message_start`): the prompt was read, so its cache prefix exists from now on. The callers
+   * start the other screens of a session after it, so they read the cache instead of writing it again.
+   */
+  onStart?: () => void;
   /** A root closed (raw HTML; sanitize it before anything else). */
   onBlock?: (block: StreamBlock) => void;
   /** Characters received so far. */
@@ -150,7 +155,12 @@ export async function streamBlocks(
   };
   const stream = client.beta.messages.stream(params, requestOptions);
   let tooLarge = false;
+  let started = false;
   for await (const event of stream) {
+    if (!started) {
+      started = true;
+      callbacks.onStart?.();
+    }
     if (event.type !== "content_block_delta" || event.delta.type !== "text_delta") continue;
     emit(parser.push(event.delta.text));
     callbacks.onProgress?.(parser.received);

@@ -195,5 +195,10 @@ export function manualPrompt(brand: RenderBrandInput, direction: DirectionForPro
   return parts.join("\n");
 }
 
+/** «Copiar prompt para mi Claude» for «Otra versión» / «Pedir cambio» of one block: the contract, then the same message. */
+export function manualBlockPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput): string {
+  return [AI_RENDER_SYSTEM_PROMPT, "", ...blockMessage(brand, direction, input).map((part) => part.text)].join("\n");
+}
+
 /** Axes as one line («editorial · bold-display · …») for the UI and DESIGN.md. */
 export const axesLine = (axes: AiAxes): string => Object.values(axes).join(" · ");

@@ -2,8 +2,8 @@
 
 // «Copiar prompt para mi Claude»: the free way out when there are no free uses and no key. The user
 // copies the prompt (rules, data and the JSON Schema) into Claude with their own account, attaches
-// the listed files, and pastes the JSON back; `job.parse` validates it with the same Zod schema as
-// the API paths. Nothing is sent anywhere from here.
+// the listed files, and pastes the JSON back (HTML roots for «Diseño con IA»); `job.parse` validates it with the
+// same checks as the API paths. Nothing is sent anywhere from here.
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -36,7 +36,17 @@ const CopyIcon = () => (
 );
 
 export function ClaudePromptFallback<T>({ job, onResult, className }: ClaudePromptFallbackProps<T>) {
-  const t = useDictionary(ai).manual;
+  const dictionary = useDictionary(ai);
+  // «Diseño con IA» answers HTML, not JSON: its own words for the last step, the field and the errors.
+  const t =
+    job.format === "html"
+      ? {
+          ...dictionary.manual,
+          steps: { ...dictionary.manual.steps, answer: dictionary.aiAccess.manual.answer },
+          answerPlaceholder: dictionary.aiAccess.manual.answerPlaceholder,
+          errors: dictionary.aiAccess.manual.errors,
+        }
+      : dictionary.manual;
   const promptId = useId();
   const answerId = useId();
   const statusId = useId();

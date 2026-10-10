@@ -244,6 +244,8 @@ export async function renderScreen(body: Extract<RenderRequestBody, { task: "scr
           params,
           expected,
           {
+            // The first event: the cache prefix is written, the client may start the session's other screens.
+            onStart: () => send({ type: "progress", received: 0 }),
             onBlock: (block) => send({ type: "block", ...block }),
             onProgress: (received) => {
               if (received - lastProgress < 2048) return;
