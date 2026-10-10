@@ -9,6 +9,7 @@ import type {
   LayoutBlock,
   LayoutDoc,
   LayoutWarning,
+  LibraryBlockType,
   ResponsiveLayout,
   ScreenId,
   ScreenKind,
@@ -34,6 +35,9 @@ export type Screen = {
 
 /** A recipe id from `@dialmade/catalog`, or `"guide"` for «Tu guía de estilo» (an imported guide). */
 export type StyleChoice = string;
+
+/** Drag data of a block library tile (`LIBRARY_DRAG_TYPE`); `DraggableItem` adds `label`. */
+export type LibraryDragData = { blockType: LibraryBlockType };
 
 /** Tabs of the lower left panel. */
 export type LeftTab = "blocks" | "layers";

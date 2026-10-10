@@ -391,6 +391,7 @@ export const layout = defineDictionary({
       shortcuts: "Atajos de teclado",
       style: "Estilo",
       styleChip: (name: string) => `Estilo: ${name}`,
+      styleHint: "Te lleva al selector de estilo, en el panel de la pantalla.",
       leftPanel: "Panel izquierdo",
       leftTabs: { blocks: "Bloques", layers: "Capas" },
     },
@@ -442,6 +443,14 @@ export const layout = defineDictionary({
       grid: (columns: number) => `Rejilla de ${columns} columnas`,
       overlays: "Capa superpuesta",
       grabbedBadge: "Cogido",
+      /** «Ocultos en Tablet: 2» above a derived view. */
+      hiddenIn: (device: string, n: number) => `Ocultos en ${device}: ${n}`,
+      selectBlock: (name: string) => `Seleccionar ${name}`,
+      readOnly: (device: string) => `En ${device} solo se ve. Mueve y cambia el tamaño en Escritorio.`,
+      /** Labels of «Ver estructura»: a stack lays its children out top to bottom, a row left to right. */
+      regionKinds: { stack: "Columna", row: "Fila", grid: "Rejilla" },
+      warnings: "Avisos de este bloque",
+      warningsLabel: (name: string, n: number) => `${name}: ${plural(n, "aviso", "avisos")}`,
     },
     whatIsThis: {
       title: "¿Qué es esto?",
@@ -454,6 +463,7 @@ export const layout = defineDictionary({
       chosen: (name: string) => `La caja ahora es ${name}.`,
       keptFree: "La caja queda como bloque libre.",
       frameChosen: (nav: string) => `En pantallas de app esto es la navegación. Ahora es ${nav}.`,
+      results: "Resultados",
     },
     library: {
       title: "Bloques",
@@ -473,6 +483,9 @@ export const layout = defineDictionary({
       item: (name: string, description: string, soon: boolean) => `${name}${soon ? ", pronto" : ""}. ${description}`,
       appOnly: "Solo en pantallas de app",
       frameInApp: "En pantallas de app cambia la navegación",
+      appOnlyHint: (name: string) => `${name} solo existe como navegación de las pantallas de app.`,
+      grabHint: "Con Espacio lo coges para colocarlo en el lienzo con las flechas. Espacio lo suelta y Esc cancela.",
+      useFreeLabel: (label: string) => `Usar bloque libre llamado «${label}»`,
       category: (name: string, n: number) => `${name}, ${plural(n, "bloque", "bloques")}`,
       showMore: (n: number) => `Ver ${n} más`,
       showLess: "Ver menos",
@@ -488,6 +501,23 @@ export const layout = defineDictionary({
       hidden: "Oculto",
       nav: (nav: string) => `Navegación: ${nav}`,
       overlays: "Superpuestos",
+      hiddenByParent: "Oculto con su contenedor",
+      /** Accessible name of a block row: «Calendario semanal, Calendario. Cantidad: 3. Nota: semana laboral. Oculto.» */
+      itemLabel: (b: { name: string; type: string; count?: number; note?: string; hidden?: boolean; hiddenByParent?: boolean; soon?: boolean }) =>
+        sentences([
+          b.name === b.type ? b.name : `${b.name}, ${b.type}`,
+          b.count !== undefined && `cantidad: ${b.count}`,
+          b.note && `nota: ${b.note}`,
+          b.hidden ? "oculto" : b.hiddenByParent && "oculto con su contenedor",
+          b.soon && "pronto",
+        ]),
+      /** Screen-reader help of the tree. `singleKeys`: the single-key shortcuts (Supr, F2) are on. */
+      instructions: (k: ShortcutKeys, singleKeys: boolean) =>
+        [
+          "Flechas arriba y abajo para moverte, derecha e izquierda para abrir o cerrar. Enter selecciona.",
+          singleKeys ? `${k.combo(k.mod, "D")} duplica, Supr borra y F2 renombra.` : `${k.combo(k.mod, "D")} duplica.`,
+          `${k.combo(k.mod, "Z")} deshace y ${k.combo(k.shift, k.mod, "Z")} rehace.`,
+        ].join(" "),
     },
     screens: {
       title: "Pantallas",
@@ -517,6 +547,12 @@ export const layout = defineDictionary({
       thumbnail: (name: string) => `Miniatura de ${name}`,
       blocks: (n: number) => plural(n, "bloque", "bloques"),
       lastOne: "Necesitas al menos una pantalla.",
+      /** Short kind badge of a screen row and of a template. */
+      kindBadge: { landing: "Web", app: "App" } satisfies Record<ScreenKind, string>,
+      renameHint: "F2 o doble clic para renombrar.",
+      reorderCanceled: (name: string, n: number, total: number) => `Cancelado. ${name} sigue en la posición ${n} de ${total}.`,
+      atTop: (name: string) => `${name} ya es la primera.`,
+      atBottom: (name: string) => `${name} ya es la última.`,
     },
     templatePicker: {
       region: "Plantillas",
@@ -532,6 +568,7 @@ export const layout = defineDictionary({
       use: (name: string) => `Usar ${name}`,
       includes: (names: readonly string[]) => `Incluye ${joinEs(names)}.`,
       option: (name: string, recommended: boolean) => (recommended ? `${name}, recomendada` : name),
+      applied: (name: string, screens: readonly string[]) => `Empezaste con ${name}: ${joinEs(screens)}.`,
     },
     inspector: {
       title: "Inspector",
@@ -591,6 +628,16 @@ export const layout = defineDictionary({
       hide: "Ocultar",
       show: "Mostrar",
       delete: "Borrar",
+      /** Option of a select: «Agenda (por defecto)». */
+      defaultOption: (name: string) => `${name} (por defecto)`,
+      /** Option of the type select with a remark: «Kanban · Pronto». */
+      typeOption: (name: string, remark: string | null) => (remark ? `${name} · ${remark}` : name),
+      desktopOnly: "Mover y cambiar el tamaño se hace en Escritorio.",
+      parentSelect: (name: string) => `Seleccionar ${name}`,
+      hiddenEverywhere: "Oculto en todos los dispositivos. Usa el ojo de arriba para mostrarlo.",
+      moveToGroups: { order: "Orden", align: "Alineación", nest: "Contenedor" },
+      /** Remark of Navbar/Sidebar in the type select of an app screen (they are the navigation frame there). */
+      frameRemark: "se elige en el panel de la pantalla",
     },
     screenPanel: {
       title: "Pantalla",
@@ -602,6 +649,7 @@ export const layout = defineDictionary({
       kind: "Tipo",
       convert: (kind: string) => `Convertir en ${kind}`,
       convertHint: "Conserva los bloques y su posición.",
+      convertToAppHint: "La navbar o la barra lateral de esta pantalla pasa a ser la navegación de la app.",
       navigation: "Navegación",
       navigationHint: "La comparten todas las pantallas de app.",
       pageHeader: "Cabecera de página",
@@ -617,8 +665,8 @@ export const layout = defineDictionary({
       guideHint: "La que importaste, con sus valores fijados.",
       recommended: "Recomendado",
       current: "Actual",
-      option: (name: string, state: { selected: boolean; recommended: boolean }) =>
-        [name, state.selected && "elegido", state.recommended && "recomendado"].filter(Boolean).join(", "),
+      /** Accessible name of an option; the selection is the radio's `aria-checked`, not part of the name. */
+      option: (name: string, recommended: boolean) => (recommended ? `${name}, recomendado` : name),
       preview: (name: string) => `Vista previa con ${name}`,
       emptyPreview: "Aún no hay bloques: la preview usa un layout de ejemplo.",
       applied: (name: string) => `Estilo «${name}» aplicado.`,
@@ -639,6 +687,18 @@ export const layout = defineDictionary({
       noAi: "Sin IA y sin créditos",
       generating: "Generando…",
       skip: "Saltar animación",
+      again: "Generar de nuevo",
+      /** Status of the bottom bar without the warnings, which are a button: «3 pantallas · 24 bloques (2 libres)». */
+      summary: (s: Omit<GenerateStatus, "warnings">) =>
+        [
+          s.screens > 1 && plural(s.screens, "pantalla", "pantallas"),
+          `${plural(s.blocks, "bloque", "bloques")}${s.free > 0 ? ` (${plural(s.free, "libre", "libres")})` : ""}`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      warningsCount: (n: number) => (n === 0 ? "Sin avisos" : plural(n, "aviso", "avisos")),
+      warningsHint: "No bloquean Generar. Arréglalos con un clic o mueve los bloques.",
+      templateApplied: (name: string) => `Plantilla ${name} aplicada. Deshacer la quita.`,
       report: {
         title: "Resultado",
         screen: "Pantalla",
@@ -652,6 +712,12 @@ export const layout = defineDictionary({
         copied: "Copiado",
         copyLabel: (what: string) => `Copiar ${what}`,
         fixLabel: (fix: string, name: string) => `${fix}: ${name}`,
+        screens: "Pantallas del resultado",
+        views: "Formato",
+        meta: (kind: string, route: string) => `${kind} · ${route}`,
+        code: (what: string, screen: string) => `${what} de ${screen}`,
+        copiedToast: (what: string) => `${what} copiado.`,
+        copyFailed: "No se pudo copiar. Selecciona el texto y cópialo a mano.",
       },
     },
     /** One message per warning code. `names` follow `warning.ids`: the block first, then its container. */
@@ -897,6 +963,7 @@ export const layout = defineDictionary({
       shortcuts: "Keyboard shortcuts",
       style: "Style",
       styleChip: (name: string) => `Style: ${name}`,
+      styleHint: "Takes you to the style picker, in the screen panel.",
       leftPanel: "Left panel",
       leftTabs: { blocks: "Blocks", layers: "Layers" },
     },
@@ -945,6 +1012,12 @@ export const layout = defineDictionary({
       grid: (columns: number) => `${columns}-column grid`,
       overlays: "Overlay layer",
       grabbedBadge: "Holding",
+      hiddenIn: (device: string, n: number) => `Hidden on ${device}: ${n}`,
+      selectBlock: (name: string) => `Select ${name}`,
+      readOnly: (device: string) => `${device} is view only. Move and resize on Desktop.`,
+      regionKinds: { stack: "Column", row: "Row", grid: "Grid" },
+      warnings: "Warnings for this block",
+      warningsLabel: (name: string, n: number) => `${name}: ${plural(n, "warning", "warnings")}`,
     },
     whatIsThis: {
       title: "What is this?",
@@ -957,6 +1030,7 @@ export const layout = defineDictionary({
       chosen: (name: string) => `The box is now ${name}.`,
       keptFree: "The box stays a free block.",
       frameChosen: (nav: string) => `On app screens this is the navigation. It's now ${nav}.`,
+      results: "Results",
     },
     library: {
       title: "Blocks",
@@ -976,6 +1050,9 @@ export const layout = defineDictionary({
       item: (name: string, description: string, soon: boolean) => `${name}${soon ? ", coming soon" : ""}. ${description}`,
       appOnly: "App screens only",
       frameInApp: "On app screens it changes the navigation",
+      appOnlyHint: (name: string) => `${name} only exists as the navigation of app screens.`,
+      grabHint: "Press Space to pick it up and place it on the canvas with the arrow keys. Space drops it and Esc cancels.",
+      useFreeLabel: (label: string) => `Use a free block named “${label}”`,
       category: (name: string, n: number) => `${name}, ${plural(n, "block", "blocks")}`,
       showMore: (n: number) => `Show ${n} more`,
       showLess: "Show less",
@@ -991,6 +1068,23 @@ export const layout = defineDictionary({
       hidden: "Hidden",
       nav: (nav: string) => `Navigation: ${nav}`,
       overlays: "Overlays",
+      hiddenByParent: "Hidden with its container",
+      /** Accessible name of a block row: «Weekly calendar, Calendar. Count: 3. Note: work week. Hidden.» */
+      itemLabel: (b: { name: string; type: string; count?: number; note?: string; hidden?: boolean; hiddenByParent?: boolean; soon?: boolean }) =>
+        sentences([
+          b.name === b.type ? b.name : `${b.name}, ${b.type}`,
+          b.count !== undefined && `count: ${b.count}`,
+          b.note && `note: ${b.note}`,
+          b.hidden ? "hidden" : b.hiddenByParent && "hidden with its container",
+          b.soon && "coming soon",
+        ]),
+      /** Screen-reader help of the tree. `singleKeys`: the single-key shortcuts (Delete, F2) are on. */
+      instructions: (k: ShortcutKeys, singleKeys: boolean) =>
+        [
+          "Up and down arrows to move, right and left to expand or collapse. Enter selects.",
+          singleKeys ? `${k.combo(k.mod, "D")} duplicates, Delete removes and F2 renames.` : `${k.combo(k.mod, "D")} duplicates.`,
+          `${k.combo(k.mod, "Z")} undoes and ${k.combo(k.shift, k.mod, "Z")} redoes.`,
+        ].join(" "),
     },
     screens: {
       title: "Screens",
@@ -1020,6 +1114,12 @@ export const layout = defineDictionary({
       thumbnail: (name: string) => `${name} thumbnail`,
       blocks: (n: number) => plural(n, "block", "blocks"),
       lastOne: "You need at least one screen.",
+      /** Short kind badge of a screen row and of a template. */
+      kindBadge: { landing: "Web", app: "App" } satisfies Record<ScreenKind, string>,
+      renameHint: "F2 or double-click to rename.",
+      reorderCanceled: (name: string, n: number, total: number) => `Canceled. ${name} stays at position ${n} of ${total}.`,
+      atTop: (name: string) => `${name} is already first.`,
+      atBottom: (name: string) => `${name} is already last.`,
     },
     templatePicker: {
       region: "Templates",
@@ -1035,6 +1135,7 @@ export const layout = defineDictionary({
       use: (name: string) => `Use ${name}`,
       includes: (names: readonly string[]) => `Includes ${joinEn(names)}.`,
       option: (name: string, recommended: boolean) => (recommended ? `${name}, recommended` : name),
+      applied: (name: string, screens: readonly string[]) => `Started with ${name}: ${joinEn(screens)}.`,
     },
     inspector: {
       title: "Inspector",
@@ -1094,6 +1195,16 @@ export const layout = defineDictionary({
       hide: "Hide",
       show: "Show",
       delete: "Delete",
+      /** Option of a select: «Agenda (default)». */
+      defaultOption: (name: string) => `${name} (default)`,
+      /** Option of the type select with a remark: «Kanban · Coming soon». */
+      typeOption: (name: string, remark: string | null) => (remark ? `${name} · ${remark}` : name),
+      desktopOnly: "Moving and resizing happen on Desktop.",
+      parentSelect: (name: string) => `Select ${name}`,
+      hiddenEverywhere: "Hidden on every device. Use the eye above to show it.",
+      moveToGroups: { order: "Order", align: "Alignment", nest: "Container" },
+      /** Remark of Navbar/Sidebar in the type select of an app screen (they are the navigation frame there). */
+      frameRemark: "chosen in the screen panel",
     },
     screenPanel: {
       title: "Screen",
@@ -1105,6 +1216,7 @@ export const layout = defineDictionary({
       kind: "Type",
       convert: (kind: string) => `Convert to ${kind}`,
       convertHint: "Keeps the blocks and their position.",
+      convertToAppHint: "This screen's navbar or sidebar becomes the app navigation.",
       navigation: "Navigation",
       navigationHint: "Shared by every app screen.",
       pageHeader: "Page header",
@@ -1120,8 +1232,7 @@ export const layout = defineDictionary({
       guideHint: "The one you imported, with its values locked.",
       recommended: "Recommended",
       current: "Current",
-      option: (name: string, state: { selected: boolean; recommended: boolean }) =>
-        [name, state.selected && "selected", state.recommended && "recommended"].filter(Boolean).join(", "),
+      option: (name: string, recommended: boolean) => (recommended ? `${name}, recommended` : name),
       preview: (name: string) => `Preview with ${name}`,
       emptyPreview: "No blocks yet: the preview uses a sample layout.",
       applied: (name: string) => `“${name}” style applied.`,
@@ -1142,6 +1253,17 @@ export const layout = defineDictionary({
       noAi: "No AI, no credits",
       generating: "Generating…",
       skip: "Skip animation",
+      again: "Generate again",
+      summary: (s: Omit<GenerateStatus, "warnings">) =>
+        [
+          s.screens > 1 && plural(s.screens, "screen", "screens"),
+          `${plural(s.blocks, "block", "blocks")}${s.free > 0 ? ` (${s.free} free)` : ""}`,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      warningsCount: (n: number) => (n === 0 ? "No warnings" : plural(n, "warning", "warnings")),
+      warningsHint: "They don't block Generate. Fix them in one click or move the blocks.",
+      templateApplied: (name: string) => `${name} template applied. Undo removes it.`,
       report: {
         title: "Result",
         screen: "Screen",
@@ -1155,6 +1277,12 @@ export const layout = defineDictionary({
         copied: "Copied",
         copyLabel: (what: string) => `Copy ${what}`,
         fixLabel: (fix: string, name: string) => `${fix}: ${name}`,
+        screens: "Result screens",
+        views: "Format",
+        meta: (kind: string, route: string) => `${kind} · ${route}`,
+        code: (what: string, screen: string) => `${screen} ${what}`,
+        copiedToast: (what: string) => `${what} copied.`,
+        copyFailed: "Couldn't copy. Select the text and copy it by hand.",
       },
     },
     warnings: {

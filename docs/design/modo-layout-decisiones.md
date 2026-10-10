@@ -46,3 +46,28 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 28. **«Generar» en la Fase A** no compila secciones, porque eso es de la Fase B. Calcula estructura, responsive, CSS y wireframe de cada pantalla, muestra los avisos con sus arreglos y entrega el resultado por `onGenerate`. La ruta de desarrollo lo enseña.
 29. **«Tu guía de estilo»** se representa con el valor `"guide"` en el selector. En la Fase B, elegirla conserva los valores importados y bloqueados. Las recetas llaman a `onStyleChange(recipeId)`, que en la Fase B será `actions.setRecipe(id, { cascade: true })`.
 30. **Preview del selector de estilo:** variables del tema aplicadas con `style` en la raíz de cada carta (`compileThemeVars` con la receta cambiada). No uso `ThemeScope`, para no cargar el CSS de las secciones solo por una miniatura. El vidrio sale de `recipe.surface === "glass"`, porque el contrato del tema no tiene variable para él.
+
+## Detalles del motor que fijó la implementación
+
+31. **Un bloque raíz solo y más estrecho que la rejilla** recibe `width` y `margin-inline-start` en porcentaje. Un grid en el elemento raíz no serviría, porque un elemento no puede responder a sus propias container queries.
+32. **Ocultar solo en tablet** genera un bloque extra `@container dl-layout (40rem <= width < 64rem)`, porque las reglas de móvil no pueden deshacer un `display: none`.
+33. **Ocultar se hereda:** un bloque dentro de uno oculto (overlays incluidos) queda oculto en todos los breakpoints.
+34. **`moveBlock`** arrastra a los descendientes solo cuando el bloque se mueve sin cambiar de tamaño. Al redimensionar (por ejemplo, desde el borde izquierdo) los hijos se quedan donde están.
+35. **`normalizeDrop`:**
+    - El padre actual cuenta como candidato aunque no sea contenedor, así que un media dentro de un hero se queda ahí.
+    - Al desanidar, el bloque pasa al ancestro más cercano que aún contiene ≥50 % de él; si no hay ninguno, va a la raíz.
+36. **Contenedor sin sitio:** al insertar dentro, crece, y `insertBlock` lo devuelve en `grown`. No hay un `Adjustment` nuevo.
+37. **`count`** se limita a los topes del bloque repetible, o a 1–99 en los que no lo son. `validateLayout` usa la misma regla.
+38. **Tipos desconocidos** se tratan como «Bloque libre» al inferir. Solo `validateLayout` los reporta.
+
+## Detalles del store y de la UI que fijó la implementación
+
+39. **Las huellas de «Generar» viven en el estado del store, no en `block.generated`.** Si se escribieran en los bloques, «Generar» sería un paso de deshacer invisible.
+    - «Regenerar N» compara tipo, ancho, alto, `count` y la nota. Mover sin cambiar de tamaño no cuenta.
+    - En la Fase B pasan a `block.generated`, en el mismo batch que `elements`.
+40. **La navegación de app se comparte.** Cambiar la navegación en una pantalla de app la cambia en todas las que tienen navegación; Login y Checkout se quedan en «Ninguna». `header` y `activeItem` son de cada pantalla.
+41. **Convertir una landing en pantalla de app** quita los bloques Navbar y Sidebar y los convierte en el marco (gana Sidebar). Convertir a landing quita el marco y conserva todos los bloques.
+42. **Ids únicos en todo el proyecto,** no solo en la pantalla. Los de pantalla son `s-` + 6 caracteres base36.
+43. **Nombres y rutas.** Los nombres de pantalla se hacen únicos («Dashboard 2»). La ruta es «/» para la primera landing; si no, «/» + slug único. Una ruta automática sigue al nombre al renombrar; una ruta escrita a mano se queda.
+44. **Deshacer** también revierte «aplicar plantilla de conjunto», así que se puede volver al selector de plantillas. Borrar una pantalla quita los enlaces a ella en el mismo paso. La última pantalla no se puede borrar.
+45. **Nombres en español:** «Características» (features) y «Tarjetas» (cards). La categoría `overlays` se llama «Estados y ventanas». Los sinónimos mezclan es y en en los dos idiomas.

@@ -1,4 +1,6 @@
 import type { AppShell } from "@dialmade/layout";
+// Relative and type-only: vitest runs the pure modules that read these constants without the `@/` alias.
+import type { GridSize } from "../../lib/geometry/grid";
 import type { LayoutRegion } from "./types";
 
 /** Undo steps kept by the layout store (screens + screen order). */
@@ -41,3 +43,21 @@ export const INSPECTOR_NAME_ID = "layout-inspector-name";
 /** Height handling like the Composer: on large screens the step fills the viewport below it. */
 export const LAYOUT_MIN_HEIGHT = 600;
 export const LAYOUT_BOTTOM_GAP = 24;
+
+/**
+ * DnD type of a block library tile (`DraggableItem` in BlockLibrary, `useDroppable({ accept })` on the
+ * canvas). The drag data is `LibraryDragData` (`{ blockType }`).
+ */
+export const LIBRARY_DRAG_TYPE = "layout-block";
+
+/**
+ * Smallest block a canvas resize, a keyboard resize, a drawn box or the inspector's size fields can make:
+ * 1 column × 2 rows (16 px).
+ */
+export const MIN_BLOCK_SIZE: Readonly<GridSize> = { w: 1, h: 2 };
+
+/**
+ * Sonner id of the «Ajustado · Deshacer» toast (canvas drops and inspector edits): a new adjustment
+ * replaces the toast instead of stacking a second one.
+ */
+export const ADJUSTED_TOAST_ID = "layout-adjusted";
