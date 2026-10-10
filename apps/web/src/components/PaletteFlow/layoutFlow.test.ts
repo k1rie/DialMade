@@ -6,13 +6,15 @@ import { createDesignDoc, renderTargets, resolveThemeInputs, type DesignDoc } fr
 import { SHELL_ELEMENT_ID, sectionRegistry } from "@dialmade/sections";
 import { strFromU8, unzipSync } from "fflate";
 import { beforeAll, describe, expect, it } from "vitest";
-import { canHide, hiddenOps, pageTarget, sectionRows, setPropOps, type PageTarget } from "@/components/Composer/pageOps";
+import { MAX_SCREENS } from "@dialmade/doc";
+import { canHide, COUNT_PROP, hiddenOps, pageTarget, sectionRows, setPropOps, type PageTarget } from "@/components/Composer/pageOps";
 import { buildCodePack } from "@/components/ExportDialog/exportPack";
 import { createLayoutStore } from "@/components/LayoutStep/useLayoutStore";
 import { createDesignDocStore, loadDesignEngine, selectActiveKey } from "@/hooks/useDesignDoc";
 import { exportDialog } from "@/i18n/export";
 import { designEngine } from "@/lib/design-engine";
 import { compileScreenLayout } from "@/lib/screen-layout";
+import { enterLayout } from "./layoutEntry";
 
 beforeAll(async () => {
   await loadDesignEngine(async () => designEngine);
@@ -160,6 +162,175 @@ describe("Modo Layout flow", () => {
     }
     const readme = strFromU8(zip[Object.keys(zip).find((path) => path.endsWith("README.md"))!]!);
     expect(readme).toContain("DesignDoc v2");
+  });
+});
+
+describe("Modo Layout flow: review B", () => {
+  it("a pending Layout edit survives two rounds of Ajustar edits and reaches the document on Generar", () => {
+    const { actions, layout, doc, target, generate } = flow();
+    const [home] = layout.getState().actions.applySet("landing");
+    generate();
+    const blocks = () => layout.getState().screens[home!]!.layout.blocks;
+    const noted = Object.keys(blocks()).find((id) => blocks()[id]!.type === "features")!;
+    expect(layout.getState().actions.updateBlock(noted, { note: "tres ventajas con iconos" }, home).changed).toBe(true);
+    // Stepper → Ajustar (no Generar): pin a title. «Editar layout» merges.
+    const hero = firstBlockOfType(target(home), "landing.hero")!;
+    expect(actions.applyPatch(setPropOps(doc(), target(home), hero, "title", "Uno")).ok).toBe(true);
+    expect(layout.getState().actions.syncFromDoc(doc())).toBe("merged");
+    // Ajustar again (no Generar): hide another section. «Editar layout» must not drop the pending note.
+    const other = sectionRows(target(home), sectionRegistry).ids.find((id) => id !== hero && canHide(target(home), id))!;
+    expect(actions.applyPatch(hiddenOps(target(home), other, true)).ok).toBe(true);
+    layout.getState().actions.syncFromDoc(doc());
+    expect(blocks()[noted]!.note).toBe("tres ventajas con iconos");
+    generate();
+    expect(doc().screens[home!]!.layout.blocks[noted]!.note).toBe("tres ventajas con iconos");
+    expect(pageTarget(doc(), home!)!.page.elements[hero]?.props.title).toBe("Uno");
+    expect(doc().screens[home!]!.layout.blocks[other]!.hidden).toBe(true);
+  });
+
+  it("an Ajustar ×N on a block the draft retyped does not make Generar fail (#4)", () => {
+    const { actions, layout, doc, target, generate } = flow();
+    const [home] = layout.getState().actions.applySet("landing");
+    generate();
+    const blocks = layout.getState().screens[home!]!.layout.blocks;
+    const features = Object.keys(blocks).find((id) => blocks[id]!.type === "features")!;
+    layout.getState().actions.updateBlock(features, { type: "pricing" }, home);
+    // Stepper → Ajustar: the doc still has Features, whose knob accepts 6.
+    expect(actions.applyPatch(setPropOps(doc(), target(home), features, COUNT_PROP, 6)).ok).toBe(true);
+    expect(doc().screens[home!]!.layout.blocks[features]!.count).toBe(6);
+    expect(layout.getState().actions.syncFromDoc(doc())).toBe("merged");
+    generate();
+    expect(doc().screens[home!]!.layout.blocks[features]!.type).toBe("pricing");
+  });
+
+  it("after the first Generar, undo in Layout never goes back to an empty project (#5)", () => {
+    const { layout, doc, generate } = flow();
+    layout.getState().actions.applySet("landing");
+    generate();
+    expect(layout.getState().actions.undo()).toBe(false);
+    expect(layout.getState().screenOrder).toEqual(doc().screenOrder);
+  });
+
+  it("a 25th screen is refused in the draft, so Generar never fails on the document's limit (#13, #16)", () => {
+    const { layout, doc, generate } = flow();
+    const draft = layout.getState().actions;
+    draft.applySet("landing");
+    while (layout.getState().screenOrder.length < MAX_SCREENS) draft.duplicateScreen(layout.getState().screenOrder[0]!);
+    expect(draft.addScreen("blank", "landing")).toBeNull();
+    expect(draft.duplicateScreen(layout.getState().screenOrder[0]!)).toBeNull();
+    expect(layout.getState().limitHit?.limit).toBe("screens");
+    generate();
+    expect(doc().screenOrder).toHaveLength(MAX_SCREENS);
+  });
+
+  it("a removed block still counts for «Regenerar» after Ajustar pinned a text (#15)", () => {
+    const { actions, layout, doc, target, generate } = flow();
+    const [home] = layout.getState().actions.applySet("landing");
+    generate();
+    const hero = firstBlockOfType(target(home), "landing.hero")!;
+    expect(actions.applyPatch(setPropOps(doc(), target(home), hero, "title", "Mi titular")).ok).toBe(true);
+    const draft = layout.getState().actions;
+    expect(draft.syncFromDoc(doc())).toBe("reseeded");
+    expect(draft.changedCount()).toBe(0);
+    const removed = draft.removeBlocks([Object.keys(layout.getState().screens[home!]!.layout.blocks).find((id) => id !== hero)!], home);
+    expect(removed.length).toBeGreaterThan(0);
+    expect(draft.changedCount()).toBe(removed.length);
+  });
+
+  it("Ajustar knows when the draft has layout changes that are not generated (#40)", () => {
+    const { actions, layout, doc, target, generate } = flow();
+    const [home] = layout.getState().actions.applySet("landing");
+    generate();
+    const draft = layout.getState().actions;
+    expect(draft.hasPendingChanges(doc())).toBe(false);
+    draft.insertBlock("list", { screenId: home });
+    expect(draft.hasPendingChanges(doc())).toBe(true);
+    // An Ajustar edit meanwhile is not a Layout change; the added block still is.
+    const hero = firstBlockOfType(target(home), "landing.hero")!;
+    expect(actions.applyPatch(setPropOps(doc(), target(home), hero, "title", "Otro")).ok).toBe(true);
+    expect(draft.hasPendingChanges(doc())).toBe(true);
+    // «Generar» from the notice (what PaletteFlow runs): nothing is pending afterwards.
+    generate();
+    expect(draft.hasPendingChanges(doc())).toBe(false);
+  });
+
+  it("«Editar layout» opens the screen Ajustar shows, even one only the document had (undo in Ajustar) (#30)", () => {
+    const { design, actions, layout, generate } = flow();
+    const [a, b] = layout.getState().actions.applySet("saas-app");
+    generate();
+    expect(layout.getState().actions.removeScreen(b!)).toBe(true);
+    generate();
+    // Ajustar: ⌘Z brings B back, and the user opens its tab.
+    design.temporal.getState().undo();
+    expect(design.getState().doc!.screens[b!]).toBeDefined();
+    actions.setActiveKey(b!);
+    enterLayout(layout, design.getState().doc, selectActiveKey(design.getState()));
+    expect(layout.getState().screens[b!]).toBeDefined();
+    expect(layout.getState().activeScreenId).toBe(b);
+    // From «Marca» (no key) the draft keeps its own screen.
+    layout.getState().actions.setActiveScreen(a!);
+    enterLayout(layout, design.getState().doc, null);
+    expect(layout.getState().activeScreenId).toBe(a);
+  });
+
+  it("a duplicated screen reaches Generar with its source (copyOf) and is written (#26)", () => {
+    const { layout, doc, generate } = flow();
+    const [home] = layout.getState().actions.applySet("landing");
+    generate();
+    const copy = layout.getState().actions.duplicateScreen(home!)!;
+    const result = generate();
+    const screen = result.screens.find((entry) => entry.screenId === copy)!;
+    expect(screen.copyOf?.screenId).toBe(home);
+    for (const [blockId, sourceId] of Object.entries(screen.copyOf!.blocks)) {
+      expect(Object.hasOwn(doc().screens[copy]!.layout.blocks, blockId)).toBe(true);
+      expect(Object.hasOwn(doc().screens[home!]!.layout.blocks, sourceId)).toBe(true);
+    }
+  });
+
+  it("a duplicated screen keeps the source's Ajustar edits (pinned title, hidden block, frame copy) on the copy after Generar (#26)", () => {
+    const { actions, layout, doc, target, generate } = flow();
+    const [home, pricing] = layout.getState().actions.applySet("landing");
+    generate();
+    const hero = firstBlockOfType(target(home), "landing.hero")!;
+    const hidden = sectionRows(target(home), sectionRegistry).ids.find((id) => id !== hero && canHide(target(home), id))!;
+    expect(actions.applyPatch(setPropOps(doc(), target(home), hero, "title", "Mi titular")).ok).toBe(true);
+    expect(actions.applyPatch(hiddenOps(target(home), hidden, true)).ok).toBe(true);
+    const source = doc().screens[home!]!;
+    // «Editar layout» → «Duplicar» (plus a pending change elsewhere) → Generar.
+    layout.getState().actions.syncFromDoc(doc());
+    const copy = layout.getState().actions.duplicateScreen(home!)!;
+    layout.getState().actions.insertBlock("text", { screenId: pricing });
+    const result = generate();
+    const map = result.screens.find((entry) => entry.screenId === copy)!.copyOf!.blocks;
+    const copyOf = (sourceId: string) => Object.keys(map).find((blockId) => map[blockId] === sourceId)!;
+    const copied = doc().screens[copy]!;
+    expect(copied.page.elements[copyOf(hero)]!.props).toEqual(source.page.elements[hero]!.props);
+    expect(copied.layout.blocks[copyOf(hero)]!.pinned).toEqual(["/title"]);
+    expect(copied.page.hidden).toContain(copyOf(hidden));
+    // The source's own blocks never land in the copy's page or stash; the source keeps its edits.
+    for (const id of Object.keys(source.layout.blocks)) {
+      expect(copied.page.elements[id]).toBeUndefined();
+      expect(copied.page.stash?.[id]).toBeUndefined();
+    }
+    expect(doc().screens[home!]!.page.elements[hero]!.props).toEqual(source.page.elements[hero]!.props);
+    expect(doc().screens[home!]!.layout.blocks[hero]!.pinned).toEqual(["/title"]);
+    // Generar again: the copy is stored now and keeps all of it.
+    layout.getState().actions.syncFromDoc(doc());
+    generate();
+    expect(doc().screens[copy]!.page.elements[copyOf(hero)]!.props.title).toBe("Mi titular");
+  });
+
+  it("a duplicated app screen keeps its frame's pinned copy (#26)", () => {
+    const { actions, layout, doc, generate } = flow();
+    const [dash] = layout.getState().actions.applySet("saas-app");
+    generate();
+    expect(actions.applyPatch(setPropOps(doc(), pageTarget(doc(), dash!)!, SHELL_ELEMENT_ID, "primaryAction", "Nueva cita")).ok).toBe(true);
+    layout.getState().actions.syncFromDoc(doc());
+    const copy = layout.getState().actions.duplicateScreen(dash!)!;
+    generate();
+    expect(doc().screens[copy]!.page.elements[SHELL_ELEMENT_ID]!.props.primaryAction).toBe("Nueva cita");
+    expect(doc().screens[copy]!.shell?.pinned).toContain("/primaryAction");
+    expect(doc().screens[copy]!.page.elements[SHELL_ELEMENT_ID]!.props.title).toBe(doc().screens[copy]!.name);
   });
 });
 

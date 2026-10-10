@@ -28,6 +28,10 @@ export function Cta({
 }: SectionComponentProps<CtaProps>) {
   const strings = landingStrings(ctx.locale);
   const titleId = `${elementId}-title`;
+  // With the email form, a linked block submits to its screen like `ui.form` (export: `action`; preview: the
+  // button's `data-dl-screen-link`).
+  const href = ctx.blockLink?.(elementId) ?? null;
+  const target = ctx.linkTarget?.(elementId) ?? null;
 
   return (
     <LandingSection
@@ -52,7 +56,7 @@ export function Cta({
         </div>
         <div className="dl-landing-cta__actions">
           {showForm ? (
-            <form className="dl-landing-cta__form" action="#" onSubmit={preventSubmit}>
+            <form className="dl-landing-cta__form" action={href ?? "#"} {...(href ? { method: "get" } : {})} onSubmit={preventSubmit}>
               <Input
                 type="email"
                 name="email"
@@ -62,7 +66,7 @@ export function Cta({
                 placeholder={strings.emailPlaceholder}
                 fieldClassName="dl-landing-cta__field"
               />
-              <Button type="submit" variant="cta">
+              <Button type="submit" variant="cta" data-dl-screen-link={target ?? undefined}>
                 <span data-dl-prop="button">{button}</span>
               </Button>
             </form>

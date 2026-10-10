@@ -137,6 +137,23 @@
   margin-top: auto;
 }
 
+/* A card of a block linked to a screen, without an action link: the title is the link. */
+.dl-ui-card__title-link {
+  border-radius: var(--dl-radius-sm, 4px);
+  color: inherit;
+  text-decoration: none;
+}
+
+.dl-ui-card__title-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.dl-ui-card__title-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* Compact: icon, title and figure on one line. */
 .dl-ui-card[data-variant="compact"] {
   flex-direction: row;

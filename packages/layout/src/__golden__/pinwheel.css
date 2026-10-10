@@ -20,11 +20,13 @@
 
 .dl-layout [data-dl-id="east"] {
   grid-area: east;
+  justify-self: stretch;
   aspect-ratio: 9 / 8;
 }
 
 .dl-layout [data-dl-id="west"] {
   grid-area: west;
+  justify-self: stretch;
   aspect-ratio: 9 / 8;
 }
 

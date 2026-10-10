@@ -18,7 +18,16 @@ export {
   TABLET_COLUMNS,
   TAU,
 } from "./constants";
-export { acceptsChild, BLOCK_CATEGORIES, blocksInCategory, getBlockDef, isLibraryBlockType, LIBRARY } from "./library";
+export {
+  acceptsChild,
+  BLOCK_CATEGORIES,
+  blocksInCategory,
+  getBlockDef,
+  isLibraryBlockType,
+  isLinkableBlockType,
+  LIBRARY,
+  LINKABLE_BLOCK_TYPES,
+} from "./library";
 export {
   ELEMENT_ID_RE,
   hashString,

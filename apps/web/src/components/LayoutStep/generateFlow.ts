@@ -95,6 +95,31 @@ export function aiRunReducer(state: AiRunState, event: AiRunEvent): AiRunState {
 }
 
 /* ------------------------------------------------------------------------------------------------ */
+/* The moment and the rest of the flow                                                              */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** What these rules read of the moment in progress (`RevealState` of useGenerateFlow). */
+export type MomentView = { phase: "playing" | "holding"; layer: boolean };
+
+/**
+ * Whether the «Generar» moment holds the flow (the stepper waits): the signature animation plays, or the AI
+ * request is in flight. Leaving would unmount the step, and `useAiCopy` would cancel the request (on the free
+ * tier the use is already spent). Once the step is leaving, or the request ended, nothing is held.
+ */
+export function momentHoldsFlow(reveal: MomentView | null, leaving: boolean, run: AiRunState): boolean {
+  if (!reveal || leaving) return false;
+  return reveal.phase === "playing" || run.kind === "writing";
+}
+
+/**
+ * The signature animation lost its canvas (the step went under 640 px while it played): nothing else ends it,
+ * so it ends as if it had played.
+ */
+export function revealLostCanvas(reveal: MomentView | null, narrow: boolean): boolean {
+  return narrow && reveal !== null && reveal.phase === "playing" && reveal.layer;
+}
+
+/* ------------------------------------------------------------------------------------------------ */
 /* Chips                                                                                            */
 /* ------------------------------------------------------------------------------------------------ */
 

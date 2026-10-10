@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_SCREENS } from "@dialmade/doc";
 import type { AppNav, ScreenId, ScreenKind, ScreenTemplateId } from "@dialmade/layout";
 import type { MotionValue } from "motion/react";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
@@ -12,7 +13,7 @@ import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { ScreenTemplateList } from "../ScreenTemplateList";
 import { selectActiveScreenId, useActiveScreenId, useLayoutActions, useLayoutStore, useLayoutStoreApi, useScreens, type LayoutState } from "../useLayoutStore";
-import { stepIndex } from "./reorder";
+import { screenKeyStep, stepIndex } from "./reorder";
 import { ScreenRow, type ScreenRowHandlers, type ScreenRowKeys } from "./ScreenRow";
 import { useScreenReorder } from "./useScreenReorder";
 
@@ -33,9 +34,10 @@ const attr = (name: string, id: ScreenId) => `[${name}="${CSS.escape(id)}"]`;
 
 /**
  * «Pantallas» (left panel): the project's screens in order with thumbnail, name, kind and route, and
- * «+ Pantalla» (every screen template; «En blanco» asks web or app). Click a row to edit that screen.
- * Rename with double click / F2, reorder by dragging, Alt+↑/↓ or the row menu, duplicate and delete from
- * the menu (delete shows «Deshacer»). Every change is one undo step and is announced (es/en).
+ * «+ Pantalla» (every screen template; «En blanco» asks web or app). Click a row, or reach it with the arrow
+ * keys, to edit that screen. Rename with double click / F2; reorder by dragging, with Space/Enter (grab, arrows,
+ * drop; Esc cancels), Alt+↑/↓ or the row menu; duplicate and delete from the menu (delete shows «Deshacer»).
+ * Every change is one undo step and is announced (es/en). At 24 screens a note says it is the maximum.
  */
 export function ScreensPanel({ className }: ScreensPanelProps) {
   const t = useDictionary(layout);
@@ -68,23 +70,39 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
   const offsetOf = useCallback((id: ScreenId) => offsets.current.get(id), []);
   const nameOf = useCallback((id: ScreenId) => store.getState().screens[id]?.name ?? "", [store]);
 
-  /* ---- Pointer reorder ---- */
+  /** After a keyboard drop: React moves the row's node, which can drop its focus (Tab may have moved it on already). */
+  const keepFocus = useCallback(
+    (id: ScreenId) =>
+      requestAnimationFrame(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body) buttonOf(id)?.focus();
+      }),
+    [buttonOf],
+  );
+
+  /* ---- Pointer and keyboard reorder ---- */
   const onDrop = useCallback(
-    (id: ScreenId, to: number) => {
+    (id: ScreenId, to: number, via: "pointer" | "keyboard") => {
       if (!actions.moveScreen(id, to)) return false;
-      announce(t.announce.screenMoved(nameOf(id), to + 1, store.getState().screenOrder.length));
+      const total = store.getState().screenOrder.length;
+      if (via === "keyboard") {
+        announce(t.screens.dropped(nameOf(id), to + 1, total));
+        keepFocus(id);
+        return true;
+      }
+      announce(t.announce.screenMoved(nameOf(id), to + 1, total));
       // React moves the row's node, which can drop its focus.
       focusLater(id);
       return true;
     },
-    [actions, announce, focusLater, nameOf, store, t],
+    [actions, announce, focusLater, keepFocus, nameOf, store, t],
   );
   const onCancel = useCallback(
     (id: ScreenId, index: number) => announce(t.screens.reorderCanceled(nameOf(id), index + 1, store.getState().screenOrder.length)),
     [announce, nameOf, store, t],
   );
   const reorder = useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCancel });
-  const { onPointerDown, consumeClick, flip } = reorder;
+  const { onPointerDown, consumeClick, flip, keyboardHeld, keyboardGrab, keyboardMove, keyboardDrop, keyboardCancel } = reorder;
 
   /* ---- Commands (shared by the rows, the keyboard and the menus) ---- */
   const addScreen = useCallback(
@@ -105,12 +123,33 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
       if (refocus) focusLater(id);
     };
 
+    const select = (id: ScreenId) => {
+      const previous = selectActiveScreenId(store.getState());
+      actions.setActiveScreen(id);
+      if (previous !== id) announce(t.announce.screenActive(nameOf(id)));
+    };
+    /** Drops the row held with the keyboard (a drop in the same slot is announced too). */
+    const dropHeld = () => {
+      const held = keyboardHeld();
+      const dropped = keyboardDrop();
+      if (!held || !dropped || dropped.to !== dropped.from) return;
+      announce(t.screens.dropped(nameOf(held.id), dropped.to + 1, store.getState().screenOrder.length));
+    };
+    const move = (id: ScreenId, delta: -1 | 1) => {
+      closeMenu(id);
+      const { screenOrder } = store.getState();
+      const to = stepIndex(screenOrder.indexOf(id), delta, screenOrder.length);
+      if (to === null) {
+        announce(delta < 0 ? t.screens.atTop(nameOf(id)) : t.screens.atBottom(nameOf(id)), "assertive");
+        focusLater(id);
+        return;
+      }
+      if (flip(() => actions.moveScreen(id, to))) announce(t.announce.screenMoved(nameOf(id), to + 1, screenOrder.length));
+      focusLater(id);
+    };
+
     return {
-      select: (id) => {
-        const previous = selectActiveScreenId(store.getState());
-        actions.setActiveScreen(id);
-        if (previous !== id) announce(t.announce.screenActive(nameOf(id)));
-      },
+      select,
       pointerDown: onPointerDown,
       consumeClick,
       startRename: (id) => {
@@ -133,18 +172,7 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
         announce(t.announce.screenDuplicated(nameOf(copyId)));
         focusLater(copyId);
       },
-      move: (id, delta) => {
-        closeMenu(id);
-        const { screenOrder } = store.getState();
-        const to = stepIndex(screenOrder.indexOf(id), delta, screenOrder.length);
-        if (to === null) {
-          announce(delta < 0 ? t.screens.atTop(nameOf(id)) : t.screens.atBottom(nameOf(id)), "assertive");
-          focusLater(id);
-          return;
-        }
-        if (flip(() => actions.moveScreen(id, to))) announce(t.announce.screenMoved(nameOf(id), to + 1, screenOrder.length));
-        focusLater(id);
-      },
+      move,
       remove: (id) => {
         closeMenu(id);
         const before = store.getState();
@@ -176,21 +204,78 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
           },
         });
       },
-      focusRow: (id, target) => {
+      keyDown: (id, event) => {
         const { screenOrder } = store.getState();
-        const index = screenOrder.indexOf(id);
-        const last = screenOrder.length - 1;
-        const next =
-          target === "first" ? 0 : target === "last" ? last : target === "previous" ? Math.max(0, index - 1) : Math.min(last, index + 1);
-        const nextId = screenOrder[next];
-        if (nextId) buttonOf(nextId)?.focus();
+        const total = screenOrder.length;
+        const step = screenKeyStep(keyboardHeld(), id, screenOrder.indexOf(id), total, event);
+        if (step.type === "none") return;
+        if (!(step.type === "drop" && step.keepKey)) event.preventDefault();
+        switch (step.type) {
+          case "focus": {
+            // Automatic activation, like tabs: reaching a row selects its screen.
+            const nextId = screenOrder[step.to];
+            if (!nextId) return;
+            select(nextId);
+            buttonOf(nextId)?.focus();
+            return;
+          }
+          case "grab":
+            closeMenu(id);
+            if (keyboardGrab(id)) announce(t.screens.grabbed(nameOf(id), screenOrder.indexOf(id) + 1, total));
+            return;
+          case "move":
+            if (keyboardMove(step.to)) announce(t.announce.screenMoved(nameOf(id), step.to + 1, total));
+            return;
+          case "edge":
+            announce(step.delta < 0 ? t.screens.atTop(nameOf(id)) : t.screens.atBottom(nameOf(id)), "assertive");
+            return;
+          case "drop":
+            dropHeld();
+            return;
+          case "cancel": {
+            // Esc ends the grab only: nothing else (deselect, close) reacts to it.
+            event.stopPropagation();
+            const from = keyboardCancel();
+            if (from !== null) announce(t.screens.reorderCanceled(nameOf(id), from + 1, total));
+            return;
+          }
+          case "shift":
+            move(id, step.delta);
+            return;
+          case "rename":
+            setMenuId(null);
+            setRenamingId(id);
+            return;
+          case "menu":
+            setMenuId(id);
+            return;
+        }
+      },
+      blur: (id) => {
+        if (keyboardHeld()?.id === id) dropHeld();
       },
       registerOffset: (id, value) => {
         if (value) offsets.current.set(id, value);
         else offsets.current.delete(id);
       },
     };
-  }, [actions, announce, buttonOf, consumeClick, flip, focusLater, nameOf, onPointerDown, store, t]);
+  }, [
+    actions,
+    announce,
+    buttonOf,
+    consumeClick,
+    flip,
+    focusLater,
+    keyboardCancel,
+    keyboardDrop,
+    keyboardGrab,
+    keyboardHeld,
+    keyboardMove,
+    nameOf,
+    onPointerDown,
+    store,
+    t,
+  ]);
 
   const total = screens.length;
 
@@ -238,9 +323,16 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
         ))}
       </ul>
 
+      {total >= MAX_SCREENS && <p className="text-caption text-pretty text-muted">{t.screens.limitHint(MAX_SCREENS)}</p>}
       <p id={hintId} className="text-caption text-pretty text-muted">
-        {/* Touch has no pointer drag here (the row menu moves rows), so the drag hint is for fine pointers. */}
-        {total > 1 && <span className="pointer-coarse:hidden">{t.screens.reorderHint(keys.up, keys.down)} </span>}
+        {total > 1 && (
+          <>
+            {`${t.screens.navigateHint} `}
+            {/* Touch has no pointer drag here (the row menu moves rows), so the drag hint is for fine pointers. */}
+            <span className="pointer-coarse:hidden">{t.screens.dragHint} </span>
+            {`${t.screens.reorderHint(keys.up, keys.down)} `}
+          </>
+        )}
         {t.screens.renameHint}
       </p>
     </div>

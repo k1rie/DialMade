@@ -1,11 +1,15 @@
 "use client";
 
-import { Button, Icon } from "@dialmade/ui";
+import { Button, Icon, buttonStyleProps } from "@dialmade/ui";
+import { linkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import type { EmptyStateProps } from "./schema";
 import "./EmptyState.css";
 
-/** What a list looks like before it has data: icon, one sentence and the action that fills it. */
+/**
+ * What a list looks like before it has data: icon, one sentence and the action that fills it. When the block
+ * links to a screen (`linkTo`), the primary action is a link to it (preview and export).
+ */
 export function EmptyState({
   icon,
   title,
@@ -13,9 +17,11 @@ export function EmptyState({
   primaryAction,
   secondaryAction,
   variant,
+  ctx,
   elementId,
 }: SectionComponentProps<EmptyStateProps>) {
   const titleId = `${elementId}-title`;
+  const linked = (ctx.linkTarget?.(elementId) ?? null) !== null;
   const illustrated = variant === "illustrated";
   return (
     <section className="dl-app-empty" data-layout={illustrated ? "illustrated" : "dashed"} aria-labelledby={titleId}>
@@ -45,9 +51,16 @@ export function EmptyState({
       </div>
       <div className="dl-app-empty__actions">
         {primaryAction ? (
-          <Button variant="primary" iconStart="plus">
-            {primaryAction}
-          </Button>
+          linked ? (
+            <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "primary" })}>
+              <Icon name="plus" className="dl-button__icon" />
+              <span className="dl-button__label">{primaryAction}</span>
+            </a>
+          ) : (
+            <Button variant="primary" iconStart="plus">
+              {primaryAction}
+            </Button>
+          )
         ) : null}
         {secondaryAction ? <Button variant="outline">{secondaryAction}</Button> : null}
       </div>

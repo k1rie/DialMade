@@ -1,4 +1,4 @@
-import { addPage, applyPatch, checkScreenPage, createDesignDoc, safeParseDesignDoc, screenPointer, type DesignDoc } from "@dialmade/doc";
+import { MAX_STASHED_SCREENS, addPage, applyPatch, checkScreenPage, createDesignDoc, safeParseDesignDoc, screenPointer, type DesignDoc } from "@dialmade/doc";
 import { getScreenTemplate, instantiateTemplate, type LayoutBlock, type LayoutDoc, type ScreenTemplateId } from "@dialmade/layout";
 import { buildDefaultPage, contentContextFromDoc } from "@dialmade/sections";
 import { describe, expect, it } from "vitest";
@@ -326,5 +326,139 @@ describe("rebuilding the copy of a document with screens (critique #2)", () => {
     expect(next.brief.locale).toBe("en");
     expect(next.pages.landing?.layoutId).toBe(legacy.pages.landing?.layoutId);
     expect(next.pages.landing).not.toEqual(legacy.pages.landing);
+  });
+});
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Review B: a Layout undo across «Generar», frame edits, navbars from screens                        */
+/* ------------------------------------------------------------------------------------------------ */
+
+describe("a Layout undo across «Generar» brings back copy and pins (review B #0)", () => {
+  const page = (screen: string, id: string, ...segments: string[]) => screenPointer(screen, "page", "elements", id, ...segments);
+  const pin = (screen: string, id: string, pointers: string[]) => ({ op: "add", path: screenPointer(screen, "layout", "blocks", id, "pinned"), value: pointers });
+
+  it("a deleted block: its last props and pins wait in page.stash and come back with it", () => {
+    const draft = landingDraft();
+    const hero = blockOf(draft[0]!, "hero");
+    const edited = patched(ok(withGeneratedScreens(freshDoc(), draft)), [
+      { op: "replace", path: page("s-home", hero, "props", "title"), value: "Mi titular" },
+      { op: "replace", path: page("s-home", hero, "props", "subtitle"), value: "Escrito por la IA" },
+      pin("s-home", hero, ["/title"]),
+    ]);
+    const removed = ok(withGeneratedScreens(edited, [withoutBlock(draft[0]!, hero), draft[1]!]));
+    expect(removed.screens["s-home"]!.page.elements[hero]).toBeUndefined();
+    expect(removed.screens["s-home"]!.page.stash?.[hero]).toMatchObject({ type: "landing.hero", pinned: ["/title"], props: { title: "Mi titular" } });
+
+    // ⌘Z in Layout: the draft has the hero again (no pins, no fingerprint: the draft never had them).
+    const back = ok(withGeneratedScreens(removed, draft));
+    const screen = back.screens["s-home"]!;
+    expect(screen.page.elements[hero]!.props).toMatchObject({ title: "Mi titular", subtitle: "Escrito por la IA" });
+    expect(screen.layout.blocks[hero]!.pinned).toEqual(["/title"]);
+    expect(screen.page.stash).toBeUndefined();
+    // A language change after the undo still keeps the pinned title.
+    expect(ok(withContentLocale(back, "en", { rebuildPages: true })).screens["s-home"]!.page.elements[hero]!.props.title).toBe("Mi titular");
+  });
+
+  it("a type change: the old type's props come back when the change is undone", () => {
+    const draft = appDraft();
+    const settings = draft[1]!;
+    const list = blockOf(settings, "list");
+    const edited = patched(ok(withGeneratedScreens(freshDoc(), draft)), [
+      { op: "replace", path: page("s-settings", list, "props", "action"), value: "Ver más citas" },
+      pin("s-settings", list, ["/action"]),
+    ]);
+    const retyped = ok(withGeneratedScreens(edited, [draft[0]!, withBlock(settings, list, { type: "calendar" }), draft[2]!]));
+    expect(retyped.screens["s-settings"]!.page.elements[list]!.type).toBe("ui.calendar");
+    const back = ok(withGeneratedScreens(retyped, draft));
+    expect(back.screens["s-settings"]!.page.elements[list]!.props.action).toBe("Ver más citas");
+    expect(back.screens["s-settings"]!.layout.blocks[list]!.pinned).toEqual(["/action"]);
+  });
+
+  it("a removed screen waits in screenStash (the newest MAX_STASHED_SCREENS) and comes back with its copy and pins", () => {
+    const draft = landingDraft();
+    const text = blockOf(draft[1]!, "text");
+    const edited = patched(ok(withGeneratedScreens(freshDoc(), draft)), [
+      { op: "replace", path: page("s-pricing", text, "props", "title"), value: "Planes para equipos" },
+      { op: "replace", path: page("s-pricing", text, "props", "body"), value: "Escrito por la IA" },
+      pin("s-pricing", text, ["/title"]),
+    ]);
+    const removed = ok(withGeneratedScreens(edited, [draft[0]!]));
+    expect(Object.keys(removed.screens)).toEqual(["s-home"]);
+    expect(removed.screenStash?.["s-pricing"]).toEqual(edited.screens["s-pricing"]);
+    expect(safeParseDesignDoc(removed).success).toBe(true);
+    // The home navbar no longer links a pricing screen.
+    const navLinks = (doc: DesignDoc) => Object.values(doc.screens["s-home"]!.page.elements).find((el) => el.type === "landing.navbar")!.props.links as { linkTo?: string }[];
+    expect(navLinks(removed).some((link) => link.linkTo !== undefined)).toBe(false);
+
+    // A language change meanwhile rebuilds the stashed screen too: pinned title kept, the rest in English.
+    const english = ok(withContentLocale(removed, "en", { rebuildPages: true }));
+    const stashedText = english.screenStash!["s-pricing"]!.page.elements[text]!.props;
+    expect(stashedText.title).toBe("Planes para equipos");
+    expect(stashedText.body).not.toBe("Escrito por la IA");
+
+    const back = ok(withGeneratedScreens(removed, draft));
+    expect(back.screenStash).toBeUndefined();
+    expect(back.screens["s-pricing"]!.page.elements[text]!.props).toMatchObject({ title: "Planes para equipos", body: "Escrito por la IA" });
+    expect(back.screens["s-pricing"]!.layout.blocks[text]!.pinned).toEqual(["/title"]);
+    expect(navLinks(back).map((link) => link.linkTo).filter(Boolean)).toEqual(["s-home", "s-pricing"]);
+  });
+
+  it("keeps at most MAX_STASHED_SCREENS removed screens, dropping the oldest", () => {
+    const newId = idFactory();
+    const draft = [
+      draftScreen(newId, "s-home", "Inicio", "/", "home"),
+      ...["a", "b", "c", "d", "e"].map((x) => draftScreen(newId, `s-${x}`, `Detalle ${x}`, `/detalle-${x}`, "detail")),
+    ];
+    let doc = ok(withGeneratedScreens(freshDoc(), draft));
+    for (let n = draft.length - 1; n >= 1; n--) doc = ok(withGeneratedScreens(doc, draft.slice(0, n)));
+    expect(Object.keys(doc.screenStash ?? {})).toEqual(["s-e", "s-d", "s-c", "s-b", "s-a"].slice(-MAX_STASHED_SCREENS));
+  });
+});
+
+describe("app frame edits survive «Generar» and language or product changes (review B #1–#3)", () => {
+  const shellProp = (screen: string, key: string) => screenPointer(screen, "page", "elements", "shell", "props", key);
+
+  it("pinned frame copy is kept when the draft has no pins; header and navigation come from the screen's shell", () => {
+    const draft = appDraft();
+    const edited = patched(ok(withGeneratedScreens(freshDoc(), draft)), [
+      { op: "replace", path: shellProp("s-dash", "primaryAction"), value: "Nuevo informe" },
+      { op: "replace", path: shellProp("s-dash", "subtitle"), value: "Mi subtítulo" },
+      { op: "add", path: screenPointer("s-dash", "shell", "pinned"), value: ["/primaryAction", "/subtitle"] },
+    ]);
+    const again = ok(withGeneratedScreens(edited, draft));
+    const props = again.screens["s-dash"]!.page.elements.shell!.props;
+    expect(props).toMatchObject({ primaryAction: "Nuevo informe", subtitle: "Mi subtítulo" });
+    expect(again.screens["s-dash"]!.shell?.pinned).toEqual(["/primaryAction", "/subtitle"]);
+    for (const rebuilt of [ok(withContentLocale(again, "en", { rebuildPages: true })), ok(withProductType(again, "e-commerce", { rebuildPages: true }))]) {
+      expect(rebuilt.screens["s-dash"]!.page.elements.shell!.props).toMatchObject({ primaryAction: "Nuevo informe", subtitle: "Mi subtítulo" });
+    }
+  });
+
+  it("a new app screen takes the shared frame props and their pins", () => {
+    const newId = idFactory();
+    const draft = appDraft(newId);
+    const edited = patched(ok(withGeneratedScreens(freshDoc(), draft)), [
+      { op: "replace", path: shellProp("s-dash", "workspace"), value: "Equipo Norte" },
+      { op: "add", path: screenPointer("s-dash", "shell", "pinned"), value: ["/workspace", "/primaryAction"] },
+    ]);
+    const doc = ok(withGeneratedScreens(edited, [...draft, draftScreen(newId, "s-list", "Clientes", "/clientes", "list")]));
+    expect(doc.screens["s-list"]!.page.elements.shell!.props.workspace).toBe("Equipo Norte");
+    expect(doc.screens["s-list"]!.shell?.pinned).toEqual(["/workspace"]);
+    expect(ok(withContentLocale(doc, "en", { rebuildPages: true })).screens["s-list"]!.page.elements.shell!.props.workspace).toBe("Equipo Norte");
+  });
+});
+
+describe("landing navbars open the landing screens (review B #12)", () => {
+  it("every landing screen's navbar links each landing screen by id first", () => {
+    const doc = ok(withGeneratedScreens(freshDoc(), landingDraft()));
+    for (const id of ["s-home", "s-pricing"]) {
+      const navbar = Object.values(doc.screens[id]!.page.elements).find((element) => element.type === "landing.navbar")!;
+      const links = navbar.props.links as { label: string; href: string; linkTo?: string }[];
+      expect(links.slice(0, 2), id).toEqual([
+        { label: "Inicio", href: "#", linkTo: "s-home" },
+        { label: "Precios", href: "#", linkTo: "s-pricing" },
+      ]);
+      expect(links.filter((link) => link.label === "Precios"), id).toHaveLength(1);
+    }
   });
 });

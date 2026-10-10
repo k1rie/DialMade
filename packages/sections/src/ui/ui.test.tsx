@@ -306,3 +306,17 @@ describe("enlaces entre pantallas", () => {
     expect(plain.container.querySelector("a")?.hasAttribute("data-dl-screen-link")).toBe(false);
   });
 });
+
+describe("heading level of ui.* titles (review B #39)", () => {
+  it("form, list, cards and calendar render their title at the given level: h2 by default, h1 when the build promotes it", () => {
+    for (const type of ["ui.form", "ui.list", "ui.cards", "ui.calendar"]) {
+      const def = sectionRegistry.get(type)!;
+      for (const [level, tag] of [[undefined, "H2"], ["h2", "H2"], ["h1", "H1"]] as const) {
+        const view = renderSection(def, { props: { title: "Título", ...(level && { level }) }, elementId: "blk" });
+        expect(view.invalidKeys, type).toEqual([]);
+        expect(view.container.querySelector("#blk-title")?.tagName, `${type} ${level}`).toBe(tag);
+        view.unmount();
+      }
+    }
+  });
+});

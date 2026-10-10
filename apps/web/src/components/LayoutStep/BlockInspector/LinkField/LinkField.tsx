@@ -14,10 +14,16 @@ export type LinkFieldProps = {
   screenId: ScreenId;
   /** Accessible name of the select (the section title). */
   label: string;
+  /**
+   * The block's section follows the link (`linkFieldMode` → `link`). When false the block keeps a link that
+   * nothing follows: the select stays so it can be cleared, and the hint says the link does nothing instead of
+   * promising a working one.
+   */
+  supported?: boolean;
 };
 
 /** «Enlaza a»: another screen of the project (preview navigation and export), or none. */
-export function LinkField({ blockId, linkTo, screenId, label }: LinkFieldProps) {
+export function LinkField({ blockId, linkTo, screenId, label, supported = true }: LinkFieldProps) {
   const t = useDictionary(layout);
   const id = useId();
   const actions = useLayoutActions();
@@ -49,7 +55,7 @@ export function LinkField({ blockId, linkTo, screenId, label }: LinkFieldProps) 
         ))}
       </select>
       <p id={`${id}-hint`} className={FIELD_HINT}>
-        {t.inspector.linkHint}
+        {supported ? t.inspector.linkHint : t.inspector.linkUnsupported}
       </p>
     </div>
   );

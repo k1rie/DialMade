@@ -23,3 +23,32 @@ describe("flow steps: Marca → Layout → Ajustar", () => {
     expect(next.primary).toBe("#3a5bd9");
   });
 });
+
+describe("the cropper's «Volver»", () => {
+  const logo: NonNullable<PaletteFlowState["logo"]> = { name: "lumen.png", type: "image/png", objectUrl: "blob:logo", width: 64, height: 64 };
+
+  it("after «Recortar de nuevo» goes back to the lab with the colors and the crop it had (the doc is kept)", () => {
+    const crop = { x: 0.1, y: 0.1, w: 0.5, h: 0.5 };
+    const lab: PaletteFlowState = { ...inPalette, logo, crop, secondary: "#22c55e" };
+    const cropping = paletteFlowReducer(lab, { type: "editCrop" });
+    expect(cropping.step).toBe("crop");
+    const back = paletteFlowReducer(cropping, { type: "cancelCrop" });
+    expect(back.step).toBe("palette");
+    expect(back.primary).toBe(lab.primary);
+    expect(back.secondary).toBe(lab.secondary);
+    expect(back.crop).toEqual(crop);
+    expect(back.logo).toBe(logo);
+    // Not «drop»: useDesignDocSync drops the DesignDoc (screens, Ajustar edits) only there.
+    expect(back.step).not.toBe("drop");
+  });
+
+  it("on a first crop (no colors yet) goes back to the start", () => {
+    const first = paletteFlowReducer(initialPaletteFlowState, { type: "setLogo", logo });
+    expect(first.step).toBe("crop");
+    expect(paletteFlowReducer(first, { type: "cancelCrop" })).toEqual(initialPaletteFlowState);
+  });
+
+  it("does nothing outside the cropper", () => {
+    expect(paletteFlowReducer(inPalette, { type: "cancelCrop" })).toBe(inPalette);
+  });
+});

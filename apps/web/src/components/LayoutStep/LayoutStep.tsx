@@ -1,7 +1,8 @@
 "use client";
 
-import { sanitizeLabel, type LibraryBlockType } from "@dialmade/layout";
-import { motion } from "motion/react";
+import { MAX_SCREENS } from "@dialmade/doc";
+import { MAX_BLOCKS, sanitizeLabel, type LibraryBlockType } from "@dialmade/layout";
+import { motion, useIsPresent } from "motion/react";
 import {
   useCallback,
   useEffect,
@@ -13,6 +14,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
+import { toast } from "sonner";
 import { useStore } from "zustand";
 import { AiKeyDialog } from "@/components/AiKeyDialog";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
@@ -54,6 +56,9 @@ const PANEL = "flex min-h-0 flex-col overflow-hidden rounded-panel border border
 /** The inactive tab panel stays mounted (search, open categories, scroll) but hidden; the shown one fades in. */
 const TAB_PANEL = { active: { opacity: 1 }, inactive: { opacity: 0 } } as const;
 
+/** Sonner id of the «máximo de pantallas / bloques» refusal: a second refusal replaces it instead of stacking. */
+const LIMIT_TOAST_ID = "layout-limit";
+
 /**
  * «2 Layout» (refs 11B Replit + 11F Klaviyo): screens and the block library / layers on the left, the
  * grid canvas in the middle with the floating tools + Generar bar, the inspector (block or screen) on
@@ -66,7 +71,10 @@ const TAB_PANEL = { active: { opacity: 1 }, inactive: { opacity: 0 } } as const;
  *
  * «Generar» (`useGenerateFlow`): the flow writes the result (`onGenerate`), the canvas plays the signature moment
  * over the generated page, the optional AI copy runs in one request (its bar replaces the GenerateBar while the
- * page stays) and `onRevealEnd` hands over to «Ajustar».
+ * page stays) and `onRevealEnd` hands over to «Ajustar». While the moment holds the flow, `onMomentChange` says
+ * so (the flow's stepper waits).
+ *
+ * An action refused by a document limit (24 screens, 200 blocks in a screen) says why in a toast.
  */
 export function LayoutStep({
   doc,
@@ -80,6 +88,8 @@ export function LayoutStep({
   onGenerate,
   onGenerateIntent,
   onRevealEnd,
+  onMomentChange,
+  landmark = true,
   className,
 }: LayoutStepProps) {
   const t = useDictionary(layout);
@@ -187,8 +197,30 @@ export function LayoutStep({
     },
     [announce, t],
   );
-  const flow = useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announceGenerated });
-  const { reveal, leaving, generate, endPlaying } = flow;
+  // Inside the flow's AnimatePresence: false while the step leaves (its moment then moves the flow nowhere).
+  const present = useIsPresent();
+  const flow = useGenerateFlow({ store, narrow, present, onGenerate, onRevealEnd, announceGenerated });
+  const { reveal, leaving, generate, endPlaying, holdsFlow } = flow;
+
+  // The flow's stepper waits while the moment holds it (leaving would cancel the AI request); never after unmount.
+  const reportMoment = useEffectEvent((holds: boolean) => onMomentChange?.(holds));
+  useEffect(() => {
+    reportMoment(holdsFlow);
+  }, [holdsFlow]);
+  useEffect(() => () => reportMoment(false), []);
+
+  // A refusal at a document limit (the store did nothing): say why, whichever control asked.
+  const limitText = useRef({ screens: t.screens.limitReached(MAX_SCREENS), blocks: t.common.blockLimit(MAX_BLOCKS) });
+  useEffect(() => {
+    limitText.current = { screens: t.screens.limitReached(MAX_SCREENS), blocks: t.common.blockLimit(MAX_BLOCKS) };
+  }, [t]);
+  useEffect(
+    () =>
+      store.subscribe((state, previous) => {
+        if (state.limitHit && state.limitHit !== previous.limitHit) toast(limitText.current[state.limitHit.limit], { id: LIMIT_TOAST_ID });
+      }),
+    [store],
+  );
 
   // «Bloques» is the left tab on desktop. On a phone the layers list is the main view (no canvas to drag
   // onto); widening again goes back to «Bloques» unless the user picked a tab in between.
@@ -362,10 +394,11 @@ export function LayoutStep({
 
   let body;
   if (!hasScreens) {
+    // A group, not a landmark: the step (and the flow's stage around it) already is one.
     body = (
-      <section aria-label={t.templatePicker.region} className="flex flex-1 flex-col">
+      <div role="group" aria-label={t.templatePicker.region} className="flex flex-1 flex-col">
         {parts.templatePicker}
-      </section>
+      </div>
     );
   } else if (narrow) {
     body = (
@@ -427,8 +460,8 @@ export function LayoutStep({
       <GenerateAiProvider value={flow.aiValue}>
         <div
           ref={measureRef}
-          role="region"
-          aria-label={t.region}
+          // Standalone, the step is its own landmark; inside the flow its stage already is «Layout».
+          {...(landmark && { role: "region", "aria-label": t.region })}
           onFocus={rememberFocus}
           className={cn("mx-auto flex w-full max-w-[1760px] flex-col gap-3", hasScreens && !narrow && "lg:h-(--layout-h)", className)}
           style={{ "--layout-h": height ? `${height}px` : `max(${LAYOUT_MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}

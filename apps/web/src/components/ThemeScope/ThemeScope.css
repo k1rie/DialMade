@@ -131,12 +131,15 @@
   }
 }
 
-/* Edit mode: looping demos (spinners, skeletons, indeterminate progress) hold still on the canvas.
-   `!important` because the kit's own `animation` shorthands have the same specificity. */
+/* Edit mode: the page holds still in its resting state. Looping demos (spinners, skeletons, indeterminate
+   progress) stop, and entrance animations (a chart's line, area and bars, a dialog) show what they animate
+   to. Pausing instead would freeze both at their first frame: a chart without its line, an empty progress
+   track. «Probar» drops the attribute and every animation runs again. `!important` because the kit's own
+   `animation` shorthands have the same specificity. */
 .app-theme-scope .dl-page[data-dl-interactive] *,
 .app-theme-scope .dl-page[data-dl-interactive] *::before,
 .app-theme-scope .dl-page[data-dl-interactive] *::after {
-  animation-play-state: paused !important;
+  animation: none !important;
 }
 
 /* Edit mode (PageRenderer interactive): @dialmade/sections only sets attributes; the app paints them. */

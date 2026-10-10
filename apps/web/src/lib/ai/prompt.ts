@@ -76,8 +76,19 @@ const NO_REQUEST = "No specific request: improve clarity, specificity and persua
 /** Delimiters of the prompt (also with spaces inside, `< /request >`). */
 const PROMPT_TAGS = /<\s*\/?\s*(?:page_copy|request|layout_notes)\s*>/gi;
 
-/** Strips the delimiters of the prompt so user text cannot close a block early. Whitespace is kept as it is. */
-const sanitize = (text: string) => text.replace(PROMPT_TAGS, "").trim();
+/**
+ * Strips the delimiters of the prompt so user text cannot close a block early. Until nothing changes: removing
+ * the inner tag of `<</request>/request>` leaves a whole `</request>`. Whitespace is kept as it is.
+ */
+function sanitize(text: string): string {
+  let current = text;
+  for (;;) {
+    // Each pass that changes the text makes it shorter, so this ends.
+    const next = current.replace(PROMPT_TAGS, "");
+    if (next === current) return current.trim();
+    current = next;
+  }
+}
 
 /** JSON that no string inside can end a block with: `<` and `>` travel as `\u003c` / `\u003e` (same JSON value). */
 const blockJson = (value: unknown) => JSON.stringify(value, null, 1).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");

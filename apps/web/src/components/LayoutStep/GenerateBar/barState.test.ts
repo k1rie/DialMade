@@ -1,7 +1,7 @@
 import type { LayoutBlock, LayoutDoc, LayoutWarning, ScreenTemplateId } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { createLayoutStore, selectActiveScreen } from "../useLayoutStore";
-import { countStats, ctaState, replaceWithTemplateSet, templateSetFor } from "./barState";
+import { createLayoutStore, selectActiveScreen, selectChangedCount, selectPendingChanges } from "../useLayoutStore";
+import { countStats, ctaHint, ctaState, replaceWithTemplateSet, templateSetFor } from "./barState";
 
 const NAMES: Record<ScreenTemplateId, string> = {
   home: "Inicio",
@@ -113,5 +113,35 @@ describe("replaceWithTemplateSet", () => {
       },
     };
     expect(replaceWithTemplateSet(noop, ["s-1"], "landing")).toEqual([]);
+  });
+});
+
+describe("ctaHint (review B #40)", () => {
+  it("says «no changes» only when nothing would change: a rename or a move after Generar is pending, not up to date", () => {
+    const store = createLayoutStore({ screenNameFor: (id) => `Pantalla ${id}` });
+    const { actions } = store.getState();
+    const [home] = actions.applySet("landing");
+    const { screens, screenOrder } = store.getState();
+    const doc = { screens: Object.fromEntries(screenOrder.map((id) => [id, { ...screens[id]!, page: {} }])), screenOrder };
+    actions.generate();
+    actions.markSynced(doc as never);
+    const hint = () => {
+      const state = store.getState();
+      const cta = ctaState({ blocks: 1, generated: true, changed: selectChangedCount(state), activeKind: "landing" });
+      return ctaHint(cta, { aiOn: false, pending: selectPendingChanges(state, doc as never) });
+    };
+    expect(hint()).toBe("upToDate");
+    // A rename is not a «Regenerar N» block, but «Generar» writes it.
+    actions.renameScreen(home!, "Portada");
+    expect(selectChangedCount(store.getState())).toBe(0);
+    expect(hint()).toBe("noAi");
+    actions.undo();
+    expect(hint()).toBe("upToDate");
+  });
+
+  it("the template and AI hints win", () => {
+    expect(ctaHint({ kind: "template", set: "landing" }, { aiOn: true, pending: true })).toBe("empty");
+    expect(ctaHint({ kind: "again" }, { aiOn: true, pending: false })).toBe("ai");
+    expect(ctaHint({ kind: "regenerate", count: 2 }, { aiOn: false, pending: true })).toBe("noAi");
   });
 });

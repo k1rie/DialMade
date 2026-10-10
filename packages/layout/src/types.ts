@@ -132,7 +132,17 @@ export type LayoutDoc = {
 
 /** Navigation of an app screen: a frame with a fixed selector, not loose blocks (critique #4). */
 export type AppNav = "sidebar" | "rail" | "topnav" | "none";
-export type AppShell = { nav: AppNav; header: boolean; activeItem?: string };
+export type AppShell = {
+  nav: AppNav;
+  header: boolean;
+  activeItem?: string;
+  /**
+   * Frame props the user edited in «Ajustar» (JSON Pointers relative to the `app.shell` props, like
+   * `LayoutBlock.pinned`): «Generar» and a language or product change keep them. The document is their only
+   * source; the Layout draft never edits them.
+   */
+  pinned?: string[];
+};
 
 /* ------------------------------------------------------------------------------------------------ */
 /* Library metadata                                                                                 */
@@ -173,6 +183,8 @@ export type LibraryBlockDef = {
   frame: Exclude<AppNav, "none" | "rail"> | null;
   /** Screen kinds where the block is suggested first. Every block can be placed on any screen kind except frame blocks. */
   kinds: readonly ScreenKind[];
+  /** Its section draws a primary action that follows `linkTo` to another screen («Enlaza a»; `LINKABLE_BLOCK_TYPES`). */
+  linkable: boolean;
 };
 
 /* ------------------------------------------------------------------------------------------------ */

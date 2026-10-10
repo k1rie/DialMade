@@ -5,7 +5,7 @@ import { LANDING_SECTION_TYPES, landingLayouts, productTypes, type Locale } from
 import { UiProvider } from "@dialmade/ui";
 import { compileThemeVars, resolveThemeInputs, type DesignDoc } from "@dialmade/doc";
 import { buildDefaultPage } from "../buildPage";
-import { contentContextFromDoc, resolveProductType } from "../context";
+import { contentContextFromDoc, linkContext, resolveProductType } from "../context";
 import { PageRenderer } from "../PageRenderer";
 import { resolveSectionProps } from "../props";
 import { createRegistry, validateSections } from "../registry";
@@ -136,6 +136,66 @@ describe("todas las variantes y énfasis", () => {
           expect(html).toContain('data-bg="brand-gradient"');
         }
       }
+    }
+  });
+});
+
+describe("enlaces a otras pantallas en navbar y footer (Modo Layout, review B #12)", () => {
+  const doc = acmeDoc();
+  const content = contentContextFromDoc(doc);
+  const links = [
+    { label: "Precios", href: "#pricing", linkTo: "s-pricing" },
+    { label: "Blog", href: "#blog" },
+    { label: "Docs", href: "#docs", linkTo: "s-gone" },
+  ];
+  const hrefOf = (id: string) => (id === "s-pricing" ? "precios/index.html" : null);
+
+  function renderLinks(type: "landing.navbar" | "landing.footer", props: Record<string, unknown>, linkHref?: (id: string) => string | null) {
+    const def = registry.get(type)!;
+    const ctx: RenderContext = { ...content, mode: "light", interactive: false, doc, ...linkContext(linkHref ? { linkHref } : {}) };
+    const resolved = resolveSectionProps(def, props, content);
+    const Section = def.Component;
+    return render(
+      <UiProvider locale="es">
+        <Section {...resolved.props} variant={resolved.variant} ctx={ctx} elementId="x" />
+      </UiProvider>,
+    );
+  }
+
+  const anchors = (root: HTMLElement, label: string) => [...root.querySelectorAll("a")].filter((a) => a.textContent === label);
+
+  it("un enlace del navbar con linkTo lleva a esa pantalla; sin URL de pantalla, a su href", () => {
+    const { container, unmount } = renderLinks("landing.navbar", { links, linkCount: 3 }, hrefOf);
+    for (const a of anchors(container, "Precios")) {
+      expect(a.getAttribute("href")).toBe("precios/index.html");
+      expect(a.getAttribute("data-dl-screen-link")).toBe("s-pricing");
+    }
+    expect(anchors(container, "Precios").length).toBeGreaterThan(0);
+    for (const a of anchors(container, "Blog")) expect(a.getAttribute("href")).toBe("#blog");
+    // A screen with no URL in this render (deleted, or not exported) keeps the anchor.
+    for (const a of anchors(container, "Docs")) {
+      expect(a.getAttribute("href")).toBe("#docs");
+      expect(a.hasAttribute("data-dl-screen-link")).toBe(false);
+    }
+    unmount();
+    const plain = renderLinks("landing.navbar", { links, linkCount: 3 });
+    for (const a of anchors(plain.container, "Precios")) expect(a.getAttribute("href")).toBe("#pricing");
+  });
+
+  it("los enlaces del footer (columnas y variante simple) también", () => {
+    const columns = [{ title: "Producto", links }];
+    for (const variant of ["columns", "simple"]) {
+      const def = registry.get("landing.footer")!;
+      if (!def.variants.some((v) => v.id === variant)) continue;
+      const { container, unmount } = renderLinks("landing.footer", { variant, columns }, hrefOf);
+      const pricing = anchors(container, "Precios");
+      expect(pricing.length, variant).toBeGreaterThan(0);
+      for (const a of pricing) {
+        expect(a.getAttribute("href")).toBe("precios/index.html");
+        expect(a.getAttribute("data-dl-screen-link")).toBe("s-pricing");
+      }
+      for (const a of anchors(container, "Blog")) expect(a.getAttribute("href")).toBe("#blog");
+      unmount();
     }
   });
 });

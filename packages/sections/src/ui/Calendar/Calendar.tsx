@@ -15,10 +15,11 @@ import "./Calendar.css";
  * week, agenda or mini. With `mobile: "agenda"` the agenda is also in the markup and replaces the view
  * below the layout's mobile breakpoint.
  */
-export function Calendar({ title, startWeekday, events, mobile, frame, variant, ctx, elementId }: SectionComponentProps<CalendarProps>) {
+export function Calendar({ title, level, startWeekday, events, mobile, frame, variant, ctx, elementId }: SectionComponentProps<CalendarProps>) {
   const { locale } = ctx;
   const strings = uiStrings(locale);
   const titleId = `${elementId}-title`;
+  const Heading = level ?? "h2";
   const monthId = `${elementId}-month`;
   const mobileAgenda = mobile === "agenda" && variant !== "agenda";
   const next = variant === "mini" ? sortEvents(events).find((event) => event.day >= 0) : undefined;
@@ -43,9 +44,9 @@ export function Calendar({ title, startWeekday, events, mobile, frame, variant, 
       <div className="dl-ui__head">
         <div className="dl-ui__heading">
           {title ? (
-            <h2 id={titleId} className="dl-ui__title" data-dl-prop="title">
+            <Heading id={titleId} className="dl-ui__title" data-dl-prop="title">
               {title}
-            </h2>
+            </Heading>
           ) : null}
           <p id={monthId} className="dl-ui__subtitle">
             {monthTitle(locale)}

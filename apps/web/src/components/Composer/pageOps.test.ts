@@ -1,6 +1,6 @@
 import { MAX_PINNED, applyPatch, screenPointer, type DesignDoc } from "@dialmade/doc";
 import { blockCount, estimateContent } from "@dialmade/layout";
-import { buildPageFromLayout, contentContextFromDoc, sectionRegistry } from "@dialmade/sections";
+import { SHELL_ELEMENT_ID, buildPageFromLayout, contentContextFromDoc, sectionRegistry } from "@dialmade/sections";
 import { describe, expect, it } from "vitest";
 import { sampleDoc, sampleScreensDoc } from "@/lib/ai/testing";
 import { COUNT_PROP, canHide, hiddenOps, isPageKind, pageBase, pageTarget, sectionRows, setPropOps } from "./pageOps";
@@ -155,5 +155,71 @@ describe("count edits on a screen", () => {
 
     const relaid = patched(edited, [{ op: "replace", path: screenPointer("s-home", "layout", "blocks", id, "count"), value: 2 }]);
     expect(regenerate(relaid, "s-home").page.elements[id]!.props[COUNT_PROP]).toBe(2);
+  });
+});
+
+describe("app frame edits on a screen (review B #1–#3)", () => {
+  /** Dashboard, Ajustes (both framed, shared sidebar) and Login (no navigation). */
+  const APP_SCREENS = [
+    { id: "s-dash", name: "Dashboard", route: "/dashboard", template: "dashboard" },
+    { id: "s-sett", name: "Ajustes", route: "/ajustes", template: "settings" },
+    { id: "s-login", name: "Login", route: "/login", template: "login" },
+  ] as const;
+  const appDoc = () => sampleScreensDoc(APP_SCREENS);
+  const frame = (doc: DesignDoc, id: string) => doc.screens[id]!.page.elements[SHELL_ELEMENT_ID]!.props;
+  const edit = (doc: DesignDoc, prop: string, value: unknown, screen = "s-dash") =>
+    patched(doc, setPropOps(doc, pageTarget(doc, screen)!, SHELL_ELEMENT_ID, prop, value));
+
+  it("«Navegación» writes shell.nav on every app screen with navigation (an inset panel is a sidebar), never a pin", () => {
+    const doc = appDoc();
+    const top = edit(doc, "variant", "topnav");
+    for (const id of ["s-dash", "s-sett"]) {
+      expect(top.screens[id]!.shell?.nav, id).toBe("topnav");
+      expect(frame(top, id).variant, id).toBe("topnav");
+      expect(top.screens[id]!.shell?.pinned, id).toBeUndefined();
+    }
+    expect(top.screens["s-login"]!.shell?.nav).toBe("none");
+    const inset = edit(top, "variant", "inset");
+    expect(inset.screens["s-sett"]!.shell?.nav).toBe("sidebar");
+    expect(frame(inset, "s-sett").variant).toBe("inset");
+  });
+
+  it("«Cabecera de página» writes this screen's shell.header only", () => {
+    const off = edit(appDoc(), "showPageHeader", false);
+    expect(off.screens["s-dash"]!.shell?.header).toBe(false);
+    expect(frame(off, "s-dash").showPageHeader).toBe(false);
+    expect(off.screens["s-sett"]!.shell?.header).toBe(true);
+  });
+
+  it("«Título de la página» renames the screen: unique name, its automatic route and the frames' nav labels follow", () => {
+    const doc = appDoc();
+    const renamed = edit(doc, "title", "Mi panel");
+    expect(renamed.screens["s-dash"]).toMatchObject({ name: "Mi panel", route: "/mi-panel" });
+    expect(frame(renamed, "s-dash").title).toBe("Mi panel");
+    for (const id of ["s-dash", "s-sett"]) {
+      const nav = frame(renamed, id).nav as { id: string; label: string }[];
+      expect(nav.find((item) => item.id === "s-dash")?.label, id).toBe("Mi panel");
+    }
+    expect(edit(doc, "title", "Ajustes").screens["s-dash"]!.name).toBe("Ajustes 2");
+    // Typing a trailing space or clearing the field changes nothing (no empty write, no invalid name).
+    expect(setPropOps(renamed, pageTarget(renamed, "s-dash")!, SHELL_ELEMENT_ID, "title", "Mi panel ")).toEqual([]);
+    expect(setPropOps(renamed, pageTarget(renamed, "s-dash")!, SHELL_ELEMENT_ID, "title", "   ")).toEqual([]);
+  });
+
+  it("frame copy is pinned on its screen; a shared key is written and pinned on every frame", () => {
+    const action = edit(appDoc(), "primaryAction", "Nuevo informe");
+    expect(action.screens["s-dash"]!.shell?.pinned).toEqual(["/primaryAction"]);
+    expect(action.screens["s-sett"]!.shell?.pinned).toBeUndefined();
+    expect(frame(action, "s-sett").primaryAction).not.toBe("Nuevo informe");
+    // Once only.
+    expect(edit(action, "primaryAction", "Nuevo informe 2").screens["s-dash"]!.shell?.pinned).toEqual(["/primaryAction"]);
+
+    const workspace = edit(appDoc(), "workspace", "Equipo Norte", "s-sett");
+    for (const id of ["s-dash", "s-sett"]) {
+      expect(frame(workspace, id).workspace, id).toBe("Equipo Norte");
+      expect(workspace.screens[id]!.shell?.pinned, id).toEqual(["/workspace"]);
+    }
+    // Settings are shared and survive every rebuild: not pinned.
+    expect(edit(appDoc(), "tone", "inverted").screens["s-sett"]!.shell?.pinned).toBeUndefined();
   });
 });

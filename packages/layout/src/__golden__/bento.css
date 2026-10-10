@@ -16,6 +16,7 @@
 
 .dl-layout [data-dl-id="a"] {
   grid-area: a;
+  justify-self: stretch;
   aspect-ratio: 9 / 4;
 }
 
@@ -25,6 +26,7 @@
 
 .dl-layout [data-dl-id="c"] {
   grid-area: c;
+  justify-self: stretch;
   aspect-ratio: 9 / 4;
 }
 

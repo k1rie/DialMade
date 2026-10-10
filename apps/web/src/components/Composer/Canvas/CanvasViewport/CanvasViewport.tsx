@@ -18,6 +18,9 @@ import { SelectionToolbar, type SelectionToolbarProps } from "../SelectionToolba
 
 const PAD = 24;
 const BAR_HEIGHT = 30;
+/** The scroll region: the global `:focus-visible` ring (2 px accent), drawn inside its edge. */
+const REGION_CLASS =
+  "absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain focus-visible:-outline-offset-2 [background-image:radial-gradient(oklch(1_0_0/0.05)_1px,transparent_1px)] [background-size:24px_24px]";
 
 export type CanvasViewportProps = {
   id: string;
@@ -142,9 +145,10 @@ export function CanvasViewport({
         id={id}
         role="region"
         aria-label={label}
-        // Focus target after a «Probar» navigation (never a Tab stop).
+        // Focus target after a «Probar» navigation (never a Tab stop). After a key it shows the app's focus ring,
+        // inset because the stage clips anything outside (the arrows scroll it); a click shows none.
         tabIndex={-1}
-        className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain outline-none [background-image:radial-gradient(oklch(1_0_0/0.05)_1px,transparent_1px)] [background-size:24px_24px]"
+        className={REGION_CLASS}
         onClick={onBackgroundClick}
       >
         <div

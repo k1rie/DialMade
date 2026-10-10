@@ -82,6 +82,12 @@ export type GeneratedScreen = {
   css: string;
   ascii: string;
   warnings: LayoutWarning[];
+  /**
+   * A «Duplicar» copy that was never generated: the screen it copies (`screenId`) and, for each copied block still
+   * on it, its source block id. The document builds it from the source's page (its copy, pinned values and hidden
+   * blocks) instead of fresh copy. Absent for every other screen.
+   */
+  copyOf?: { screenId: ScreenId; blocks: Record<BlockId, BlockId> };
 };
 
 /** Output of `generate()`: every screen in order, and how many blocks changed since the previous run. */
@@ -128,6 +134,16 @@ export type LayoutStepProps = {
   onRevealEnd?(): void;
   /** Hover or focus on «Generar»: preload the Composer chunk. */
   onGenerateIntent?(): void;
+  /**
+   * The «Generar» moment holds the flow (`true`): the signature animation plays or the AI request is in flight, so
+   * leaving the step would cancel it. `false` once it no longer does (and when the step unmounts).
+   */
+  onMomentChange?(holds: boolean): void;
+  /**
+   * The step's root is a `region` landmark named «Layout» (default). Inside the flow, whose stage is already that
+   * landmark, pass `false`.
+   */
+  landmark?: boolean;
   className?: string;
 };
 

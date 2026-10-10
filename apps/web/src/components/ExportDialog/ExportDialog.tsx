@@ -8,7 +8,7 @@
 import { outputKindOptions, type OutputKind } from "@dialmade/catalog";
 import type { PageKey } from "@dialmade/doc";
 import { motion, type Variants } from "motion/react";
-import { useEffect, useId, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -35,6 +35,11 @@ export type ExportDialogProps = {
    * screen, else `doc.brief.focus`.
    */
   page?: PageKey;
+  /**
+   * Shown at the top, inside the modal (e.g. the flow's «cambios en Layout sin generar» notice, so what is exported
+   * is never silently an older generation). When it goes away with focus inside it, focus stays in the dialog.
+   */
+  notice?: ReactNode;
 };
 
 const listVariants: Variants = {
@@ -50,7 +55,7 @@ function isBackdropClick(event: MouseEvent<HTMLDialogElement>): boolean {
   return x < box.left || x > box.right || y < box.top || y > box.bottom;
 }
 
-export function ExportDialog({ open, onOpenChange, page }: ExportDialogProps) {
+export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogProps) {
   const { locale } = useI18n();
   const t = useDictionary(exportDialog);
   const titleId = useId();
@@ -73,6 +78,19 @@ export function ExportDialog({ open, onOpenChange, page }: ExportDialogProps) {
     texts: t,
     dialog: ref,
   });
+
+  // The notice's own button goes with it (e.g. its «Generar» worked): focus would fall to <body>, outside the modal.
+  const hasNotice = notice !== undefined && notice !== null && notice !== false;
+  const hadNotice = useRef(hasNotice);
+  useLayoutEffect(() => {
+    const had = hadNotice.current;
+    hadNotice.current = hasNotice;
+    const dialog = ref.current;
+    if (!had || hasNotice || !dialog?.open) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && dialog.contains(active)) return;
+    dialog.querySelector<HTMLElement>("button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex='-1'])")?.focus();
+  }, [hasNotice]);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -227,6 +245,8 @@ export function ExportDialog({ open, onOpenChange, page }: ExportDialogProps) {
             </div>
             <IconButton label={t.close} icon={<CloseIcon />} tooltip={false} className="-mt-1 -mr-1" onClick={() => onOpenChange(false)} />
           </header>
+
+          {hasNotice && notice}
 
           {preview && (
             <PreviewCard

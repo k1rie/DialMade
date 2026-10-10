@@ -19,10 +19,14 @@ export interface UiListItem {
 /** Most rows a list stores: `count` decides how many are shown. */
 export const UI_LIST_MAX = 12;
 
+/** Enough titles that lists on different screens (each with its own seed) rarely share one. */
 const LIST_TITLES = [
   t("Actividad reciente", "Recent activity"),
   t("Últimos cambios", "Latest changes"),
   t("Novedades del equipo", "Team updates"),
+  t("Movimientos recientes", "Recent moves"),
+  t("Lo último", "What's new"),
+  t("Qué ha pasado hoy", "What happened today"),
 ] as const;
 
 /** Title of a list block, picked by seed. */

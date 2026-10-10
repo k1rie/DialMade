@@ -1,6 +1,6 @@
 "use client";
 
-import { ROUTE_MAX } from "@dialmade/doc";
+import { MAX_SCREENS, ROUTE_MAX } from "@dialmade/doc";
 import {
   applyFix as applyLayoutFix,
   duplicateBlock as duplicateLayoutBlock,
@@ -13,6 +13,7 @@ import {
   instantiateTemplate,
   isLibraryBlockType,
   LABEL_MAX,
+  MAX_BLOCKS,
   MAX_HEIGHT_ROWS,
   MAX_ROW,
   moveBlock,
@@ -109,11 +110,17 @@ export type InsertBlockOptions = {
 
 export type LayoutActions = {
   /* Screens. Every change is one undo step. */
-  /** Appends the screens of a starting set («SaaS app», «Landing»); the first one becomes active. */
+  /**
+   * Appends the screens of a starting set («SaaS app», «Landing»); the first one becomes active. Nothing (and
+   * `limitHit`) when the project would pass `MAX_SCREENS`.
+   */
   applySet: (setId: SetTemplateId) => ScreenId[];
-  /** Appends a screen from a template; «En blanco» needs `kind`. Returns `null` when it cannot. */
+  /** Appends a screen from a template; «En blanco» needs `kind`. Returns `null` when it cannot (at `MAX_SCREENS`: `limitHit`). */
   addScreen: (templateId: ScreenTemplateId, kind?: ScreenKind) => ScreenId | null;
-  /** Copies a screen (new block ids) right after it and activates the copy. */
+  /**
+   * Copies a screen (new block ids) right after it and activates the copy (`null` at `MAX_SCREENS`: `limitHit`).
+   * The next «Generar» builds the copy from the source's page (`GeneratedScreen.copyOf`), so Ajustar's edits come along.
+   */
   duplicateScreen: (id: ScreenId) => ScreenId | null;
   /** Renames; an automatic route (`/<slug of the old name>`) follows the new name. */
   renameScreen: (id: ScreenId, name: string) => boolean;
@@ -130,7 +137,10 @@ export type LayoutActions = {
   convertScreen: (id: ScreenId, kind: ScreenKind) => boolean;
 
   /* Blocks (active screen unless `screenId` is given). Every change is one undo step unless batched. */
-  /** Inserts with the i18n label and selects the block. Frame blocks on an app screen set `shell.nav` instead. */
+  /**
+   * Inserts with the i18n label and selects the block. Frame blocks on an app screen set `shell.nav` instead.
+   * A screen with `MAX_BLOCKS` blocks takes no more (`limitHit`).
+   */
   insertBlock: (type: LibraryBlockType, options?: InsertBlockOptions) => InsertOutcome;
   /** Sanitizes label and note, clamps count; a type change keeps the geometry and renames only default labels. */
   updateBlock: (id: BlockId, patch: BlockPatch, screenId?: ScreenId) => UpdateOutcome;
@@ -138,7 +148,7 @@ export type LayoutActions = {
   setRect: (id: BlockId, rect: GridRect, screenId?: ScreenId) => Adjustment[];
   /** Removes the blocks and their descendants; returns every removed id. Clears a removed selection. */
   removeBlocks: (ids: readonly BlockId[], screenId?: ScreenId) => BlockId[];
-  /** Duplicates the block (and its descendants) and selects the copy. */
+  /** Duplicates the block (and its descendants) and selects the copy; `null` when the screen would pass `MAX_BLOCKS` (`limitHit`). */
   duplicateBlock: (id: BlockId, screenId?: ScreenId) => BlockId | null;
   /** Applies a warning's one-click fix. */
   applyFix: (fix: LayoutFix, screenId?: ScreenId) => boolean;
@@ -186,16 +196,27 @@ export type LayoutActions = {
   /**
    * Brings the draft in line with the document's screens (`doc.screens`/`doc.screenOrder`; extra members such
    * as `page` are ignored). Nothing to do when those screens did not change since the last sync (compared by
-   * content: any document edit re-parses it into new objects). When the draft did not change either, it
-   * becomes the document's screens (an edit or an undo in «Ajustar» is followed) and the layout history starts
-   * again: what it held is already in the document's own history. When both changed, the draft keeps its
-   * screens, geometry, types, labels, notes, counts and links; `pinned` and `generated` always come from the
-   * document, and `hidden` from whichever side changed it since the last sync (the draft wins a tie). The
-   * history is rebased the same way and gets no step. Not undoable. Returns what it did.
+   * content: any document edit re-parses it into new objects). When the draft holds nothing of its own (it is
+   * what the last sync or «Generar» left and that equalled the document, or it is empty while the document has
+   * screens), it becomes the document's screens (an edit or an undo in «Ajustar» is followed) and the layout
+   * history starts again: what it held is already in the document's own history. Otherwise the draft has edits
+   * the document does not have, and they are never dropped: it keeps its screens, geometry, types, labels, notes
+   * and links; `pinned` and `generated` always come from the document, and `hidden` and `count` from whichever
+   * side changed them since the last sync (the draft wins a tie). The history is rebased the same way and gets
+   * no step. Not undoable. Returns what it did.
    */
   syncFromDoc: (doc: ScreensSource) => SyncOutcome;
-  /** The document now holds this draft (right after «Generar» wrote it): the next sync starts from here. */
+  /**
+   * The document now holds this draft (right after «Generar» wrote it): the next sync starts from here. The
+   * first «Generar» of a document also starts the layout history again (like the document's, decision 92), so
+   * undo never takes the draft back to an empty project the document no longer is.
+   */
   markSynced: (doc: ScreensSource) => void;
+  /**
+   * Whether the draft has layout changes the document does not have (what «Generar» would still write: a moved,
+   * added, removed, renamed or retyped block or screen…). Edits made in «Ajustar» are not pending changes.
+   */
+  hasPendingChanges: (doc: ScreensSource) => boolean;
 
   /* Generate. */
   /**
@@ -239,6 +260,10 @@ export type LayoutState = {
   batchBase: HistorySlice | null;
   /** The document's screens at the last `syncFromDoc`/`markSynced` and the draft right after it. Read-only. */
   docSync: DocSync | null;
+  /** The last action refused by a document limit (`MAX_SCREENS`, `MAX_BLOCKS`); a new object on every refusal. */
+  limitHit: LimitHit | null;
+  /** Screens made with «Duplicar» since the last «Generar», and what they copy (see `GeneratedScreen.copyOf`). Not undoable. */
+  copies: Record<ScreenId, ScreenCopy>;
 
   actions: LayoutActions;
 };
@@ -256,9 +281,17 @@ export type ScreensSource = { readonly screens: Readonly<Record<ScreenId, Screen
 
 /**
  * What the last sync saw: the document's own objects, a key of their content (every document edit re-parses
- * it, so identity alone would see a change on each keystroke of the brand name) and the draft it left.
+ * it, so identity alone would see a change on each keystroke of the brand name) and the draft it left. `clean`:
+ * that draft held nothing the document did not (a reseed, «Generar», or a merge that came out equal); a merged
+ * draft with edits of its own is not clean, so a later sync merges again instead of replacing it.
  */
-export type DocSync = { doc: ScreensSource; key: string; draft: HistorySlice };
+export type DocSync = { doc: ScreensSource; key: string; draft: HistorySlice; clean: boolean };
+
+/** A refusal at a document limit: `screens` (`MAX_SCREENS`) or `blocks` (`MAX_BLOCKS` in one screen). `tick` grows on each one. */
+export type LimitHit = { limit: "screens" | "blocks"; tick: number };
+
+/** A screen made with «Duplicar»: the screen it copies and, for each copied block id, its source block id. */
+export type ScreenCopy = { from: ScreenId; blocks: Record<BlockId, BlockId> };
 
 /** What `syncFromDoc` did. */
 export type SyncOutcome = "unchanged" | "reseeded" | "merged";
@@ -536,7 +569,19 @@ export function screensFromDoc(doc: ScreensSource): HistorySlice {
   return { screens, screenOrder };
 }
 
-const sameJson = (a: unknown, b: unknown) => a === b || JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+/** Same pinned pointers (element-wise: a sync rebases the whole history, so no JSON per block). */
+function samePins(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  if (a === b) return true;
+  if ((a?.length ?? 0) !== (b?.length ?? 0)) return false;
+  return (a ?? []).every((pointer, index) => pointer === b![index]);
+}
+
+/** Same «Generar» fingerprint, field by field. */
+function samePrint(a: GeneratedFingerprint | undefined, b: GeneratedFingerprint | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.type === b.type && a.w === b.w && a.h === b.h && a.count === b.count && a.variant === b.variant && a.noteHash === b.noteHash;
+}
 
 const contentKeys = new WeakMap<object, { order: readonly ScreenId[]; key: string }>();
 
@@ -557,9 +602,11 @@ function mergeBlock(block: LayoutBlock, base: LayoutBlock | undefined, doc: Layo
   // Hidden: the side that changed it since the last sync wins; with no change in the draft, the document's.
   const hidden = doc && base && draftHidden === (base.hidden === true) ? doc.hidden === true : draftHidden;
   // Count, the same way: Ajustar's count knob writes `block.count` (the layout owns it), so a ×N changed there
-  // while the draft also changed elsewhere is kept, unless the draft changed that count itself.
-  const count = doc && base && block.count === base.count ? doc.count : block.count;
-  if (sameJson(block.pinned, pinned) && sameJson(block.generated, generated) && draftHidden === hidden && block.count === count) return block;
+  // while the draft also changed elsewhere is kept, unless the draft changed that count itself. Ajustar checked
+  // it against the document's type: when the draft changed the type meanwhile, that ×N is not one for this block.
+  let count = doc && base && block.count === base.count && doc.type === block.type ? doc.count : block.count;
+  if (count !== undefined && count !== block.count) count = clampCount(block.type, count);
+  if (samePins(block.pinned, pinned) && samePrint(block.generated, generated) && draftHidden === hidden && block.count === count) return block;
   const next: LayoutBlock = { ...block };
   if (count !== undefined) next.count = count;
   else delete next.count;
@@ -573,27 +620,173 @@ function mergeBlock(block: LayoutBlock, base: LayoutBlock | undefined, doc: Layo
 }
 
 /**
- * Merges what changed in the document into a draft that also changed (rules of `syncFromDoc`): screens, order,
- * geometry, type, label, note and links stay as in `draft`; for every block `pinned` and `generated` come from
- * `doc` (dropped when the document does not have the block), and `hidden` and `count` are three-way against
- * `base` (the document at the last sync): the side that changed them wins, the draft when both did. Keeps the
- * identity of everything that does not change (the draft itself when nothing does).
+ * A draft screen's app frame merged with the document's: navigation and page header three-way against `base`
+ * (Ajustar's «Navegación» and «Cabecera de página» write them), `pinned` from the document (frame copy edited in
+ * Ajustar; the engine reads it from the document anyway). Same object when nothing changes.
  */
-export function mergeDocScreens(draft: HistorySlice, base: HistorySlice | null, doc: HistorySlice): HistorySlice {
+function mergeShell(shell: AppShell | null, base: AppShell | null | undefined, doc: AppShell | null | undefined): AppShell | null {
+  if (!shell || !doc) return shell;
+  const nav = base && shell.nav === base.nav ? doc.nav : shell.nav;
+  const header = base && shell.header === base.header ? doc.header : shell.header;
+  const pinned = doc.pinned && doc.pinned.length > 0 ? doc.pinned : undefined;
+  if (nav === shell.nav && header === shell.header && samePins(shell.pinned, pinned)) return shell;
+  const next: AppShell = { ...shell, nav, header };
+  if (pinned) next.pinned = [...pinned];
+  else delete next.pinned;
+  return next;
+}
+
+/** One screen of the draft merged with the document (see `mergeDocScreens`). Same object when nothing changes. */
+function mergeScreen(screen: Screen, base: HistorySlice | null, doc: HistorySlice): Screen {
+  const id = screen.id;
+  const docScreen = Object.hasOwn(doc.screens, id) ? doc.screens[id] : undefined;
+  const baseScreen = base && Object.hasOwn(base.screens, id) ? base.screens[id] : undefined;
+  let blocks: Record<BlockId, LayoutBlock> | undefined;
+  for (const [blockId, block] of Object.entries(screen.layout.blocks)) {
+    const docBlock = docScreen && Object.hasOwn(docScreen.layout.blocks, blockId) ? docScreen.layout.blocks[blockId] : undefined;
+    const baseBlock = baseScreen && Object.hasOwn(baseScreen.layout.blocks, blockId) ? baseScreen.layout.blocks[blockId] : undefined;
+    const merged = mergeBlock(block, baseBlock, docBlock);
+    if (merged !== block) (blocks ??= { ...screen.layout.blocks })[blockId] = merged;
+  }
+  // Name and route, three-way (Ajustar's «Título de la página» renames the screen; an automatic route follows).
+  const name = docScreen && baseScreen && screen.name === baseScreen.name ? docScreen.name : screen.name;
+  const route = docScreen && baseScreen && screen.route === baseScreen.route ? docScreen.route : screen.route;
+  const shell = docScreen && screen.kind === docScreen.kind ? mergeShell(screen.shell, baseScreen?.shell, docScreen.shell) : screen.shell;
+  if (!blocks && name === screen.name && route === screen.route && shell === screen.shell) return screen;
+  return { ...screen, name, route, shell, ...(blocks && { layout: { ...screen.layout, blocks } }) };
+}
+
+/** `screen` with the shared navigation `nav` when it has navigation (pure, so cached per object and value). */
+const withNavCache = new WeakMap<Screen, Map<AppNav, Screen>>();
+function withSharedNav(screen: Screen, nav: AppNav): Screen {
+  if (screen.kind !== "app" || !screen.shell || screen.shell.nav === "none" || screen.shell.nav === nav) return screen;
+  let byNav = withNavCache.get(screen);
+  if (!byNav) withNavCache.set(screen, (byNav = new Map()));
+  let next = byNav.get(nav);
+  if (!next) byNav.set(nav, (next = { ...screen, shell: { ...screen.shell, nav } }));
+  return next;
+}
+
+/**
+ * The merged screens with the document's rules the draft also keeps: app screens with navigation share it (the
+ * draft's when the draft changed it since `base`, else the document's, so a screen only the draft has follows
+ * Ajustar's «Navegación» too), and names and routes stay unique (a name or route taken from the document that
+ * another draft screen already uses gets a number: the draft's own never changes). Same record when nothing does.
+ */
+function keepScreenRules(
+  merged: Record<ScreenId, Screen>,
+  draft: HistorySlice,
+  base: HistorySlice | null,
+  doc: HistorySlice,
+): Record<ScreenId, Screen> {
+  const order = [...new Set([...draft.screenOrder.filter((id) => Object.hasOwn(merged, id)), ...Object.keys(merged)])];
+  const draftNav = sharedNav(draft.screens, draft.screenOrder);
+  const nav = base && draftNav === sharedNav(base.screens, base.screenOrder) ? (sharedNav(doc.screens, doc.screenOrder) ?? draftNav) : draftNav;
+  let out = merged;
+  const put = (id: ScreenId, screen: Screen) => {
+    if (out[id] === screen) return;
+    if (out === merged) out = { ...merged };
+    out[id] = screen;
+  };
+  if (nav) for (const id of order) put(id, withSharedNav(out[id]!, nav));
+  // The draft's own names and routes first: those never move.
+  const names = new Set<string>();
+  const routes = new Set<string>();
+  for (const id of order) {
+    const own = draft.screens[id];
+    if (own && out[id]!.name === own.name) names.add(own.name);
+    if (own && out[id]!.route === own.route) routes.add(own.route);
+  }
+  for (const id of order) {
+    const screen = out[id]!;
+    const own = draft.screens[id];
+    let { name, route } = screen;
+    if (own && name !== own.name) names.add((name = names.has(name) ? uniqueName(name, names) : name));
+    if (own && route !== own.route) {
+      if (routes.has(route)) {
+        const numbered = uniqueRoute(route, routes);
+        // Too long for the document (`ROUTE_MAX`): the draft's own route, when it is free.
+        route = numbered.length <= ROUTE_MAX || routes.has(own.route) ? numbered : own.route;
+      }
+      routes.add(route);
+    }
+    if (name !== screen.name || route !== screen.route) put(id, { ...screen, name, route });
+  }
+  return out;
+}
+
+/**
+ * Merges what changed in the document into a draft that also changed (rules of `syncFromDoc`): screens, order,
+ * geometry, type, label, note, links and the active nav item stay as in `draft`; for every block `pinned` and
+ * `generated` come from `doc` (dropped when the document does not have the block), and `hidden` and `count` are
+ * three-way against `base` (the document at the last sync): the side that changed them wins, the draft when both
+ * did. A screen's name, route, navigation and page header are three-way the same way (Ajustar's frame knobs write
+ * them), its frame's `pinned` comes from `doc`, and the result keeps the shared navigation and unique names and
+ * routes (`keepScreenRules`). Keeps the identity of everything that does not change (the draft itself when
+ * nothing does).
+ *
+ * `memo` (one per `base`/`doc` pair) remembers merged screens: the slices of the history share most screen
+ * objects, so rebasing it merges each distinct screen once.
+ */
+export function mergeDocScreens(draft: HistorySlice, base: HistorySlice | null, doc: HistorySlice, memo?: WeakMap<Screen, Screen>): HistorySlice {
   let screens: Record<ScreenId, Screen> | undefined;
   for (const [id, screen] of Object.entries(draft.screens)) {
-    const docScreen = Object.hasOwn(doc.screens, id) ? doc.screens[id] : undefined;
-    const baseScreen = base && Object.hasOwn(base.screens, id) ? base.screens[id] : undefined;
-    let blocks: Record<BlockId, LayoutBlock> | undefined;
-    for (const [blockId, block] of Object.entries(screen.layout.blocks)) {
-      const docBlock = docScreen && Object.hasOwn(docScreen.layout.blocks, blockId) ? docScreen.layout.blocks[blockId] : undefined;
-      const baseBlock = baseScreen && Object.hasOwn(baseScreen.layout.blocks, blockId) ? baseScreen.layout.blocks[blockId] : undefined;
-      const merged = mergeBlock(block, baseBlock, docBlock);
-      if (merged !== block) (blocks ??= { ...screen.layout.blocks })[blockId] = merged;
+    let merged = memo?.get(screen);
+    if (!merged) {
+      merged = mergeScreen(screen, base, doc);
+      memo?.set(screen, merged);
     }
-    if (blocks) (screens ??= { ...draft.screens })[id] = { ...screen, layout: { ...screen.layout, blocks } };
+    if (merged !== screen) (screens ??= { ...draft.screens })[id] = merged;
   }
-  return screens ? { screens, screenOrder: draft.screenOrder } : draft;
+  const ruled = keepScreenRules(screens ?? draft.screens, draft, base, doc);
+  return ruled !== draft.screens ? { screens: ruled, screenOrder: draft.screenOrder } : draft;
+}
+
+/**
+ * Whether two sets of screens hold the same layout: order, names, kinds, routes, shells and every block's
+ * geometry, nesting, type, label, note, count, links, hiding and responsive overrides. `pinned` and `generated`
+ * are not compared: they always come from the document.
+ */
+export function sameScreensContent(a: HistorySlice, b: HistorySlice): boolean {
+  if (a.screenOrder.length !== b.screenOrder.length) return false;
+  for (let index = 0; index < a.screenOrder.length; index++) {
+    const id = a.screenOrder[index]!;
+    if (b.screenOrder[index] !== id) return false;
+    const left = Object.hasOwn(a.screens, id) ? a.screens[id] : undefined;
+    const right = Object.hasOwn(b.screens, id) ? b.screens[id] : undefined;
+    if (!left || !right) {
+      if (left !== right) return false;
+      continue;
+    }
+    if (left === right) continue;
+    if (left.name !== right.name || left.kind !== right.kind || left.route !== right.route) return false;
+    if (left.shell !== right.shell && (!left.shell || !right.shell || !sameShell(left.shell, right.shell))) return false;
+    if (left.layout === right.layout) continue;
+    const leftBlocks = left.layout.blocks;
+    const rightBlocks = right.layout.blocks;
+    const ids = Object.keys(leftBlocks);
+    if (ids.length !== Object.keys(rightBlocks).length) return false;
+    for (const blockId of ids) {
+      const x = leftBlocks[blockId]!;
+      const y = Object.hasOwn(rightBlocks, blockId) ? rightBlocks[blockId] : undefined;
+      if (!y) return false;
+      if (x === y) continue;
+      if (!sameBlockProps(x, y) || !sameRect(x.rect, y.rect) || x.parentId !== y.parentId || x.z !== y.z) return false;
+    }
+  }
+  return true;
+}
+
+/** What a «Duplicar» copy tells «Generar»: its source and the copied blocks that are still on it. `null` when none is. */
+function copyOfFor(copy: ScreenCopy, layout: LayoutDoc): GeneratedScreen["copyOf"] | null {
+  const blocks: Record<BlockId, BlockId> = {};
+  let any = false;
+  for (const [blockId, sourceId] of Object.entries(copy.blocks)) {
+    if (!Object.hasOwn(layout.blocks, blockId)) continue;
+    blocks[blockId] = sourceId;
+    any = true;
+  }
+  return any ? { screenId: copy.from, blocks } : null;
 }
 
 /* ------------------------------------------------------------------------------------------------ */
@@ -621,13 +814,18 @@ export function selectSelectedId(state: ScreensView & Pick<LayoutState, "activeS
   return selectActiveScreen(state)?.layout.blocks[id] ? id : null;
 }
 
-const changedMemo = new WeakMap<object, { order: ScreenId[]; prints: GeneratedPrints | null; value: number }>();
+const changedMemo = new WeakMap<object, { order: ScreenId[]; prints: GeneratedPrints | null; docBase: ScreensSource | null; value: number }>();
 
-/** Blocks «Regenerar N bloques» would touch: new, changed or removed since the last «Generar». */
-export function selectChangedCount(state: ScreensView & Pick<LayoutState, "generatedPrints">): number {
+/**
+ * Blocks «Regenerar N bloques» would touch: new, changed or removed since the last «Generar». Removed blocks are
+ * counted against the fingerprints of this session's last «Generar» or, after a sync with the document (which
+ * drops them), against the document's own generated blocks (`docSync.doc`).
+ */
+export function selectChangedCount(state: ScreensView & Pick<LayoutState, "generatedPrints"> & Partial<Pick<LayoutState, "docSync">>): number {
   const { screens, screenOrder, generatedPrints: prints } = state;
+  const docBase = prints ? null : (state.docSync?.doc ?? null);
   const memo = changedMemo.get(screens);
-  if (memo && memo.order === screenOrder && memo.prints === prints) return memo.value;
+  if (memo && memo.order === screenOrder && memo.prints === prints && memo.docBase === docBase) return memo.value;
   let count = 0;
   for (const id of screenOrder) {
     const screen = screens[id];
@@ -640,8 +838,38 @@ export function selectChangedCount(state: ScreensView & Pick<LayoutState, "gener
     if (base) for (const blockId of Object.keys(base)) if (!screen.layout.blocks[blockId]) count++;
   }
   if (prints) for (const [id, base] of Object.entries(prints)) if (!screens[id]) count += Object.keys(base).length;
-  changedMemo.set(screens, { order: screenOrder, prints, value: count });
+  if (docBase) {
+    for (const id of docBase.screenOrder) {
+      const docScreen = Object.hasOwn(docBase.screens, id) ? docBase.screens[id] : undefined;
+      if (!docScreen) continue;
+      const draftBlocks = Object.hasOwn(screens, id) ? screens[id]!.layout.blocks : undefined;
+      for (const [blockId, block] of Object.entries(docScreen.layout.blocks)) {
+        if (block.generated && !(draftBlocks && Object.hasOwn(draftBlocks, blockId))) count++;
+      }
+    }
+  }
+  changedMemo.set(screens, { order: screenOrder, prints, docBase, value: count });
   return count;
+}
+
+const pendingMemo = new WeakMap<object, { order: ScreenId[]; sync: DocSync | null; docScreens: object; docOrder: readonly ScreenId[]; value: boolean }>();
+
+/**
+ * Whether the draft has layout changes `doc` does not have (see `LayoutActions.hasPendingChanges`): what the next
+ * sync would leave, compared with the document. An empty draft has none (the next sync restores the document's).
+ * Memoized per version of the draft, the last sync and the document.
+ */
+export function selectPendingChanges(state: ScreensView & Pick<LayoutState, "docSync">, doc: ScreensSource): boolean {
+  const { screens, screenOrder, docSync: sync } = state;
+  if (screenOrder.length === 0) return false;
+  if (sync && sync.clean && sync.draft.screens === screens && sync.draft.screenOrder === screenOrder) return false;
+  const hit = pendingMemo.get(screens);
+  if (hit && hit.order === screenOrder && hit.sync === sync && hit.docScreens === doc.screens && hit.docOrder === doc.screenOrder) return hit.value;
+  const fromDoc = screensFromDoc(doc);
+  const base = sync ? screensFromDoc(sync.doc) : null;
+  const value = !sameScreensContent(mergeDocScreens({ screens, screenOrder }, base, fromDoc), fromDoc);
+  pendingMemo.set(screens, { order: screenOrder, sync, docScreens: doc.screens, docOrder: doc.screenOrder, value });
+  return value;
 }
 
 /**
@@ -764,6 +992,8 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
         });
         const adjusted = (adjustments: Adjustment[]): Partial<LayoutState> =>
           adjustments.length > 0 ? { lastAdjustments: adjustments, adjustmentsTick: get().adjustmentsTick + 1 } : {};
+        /** Records a refusal at a document limit (LayoutStep says why). */
+        const limitHit = (limit: LimitHit["limit"]) => set({ limitHit: { limit, tick: (get().limitHit?.tick ?? 0) + 1 } });
 
         const routeFor = (name: string, kind: ScreenKind, screens: Record<ScreenId, Screen>, exceptId?: ScreenId): string => {
           const routes = new Set(Object.values(screens).filter((s) => s.id !== exceptId).map((s) => s.route));
@@ -805,6 +1035,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           /* ---------------------------------------------------------------------------------------- */
           applySet: (setId) => {
             const template = getSetTemplate(setId);
+            if (get().screenOrder.length + template.screens.length > MAX_SCREENS) {
+              limitHit("screens");
+              return [];
+            }
             const taken = takenIds();
             const screens = { ...get().screens };
             const order = [...get().screenOrder];
@@ -824,6 +1058,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             const { screens, screenOrder } = get();
             const screen = buildScreen(templateId, kind, screens, screenOrder, takenIds());
             if (!screen) return null;
+            if (screenOrder.length >= MAX_SCREENS) {
+              limitHit("screens");
+              return null;
+            }
             set({
               screens: { ...screens, [screen.id]: screen },
               screenOrder: [...screenOrder, screen.id],
@@ -833,9 +1071,13 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             return screen.id;
           },
           duplicateScreen: (id) => {
-            const { screens, screenOrder } = get();
+            const { screens, screenOrder, copies } = get();
             const source = screens[id];
             if (!source) return null;
+            if (screenOrder.length >= MAX_SCREENS) {
+              limitHit("screens");
+              return null;
+            }
             const taken = takenIds();
             const blockIds = Object.keys(source.layout.blocks).sort();
             const idMap = new Map(blockIds.map((blockId) => [blockId, nextId("b", taken)] as const));
@@ -859,7 +1101,20 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             };
             const order = [...screenOrder];
             order.splice(order.indexOf(id) + 1, 0, copyId);
-            set({ screens: { ...screens, [copyId]: copy }, screenOrder: order, activeScreenId: copyId, selectedId: null });
+            // What it copies, for the next «Generar»: a copy of a copy that was never generated copies its source.
+            const via = Object.hasOwn(copies, id) ? copies[id] : undefined;
+            const copied: Record<BlockId, BlockId> = {};
+            for (const [sourceId, newId] of idMap) {
+              const original = via ? (Object.hasOwn(via.blocks, sourceId) ? via.blocks[sourceId] : undefined) : sourceId;
+              if (original !== undefined) copied[newId] = original;
+            }
+            set({
+              screens: { ...screens, [copyId]: copy },
+              screenOrder: order,
+              activeScreenId: copyId,
+              selectedId: null,
+              copies: { ...copies, [copyId]: { from: via?.from ?? id, blocks: copied } },
+            });
             return copyId;
           },
           renameScreen: (id, rawName) => {
@@ -976,6 +1231,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               if (next !== screens) set({ screens: next });
               return { id: null, nav: def.frame, adjustments: [] };
             }
+            if (Object.keys(screen.layout.blocks).length >= MAX_BLOCKS) {
+              limitHit("blocks");
+              return none;
+            }
             const id = nextId("b", takenIds());
             const parentId = options.parentId !== undefined && screen.layout.blocks[options.parentId] ? options.parentId : undefined;
             const result = insertLayoutBlock(screen.layout, {
@@ -1089,6 +1348,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               const parentId = block.parentId !== undefined ? rename.get(block.parentId) : undefined;
               blocks[rename.get(blockId) ?? blockId] = parentId !== undefined ? { ...block, parentId } : block;
             }
+            if (Object.keys(blocks).length > MAX_BLOCKS) {
+              limitHit("blocks");
+              return null;
+            }
             set({ screens: withLayout(screen, { ...result.layout, blocks }), selectedId: result.id });
             return result.id;
           },
@@ -1188,10 +1451,12 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           /* ---------------------------------------------------------------------------------------- */
           syncFromDoc: (doc) => {
             const sync = get().docSync;
-            if (sync && sync.doc.screens === doc.screens && sync.doc.screenOrder === doc.screenOrder) return "unchanged";
+            // An empty draft while the document has screens (undo past the first template): the document's come back.
+            const restore = get().screenOrder.length === 0 && doc.screenOrder.length > 0;
+            if (!restore && sync && sync.doc.screens === doc.screens && sync.doc.screenOrder === doc.screenOrder) return "unchanged";
             const docRef: ScreensSource = { screens: doc.screens, screenOrder: doc.screenOrder };
             const key = screensKey(doc);
-            if (sync && sync.key === key) {
+            if (!restore && sync && sync.key === key) {
               // Same screens in a re-parsed document (a brand or style edit): remember the new objects only.
               set({ docSync: { ...sync, doc: docRef } });
               return "unchanged";
@@ -1201,35 +1466,49 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             const { screens, screenOrder } = get();
             const draft: HistorySlice = { screens, screenOrder };
             const fromDoc = screensFromDoc(doc);
-            const untouched = sync
-              ? sync.draft.screens === screens && sync.draft.screenOrder === screenOrder
-              : screenOrder.length === 0;
+            // Replacing the draft is only safe when it holds nothing the document lacks: the very draft a clean sync
+            // or «Generar» left. A merged draft with edits of its own merges again (its edits are never dropped).
+            const untouched =
+              restore ||
+              (sync ? sync.clean && sync.draft.screens === screens && sync.draft.screenOrder === screenOrder : screenOrder.length === 0);
             if (untouched) {
               history().pause();
-              set({ screens: fromDoc.screens, screenOrder: fromDoc.screenOrder, generatedPrints: null, docSync: { doc: docRef, key, draft: fromDoc } });
+              set({
+                screens: fromDoc.screens,
+                screenOrder: fromDoc.screenOrder,
+                generatedPrints: null,
+                docSync: { doc: docRef, key, draft: fromDoc, clean: true },
+                copies: {},
+              });
               history().resume();
               history().clear();
               return "reseeded";
             }
             const base = sync ? screensFromDoc(sync.doc) : null;
-            const merged = mergeDocScreens(draft, base, fromDoc);
+            const memo = new WeakMap<Screen, Screen>();
+            const merged = mergeDocScreens(draft, base, fromDoc, memo);
             history().pause();
             set({
               ...(merged !== draft && { screens: merged.screens }),
               generatedPrints: null,
-              docSync: { doc: docRef, key, draft: merged },
+              docSync: { doc: docRef, key, draft: merged, clean: sameScreensContent(merged, fromDoc) },
             });
             history().resume();
             const rebase = (slices: Partial<HistorySlice>[]) =>
-              slices.map((slice) => (slice.screens && slice.screenOrder ? mergeDocScreens(slice as HistorySlice, base, fromDoc) : slice));
+              slices.map((slice) => (slice.screens && slice.screenOrder ? mergeDocScreens(slice as HistorySlice, base, fromDoc, memo) : slice));
             const { pastStates, futureStates } = history();
             (api as unknown as LayoutStore).temporal.setState({ pastStates: rebase(pastStates), futureStates: rebase(futureStates) });
             return "merged";
           },
           markSynced: (doc) => {
-            const { screens, screenOrder } = get();
-            set({ docSync: { doc: { screens: doc.screens, screenOrder: doc.screenOrder }, key: screensKey(doc), draft: { screens, screenOrder } } });
+            const { screens, screenOrder, docSync: sync } = get();
+            const first = !sync || sync.doc.screenOrder.length === 0;
+            set({
+              docSync: { doc: { screens: doc.screens, screenOrder: doc.screenOrder }, key: screensKey(doc), draft: { screens, screenOrder }, clean: true },
+            });
+            if (first) history().clear();
           },
+          hasPendingChanges: (doc) => selectPendingChanges(get(), doc),
 
           /* ---------------------------------------------------------------------------------------- */
           /* Generate                                                                                 */
@@ -1239,10 +1518,14 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             const changed = selectChangedCount(state);
             const screens: GeneratedScreen[] = [];
             const prints: GeneratedPrints = {};
+            let overLimit: LimitHit["limit"] | null = state.screenOrder.length > MAX_SCREENS ? "screens" : null;
             for (const screenId of state.screenOrder) {
               const screen = state.screens[screenId];
               if (!screen) continue;
               const { layout } = screen;
+              if (Object.keys(layout.blocks).length > MAX_BLOCKS) overLimit ??= "blocks";
+              const copy = Object.hasOwn(state.copies, screenId) ? state.copies[screenId] : undefined;
+              const copyOf = copy ? copyOfFor(copy, layout) : null;
               const structure = getStructure(layout);
               const responsive = getResponsive(layout);
               screens.push({
@@ -1258,14 +1541,20 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
                 css: compileScreenLayout({ layout, kind: screen.kind }).css,
                 ascii: toAsciiWireframe(layout, { structure, responsive }),
                 warnings: structure.warnings,
+                ...(copyOf && { copyOf }),
               });
               const screenPrints: Record<BlockId, GeneratedFingerprint> = {};
               for (const [blockId, block] of Object.entries(layout.blocks)) screenPrints[blockId] = fingerprintOf(block, layout, blockId);
               prints[screenId] = screenPrints;
             }
             const result: GenerateResult = { screens, changed };
+            // The document would refuse it: say why instead of a write that can only fail (`accept` is not asked).
+            if (overLimit) {
+              limitHit(overLimit);
+              return result;
+            }
             if (options?.accept && !options.accept(result)) return result;
-            set({ generated: result, generatedPrints: prints });
+            set({ generated: result, generatedPrints: prints, copies: {} });
             return result;
           },
           changedCount: () => selectChangedCount(get()),
@@ -1299,6 +1588,8 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           adjustmentsTick: 0,
           batchBase: null,
           docSync: null,
+          limitHit: null,
+          copies: {},
           actions,
         };
       },
@@ -1437,4 +1728,9 @@ export function useScreenResponsive(screenId?: ScreenId): ResponsiveLayout | nul
 
 /** N of «Regenerar N bloques». */
 export const useChangedCount = (): number => useLayoutStore(selectChangedCount);
+/**
+ * Whether the draft has layout changes `doc` (LayoutStep's, `useLayoutEnv().doc`) does not have: also the ones
+ * «Regenerar N» does not count (moves, renames, routes, links, hiding), so «No hay cambios» is not shown over them.
+ */
+export const usePendingChanges = (doc: ScreensSource): boolean => useLayoutStore((state) => selectPendingChanges(state, doc));
 export const useHasGenerated = (): boolean => useLayoutStore(selectHasGenerated);

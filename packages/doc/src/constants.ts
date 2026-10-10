@@ -209,3 +209,15 @@ export const MOBILE_BEHAVIORS = [
 
 /** Most pinned prop pointers per block (`LayoutBlock.pinned`). */
 export const MAX_PINNED = 128;
+
+/**
+ * Most entries of a screen page's `stash` for blocks a «Generar» removed (the oldest go first). Absorbed and
+ * retyped blocks are not counted: they still are blocks of the layout (at most `MAX_BLOCKS` between them).
+ */
+export const MAX_REMOVED_STASH = 32;
+
+/**
+ * Most screens in `screenStash` (screens a «Generar» removed, kept so a Layout undo brings back their copy
+ * and pinned values; the oldest go first). Each one is validated like a screen, so the bound is small.
+ */
+export const MAX_STASHED_SCREENS = 4;

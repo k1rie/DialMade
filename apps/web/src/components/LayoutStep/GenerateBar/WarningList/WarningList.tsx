@@ -2,12 +2,13 @@
 
 import type { LayoutFix, ScreenId } from "@dialmade/layout";
 import { memo, useId, useLayoutEffect, useRef } from "react";
-import { Button } from "@/components/ui/Button";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
-import { CheckIcon, WarningIcon } from "../../icons";
-import { focusIndexAfterFix, type WarningGroup, type WarningItem } from "../warnings";
+import { CheckIcon } from "../../icons";
+import { focusIndexAfterFix, type WarningGroup } from "../warnings";
+import { ITEM_ATTR } from "./constants";
+import { WarningRow } from "./WarningRow";
 
 export type WarningListProps = {
   groups: readonly WarningGroup[];
@@ -17,9 +18,6 @@ export type WarningListProps = {
   showScreenNames?: boolean;
   className?: string;
 };
-
-/** Marks each row (WarningRow sets it) so focus can find the row that replaced a fixed one. */
-const ITEM_ATTR = "data-warning-item";
 
 /**
  * Warnings with their one-click fixes («Anidar», «Poner debajo»…). Nothing is corrected silently: each
@@ -86,32 +84,3 @@ export const WarningList = memo(function WarningList({ groups, onFix, showScreen
     </div>
   );
 });
-
-type WarningRowProps = { item: WarningItem; onFix: (fix: LayoutFix, blockName: string) => void };
-
-function WarningRow({ item, onFix }: WarningRowProps) {
-  const t = useDictionary(layout);
-  return (
-    <li data-warning-item="" className="flex flex-col gap-2 rounded-control border border-app bg-white/[0.02] p-2.5">
-      <p className="m-0 flex gap-2 text-small text-fg">
-        <WarningIcon className="mt-0.5 size-3.5 shrink-0 text-warning" />
-        <span className="min-w-0">{t.warnings[item.code](item.names)}</span>
-      </p>
-      {item.fixes.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 ps-5.5">
-          {item.fixes.map(({ key, fix, blockName }) => (
-            <Button
-              key={key}
-              size="sm"
-              variant="secondary"
-              aria-label={t.generate.report.fixLabel(t.fixes[fix.kind], blockName)}
-              onClick={() => onFix(fix, blockName)}
-            >
-              {t.fixes[fix.kind]}
-            </Button>
-          ))}
-        </div>
-      )}
-    </li>
-  );
-}

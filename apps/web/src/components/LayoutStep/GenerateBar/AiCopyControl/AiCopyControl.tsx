@@ -1,23 +1,22 @@
 "use client";
 
 import type { DesignDoc } from "@dialmade/doc";
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AiUsageMeter } from "@/components/AiUsageMeter";
 import { Button } from "@/components/ui/Button";
 import { Popover } from "@/components/ui/Popover";
-import { Switch } from "@/components/ui/Switch";
 import { useDictionary, useI18n } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
 import { withGeneratedScreens, type GeneratedScreenInput } from "@/lib/design-engine";
 import { formatUsd } from "@/lib/money";
-import { cn } from "@/lib/cn";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { aiTargetsFor } from "../../generateFlow";
-import { SparkleIcon } from "../../icons";
 import { getResponsive, getStructure } from "../../structureCache";
 import type { Screen } from "../../types";
 import { useGenerateAi } from "../../useGenerateFlow";
 import { selectChangedBlocks, useChangedCount, useHasGenerated, useLayoutEnv, useLayoutStore, type LayoutState } from "../../useLayoutStore";
+import { AiCopyTrigger } from "./AiCopyTrigger";
+import { ConsentSwitch } from "./ConsentSwitch";
 
 export type AiCopyControlProps = {
   /** Hover or focus: «Generar» is near (preload the Composer). */
@@ -51,8 +50,6 @@ export function AiCopyControl({ onIntent, className }: AiCopyControlProps) {
   const { locale } = useI18n();
   const { ai, enabled, setEnabled, openKeyDialog, copyPrompt } = useGenerateAi();
   const { doc } = useLayoutEnv();
-  const labelId = useId();
-  const costId = useId();
   const [open, setOpen] = useState(false);
 
   const screens = useLayoutStore((state) => state.screens);
@@ -98,23 +95,7 @@ export function AiCopyControl({ onIntent, className }: AiCopyControlProps) {
       side="top"
       align="end"
       className="w-80"
-      trigger={(props) => (
-        <Button
-          {...props}
-          size="md"
-          variant={on ? "secondary" : "ghost"}
-          leadingIcon={<SparkleIcon className={on ? "text-accent" : undefined} />}
-          // Out of the label's box: a dot in the button's corner while it is on.
-          trailingIcon={on ? <span aria-hidden className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent" /> : undefined}
-          onPointerEnter={onIntent}
-          onFocus={onIntent}
-          className={cn("px-3", className)}
-        >
-          {/* The name keeps the visible words («Textos con IA») and says whether it is on. */}
-          <span className="sr-only @3xl:not-sr-only">{t.control}</span>
-          <span className="sr-only">{`, ${t.controlState(on)}`}</span>
-        </Button>
-      )}
+      trigger={(props) => <AiCopyTrigger {...props} on={on} open={open} onIntent={onIntent} className={className} />}
     >
       <div className="flex flex-col gap-3">
         <div>
@@ -122,30 +103,17 @@ export function AiCopyControl({ onIntent, className }: AiCopyControlProps) {
           <p className="m-0 mt-1 text-caption text-muted">{t.description}</p>
         </div>
         <AiUsageMeter />
-        <div className="flex items-start gap-3 rounded-control border border-app bg-white/[0.02] px-3 py-2.5">
-          {/* Switching it on is the consent to one request: its description carries the cost and the uses left. */}
-          <Switch
-            checked={on}
-            onCheckedChange={setEnabled}
-            disabled={blocked || noFields}
-            aria-labelledby={labelId}
-            aria-describedby={costId}
-            className="mt-0.5"
-          />
-          <div id={costId} className="flex min-w-0 flex-1 flex-col gap-1">
-            <span id={labelId} className="text-small font-medium text-fg">
-              {t.switchLabel}
+        {/* Switching it on is the consent to one request: its description carries the cost and the uses left. */}
+        <ConsentSwitch checked={on} onCheckedChange={setEnabled} disabled={blocked || noFields} label={t.switchLabel}>
+          {costLine && <span className="font-mono text-caption text-muted tabular-nums">{costLine}</span>}
+          {estimate && (
+            <span className="text-caption text-muted">
+              {t.scope(estimate.blocks, plan?.changedOnly ?? false)}
+              {ai.source !== "byok" && !blocked && ` ${t.oneUse}`}
             </span>
-            {costLine && <span className="font-mono text-caption text-muted tabular-nums">{costLine}</span>}
-            {estimate && (
-              <span className="text-caption text-muted">
-                {t.scope(estimate.blocks, plan?.changedOnly ?? false)}
-                {ai.source !== "byok" && !blocked && ` ${t.oneUse}`}
-              </span>
-            )}
-            {estimate?.truncated && <span className="text-caption text-fg">{t.truncated(estimate.maxFields)}</span>}
-          </div>
-        </div>
+          )}
+          {estimate?.truncated && <span className="text-caption text-fg">{t.truncated(estimate.maxFields)}</span>}
+        </ConsentSwitch>
         <div className="flex flex-col items-start gap-1.5 border-t border-app pt-3">
           <div className="flex flex-wrap gap-2">
             <Button

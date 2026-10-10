@@ -57,6 +57,83 @@ function touchedBy(op: PatchOperation, before: unknown): string[] {
   return targets.map((path) => (path !== "" && Array.isArray(valueAtPointer(before, parentPointer(path))) ? parentPointer(path) : path));
 }
 
+/**
+ * Documents `applyPatch` returned. They are JSON-clean (built from a JSON clone or from other clean documents
+ * and cloned operation values, then parsed) and, like every DesignDoc, never mutated: a patch on one of them
+ * copies only the objects along the operations' paths (`ownAncestors`) instead of the whole document.
+ */
+const PATCHED = new WeakSet<object>();
+
+const isContainer = (value: unknown): value is object => typeof value === "object" && value !== null;
+
+/**
+ * Copy-on-write before jsonpatch mutates `root` in place at `pointer`: every object or array from the root to
+ * the parent of the target that the patch does not own yet (`owned`) is replaced by a shallow copy, so the
+ * input document never changes and untouched subtrees keep their identity. The walk follows jsonpatch's own
+ * key rules (unescaping, `-` and integer keys of arrays) and stops where jsonpatch would fail or leave the
+ * own properties (it then throws before mutating anything). Returns the (possibly new) root.
+ */
+function ownAncestors(root: unknown, pointer: string, owned: WeakSet<object>): unknown {
+  if (!isContainer(root)) return root;
+  const own = (value: object): object => {
+    if (owned.has(value)) return value;
+    const copy = Array.isArray(value) ? value.slice() : { ...value };
+    owned.add(copy);
+    return copy;
+  };
+  const top = own(root);
+  const keys = pointer.split("/");
+  let parent: object = top;
+  for (let t = 1; t < keys.length - 1; t++) {
+    const raw = keys[t]!.replace(/~1/g, "/").replace(/~0/g, "~");
+    // jsonpatch refuses these (it throws before changing anything); `constructor` alone is a normal key.
+    if (raw === "__proto__" || (raw === "prototype" && keys[t - 1] === "constructor")) return top;
+    let key: string | number = raw;
+    if (Array.isArray(parent)) {
+      if (!/^\d*$/.test(raw)) return top;
+      key = ~~raw;
+    }
+    if (!Object.hasOwn(parent, key)) return top;
+    const child = (parent as Record<string | number, unknown>)[key];
+    if (!isContainer(child)) return top;
+    const copy = own(child);
+    if (copy !== child) (parent as Record<string | number, unknown>)[key] = copy;
+    parent = copy;
+  }
+  return top;
+}
+
+/**
+ * Structural sharing after the parse. `next` is the patched input of the parse and `prev` the document the patch
+ * started from (one `applyPatch` returned, so a parse output itself). Where `next` still holds `prev`'s very
+ * object (the copy on write never touched it), the parse output there equals that object (parsing is
+ * idempotent on its own output: the schema has no transforms, defaults are already filled), so `prev`'s object
+ * is used instead. Unchanged screens, elements and blocks keep their identity across edits: the undo history
+ * stores only what changed and the preview can skip what did not. Only the copies made on write (`owned`) can
+ * still hold `prev`'s objects, so only they are walked (a value an operation wrote is new all the way down).
+ * `out` is only written where it holds a container the parse just built (never inside `z.unknown()` values,
+ * which the parse passes by reference: there `out` is `next` itself and nothing changes).
+ */
+function reuseUntouched(out: unknown, next: unknown, prev: unknown, owned: WeakSet<object>): unknown {
+  if (next === prev) return prev;
+  return isContainer(next) && owned.has(next) ? reuseInside(out, next, prev, owned) : out;
+}
+
+/** `reuseUntouched` below `out` itself, which stays (the document root is always a new object, as before). */
+function reuseInside(out: unknown, next: unknown, prev: unknown, owned: WeakSet<object>): unknown {
+  if (!isContainer(out) || !isContainer(next) || !isContainer(prev)) return out;
+  if (Array.isArray(out) !== Array.isArray(next) || Array.isArray(next) !== Array.isArray(prev)) return out;
+  const target = out as Record<string, unknown>;
+  const from = next as Record<string, unknown>;
+  const base = prev as Record<string, unknown>;
+  for (const key of Object.keys(target)) {
+    if (!Object.hasOwn(from, key) || !Object.hasOwn(base, key)) continue;
+    const value = reuseUntouched(target[key], from[key], base[key], owned);
+    if (value !== target[key]) target[key] = value;
+  }
+  return out;
+}
+
 /** The hard lock an operation breaks: a locked value that changed, or a lock that disappeared. */
 function brokenLock(touched: readonly string[], original: DesignDoc, next: unknown, locks: readonly string[]): string | undefined {
   if (touched.length === 0) return undefined;
@@ -95,11 +172,25 @@ export function applyPatch(doc: DesignDoc, ops: unknown, options: ApplyPatchOpti
   }
 
   const locks = options.allowLocked ? [] : hardLocks(doc);
-  let next: unknown = cloneJson(doc);
+  // jsonpatch mutates the document it walks. A document this function returned is copied on write, path by
+  // path (`ownAncestors`); any other is cloned whole first (it may hold `undefined` members or other non-JSON
+  // values the clone drops, as before).
+  let ownedWhole = !PATCHED.has(doc);
+  let next: unknown = ownedWhole ? cloneJson(doc) : doc;
+  const owned = new WeakSet<object>();
   // jsonpatch inserts `op.value` by reference: a later op (`add …/-`) would mutate the caller's ops.
   const operations = cloneJson(parsedOps.data);
   for (const [index, op] of operations.entries()) {
     const touched = locks.length > 0 ? touchedBy(op, next) : [];
+    if (!ownedWhole && op.op !== "test" && op.path !== "") {
+      if (op.op === "move") {
+        // A move removes and then adds on the shifted document: own all of it (rare; same cost as before).
+        next = cloneJson(next);
+        ownedWhole = true;
+      } else {
+        next = ownAncestors(next, op.path, owned);
+      }
+    }
     try {
       next = jsonpatch.applyOperation(next, op as Operation, true, true, true, index).newDocument;
     } catch (error) {
@@ -127,7 +218,9 @@ export function applyPatch(doc: DesignDoc, ops: unknown, options: ApplyPatchOpti
   if (!result.success) {
     return { ok: false, error: { reason: "invalid-document", message: "The patched document is invalid", issues: result.error.issues } };
   }
-  return { ok: true, doc: result.data };
+  const patched = (ownedWhole ? result.data : reuseInside(result.data, next, doc, owned)) as DesignDoc;
+  PATCHED.add(patched);
+  return { ok: true, doc: patched };
 }
 
 /** The RFC 6902 patch that turns `from` into `to` (for undo/redo or sync). */

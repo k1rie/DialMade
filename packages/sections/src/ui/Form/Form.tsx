@@ -18,6 +18,7 @@ const preventSubmit = (event: FormEvent<HTMLFormElement>) => event.preventDefaul
  */
 export function Form({
   title,
+  level,
   description,
   submit,
   secondary,
@@ -30,6 +31,7 @@ export function Form({
   elementId,
 }: SectionComponentProps<FormProps>) {
   const titleId = `${elementId}-title`;
+  const Heading = level ?? "h2";
   const text = (key: PurposeText, own: string | undefined) => own ?? purposeText(purpose, key, ctx);
   const heading = text("title", title);
   const intro = text("description", description);
@@ -52,9 +54,9 @@ export function Form({
         {heading || intro ? (
           <div className="dl-ui-form__intro">
             {heading ? (
-              <h2 id={titleId} className="dl-ui-form__title" data-dl-prop="title">
+              <Heading id={titleId} className="dl-ui-form__title" data-dl-prop="title">
                 {heading}
-              </h2>
+              </Heading>
             ) : null}
             {intro ? (
               <p className="dl-ui-form__description" data-dl-prop="description">

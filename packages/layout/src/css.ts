@@ -96,6 +96,7 @@ const PROP_ORDER = [
   "order",
   "margin-block-start",
   "margin-inline-start",
+  "justify-self",
   "aspect-ratio",
   "min-height",
 ] as const;
@@ -117,6 +118,7 @@ const RESET: Readonly<Record<string, string>> = {
   "margin-block-start": "0",
   "margin-inline-start": "0",
   width: "auto",
+  "justify-self": "auto",
   "aspect-ratio": "auto",
   "min-height": "auto",
 };
@@ -421,6 +423,11 @@ export function toCss(layout: LayoutDoc, options: CssOptions = {}): string {
       const b = node.rect.h * ROW_UNIT;
       const g = gcd(a, b);
       props.set("aspect-ratio", `${a / g} / ${b / g}`);
+      // The ratio is a hint for the height, never for the width. A landing row stretches its items to the
+      // tallest one; with `justify-self: normal` a stretched item with a ratio takes its width from that
+      // height and spills out of its columns (and out of the page). `stretch` keeps it in its span: the
+      // ratio then only sets the minimum height. Ignored where the parent is a flex column.
+      if (el.parent) props.set("justify-self", "stretch");
     }
     if (kind === "app") {
       // Literal height, also for blocks with children (a container or a modal keeps its drawn height). On

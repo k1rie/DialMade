@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { memo, useMemo, type ReactNode } from "react";
 import type { PageElement } from "@dialmade/doc";
 import { resolveSectionProps } from "../../props";
 import { sectionStrings } from "../../lib/strings";
-import type { AnySectionDefinition } from "../../types";
+import type { AnySectionDefinition, ContentContext, RenderContext } from "../../types";
 import { isStructuralElement } from "./structural";
 import { SectionBoundary } from "../SectionBoundary";
 import { SectionFrame } from "../SectionFrame";
@@ -38,7 +38,7 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
     if (!def) return <>{children}</>;
     return (
       <SectionBoundary resetKey={element.props} fallback={children} onError={(error) => scope.onSectionError?.(id, error)}>
-        <SectionContent def={def} element={element} id={id} scope={scope}>
+        <SectionContent def={def} element={element} id={id} ctx={ctx} content={scope.content}>
           {children}
         </SectionContent>
       </SectionBoundary>
@@ -53,6 +53,7 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
       ctx={ctx}
       container={def?.container === true || !def}
       structural={structural}
+      selected={scope.selectedId === id}
       {...(attributes && { attributes })}
     >
       {def ? (
@@ -61,7 +62,7 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
           onError={(error) => scope.onSectionError?.(id, error)}
           fallback={ctx.interactive ? <SectionNotice tone="error" title={strings.sectionError(label)} hint={strings.sectionErrorHint} /> : null}
         >
-          <SectionContent def={def} element={element} id={id} scope={scope}>
+          <SectionContent def={def} element={element} id={id} ctx={ctx} content={scope.content}>
             {children}
           </SectionContent>
         </SectionBoundary>
@@ -79,12 +80,18 @@ interface SectionContentProps {
   def: AnySectionDefinition;
   element: PageElement;
   id: string;
-  scope: RenderScope;
+  ctx: RenderContext;
+  content: ContentContext;
   children: ReactNode;
 }
 
-function SectionContent({ def, element, id, scope, children }: SectionContentProps) {
-  const { content, ctx } = scope;
+/**
+ * The section itself. Memoized on its inputs (shallow): a leaf (no children) whose element, `ctx` and content
+ * did not change skips its render, so a new selection (kept out of `ctx`) or an edit that keeps the other
+ * elements' objects re-renders only what changed. Containers get new children on every render and always
+ * re-render; their children decide for themselves.
+ */
+const SectionContent = memo(function SectionContent({ def, element, id, ctx, content, children }: SectionContentProps) {
   const resolved = useMemo(() => resolveSectionProps(def, element.props, content), [def, element.props, content]);
   const Section = def.Component;
   return (
@@ -92,4 +99,4 @@ function SectionContent({ def, element, id, scope, children }: SectionContentPro
       {children}
     </Section>
   );
-}
+});

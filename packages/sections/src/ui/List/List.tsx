@@ -8,8 +8,9 @@ import type { ListProps } from "./schema";
 import "./List.css";
 
 /** Rows of people and what they did: simple, with avatars or divided, and a «Ver todo» link. */
-export function List({ title, items, count, showAvatars, action, frame, variant, ctx, elementId }: SectionComponentProps<ListProps>) {
+export function List({ title, level, items, count, showAvatars, action, frame, variant, ctx, elementId }: SectionComponentProps<ListProps>) {
   const titleId = `${elementId}-title`;
+  const Heading = level ?? "h2";
   const visible = items.slice(0, Math.max(1, count));
   const avatars = variant === "avatars" || showAvatars;
   return (
@@ -18,9 +19,9 @@ export function List({ title, items, count, showAvatars, action, frame, variant,
         <div className="dl-ui__head">
           <div className="dl-ui__heading">
             {title ? (
-              <h2 id={titleId} className="dl-ui__title" data-dl-prop="title">
+              <Heading id={titleId} className="dl-ui__title" data-dl-prop="title">
                 {title}
-              </h2>
+              </Heading>
             ) : null}
           </div>
           {action ? (

@@ -8,17 +8,30 @@
 //    revealed page stays (`"holding"`) with a chip per block and the run's bar, until «Ir a Ajustar» or «Seguir
 //    editando el layout»;
 // 4. `onRevealEnd`: the flow moves to «Ajustar» with its normal transition. The layer stays painted while the
-//    step leaves.
+//    step leaves. Once the step is leaving (`present` false: the user went elsewhere, or «Ajustar» already took
+//    over) the moment never moves the flow again; coming back while it still exits starts editable.
 import type { ScreenId } from "@dialmade/layout";
-import { createContext, createElement, useCallback, useContext, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { AiKeyDialogView } from "@/components/AiKeyDialog";
 import { AiCopyError, type AiCopyResult } from "@/hooks/useAiCopy";
 import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
-import { useLayoutAiCopy, type ScreenCopyTarget, type UseLayoutAiCopy } from "@/hooks/useLayoutAiCopy";
 import type { ManualJob } from "@/lib/ai/manual";
 import { compileScreenLayout } from "@/lib/screen-layout";
-import { AI_RUN_IDLE, aiRunReducer, aiTargetsFor, type AiMode, type AiRunState } from "./generateFlow";
+import { AI_RUN_IDLE, aiRunReducer, aiTargetsFor, momentHoldsFlow, revealLostCanvas, type AiMode, type AiRunState } from "./generateFlow";
 import type { GenerateResult } from "./types";
+import { useLayoutAiCopy, type ScreenCopyTarget, type UseLayoutAiCopy } from "./useLayoutAiCopy";
 import { selectActiveScreenId, selectChangedBlocks, type LayoutStore } from "./useLayoutStore";
 
 export type RevealPhase = "playing" | "holding";
@@ -51,8 +64,13 @@ export type GenerateOptions = {
 
 type FlowOptions = {
   store: LayoutStore;
-  /** Under 640 px: no canvas, so no layer. */
+  /** Under 640 px: no canvas, so no layer (a moment that loses its canvas while it plays ends right away). */
   narrow: boolean;
+  /**
+   * The step is still shown (`useIsPresent`; true outside AnimatePresence). While it is leaving, the moment's end
+   * moves the flow nowhere; when it comes back before it is gone, the moment is over and the step is editable.
+   */
+  present?: boolean;
   onGenerate?: ((result: GenerateResult) => boolean | void) | undefined;
   onRevealEnd?: (() => void) | undefined;
   /** «Diseño generado: …» (polite). */
@@ -96,6 +114,8 @@ export type GenerateFlow = {
   reveal: RevealState | null;
   /** The step is leaving for «Ajustar»: the bar goes with it. */
   leaving: boolean;
+  /** The moment holds the flow (animation playing or AI request in flight): the stepper must wait (`momentHoldsFlow`). */
+  holdsFlow: boolean;
   generate: (options?: GenerateOptions) => GenerateOutcome;
   /** The signature animation ended (played or skipped). */
   endPlaying: () => void;
@@ -119,7 +139,7 @@ function failure(error: unknown): { message: string; fallback: AiCopyError["fall
   return { message: error instanceof Error ? error.message : String(error), fallback: error instanceof AiCopyError ? error.fallback : null };
 }
 
-export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announceGenerated }: FlowOptions): GenerateFlow {
+export function useGenerateFlow({ store, narrow, present = true, onGenerate, onRevealEnd, announceGenerated }: FlowOptions): GenerateFlow {
   const ai = useLayoutAiCopy();
   const supported = useOptionalDesignDocStore() !== null;
   const [wanted, setEnabled] = useState(false);
@@ -134,9 +154,9 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
   const [targets, setTargets] = useState<ScreenCopyTarget[] | null>(null);
 
   // Read at event time: the parent may pass new functions on every render.
-  const latest = useRef({ ai, supported, enabled, narrow, onGenerate, onRevealEnd, announceGenerated, targets });
+  const latest = useRef({ ai, supported, enabled, narrow, present, onGenerate, onRevealEnd, announceGenerated, targets });
   useLayoutEffect(() => {
-    latest.current = { ai, supported, enabled, narrow, onGenerate, onRevealEnd, announceGenerated, targets };
+    latest.current = { ai, supported, enabled, narrow, present, onGenerate, onRevealEnd, announceGenerated, targets };
   });
   // The moment as events see it right away (a second click before React renders is «busy»).
   const revealRef = useRef<RevealState | null>(null);
@@ -159,7 +179,9 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
   }, []);
 
   const finish = useCallback(() => {
-    const end = latest.current.onRevealEnd;
+    const { onRevealEnd: end, present: shown } = latest.current;
+    // Leaving already (the user picked another step, or «Ajustar» took over): where the flow went stays.
+    if (!shown) return;
     setDialog(null);
     if (!end) {
       setReveal(null);
@@ -184,7 +206,8 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
           })
         : null;
       const screenId = selectActiveScreenId(state);
-      let accepted = true;
+      // Only a result the flow accepted counts: `generate` may refuse before asking (a document limit).
+      let accepted = false;
       const result = state.actions.generate({
         accept: (next) => {
           accepted = write?.(next) !== false;
@@ -216,7 +239,7 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
 
   const endPlaying = useCallback(() => {
     const current = revealRef.current;
-    if (!current || current.phase !== "playing") return;
+    if (!current || current.phase !== "playing" || !latest.current.present) return;
     if (!current.ai) {
       finish();
       return;
@@ -232,6 +255,27 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
     setTargets(null);
     setReveal(null);
   }, [setReveal]);
+
+  // Back on the step before its exit ended (AnimatePresence revives it): the moment is over, the step is editable.
+  const leavingRef = useRef(leaving);
+  useLayoutEffect(() => {
+    leavingRef.current = leaving;
+  }, [leaving]);
+  const resetMoment = useCallback(() => {
+    keepEditing();
+    setLeaving(false);
+  }, [keepEditing]);
+  const wasPresent = useRef(present);
+  useLayoutEffect(() => {
+    const back = present && !wasPresent.current;
+    wasPresent.current = present;
+    if (back && (revealRef.current || leavingRef.current)) resetMoment();
+  }, [present, resetMoment]);
+
+  // The animation's canvas went away (under 640 px) while it played: nothing else would end it.
+  useEffect(() => {
+    if (revealLostCanvas(revealRef.current, narrow)) endPlaying();
+  }, [narrow, endPlaying]);
 
   const cancel = useCallback(() => {
     latest.current.ai.cancel();
@@ -267,6 +311,7 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
   const closeDialog = useCallback(() => setDialog(null), []);
 
   const writing = run.kind === "writing";
+  const holdsFlow = momentHoldsFlow(reveal, leaving, run);
   const hasErrors = Object.values(ai.blocks).includes("error");
   const aiValue = useMemo<GenerateAi>(
     () => ({
@@ -286,6 +331,7 @@ export function useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announ
   return {
     reveal,
     leaving,
+    holdsFlow,
     generate,
     endPlaying,
     finish,

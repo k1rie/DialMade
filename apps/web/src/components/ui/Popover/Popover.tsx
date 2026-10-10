@@ -13,6 +13,7 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
+import { createPopoverFocus, type FocusAtClose } from "./popoverFocus";
 import { tabExit } from "./tabExit";
 
 export type PopoverTriggerProps = {
@@ -43,14 +44,38 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
 
 /**
  * Non-modal popover (role="dialog") rendered in a portal with fixed positioning, so it escapes the
- * clipped canvas. Focus moves in on open and back to the trigger on Esc; outside clicks, focus elsewhere
- * and Tab out of either end close it (Tab continues from the trigger, Shift+Tab lands on it).
+ * clipped canvas. Focus moves in on every opening (the first one too, once the panel is measured and shown)
+ * and back to the trigger on Esc or when the popover closes with focus inside (an item that closes it);
+ * outside clicks, focus elsewhere and Tab out of either end close it (Tab continues from the trigger,
+ * Shift+Tab lands on it).
  */
 export function Popover({ open, onOpenChange, trigger, label, align = "start", side = "bottom", className, children }: PopoverProps) {
   const id = useId();
   const triggerRef = useRef<HTMLSpanElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
+  const [focus] = useState(createPopoverFocus);
+  const wasOpenRef = useRef(false);
+
+  const triggerControl = useCallback(() => triggerRef.current?.querySelector<HTMLElement>(FOCUSABLE) ?? null, []);
+
+  // Opening and closing, declared before the placement so that focus is pending when the panel shows. The close
+  // runs in the layout phase of the commit that closes it (the exiting panel is still there): a cleanup would run
+  // in the mutation phase, where React's own focus restore undoes it. Effects that move focus later in that commit
+  // (a dialog that opens, a field that takes focus) still win. Unmounting runs nothing: the next view owns focus.
+  useLayoutEffect(() => {
+    if (open) {
+      wasOpenRef.current = true;
+      focus.opened();
+      return;
+    }
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
+    const panel = panelRef.current;
+    const active = document.activeElement;
+    const at: FocusAtClose = !active || active === document.body ? "lost" : panel?.contains(active) ? "inside" : "elsewhere";
+    focus.closed(at, triggerControl());
+  }, [open, focus, triggerControl]);
 
   const place = useCallback(() => {
     const anchor = triggerRef.current?.getBoundingClientRect();
@@ -88,18 +113,23 @@ export function Popover({ open, onOpenChange, trigger, label, align = "start", s
     if (open) place();
   });
 
-  useEffect(() => {
+  // Focus moves in once the panel is shown. On the first opening it is hidden until `place` measures it (the
+  // position arrives in a second, synchronous render), so this waits for the position instead of the opening.
+  useLayoutEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
-    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? panel)?.focus({ preventScroll: true });
+    focus.moveIn(panel?.querySelector<HTMLElement>(FOCUSABLE) ?? panel, position !== null);
+  }, [open, position, focus]);
 
+  useEffect(() => {
+    if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      const onPopover = !!(panelRef.current?.contains(target) || triggerRef.current?.contains(target));
+      focus.pressed(onPopover);
+      if (onPopover) return;
       onOpenChange(false);
     };
-    const triggerControl = () => triggerRef.current?.querySelector<HTMLElement>(FOCUSABLE) ?? null;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
@@ -135,7 +165,7 @@ export function Popover({ open, onOpenChange, trigger, label, align = "start", s
       document.removeEventListener("keydown", onKeyDown, true);
       document.removeEventListener("focusin", onFocusIn, true);
     };
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, focus, triggerControl]);
 
   const panelId = `popover-${id}`;
 

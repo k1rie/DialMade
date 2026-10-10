@@ -1,8 +1,10 @@
+import { MAX_SCREENS } from "@dialmade/doc";
 import {
   deriveResponsive,
   getBlockDef,
   getScreenTemplate,
   LABEL_MAX,
+  MAX_BLOCKS,
   MAX_HEIGHT_ROWS,
   MAX_ROW,
   type GridRect,
@@ -18,6 +20,7 @@ import {
   screensFromDoc,
   selectActiveScreen,
   selectActiveScreenId,
+  selectChangedCount,
   selectSelectedId,
   slugify,
   uniqueName,
@@ -971,5 +974,322 @@ describe("document sync", () => {
     const screens = state().screens;
     expect(actions.syncFromDoc(generatedDoc)).toBe("unchanged");
     expect(state().screens).toBe(screens);
+  });
+});
+
+describe("document sync keeps the draft's own edits (review B)", () => {
+  /** A generated «Landing» project, as PaletteFlow leaves it right after «Generar» (markSynced). */
+  function generated() {
+    const t = setup();
+    const [home, pricing] = t.actions.applySet("landing");
+    const doc = docOf(t.state());
+    t.actions.markSynced(doc);
+    const ids = Object.keys(t.state().screens[home!]!.layout.blocks);
+    return { ...t, home: home!, pricing: pricing!, doc, ids };
+  }
+
+  it("a pending edit survives a merge followed by another document change (it is never reseeded away)", () => {
+    const { state, actions, home, ids, doc } = generated();
+    const [noted, pinned, hidden] = ids;
+    actions.updateBlock(noted!, { note: "pendiente de generar" }, home);
+    // Ajustar pins a text: the draft changed too, so this merges.
+    const first = docOf(screensFromDoc(doc), (screens) => patchBlock(screens, home, pinned!, { pinned: ["/title"] }));
+    expect(actions.syncFromDoc(first)).toBe("merged");
+    // Ajustar hides a block. The draft did not change since that merge, but it still holds an edit the doc lacks.
+    const second = docOf(screensFromDoc(first), (screens) => patchBlock(screens, home, hidden!, { hidden: true }));
+    actions.syncFromDoc(second);
+    const blocks = state().screens[home]!.layout.blocks;
+    expect(blocks[noted!]!.note).toBe("pendiente de generar");
+    expect(blocks[pinned!]!.pinned).toEqual(["/title"]);
+    expect(blocks[hidden!]!.hidden).toBe(true);
+    expect(state().docSync?.clean).toBe(false);
+  });
+
+  it("a merge that comes out equal to the document is clean: the next document change is followed", () => {
+    const { state, actions, home, ids, doc } = generated();
+    const [block] = ids;
+    actions.updateBlock(block!, { note: "ida" }, home);
+    actions.updateBlock(block!, { note: undefined }, home); // back to what the doc has, without undo
+    const edited = docOf(screensFromDoc(doc), (screens) => patchBlock(screens, home, block!, { pinned: ["/title"] }));
+    expect(actions.syncFromDoc(edited)).toBe("merged");
+    expect(state().docSync?.clean).toBe(true);
+    const next = docOf(screensFromDoc(edited), (screens) => patchBlock(screens, home, block!, { hidden: true }));
+    expect(actions.syncFromDoc(next)).toBe("reseeded");
+  });
+
+  it("a ×N Ajustar wrote for the old type never lands on a block the draft retyped (#4)", () => {
+    const { state, actions, home, doc } = generated();
+    const blocks = state().screens[home]!.layout.blocks;
+    const features = Object.keys(blocks).find((id) => blocks[id]!.type === "features")!;
+    expect(features).toBeDefined();
+    expect(blocks[features]!.count).toBeUndefined();
+    actions.updateBlock(features, { type: "pricing" }, home);
+    // Ajustar's count knob on the doc's Features block: 6 is valid there (features 1–6), not for pricing (1–4).
+    const edited = docOf(screensFromDoc(doc), (screens) => patchBlock(screens, home, features, { count: 6 }));
+    expect(actions.syncFromDoc(edited)).toBe("merged");
+    const merged = state().screens[home]!.layout.blocks[features]!;
+    expect(merged.type).toBe("pricing");
+    expect(merged.count).toBeUndefined();
+    const range = getBlockDef("pricing").repeatable!;
+    // A count the draft keeps for the same type is still taken from the doc when only Ajustar changed it.
+    actions.updateBlock(features, { count: 2 }, home);
+    actions.markSynced(docOf(state()));
+    const knob = docOf(state(), (screens) => patchBlock(screens, home, features, { count: range.max }));
+    actions.updateBlock(Object.keys(blocks).find((id) => id !== features)!, { note: "otro cambio" }, home);
+    expect(actions.syncFromDoc(knob)).toBe("merged");
+    expect(state().screens[home]!.layout.blocks[features]!.count).toBe(range.max);
+  });
+
+  it("the first «Generar» starts the layout history again: undo never empties the draft (#5)", () => {
+    const t = setup();
+    t.actions.syncFromDoc({ screens: {}, screenOrder: [] });
+    t.actions.applySet("landing");
+    expect(t.history().pastStates.length).toBeGreaterThan(0);
+    t.actions.markSynced(docOf(t.state()));
+    expect(t.history().pastStates).toHaveLength(0);
+    expect(t.actions.undo()).toBe(false);
+    expect(t.state().screenOrder.length).toBe(2);
+    // Later «Generar»s keep the history.
+    t.actions.insertBlock("text");
+    t.actions.markSynced(docOf(t.state()));
+    expect(t.history().pastStates).toHaveLength(1);
+  });
+
+  it("an empty draft takes the document's screens back on the next sync, even with the same document (#5)", () => {
+    const source = setup();
+    source.actions.applySet("landing");
+    const doc = docOf(source.state());
+    const t = setup();
+    t.actions.syncFromDoc({ screens: {}, screenOrder: [] });
+    t.actions.applySet("saas-app");
+    t.actions.markSynced(doc); // (as if) generated, with a history that can still reach the empty project
+    t.store.setState({ screens: {}, screenOrder: [] });
+    expect(t.actions.syncFromDoc(doc)).toBe("reseeded");
+    expect(t.state().screenOrder).toEqual(doc.screenOrder);
+  });
+
+  it("removed blocks and screens still count for «Regenerar N» after a sync with the document (#15)", () => {
+    const { state, actions, home, pricing, ids, doc } = generated();
+    // Ajustar changed the doc (a pin): the draft reseeds and drops the session's fingerprints.
+    const docPrints = docOf(screensFromDoc(doc), (screens) => {
+      for (const id of [home, pricing]) {
+        for (const blockId of Object.keys(screens[id]!.layout.blocks)) {
+          const block = screens[id]!.layout.blocks[blockId]!;
+          patchBlock(screens, id, blockId, { generated: { type: block.type, w: block.rect.w, h: block.rect.h, variant: "default", ...(block.count !== undefined && { count: block.count }) } });
+        }
+      }
+      patchBlock(screens, home, ids[0]!, { pinned: ["/title"] });
+    });
+    expect(actions.syncFromDoc(docPrints)).toBe("reseeded");
+    expect(state().generatedPrints).toBeNull();
+    expect(selectChangedCount(state())).toBe(0);
+    const removed = actions.removeBlocks([ids[ids.length - 1]!], home);
+    expect(selectChangedCount(state())).toBe(removed.length);
+    actions.undo();
+    const pricingBlocks = Object.keys(state().screens[pricing]!.layout.blocks).length;
+    expect(actions.removeScreen(pricing)).toBe(true);
+    expect(selectChangedCount(state())).toBe(pricingBlocks);
+  });
+
+  it("hasPendingChanges: layout edits not generated yet, not Ajustar's own edits (#40)", () => {
+    const { state, actions, home, ids, doc } = generated();
+    expect(actions.hasPendingChanges(doc)).toBe(false);
+    // Ajustar hid a block and pinned a text: nothing is pending in Layout.
+    const ajustar = docOf(screensFromDoc(doc), (screens) => {
+      patchBlock(screens, home, ids[0]!, { hidden: true });
+      patchBlock(screens, home, ids[1]!, { pinned: ["/title"] });
+    });
+    expect(actions.hasPendingChanges(ajustar)).toBe(false);
+    // A block added in Layout is pending, and stays so after a merge with Ajustar's edits.
+    const added = actions.insertBlock("text", { screenId: home }).id!;
+    expect(actions.hasPendingChanges(ajustar)).toBe(true);
+    expect(actions.syncFromDoc(ajustar)).toBe("merged");
+    expect(actions.hasPendingChanges(ajustar)).toBe(true);
+    // Removing it again: nothing pending.
+    actions.removeBlocks([added], home);
+    expect(actions.hasPendingChanges(ajustar)).toBe(false);
+    // Moves, renames and routes are pending too.
+    actions.renameScreen(home, "Portada");
+    expect(actions.hasPendingChanges(ajustar)).toBe(true);
+    actions.undo();
+    expect(actions.hasPendingChanges(ajustar)).toBe(false);
+    expect(state().screens[home]!.name).toBe("Inicio");
+  });
+
+  it("the history rebase merges each distinct screen once (shared screens keep one merged object) (#38)", () => {
+    const { state, actions, history, home, pricing, ids, doc } = generated();
+    for (let n = 0; n < 12; n++) actions.updateBlock(ids[n % ids.length]!, { note: `nota ${n}` }, home);
+    const edited = docOf(screensFromDoc(doc), (screens) => patchBlock(screens, pricing, Object.keys(screens[pricing]!.layout.blocks)[0]!, { pinned: ["/title"] }));
+    expect(actions.syncFromDoc(edited)).toBe("merged");
+    const merged = history().pastStates.map((slice) => slice.screens![pricing]);
+    // Every past slice shares the same (merged) Precios screen: merged once, then reused.
+    expect(new Set(merged).size).toBe(1);
+    expect(merged[0]).toBe(state().screens[pricing]);
+    const memo = new WeakMap<Screen, Screen>();
+    const draft: HistorySlice = { screens: state().screens, screenOrder: state().screenOrder };
+    const base = screensFromDoc(doc);
+    const a = mergeDocScreens(draft, base, screensFromDoc(edited), memo);
+    const b = mergeDocScreens({ ...draft, screens: { ...draft.screens } }, base, screensFromDoc(edited), memo);
+    expect(a.screens[home]).toBe(b.screens[home]);
+  });
+});
+
+describe("document sync merges a screen's name, route and frame three-way (review B #1)", () => {
+  /** A generated «SaaS app» project, synced, with a pending draft edit (so the next sync merges). */
+  function pending() {
+    const t = setup();
+    const [dash, settings, login] = t.actions.applySet("saas-app");
+    const doc = docOf(t.state());
+    t.actions.markSynced(doc);
+    t.actions.insertBlock("text", { screenId: settings });
+    return { ...t, dash: dash!, settings: settings!, login: login!, doc };
+  }
+  const shellOf = (screen: Screen) => screen.shell!;
+
+  it("Ajustar's rename, page header, navigation and frame pins reach a draft that changed elsewhere", () => {
+    const { state, actions, history, dash, settings, login, doc } = pending();
+    const steps = history().pastStates.length;
+    const ajustar = docOf(screensFromDoc(doc), (screens) => {
+      screens[dash] = { ...screens[dash]!, name: "Mi panel", route: "/mi-panel", shell: { ...shellOf(screens[dash]!), header: false, pinned: ["/subtitle"] } };
+      for (const id of [dash, settings]) screens[id] = { ...screens[id]!, shell: { ...shellOf(screens[id]!), nav: "topnav" } };
+    });
+    expect(actions.syncFromDoc(ajustar)).toBe("merged");
+    const screens = state().screens;
+    expect(screens[dash]).toMatchObject({ name: "Mi panel", route: "/mi-panel", shell: { nav: "topnav", header: false, pinned: ["/subtitle"] } });
+    expect(screens[settings]!.shell).toMatchObject({ nav: "topnav", header: true });
+    expect(screens[login]!.shell?.nav).toBe("none");
+    expect(Object.keys(screens[settings]!.layout.blocks)).toHaveLength(Object.keys(doc.screens[settings]!.layout.blocks).length + 1);
+    // The past is rebased: undoing the draft's own edit keeps Ajustar's.
+    expect(history().pastStates).toHaveLength(steps);
+    actions.undo();
+    expect(state().screens[dash]).toMatchObject({ name: "Mi panel", shell: { nav: "topnav", header: false } });
+  });
+
+  it("the side that changed wins, the draft when both did; the identity stays when nothing changes", () => {
+    const { state, actions, dash, settings, doc } = pending();
+    actions.renameScreen(dash, "Inicio");
+    actions.setShell(settings, { header: false });
+    const draft: HistorySlice = { screens: state().screens, screenOrder: state().screenOrder };
+    const base = screensFromDoc(doc);
+    expect(mergeDocScreens(draft, base, base)).toBe(draft);
+    const ajustar = docOf(base, (screens) => {
+      screens[dash] = { ...screens[dash]!, name: "Mi panel", shell: { ...shellOf(screens[dash]!), header: false } };
+      screens[settings] = { ...screens[settings]!, shell: { ...shellOf(screens[settings]!), header: true } };
+    });
+    const merged = mergeDocScreens(draft, base, screensFromDoc(ajustar));
+    expect(merged.screens[dash]!.name).toBe("Inicio");
+    expect(merged.screens[dash]!.shell?.header).toBe(false);
+    expect(merged.screens[settings]!.shell?.header).toBe(false);
+  });
+
+  it("navigation stays shared: a screen only the draft has follows Ajustar's, and the draft's own change wins", () => {
+    const { state, actions, dash, settings, doc } = pending();
+    const fresh = actions.addScreen("blank", "app")!;
+    expect(state().screens[fresh]!.shell?.nav).toBe("sidebar");
+    const ajustar = docOf(screensFromDoc(doc), (screens) => {
+      for (const id of [dash, settings]) screens[id] = { ...screens[id]!, shell: { ...shellOf(screens[id]!), nav: "rail" } };
+    });
+    const draft = (): HistorySlice => ({ screens: state().screens, screenOrder: state().screenOrder });
+    const merged = mergeDocScreens(draft(), screensFromDoc(doc), screensFromDoc(ajustar));
+    for (const id of [dash, settings, fresh]) expect(merged.screens[id]!.shell?.nav).toBe("rail");
+    actions.setShell(dash, { nav: "topnav" });
+    const own = mergeDocScreens(draft(), screensFromDoc(doc), screensFromDoc(ajustar));
+    for (const id of [dash, settings, fresh]) expect(own.screens[id]!.shell?.nav).toBe("topnav");
+  });
+
+  it("a name or route taken from the document that a draft screen already uses gets a number", () => {
+    const { state, actions, dash, doc } = pending();
+    const fresh = actions.addScreen("blank", "app")!;
+    const taken = state().screens[fresh]!;
+    const ajustar = docOf(screensFromDoc(doc), (screens) => {
+      screens[dash] = { ...screens[dash]!, name: taken.name, route: taken.route };
+    });
+    expect(actions.syncFromDoc(ajustar)).toBe("merged");
+    const screens = state().screens;
+    expect(screens[fresh]).toMatchObject({ name: taken.name, route: taken.route });
+    expect(screens[dash]).toMatchObject({ name: `${taken.name} 2`, route: `${taken.route}-2` });
+  });
+});
+
+describe("document limits (review B #13, #16)", () => {
+  it("no screen past MAX_SCREENS: add, duplicate and starting sets refuse and say so", () => {
+    const t = setup();
+    t.actions.applySet("landing");
+    while (t.state().screenOrder.length < MAX_SCREENS) expect(t.actions.addScreen("blank", "landing")).not.toBeNull();
+    const before = t.state().screens;
+    expect(t.actions.addScreen("blank", "app")).toBeNull();
+    expect(t.state().limitHit?.limit).toBe("screens");
+    const tick = t.state().limitHit!.tick;
+    expect(t.actions.duplicateScreen(t.state().screenOrder[0]!)).toBeNull();
+    expect(t.state().limitHit!.tick).toBe(tick + 1);
+    expect(t.actions.applySet("saas-app")).toEqual([]);
+    expect(t.state().screens).toBe(before);
+    expect(t.state().screenOrder).toHaveLength(MAX_SCREENS);
+    // «En blanco» without a kind is not a limit.
+    t.actions.removeScreen(t.state().screenOrder[1]!);
+    const hits = t.state().limitHit!.tick;
+    expect(t.actions.addScreen("blank")).toBeNull();
+    expect(t.state().limitHit!.tick).toBe(hits);
+  });
+
+  it("no block past MAX_BLOCKS in a screen: insert and duplicate refuse and say so", () => {
+    const t = setup();
+    const id = t.blank();
+    for (let n = 0; n < MAX_BLOCKS; n++) expect(t.actions.insertBlock("text").id).not.toBeNull();
+    const screen = t.state().screens[id];
+    const outcome = t.actions.insertBlock("text");
+    expect(outcome.id).toBeNull();
+    expect(t.state().limitHit?.limit).toBe("blocks");
+    expect(t.actions.duplicateBlock(Object.keys(screen!.layout.blocks)[0]!)).toBeNull();
+    expect(t.state().screens[id]).toBe(screen);
+    expect(Object.keys(t.state().screens[id]!.layout.blocks)).toHaveLength(MAX_BLOCKS);
+  });
+
+  it("generate refuses a draft past a limit before asking the flow to write it", () => {
+    const t = setup();
+    const id = t.blank();
+    const blocks: Record<string, LayoutBlock> = {};
+    for (let n = 0; n <= MAX_BLOCKS; n++) blocks[`b-x${n}`] = { type: "text", label: "Texto", rect: { col: 0, row: n * 4, w: 12, h: 4 }, z: 0 };
+    t.store.setState({ screens: { [id]: { ...t.state().screens[id]!, layout: { ...t.state().screens[id]!.layout, blocks } } } });
+    let asked = false;
+    t.actions.generate({ accept: () => (asked = true) });
+    expect(asked).toBe(false);
+    expect(t.state().generated).toBeNull();
+    expect(t.state().limitHit?.limit).toBe("blocks");
+  });
+});
+
+describe("duplicated screens carry their source to the next «Generar» (review B #26)", () => {
+  it("generate passes copyOf (source screen and block map) for a copy, and only until it was generated", () => {
+    const t = setup();
+    const [home] = t.actions.applySet("landing");
+    const sourceIds = Object.keys(t.state().screens[home!]!.layout.blocks).sort();
+    const copyId = t.actions.duplicateScreen(home!)!;
+    const copyIds = Object.keys(t.state().screens[copyId]!.layout.blocks).sort();
+    const copied = t.state().copies[copyId]!;
+    expect(copied.from).toBe(home);
+    expect(Object.keys(copied.blocks).sort()).toEqual(copyIds);
+    expect(Object.values(copied.blocks).sort()).toEqual(sourceIds);
+    // A copy's own edit (a removed block) leaves it out of the map; a copy of the copy maps to the original.
+    t.actions.removeBlocks([copyIds[0]!], copyId);
+    const second = t.actions.duplicateScreen(copyId)!;
+    expect(t.state().copies[second]!.from).toBe(home);
+    for (const [blockId, sourceId] of Object.entries(t.state().copies[second]!.blocks)) {
+      expect(sourceIds).toContain(sourceId);
+      expect(Object.hasOwn(t.state().screens[second]!.layout.blocks, blockId)).toBe(true);
+    }
+
+    // Refused by the flow: the copies stay for the next try.
+    const refused = t.actions.generate({ accept: () => false });
+    const copyOf = refused.screens.find((screen) => screen.screenId === copyId)!.copyOf!;
+    expect(copyOf.screenId).toBe(home);
+    expect(Object.keys(copyOf.blocks)).not.toContain(copyIds[0]);
+    expect(Object.keys(copyOf.blocks)).toHaveLength(copyIds.length - 1);
+    expect(refused.screens.find((screen) => screen.screenId === home)!.copyOf).toBeUndefined();
+    expect(Object.keys(t.state().copies)).toHaveLength(2);
+    // Written: the document now has the copies; the next «Generar» builds them from their own pages.
+    t.actions.generate({ accept: () => true });
+    expect(t.state().copies).toEqual({});
+    expect(t.actions.generate().screens.every((screen) => screen.copyOf === undefined)).toBe(true);
   });
 });

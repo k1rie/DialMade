@@ -25,6 +25,7 @@
   grid-column: 7 / span 6;
   grid-row: 1;
   margin-block-start: var(--dl-space-2);
+  justify-self: stretch;
   aspect-ratio: 90 / 29;
 }
 

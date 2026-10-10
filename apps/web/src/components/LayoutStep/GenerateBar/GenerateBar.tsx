@@ -24,10 +24,11 @@ import {
   useLayoutEnv,
   useLayoutStore,
   useLayoutStoreApi,
+  usePendingChanges,
   useScreens,
 } from "../useLayoutStore";
 import { AiCopyControl } from "./AiCopyControl";
-import { countStats, ctaState, replaceWithTemplateSet } from "./barState";
+import { countStats, ctaHint, ctaState, replaceWithTemplateSet } from "./barState";
 import { GenerateReport } from "./GenerateReport";
 import { ToolPicker } from "./ToolPicker";
 import { WarningsMenu } from "./WarningsMenu";
@@ -51,7 +52,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
   const t = useDictionary(layout);
   const aiT = useDictionary(aiText).layoutCopy;
   const announce = useDndAnnounce({ politeness: "polite" });
-  const { narrow, onGenerateIntent, generate } = useLayoutEnv();
+  const { narrow, onGenerateIntent, generate, doc } = useLayoutEnv();
   const { supported: aiSupported, enabled: aiOn } = useGenerateAi();
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
@@ -63,6 +64,8 @@ export function GenerateBar({ className }: GenerateBarProps) {
   // A document generated in an earlier visit counts too: its blocks carry their fingerprints.
   const generated = useHasGenerated();
   const changed = useChangedCount();
+  // Moves, renames, routes, links and hiding are not «Regenerar N» blocks, but «Generar» writes them.
+  const pending = usePendingChanges(doc);
   const [reportOpen, setReportOpen] = useState(false);
   // Said by the report once it is open: the modal makes this page's live region inert.
   const [generatedMessage, setGeneratedMessage] = useState<string | null>(null);
@@ -112,8 +115,8 @@ export function GenerateBar({ className }: GenerateBarProps) {
         : cta.kind === "regenerate"
           ? t.generate.regenerate(cta.count)
           : t.generate.again;
-  const ctaHint =
-    cta.kind === "template" ? t.generate.emptyHint : aiOn ? aiT.ctaHint : cta.kind === "again" ? t.generate.upToDateHint : t.generate.noAi;
+  const hint = ctaHint(cta, { aiOn, pending });
+  const ctaHintText = hint === "empty" ? t.generate.emptyHint : hint === "ai" ? aiT.ctaHint : hint === "upToDate" ? t.generate.upToDateHint : t.generate.noAi;
   // «Usar plantilla» is not a Generar: no preload intent.
   const intent = cta.kind === "template" ? undefined : onGenerateIntent;
 
@@ -141,7 +144,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
 
         {aiSupported && cta.kind !== "template" && <AiCopyControl onIntent={intent} />}
 
-        <Tooltip content={ctaHint} side="top">
+        <Tooltip content={ctaHintText} side="top">
           <Button
             variant="primary"
             size="md"

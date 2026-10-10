@@ -4,7 +4,7 @@ import type { ScreenId } from "@dialmade/layout";
 import { animate, useReducedMotion, type MotionValue } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import { snappy } from "@/lib/motion";
-import { clampOffset, dragSpan, exceedsThreshold, overIndex, shiftFor, type RowBox } from "./reorder";
+import { clampOffset, dragSpan, exceedsThreshold, overIndex, shiftFor, slotOffset, type RowBox, type ScreenGrab } from "./reorder";
 
 export type ScreenReorderOptions = {
   /** Screen ids in list order (the store's `screenOrder`). */
@@ -15,8 +15,8 @@ export type ScreenReorderOptions = {
   rowOf: (id: ScreenId) => HTMLElement | null;
   /** The vertical offset each row is drawn with (a motion value per row). */
   offsetOf: (id: ScreenId) => MotionValue<number> | undefined;
-  /** Commits the move (one undo step). Returns whether the order changed. */
-  onDrop: (id: ScreenId, to: number) => boolean;
+  /** Commits the move (one undo step). Returns whether the order changed. `via`: what dropped it. */
+  onDrop: (id: ScreenId, to: number, via: "pointer" | "keyboard") => boolean;
   /** Esc, a lost pointer or a cancelled gesture: nothing moved. */
   onCancel: (id: ScreenId, index: number) => void;
 };
@@ -33,7 +33,20 @@ export type ScreenReorder = {
    * `run` returns whether the order changed.
    */
   flip: (run: () => boolean) => boolean;
+  /** The row held with the keyboard (Space/Enter) and the slot it is drawn in, or `null`. */
+  keyboardHeld: () => ScreenGrab | null;
+  /** Picks a row up with the keyboard (lifted, nothing moves yet). `false` when it cannot (one screen, a drag running). */
+  keyboardGrab: (id: ScreenId) => boolean;
+  /** Draws the held row in slot `to` while the others make room (no store write). Returns whether it moved. */
+  keyboardMove: (to: number) => boolean;
+  /** Drops the held row where it is drawn: one `onDrop` when the slot changed. Its start and end slots, or `null`. */
+  keyboardDrop: () => { from: number; to: number } | null;
+  /** Puts the held row back (nothing was written). Its slot, or `null` when none was held. */
+  keyboardCancel: () => number | null;
 };
+
+/** A row held with the keyboard: rows measured once at the grab, like a pointer drag. */
+type KeyboardSession = { id: ScreenId; from: number; over: number; ids: ScreenId[]; boxes: RowBox[]; span: number };
 
 type Session = {
   id: ScreenId;
@@ -56,13 +69,17 @@ type Session = {
  * Space/Enter on the rows, and its canvas droppables would see screen drags). The dragged row follows the
  * pointer inside the list, the others slide to make room with the `snappy` spring, and the drop commits
  * one `moveScreen`; the row then settles into its slot (FLIP, also used by `flip` for keyboard and menu
- * moves). Esc cancels. Reduced motion jumps instead of sliding. Keyboard and click alternatives live in
- * the row (Alt+↑/↓, menu Subir/Bajar).
+ * moves). Esc cancels. Reduced motion jumps instead of sliding.
+ *
+ * The keyboard grab (Space/Enter on a row, WCAG 2.5.7) works the same way: the held row is drawn in its new slot
+ * and the store is written once, on the drop (Esc writes nothing). The DOM never reorders mid-grab, so the row
+ * keeps focus. Alt+↑/↓ and the row menu stay as one-step alternatives (`flip`).
  */
 export function useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCancel }: ScreenReorderOptions): ScreenReorder {
   const reduced = useReducedMotion();
   const [draggingId, setDraggingId] = useState<ScreenId | null>(null);
   const session = useRef<Session | null>(null);
+  const keyboard = useRef<KeyboardSession | null>(null);
   const detach = useRef<(() => void) | null>(null);
   const suppressClick = useRef(false);
   /** Where each row is drawn right before a reorder (list-relative), for the FLIP after the commit. */
@@ -105,7 +122,7 @@ export function useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCa
       const { offsetOf: offset, onDrop: drop, onCancel: cancel } = latest.current;
       if (commit && s.over !== s.from) {
         settle.current = snapshot();
-        if (drop(s.id, s.over)) {
+        if (drop(s.id, s.over, "pointer")) {
           setDraggingId(null);
           return;
         }
@@ -142,7 +159,7 @@ export function useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCa
   const flip = useCallback(
     (run: () => boolean) => {
       // Not while a drag is moving rows (a press that has not moved yet is not a drag).
-      if (session.current?.started) return false;
+      if (session.current?.started || keyboard.current) return false;
       settle.current = snapshot();
       const changed = run();
       if (!changed) settle.current = null;
@@ -159,7 +176,7 @@ export function useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCa
       const list = listRef.current;
       const ids = [...latest.current.order];
       const from = ids.indexOf(id);
-      if (!list || session.current || ids.length < 2 || from < 0) return;
+      if (!list || session.current || keyboard.current || ids.length < 2 || from < 0) return;
 
       const s: Session = {
         id,
@@ -247,5 +264,64 @@ export function useScreenReorder({ order, listRef, rowOf, offsetOf, onDrop, onCa
     return true;
   }, []);
 
-  return { draggingId, onPointerDown, consumeClick, flip };
+  /* ---- Keyboard grab ---- */
+  const keyboardHeld = useCallback((): ScreenGrab | null => {
+    const k = keyboard.current;
+    return k ? { id: k.id, at: k.over } : null;
+  }, []);
+
+  const keyboardGrab = useCallback((id: ScreenId) => {
+    const ids = [...latest.current.order];
+    const from = ids.indexOf(id);
+    if (session.current || keyboard.current || ids.length < 2 || from < 0) return false;
+    const boxes = ids.map((rowId) => {
+      const row = latest.current.rowOf(rowId);
+      return row ? { top: row.offsetTop, height: row.offsetHeight } : { top: 0, height: 0 };
+    });
+    keyboard.current = { id, from, over: from, ids, boxes, span: dragSpan(boxes, from) };
+    setDraggingId(id);
+    return true;
+  }, []);
+
+  const keyboardMove = useCallback(
+    (to: number) => {
+      const k = keyboard.current;
+      if (!k || to < 0 || to >= k.ids.length || to === k.over) return false;
+      k.over = to;
+      const { offsetOf: offset } = latest.current;
+      k.ids.forEach((rowId, index) => {
+        slide(offset(rowId), index === k.from ? slotOffset(k.boxes, k.from, to) : shiftFor(index, k.from, to, k.span));
+      });
+      return true;
+    },
+    [slide],
+  );
+
+  const keyboardDrop = useCallback(() => {
+    const k = keyboard.current;
+    if (!k) return null;
+    keyboard.current = null;
+    if (k.over !== k.from) {
+      settle.current = snapshot();
+      if (latest.current.onDrop(k.id, k.over, "keyboard")) {
+        setDraggingId(null);
+        return { from: k.from, to: k.over };
+      }
+      settle.current = null;
+    }
+    for (const id of k.ids) slide(latest.current.offsetOf(id), 0);
+    setDraggingId(null);
+    return { from: k.from, to: k.from };
+  }, [slide, snapshot]);
+
+  const keyboardCancel = useCallback(() => {
+    const k = keyboard.current;
+    if (!k) return null;
+    keyboard.current = null;
+    for (const id of k.ids) slide(latest.current.offsetOf(id), 0);
+    setDraggingId(null);
+    return k.from;
+  }, [slide]);
+
+  return { draggingId, onPointerDown, consumeClick, flip, keyboardHeld, keyboardGrab, keyboardMove, keyboardDrop, keyboardCancel };
 }

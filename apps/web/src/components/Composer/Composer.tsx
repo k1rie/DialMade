@@ -21,6 +21,7 @@ import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
 import { formatUsd } from "@/lib/money";
 import { linkedScreen } from "@/lib/screen-layout";
+import { opensAiMenu } from "./aiWayOut";
 import { BriefPanel } from "./BriefPanel";
 import { Canvas } from "./Canvas";
 import { ComposerTopBar } from "./ComposerTopBar";
@@ -225,9 +226,9 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
       // useAiCopy rejects with messages that are already localized; the codes only pick a fallback.
       const message = error instanceof AiCopyError && error.message !== error.code ? error.message : fallback;
       toast.error(message);
-      // No free uses, budget spent, daily limit or a rejected key: the AI menu offers the user's own key and «mi Claude».
-      const wayOut = error instanceof AiCopyError && error.fallback !== null;
-      if (wayOut || code === "budget-exceeded" || reason === "invalid-key" || reason === "ai-not-configured") setAiMenuOpen(true);
+      // No free uses, budget spent, daily limit, a rejected key or a design too large for the free AI: the AI menu
+      // offers the user's own key and «mi Claude».
+      if (opensAiMenu(error)) setAiMenuOpen(true);
     },
     [t, texts],
   );

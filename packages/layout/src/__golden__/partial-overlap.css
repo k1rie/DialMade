@@ -23,6 +23,7 @@
 .dl-layout [data-dl-id="photo"] {
   grid-column: 2 / 4;
   grid-row: 2 / 4;
+  justify-self: stretch;
   aspect-ratio: 4 / 1;
 }
 

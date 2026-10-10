@@ -31,6 +31,11 @@ export interface RenderContext extends ContentContext {
   /** Edit mode: sections are selectable and links do not navigate. */
   interactive: boolean;
   onSelect?: (id: string) => void;
+  /**
+   * @deprecated `PageRenderer` no longer sets it: the selection lives in its render scope (only the frames read
+   * it), so selecting a section re-renders no section (review B #22). `SectionFrame` still reads it when it gets
+   * no `selected` prop, for callers that render frames themselves.
+   */
   selectedId?: string;
   /** The document being rendered, for sections that show the system itself (brand board). */
   doc?: DesignDoc;
@@ -66,6 +71,11 @@ export interface FitInput {
   blockId: string;
   /** The mobile behavior picked in the canvas inspector (`block.responsive.mobile.behavior`), when set. */
   mobile?: MobileBehavior;
+  /**
+   * The block links to another screen (`block.linkTo`): a section that hides its action at small sizes keeps it,
+   * so the link has something to click (ui.text).
+   */
+  linked?: boolean;
 }
 
 export interface FitResult<P> {

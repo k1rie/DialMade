@@ -1,6 +1,6 @@
 // Pure helpers of the optional AI in Modo Layout (critique #7): one request per «Generar» for every screen,
 // and the per-block states the canvas shows («Escribiendo · Listo · Sin cambios · Error · Reintentar»).
-// Client-safe, no SDK. The hook is @/hooks/useLayoutAiCopy.
+// Client-safe, no SDK. The hook is useLayoutAiCopy (components/LayoutStep/useLayoutAiCopy).
 import type { PatchOperation } from "@dialmade/doc";
 import { MAX_COPY_SCREENS, MAX_SECTION_IDS } from "./config";
 import type { CopyField, ScreenCopyTarget } from "./fields";

@@ -1,7 +1,8 @@
 import { render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { LayoutDocSchema, checkScreenPage, type Page } from "@dialmade/doc";
+import { LayoutDocSchema, MAX_REMOVED_STASH, checkScreenPage, type Page } from "@dialmade/doc";
+import { z } from "zod";
 import {
   LIBRARY,
   emptyLayout,
@@ -36,7 +37,7 @@ import { buildPageFromLayout, LAYOUT_SCOPE_ID, REGION_TYPE, SHELL_ELEMENT_ID, ty
 import { contentContextFromDoc } from "./context";
 import { PageRenderer } from "./PageRenderer";
 import { resolveSectionProps, storedDefaultProps } from "./props";
-import { sectionRegistry } from "./registry";
+import { createRegistry, sectionRegistry } from "./registry";
 import { renderStaticPage } from "./renderToHtml";
 import { acmeContent, acmeDoc } from "./testing/fixtures";
 import { cssIds, everyBlockLayout, markupIds, READY_TYPES, withFingerprints } from "./testing/layout";
@@ -380,18 +381,22 @@ describe("buildPageFromLayout: props", () => {
       }
     });
 
-    it("a block absorbed on the first Generate has no stash and comes out with fresh copy; deleting it drops its stash", () => {
+    it("a block absorbed on the first Generate has no stash and comes out with fresh copy; deleting it keeps its props and pins", () => {
       const first = build(inside(outside));
       expect(first.page.stash).toBeUndefined();
       const back = build(out(withFingerprints(inside(outside), first.fingerprints)), "landing", { previous: first.page });
       const fresh = build(outside).page.elements.note!.props;
       expect(back.page.elements.note!.props.title).toBe(fresh.title);
 
+      // Deleted while absorbed: its entry stays (with the pins its layout block had) for a Layout undo.
       const { page, layout } = edited();
-      const absorbed = build(inside(layout), "landing", { previous: page });
-      const gone = structuredClone(withFingerprints(inside(layout), absorbed.fingerprints));
+      const absorbedLayout = inside(layout);
+      const absorbed = build(absorbedLayout, "landing", { previous: page });
+      const gone = structuredClone(withFingerprints(absorbedLayout, absorbed.fingerprints));
       delete gone.blocks.note;
-      expect(build(gone, "landing", { previous: absorbed.page }).page.stash).toBeUndefined();
+      const removed = build(gone, "landing", { previous: absorbed.page, previousLayout: absorbedLayout });
+      expect(removed.page.stash).toEqual({ note: { type: "ui.text", props: page.elements.note!.props, pinned: ["/title"] } });
+      expect(checkScreenPage(removed.page, "landing")).toEqual([]);
     });
   });
 
@@ -1023,6 +1028,27 @@ describe("links between screens", () => {
     expect(plain).not.toContain("data-dl-screen-link");
   });
 
+  it("a small linked text keeps its action, so the link has something to click; adding or removing it later follows (review B #11)", () => {
+    const small = makeLayout([{ id: "txt", type: "text", rect: [0, 0, 6, 12] }]);
+    const plain = build(small);
+    expect(plain.page.elements.txt!.props.showAction).toBe(false);
+    // The link added after a «Generar», with no size change (same fingerprint): the action shows.
+    const linked = { ...small, blocks: { ...small.blocks, txt: { ...withFingerprints(small, plain.fingerprints).blocks.txt!, linkTo: "s-signup" } } };
+    const again = build(linked, "landing", { previous: plain.page });
+    expect(again.page.elements.txt!.props.showAction).toBe(true);
+    const html = renderStaticPage(acmeDoc(), "landing", {}, {
+      page: again.page,
+      fonts: false,
+      links: again.links,
+      linkHref: (id) => (id === "s-signup" ? "signup/index.html" : null),
+    });
+    expect(html).toContain('href="signup/index.html" data-dl-screen-link="s-signup"');
+    // Removed again: the small block hides its action.
+    const unlinked = { ...linked, blocks: { ...linked.blocks, txt: { ...withFingerprints(linked, again.fingerprints).blocks.txt!, linkTo: undefined } } };
+    delete unlinked.blocks.txt.linkTo;
+    expect(build(unlinked, "landing", { previous: again.page }).page.elements.txt!.props.showAction).toBe(false);
+  });
+
   it("the navigable preview switches screens on click (outside edit mode only)", () => {
     const result = build(layout);
     const seen: string[] = [];
@@ -1085,5 +1111,392 @@ describe("performance", () => {
     }
     times.sort((a, b) => a - b);
     expect(times[2]).toBeLessThan(100);
+  });
+});
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Review B: edits a «Generar» used to lose, and per-screen copy                                     */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** What `withDocBaseline` (apps/web design-engine) hands the build after a Layout undo: pins and fingerprints
+ * from the document's layout, or the pins of the block's stash entry when the document no longer has it. */
+function docBaseline(draft: LayoutDoc, docLayout: LayoutDoc, docPage: Page): LayoutDoc {
+  const next = structuredClone(draft);
+  for (const [id, block] of Object.entries(next.blocks)) {
+    const known = docLayout.blocks[id];
+    const pinned = known ? known.pinned : docPage.stash?.[id]?.pinned;
+    const generated = known?.generated;
+    if (pinned && pinned.length > 0) block.pinned = [...pinned];
+    else delete block.pinned;
+    if (generated) block.generated = generated;
+    else delete block.generated;
+  }
+  return next;
+}
+
+describe("a Layout undo across a «Generar» brings back copy and pins (page.stash)", () => {
+  const layout = makeLayout([
+    { id: "hero", type: "hero", rect: [0, 0, 12, 60] },
+    { id: "lst", type: "list", rect: [0, 62, 6, 40] },
+    { id: "feat", type: "features", rect: [0, 104, 12, 40] },
+  ]);
+
+  /** Generate, then «Ajustar»: pinned hero title and list action, an unpinned AI rewrite. */
+  function edited() {
+    const first = build(layout);
+    const page = structuredClone(first.page);
+    page.elements.hero!.props.title = "Mi titular";
+    page.elements.hero!.props.subtitle = "Escrito por la IA";
+    page.elements.lst!.props.action = "Ver más citas";
+    const docLayout = withFingerprints(layout, first.fingerprints);
+    docLayout.blocks.hero = { ...docLayout.blocks.hero!, pinned: ["/title"] };
+    docLayout.blocks.lst = { ...docLayout.blocks.lst!, pinned: ["/action"] };
+    return { page, docLayout };
+  }
+
+  it("delete → Generate → undo → Generate: the block's copy and pins come back; the stash entry goes", () => {
+    const { page, docLayout } = edited();
+    const deleted = structuredClone(docLayout);
+    delete deleted.blocks.hero;
+    const second = build(deleted, "landing", { previous: page, previousLayout: docLayout });
+    expect(second.page.elements.hero).toBeUndefined();
+    expect(second.page.stash).toEqual({ hero: { type: "landing.hero", props: page.elements.hero!.props, pinned: ["/title"] } });
+    expect(checkScreenPage(second.page, "landing")).toEqual([]);
+
+    // Another Generate in between keeps the entry as it is.
+    const docLayout2 = withFingerprints(deleted, second.fingerprints);
+    const third = build(docLayout2, "landing", { previous: second.page, previousLayout: docLayout2 });
+    expect(third.page).toEqual(second.page);
+
+    // ⌘Z in Layout: the hero is back in the draft with its old id.
+    const back = build(docBaseline(layout, docLayout2, third.page), "landing", { previous: third.page, previousLayout: docLayout2 });
+    expect(back.page.elements.hero!.props).toMatchObject({ title: "Mi titular", subtitle: "Escrito por la IA" });
+    expect(back.page.stash).toBeUndefined();
+    expect(back.page.elements.feat!.props).toEqual(page.elements.feat!.props);
+  });
+
+  it("type change → Generate → undo → Generate: the old type's props come back, the other type's wait for a redo", () => {
+    const { page, docLayout } = edited();
+    const retyped = structuredClone(docLayout);
+    retyped.blocks.lst = { ...retyped.blocks.lst!, type: "calendar" };
+    const second = build(retyped, "landing", { previous: page, previousLayout: docLayout });
+    expect(second.page.elements.lst!.type).toBe("ui.calendar");
+    expect(second.page.stash).toEqual({ lst: { type: "ui.list", props: page.elements.lst!.props } });
+    expect(checkScreenPage(second.page, "landing")).toEqual([]);
+
+    // «Ajustar» on the calendar: a pinned title (the block keeps its pins: /action and now /title).
+    const page2 = structuredClone(second.page);
+    page2.elements.lst!.props.title = "Mi agenda";
+    const docLayout2 = withFingerprints(retyped, second.fingerprints);
+    docLayout2.blocks.lst = { ...docLayout2.blocks.lst!, pinned: ["/action", "/title"] };
+
+    const undone = build(docBaseline(layout, docLayout2, page2), "landing", { previous: page2, previousLayout: docLayout2 });
+    expect(undone.page.elements.lst!.type).toBe("ui.list");
+    expect(undone.page.elements.lst!.props.action).toBe("Ver más citas");
+    expect(undone.page.elements.lst!.props.items).toEqual(page.elements.lst!.props.items);
+    expect(undone.page.stash?.lst).toMatchObject({ type: "ui.calendar", props: { title: "Mi agenda" } });
+
+    const docLayout3 = withFingerprints(docBaseline(layout, docLayout2, page2), undone.fingerprints);
+    const redone = build(docBaseline(retyped, docLayout3, undone.page), "landing", { previous: undone.page, previousLayout: docLayout3 });
+    expect(redone.page.elements.lst!.props.title).toBe("Mi agenda");
+  });
+
+  it("keeps the newest MAX_REMOVED_STASH removed blocks, the earlier removals first", () => {
+    const many = makeLayout(Array.from({ length: 40 }, (_, i) => ({ id: `t${i}`, type: "text" as const, rect: [0, i * 12, 12, 10] as [number, number, number, number] })));
+    const first = build(many);
+    const docLayout = withFingerprints(many, first.fingerprints);
+    const firstBatch = structuredClone(docLayout);
+    for (let i = 0; i < 30; i++) delete firstBatch.blocks[`t${i}`];
+    const second = build(firstBatch, "landing", { previous: first.page, previousLayout: docLayout });
+    expect(Object.keys(second.page.stash ?? {})).toHaveLength(30);
+    const docLayout2 = withFingerprints(firstBatch, second.fingerprints);
+    const secondBatch = structuredClone(docLayout2);
+    for (let i = 30; i < 40; i++) delete secondBatch.blocks[`t${i}`];
+    const third = build(secondBatch, "landing", { previous: second.page, previousLayout: docLayout2 });
+    const kept = Object.keys(third.page.stash ?? {});
+    expect(kept).toHaveLength(MAX_REMOVED_STASH);
+    expect(kept.slice(-10)).toEqual(Array.from({ length: 10 }, (_, i) => `t${30 + i}`));
+    expect(kept).not.toContain("t0");
+    expect(checkScreenPage(third.page, "landing")).toEqual([]);
+  });
+
+  it("a language change regenerates a removed block's stashed copy in the new language, keeping its pins", () => {
+    const { page, docLayout } = edited();
+    const deleted = structuredClone(docLayout);
+    delete deleted.blocks.hero;
+    const second = build(deleted, "landing", { previous: page, previousLayout: docLayout });
+    const es = contentContextFromDoc(acmeDoc({ locale: "es" }));
+    const docLayout2 = withFingerprints(deleted, second.fingerprints);
+    const translated = build(docLayout2, "landing", { previous: second.page, previousLayout: docLayout2, mode: "content" }, es);
+    const stashed = translated.page.stash!.hero!;
+    expect(stashed.pinned).toEqual(["/title"]);
+    expect(stashed.props.title).toBe("Mi titular");
+    expect(stashed.props.subtitle).toBe(storedDefaultProps(sectionRegistry.get("landing.hero")!, es).subtitle);
+  });
+});
+
+describe("property: delete or retype → Generate → undo → Generate never loses edits", () => {
+  it("random edits, removals and type changes undone keep pinned values and copy outside `owns`", () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 120; seed++) {
+      const rand = mulberry32(seed * 104729);
+      const layout0 = chance(rand, 0.5) ? randomSeparableLayout(rand, { maxBlocks: 14 }) : randomLayout(rand, { maxBlocks: 14 });
+      const kind: ScreenKind = chance(rand, 0.5) ? "landing" : "app";
+      const shell: AppShell | null = kind === "app" ? { nav: pickOne(rand, ["sidebar", "topnav", "none"] as const), header: chance(rand, 0.5) } : null;
+      const first = buildPageFromLayout(layout0, kind, shell, ctx);
+      const { page: page1, layout: docLayout1 } = editPage(rand, first.page, withFingerprints(layout0, first.fingerprints), seed);
+
+      // Layout: delete or retype some leaf blocks, then «Generar».
+      const draft2 = structuredClone(docLayout1);
+      const leaves = Object.keys(draft2.blocks).filter((id) => descendants(draft2, id).length === 0).sort();
+      for (const id of leaves) {
+        const roll = rand();
+        if (roll < 0.3) delete draft2.blocks[id];
+        else if (roll < 0.5) {
+          const { count: _count, ...block } = draft2.blocks[id]!;
+          draft2.blocks[id] = { ...block, type: pickOne(rand, LEAF_TYPES) };
+        }
+      }
+      const second = buildPageFromLayout(draft2, kind, shell, ctx, { previous: page1, previousLayout: docLayout1 });
+      const at = `seed ${seed}`;
+      expect(checkScreenPage(second.page, kind), at).toEqual([]);
+      const docLayout2 = withFingerprints(draft2, second.fingerprints);
+
+      // ⌘Z in Layout (the draft before the change), then «Generar» again.
+      const third = buildPageFromLayout(docBaseline(docLayout1, docLayout2, second.page), kind, shell, ctx, {
+        previous: second.page,
+        previousLayout: docLayout2,
+      });
+      expect(checkScreenPage(third.page, kind), at).toEqual([]);
+      for (const [id, block] of Object.entries(docLayout1.blocks)) {
+        const before = page1.elements[id];
+        const after = third.page.elements[id];
+        if (!before || !after) continue; // absorbed (no element)
+        expect(after.type, `${at} ${id}`).toBe(before.type);
+        for (const pointer of block.pinned ?? []) {
+          const value = readAt(before.props, pointer);
+          if (value === undefined) continue;
+          expect(readAt(after.props, pointer), `${at} ${id} ${pointer}`).toEqual(value);
+          checked++;
+        }
+        const owns = new Set([...ownsOf(before.type), VARIANT_PROP, ...OVERRIDE_KEYS]);
+        for (const [key, value] of Object.entries(before.props)) {
+          if (owns.has(key)) continue;
+          const now = after.props[key];
+          if (Array.isArray(value) && Array.isArray(now) && now.length > value.length) expect(now.slice(0, value.length), `${at} ${id} /${key}`).toEqual(value);
+          else expect(now, `${at} ${id} /${key}`).toEqual(value);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+});
+
+describe("app frame edits survive «Generar» and language or product changes (shell.pinned)", () => {
+  const layout = makeLayout([{ id: "kpis", type: "kpis", rect: [0, 0, 12, 14] }]);
+  const options: BuildFromLayoutOptions = { screenTitle: "Dashboard", screenId: "s-dash", navScreens: [{ id: "s-dash", name: "Dashboard" }] };
+
+  function edited() {
+    const first = buildPageFromLayout(layout, "app", SIDEBAR, ctx, options);
+    const page = structuredClone(first.page);
+    Object.assign(page.elements.shell!.props, {
+      primaryAction: "Nuevo informe",
+      subtitle: "Mi subtítulo",
+      workspace: "Equipo Norte",
+      title: "Escrito a mano",
+      variant: "topnav",
+    });
+    // Pins on layout-owned keys (title, variant) are ignored: the layout and the screen's name own them.
+    const shell: AppShell = { ...SIDEBAR, pinned: ["/primaryAction", "/subtitle", "/workspace", "/title", "/variant"] };
+    return { page, shell };
+  }
+
+  const frame = (page: Page) => page.elements.shell!.props;
+
+  it("layout and content mode write the pinned frame copy back; the layout keeps the title and the navigation", () => {
+    const { page, shell } = edited();
+    const regenerated = buildPageFromLayout(layout, "app", shell, ctx, { ...options, previous: page });
+    expect(frame(regenerated.page)).toMatchObject({ primaryAction: "Nuevo informe", subtitle: "Mi subtítulo", workspace: "Equipo Norte", title: "Dashboard", variant: "sidebar" });
+    for (const context of [contentContextFromDoc(acmeDoc({ locale: "es" })), contentContextFromDoc(acmeDoc({ productType: "e-commerce" }))]) {
+      const rebuilt = buildPageFromLayout(layout, "app", shell, context, { ...options, previous: page, mode: "content" });
+      expect(frame(rebuilt.page)).toMatchObject({ primaryAction: "Nuevo informe", subtitle: "Mi subtítulo", workspace: "Equipo Norte", title: "Dashboard" });
+      expect(checkScreenPage(rebuilt.page, "app")).toEqual([]);
+    }
+    // Without the pins, a language change rewrites them (unpinned AI copy is not kept, decision 96).
+    const es = contentContextFromDoc(acmeDoc({ locale: "es" }));
+    const unpinned = buildPageFromLayout(layout, "app", SIDEBAR, es, { ...options, previous: page, mode: "content" });
+    expect(frame(unpinned.page).primaryAction).toBe(shellScreenCopy("overview", es).primaryAction);
+  });
+
+  it("a pinned value that happens to be generated copy is still the user's: a new purpose does not rewrite it", () => {
+    const first = buildPageFromLayout(layout, "app", SIDEBAR, ctx, options);
+    const page = structuredClone(first.page);
+    const listAction = shellScreenCopy("list", ctx).primaryAction;
+    page.elements.shell!.props.primaryAction = listAction;
+    const shell: AppShell = { ...SIDEBAR, pinned: ["/primaryAction"] };
+    const renamed = buildPageFromLayout(layout, "app", shell, ctx, { ...options, screenTitle: "Ajustes", previous: page });
+    expect(frame(renamed.page).primaryAction).toBe(listAction);
+  });
+
+  it("a frame removed (navigation «none») and brought back keeps its props through page.stash", () => {
+    const { page, shell } = edited();
+    const none = buildPageFromLayout(layout, "app", { ...shell, nav: "none" }, ctx, { ...options, previous: page });
+    expect(none.page.elements.shell).toBeUndefined();
+    expect(none.page.stash?.shell?.props.primaryAction).toBe("Nuevo informe");
+    expect(checkScreenPage(none.page, "app")).toEqual([]);
+    const back = buildPageFromLayout(layout, "app", shell, ctx, { ...options, previous: none.page });
+    expect(frame(back.page)).toMatchObject({ primaryAction: "Nuevo informe", subtitle: "Mi subtítulo" });
+    expect(back.page.stash).toBeUndefined();
+  });
+});
+
+describe("landing navbars link the landing screens (review B #12)", () => {
+  const layout = makeLayout([
+    { id: "nav", type: "navbar", rect: [0, 0, 12, 8] },
+    { id: "hero", type: "hero", rect: [0, 8, 12, 60] },
+  ]);
+  const screens = [
+    { id: "s-home", name: "Home" },
+    { id: "s-pricing", name: "Pricing" },
+  ];
+  type Link = { label: string; href: string; linkTo?: string };
+  const linksOf = (page: Page) => page.elements.nav!.props.links as Link[];
+
+  it("puts one link per landing screen first (linkTo = screen id), then the anchors that are not a screen", () => {
+    const { page } = build(layout, "landing", { landingScreens: screens });
+    const links = linksOf(page);
+    expect(links.slice(0, 2)).toEqual([
+      { label: "Home", href: "#", linkTo: "s-home" },
+      { label: "Pricing", href: "#", linkTo: "s-pricing" },
+    ]);
+    expect(links.filter((link) => link.label.toLowerCase() === "pricing")).toHaveLength(1);
+    expect(links.length).toBeLessThanOrEqual(6);
+    expect(resolveSectionProps(sectionRegistry.get("landing.navbar")!, page.elements.nav!.props, ctx).invalidKeys).toEqual([]);
+  });
+
+  it("follows renames on every Generate, and drops screen links when one landing screen is left", () => {
+    const first = build(layout, "landing", { landingScreens: screens });
+    const next = withFingerprints(layout, first.fingerprints);
+    const renamed = build(next, "landing", { previous: first.page, landingScreens: [screens[0]!, { ...screens[1]!, name: "Plans" }] });
+    expect(linksOf(renamed.page)[1]).toEqual({ label: "Plans", href: "#", linkTo: "s-pricing" });
+    // Rendered with the screens' URLs (the multipage export): each link opens its screen.
+    const html = renderStaticPage(acmeDoc(), "landing", {}, { page: renamed.page, fonts: false, linkHref: (id) => (id === "s-home" ? "index.html" : "pricing/index.html") });
+    expect(html).toContain('data-dl-screen-link="s-pricing"');
+    const single = build(next, "landing", { previous: renamed.page, landingScreens: [screens[0]!] });
+    const links = linksOf(single.page);
+    expect(links.some((link) => link.linkTo !== undefined)).toBe(false);
+    // The navbar's own anchors again (the one a screen link had replaced comes back).
+    const anchors = linksOf(build(layout).page);
+    expect(links.map((link) => link.label).sort()).toEqual(anchors.map((link) => link.label).sort());
+  });
+});
+
+describe("copy differs between screens (review B #23, #24)", () => {
+  it("the first list, table and activity of each screen take the screen's seed; the navbar and hero keep the document's", () => {
+    const app = makeLayout([
+      { id: "lst", type: "list", rect: [0, 0, 6, 40] },
+      { id: "tbl", type: "table", rect: [0, 42, 12, 40] },
+      { id: "act", type: "activity", rect: [6, 0, 6, 40] },
+    ]);
+    const pages = ["s-a", "s-b", "s-c", "s-d"].map((screenId) => build(app, "app", { screenId }).page);
+    for (const id of ["lst", "tbl", "act"]) {
+      const contents = pages.map((page) => JSON.stringify(page.elements[id]!.props));
+      expect(new Set(contents).size, id).toBe(pages.length);
+    }
+    expect(build(app, "app", { screenId: "s-a" }).page).toEqual(pages[0]);
+    const landing = makeLayout([
+      { id: "nav", type: "navbar", rect: [0, 0, 12, 8] },
+      { id: "hero", type: "hero", rect: [0, 8, 12, 60] },
+    ]);
+    const [a, b] = ["s-a", "s-b"].map((screenId) => build(landing, "landing", { screenId }).page);
+    expect(b!.elements.hero!.props).toEqual(a!.elements.hero!.props);
+    expect(b!.elements.nav!.props.ctaLabel).toBe(a!.elements.hero!.props.primaryCta);
+  });
+
+  it("a pricing screen's intro text is about pricing; an app screen's text is never marketing copy", () => {
+    const pricing = makeLayout([
+      { id: "nav", type: "navbar", rect: [0, 0, 12, 8] },
+      { id: "intro", type: "text", rect: [0, 8, 12, 16] },
+      { id: "plans", type: "pricing", rect: [0, 24, 12, 60] },
+    ]);
+    const PRICING_TITLES = ["A plan for every stage", "Clear pricing, no surprises", "Choose how to start"];
+    for (let seed = 0; seed < 20; seed++) {
+      const { page } = build(pricing, "landing", { screenTitle: "Pricing", screenId: "s-pricing" }, { ...ctx, seed });
+      const intro = page.elements.intro!.props;
+      expect(intro.eyebrow, `seed ${seed}`).toBe("Pricing");
+      expect(PRICING_TITLES, `seed ${seed}`).toContain(intro.title);
+      expect(intro.level).toBe("h1");
+    }
+    const detail = makeLayout([
+      { id: "intro", type: "text", rect: [0, 0, 12, 12] },
+      { id: "pic", type: "media", rect: [0, 14, 8, 40] },
+    ]);
+    const DETAIL_TITLES = ["General information", "Current status", "Team notes"];
+    for (let seed = 0; seed < 20; seed++) {
+      const { page } = buildPageFromLayout(detail, "app", SIDEBAR, { ...ctx, seed }, { screenTitle: "Detail", screenId: "s-detail" });
+      const intro = page.elements.intro!.props;
+      expect(intro.eyebrow, `seed ${seed}`).toBe("");
+      expect(DETAIL_TITLES, `seed ${seed}`).toContain(intro.title);
+      expect(intro.body).not.toBe(page.elements.shell!.props.subtitle);
+    }
+  });
+});
+
+describe("every screen has one h1 (review B #39)", () => {
+  const login = makeLayout([
+    { id: "frm", type: "form", rect: [0, 0, 6, 60], note: "Login" },
+    { id: "pic", type: "media", rect: [6, 0, 6, 60] },
+  ]);
+  const formDef = sectionRegistry.get("ui.form")!;
+  const leveled = createRegistry(
+    sectionRegistry
+      .list()
+      .map((def) => (def.type === "ui.form" ? { ...def, schema: (def.schema as z.ZodObject).extend({ level: z.enum(["h1", "h2"]).optional() }) } : def)),
+  );
+
+  it("without a hero, page header or text, the first section that takes a heading level is the h1", () => {
+    const { page } = buildPageFromLayout(login, "app", { nav: "none", header: false }, ctx, { registry: leveled });
+    expect(page.elements.frm!.props.level).toBe("h1");
+    // A text block, a hero or the frame's page header takes it back; a promoted form goes back to h2.
+    const framed = buildPageFromLayout(login, "app", SIDEBAR, ctx, { registry: leveled, previous: page });
+    expect(framed.page.elements.frm!.props.level).toBe("h2");
+    const withText = makeLayout([
+      { id: "frm", type: "form", rect: [0, 0, 6, 60] },
+      { id: "txt", type: "text", rect: [6, 0, 6, 20] },
+    ]);
+    const text = buildPageFromLayout(withText, "app", { nav: "none", header: false }, ctx, { registry: leveled });
+    expect(text.page.elements.txt!.props.level).toBe("h1");
+    expect(text.page.elements.frm!.props.level).not.toBe("h1");
+  });
+
+  it("with the real registry, form, list, cards and calendar take a level: a Login screen's page and export have one h1", () => {
+    for (const type of ["ui.form", "ui.list", "ui.cards", "ui.calendar"]) {
+      const def = sectionRegistry.get(type)!;
+      expect(def.schema.safeParse({ ...(def.defaultProps(ctx) as Record<string, unknown>), level: "h1" }).success, type).toBe(true);
+      expect(def.schema.safeParse({ ...(def.defaultProps(ctx) as Record<string, unknown>), level: "h3" }).success, type).toBe(false);
+    }
+    const { page } = buildPageFromLayout(login, "app", { nav: "none", header: false }, ctx);
+    expect(page.elements.frm!.props.level).toBe("h1");
+    const preview = renderToStaticMarkup(<PageRenderer doc={acmeDoc()} kind="app" page={page} />);
+    expect(preview.match(/<h1\b/g)).toHaveLength(1);
+    expect(preview).toMatch(/<h1 id="frm-title"/);
+    const html = renderStaticPage(acmeDoc(), "app", {}, { page, fonts: false });
+    expect(html.match(/<h1\b/g)).toHaveLength(1);
+    // A list-only screen: its list is the h1.
+    const listOnly = makeLayout([{ id: "lst", type: "list", rect: [0, 0, 12, 40] }]);
+    const listed = buildPageFromLayout(listOnly, "app", { nav: "none", header: false }, ctx).page;
+    expect(listed.elements.lst!.props.level).toBe("h1");
+    expect(renderToStaticMarkup(<PageRenderer doc={acmeDoc()} kind="app" page={listed} />)).toMatch(/<h1 id="lst-title"/);
+  });
+
+  it("with the real registry, a form is promoted only once its section takes a level (nothing invalid is written)", () => {
+    const supported = formDef.schema.safeParse({ ...(formDef.defaultProps(ctx) as Record<string, unknown>), level: "h1" }).success;
+    const { page } = buildPageFromLayout(login, "app", { nav: "none", header: false }, ctx);
+    expect(page.elements.frm!.props.level).toBe(supported ? "h1" : undefined);
+    expect(resolveSectionProps(formDef, page.elements.frm!.props, ctx).invalidKeys).toEqual([]);
+    if (supported) {
+      const html = renderToStaticMarkup(<PageRenderer doc={acmeDoc()} kind="app" page={page} />);
+      expect(html.match(/<h1\b/g)).toHaveLength(1);
+    }
   });
 });

@@ -1,5 +1,16 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { AI_RUN_IDLE, aiRunReducer, aiTargetsFor, chipView, countBlockStates, type AiRunState } from "./generateFlow";
+import {
+  AI_RUN_IDLE,
+  aiRunReducer,
+  aiTargetsFor,
+  chipView,
+  countBlockStates,
+  momentHoldsFlow,
+  revealLostCanvas,
+  type AiRunState,
+} from "./generateFlow";
 import { createLayoutStore, selectChangedBlocks, selectHasGenerated } from "./useLayoutStore";
 
 describe("aiTargetsFor", () => {
@@ -155,5 +166,33 @@ describe("store: refused Generate, changed blocks", () => {
     const changed = selectChangedBlocks(store.getState());
     expect(changed[0]).toEqual({ screenId, changed: [blockId], all: false });
     expect(aiTargetsFor(changed)).toEqual([{ id: screenId, sectionIds: [blockId] }]);
+  });
+});
+
+describe("the moment and the rest of the flow (review B)", () => {
+  const writing: AiRunState = { kind: "writing", spends: true };
+
+  it("holds the stepper while the animation plays or the AI request is in flight, never while leaving (#14)", () => {
+    expect(momentHoldsFlow(null, false, AI_RUN_IDLE)).toBe(false);
+    expect(momentHoldsFlow({ phase: "playing", layer: true }, false, AI_RUN_IDLE)).toBe(true);
+    expect(momentHoldsFlow({ phase: "holding", layer: true }, false, writing)).toBe(true);
+    expect(momentHoldsFlow({ phase: "holding", layer: false }, false, writing)).toBe(true);
+    // The request ended (done, failed, cancelled): the page stays, but leaving cancels nothing.
+    expect(momentHoldsFlow({ phase: "holding", layer: true }, false, { kind: "done", done: 3, stale: 0 })).toBe(false);
+    expect(momentHoldsFlow({ phase: "holding", layer: true }, false, { kind: "cancelled", spent: true })).toBe(false);
+    expect(momentHoldsFlow({ phase: "playing", layer: true }, true, writing)).toBe(false);
+  });
+
+  it("an animation that loses its canvas (under 640 px) ends; one without a layer or already holding does not (#29)", () => {
+    expect(revealLostCanvas({ phase: "playing", layer: true }, true)).toBe(true);
+    expect(revealLostCanvas({ phase: "playing", layer: true }, false)).toBe(false);
+    expect(revealLostCanvas({ phase: "playing", layer: false }, true)).toBe(false);
+    expect(revealLostCanvas({ phase: "holding", layer: true }, true)).toBe(false);
+    expect(revealLostCanvas(null, true)).toBe(false);
+  });
+
+  it("the layout AI copy hook lives in the LayoutStep folder, its only user (CLAUDE.md, #9)", () => {
+    expect(existsSync(fileURLToPath(new URL("./useLayoutAiCopy.ts", import.meta.url)))).toBe(true);
+    expect(existsSync(fileURLToPath(new URL("../../hooks/useLayoutAiCopy.ts", import.meta.url)))).toBe(false);
   });
 });

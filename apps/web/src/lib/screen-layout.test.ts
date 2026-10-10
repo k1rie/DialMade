@@ -1,7 +1,8 @@
-import { DEFAULT_SCOPE } from "@dialmade/layout";
+import { applyPatch, type Screen } from "@dialmade/doc";
+import { DEFAULT_SCOPE, absorbChildren, deriveResponsive, inferStructure, toCss, type LayoutBlock, type LayoutDoc } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { sampleScreensDoc } from "@/lib/ai/testing";
-import { SCREEN_ATTRIBUTE, compileScreenLayout, scopedScreenCss, screenScope } from "./screen-layout";
+import { CONTENT_CACHE_SIZE, SCREEN_ATTRIBUTE, compileScreenLayout, scopedScreenCss, screenScope } from "./screen-layout";
 
 /** Selectors of every rule (at-rules such as `@container` are not selectors). */
 function selectors(css: string): string[] {
@@ -50,5 +51,83 @@ describe("scopedScreenCss", () => {
 
   it("escapes a quote or a backslash in the id (screen ids never have them; the selector stays valid anyway)", () => {
     expect(screenScope('a"b\\c')).toBe(`:where([${SCREEN_ATTRIBUTE}="a\\"b\\\\c"]) ${DEFAULT_SCOPE}`);
+  });
+});
+
+describe("compileScreenLayout cache", () => {
+  /** The compile without any cache: what every hit must equal. */
+  const fresh = (screen: Pick<Screen, "layout" | "kind">) => {
+    const absorb = absorbChildren(screen.layout);
+    const structure = inferStructure(absorb.layout);
+    const responsive = deriveResponsive(absorb.layout, structure);
+    return toCss(absorb.layout, { kind: screen.kind, structure, responsive });
+  };
+  const withBlock = (layout: LayoutDoc, id: string, change: (block: LayoutBlock) => LayoutBlock): LayoutDoc => ({
+    ...layout,
+    blocks: { ...layout.blocks, [id]: change(layout.blocks[id]!) },
+  });
+
+  it("a patch that touches no layout reuses every screen's compile and scoped CSS (new but equal layout objects)", () => {
+    const doc = sampleScreensDoc();
+    const before = doc.screenOrder.map((id) => ({ compiled: compileScreenLayout(doc.screens[id]!), scoped: scopedScreenCss(doc.screens[id]!) }));
+    const result = applyPatch(doc, [{ op: "replace", path: "/brand/name", value: "Otra marca" }]);
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    doc.screenOrder.forEach((id, index) => {
+      const screen = result.doc.screens[id]!;
+      expect(compileScreenLayout(screen)).toBe(before[index]!.compiled);
+      expect(scopedScreenCss(screen)).toBe(before[index]!.scoped);
+    });
+    // A deep copy is the same content: the same result.
+    const first = doc.screens[doc.screenOrder[0]!]!;
+    expect(compileScreenLayout(structuredClone(first))).toBe(before[0]!.compiled);
+  });
+
+  it("any change in the layout compiles again, exactly as an uncached compile would", () => {
+    const doc = sampleScreensDoc();
+    const screen = doc.screens[doc.screenOrder[0]!]!;
+    const base = compileScreenLayout(screen);
+    const [id] = Object.keys(screen.layout.blocks) as [string];
+    const moved = { ...screen, layout: withBlock(screen.layout, id, (block) => ({ ...block, rect: { ...block.rect, h: block.rect.h + 3 } })) };
+    const compiled = compileScreenLayout(moved);
+    expect(compiled).not.toBe(base);
+    expect(compiled.css).toBe(fresh(moved));
+    expect(compiled.css).not.toBe(base.css);
+    // Back to the original content: the first result again.
+    expect(compileScreenLayout(structuredClone(screen))).toBe(base);
+  });
+
+  it("keeps apart what JSON would merge (an `undefined` prop, -0) and each kind", () => {
+    const doc = sampleScreensDoc();
+    const screen = doc.screens[doc.screenOrder[0]!]!;
+    const [id] = Object.keys(screen.layout.blocks) as [string];
+    const base = compileScreenLayout(screen);
+    const undefinedNote = { ...screen, layout: withBlock(screen.layout, id, (block) => ({ ...block, note: undefined })) };
+    expect(compileScreenLayout(undefinedNote)).not.toBe(base);
+    const minusZero = { ...screen, layout: withBlock(screen.layout, id, (block) => ({ ...block, z: -0 })) };
+    const zero = { ...screen, layout: withBlock(screen.layout, id, (block) => ({ ...block, z: 0 })) };
+    expect(compileScreenLayout(minusZero)).not.toBe(compileScreenLayout(zero));
+    const otherKind = { ...screen, kind: screen.kind === "app" ? ("landing" as const) : ("app" as const) };
+    const compiledOther = compileScreenLayout(otherKind);
+    expect(compiledOther).not.toBe(base);
+    expect(compiledOther.css).toBe(fresh(otherKind));
+    expect(compileScreenLayout(screen)).toBe(base);
+  });
+
+  it("is bounded: the least recently used content is dropped, a recently used one stays", () => {
+    const doc = sampleScreensDoc();
+    const screen = doc.screens[doc.screenOrder[0]!]!;
+    const [id] = Object.keys(screen.layout.blocks) as [string];
+    const version = (n: number) => ({ ...screen, layout: withBlock(screen.layout, id, (block) => ({ ...block, label: `v${n}` })) });
+    const oldest = compileScreenLayout(version(0));
+    const kept = compileScreenLayout(version(1));
+    for (let n = 2; n <= CONTENT_CACHE_SIZE; n++) {
+      compileScreenLayout(version(n));
+      // Used on every step: never the least recent one.
+      expect(compileScreenLayout(version(1))).toBe(kept);
+    }
+    expect(compileScreenLayout(version(1))).toBe(kept);
+    const recompiled = compileScreenLayout(version(0));
+    expect(recompiled).not.toBe(oldest);
+    expect(recompiled.css).toBe(oldest.css);
   });
 });

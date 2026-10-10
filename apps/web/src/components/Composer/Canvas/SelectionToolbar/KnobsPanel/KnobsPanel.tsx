@@ -11,7 +11,10 @@ import { KnobField } from "./KnobField";
 
 export type KnobsPanelProps = {
   doc: DesignDoc;
-  /** The page shown: on a screen, an edited prop is pinned (and the app frame's goes to every app screen). */
+  /**
+   * The page shown: on a screen, an edited prop is pinned; an app frame's edit goes to the layout where it owns
+   * it (navigation, page header, title = the screen's name) or is pinned on the frame (`setPropOps`).
+   */
   target: PageTarget;
   id: string;
   logoUrl: string | undefined;
@@ -48,7 +51,9 @@ export function KnobsPanel({ doc, target, id, logoUrl }: KnobsPanelProps) {
       // From the live doc: a slider sends several edits before the next render, and the pin is added once.
       const live = store.getState().doc;
       const liveTarget = live ? pageTarget(live, target.key) : null;
-      if (live && liveTarget) actions.applyPatch(setPropOps(live, liveTarget, id, key, next));
+      // Empty for a frame title that cleans to the screen's current name (typing a trailing space).
+      const ops = live && liveTarget ? setPropOps(live, liveTarget, id, key, next) : [];
+      if (ops.length > 0) actions.applyPatch(ops);
     };
     return (
       <KnobField

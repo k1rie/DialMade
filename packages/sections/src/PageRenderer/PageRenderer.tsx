@@ -88,17 +88,18 @@ export function PageRenderer({
   const page = (stored ?? fallbackPage) as Page;
 
   const linkCtx = useMemo(() => linkContext({ ...(linkHref && { linkHref }), ...(links && { links }) }), [linkHref, links]);
+  // The selection is not in `ctx` (only the frames read it, through `scope.selectedId`): selecting a section
+  // keeps `ctx` and lets every section whose element did not change skip its render (`ElementView`).
   const ctx = useMemo<RenderContext>(
     () => ({
       ...content,
       mode,
       interactive,
       ...(onSelect && { onSelect }),
-      ...(selectedId !== undefined && { selectedId }),
       doc,
       ...linkCtx,
     }),
-    [content, mode, interactive, onSelect, selectedId, doc, linkCtx],
+    [content, mode, interactive, onSelect, doc, linkCtx],
   );
   const navigate =
     onNavigate && !interactive
@@ -117,6 +118,7 @@ export function PageRenderer({
     content,
     registry,
     hidden,
+    ...(selectedId !== undefined && { selectedId }),
     ...(exclude && { exclude }),
     ...(onSectionError && { onSectionError }),
   };

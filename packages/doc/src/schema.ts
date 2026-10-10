@@ -47,7 +47,9 @@ import {
   LOCALE_IDS,
   LOCK_KEYS,
   MAX_PINNED,
+  MAX_REMOVED_STASH,
   MAX_SCREENS,
+  MAX_STASHED_SCREENS,
   MOBILE_BEHAVIORS,
   MOTION_TIER_IDS,
   OUTPUT_KIND_IDS,
@@ -436,7 +438,7 @@ type PageShape = {
   root: string;
   elements: Record<string, { type: string; props: Record<string, unknown>; children: string[] }>;
   hidden?: string[] | undefined;
-  stash?: Record<string, { type: string; props: Record<string, unknown> }> | undefined;
+  stash?: Record<string, { type: string; props: Record<string, unknown>; pinned?: string[] | undefined }> | undefined;
 };
 
 const quoteList = (items: readonly string[]) => {
@@ -491,7 +493,10 @@ function treeIssues(page: PageShape, namespaces: readonly string[], owner: strin
     else if (id === root) issues.push({ message: "The root cannot be hidden", path: ["hidden", i] });
   });
   for (const [id, entry] of Object.entries(page.stash ?? {})) {
-    if (id in elements) issues.push({ message: `"${id}" has an element: only blocks without one are stashed`, path: ["stash", id] });
+    // A retyped block keeps its element (new type) and its previous props (old type) side by side.
+    if (id in elements && elements[id]!.type === entry.type) {
+      issues.push({ message: `"${id}" has an element of the same type: only blocks without one (or of another type) are stashed`, path: ["stash", id] });
+    }
     const namespace = entry.type.split(".")[0]!;
     if (!namespaces.includes(namespace)) {
       issues.push({ message: `A ${owner} only admits ${quoteList(namespaces)} elements, got "${entry.type}"`, path: ["stash", id, "type"] });
@@ -501,14 +506,30 @@ function treeIssues(page: PageShape, namespaces: readonly string[], owner: strin
   return issues;
 }
 
+/** A prop the user edited, as a JSON Pointer relative to the element's props (`/title`, `/items/2/title`). */
+const PinnedPointerSchema = z
+  .string()
+  .max(256)
+  .refine((pointer) => pointer.length > 0 && JSON_POINTER.test(pointer), "Pinned props are JSON Pointers relative to props, e.g. /title");
+
+/** `pinned` of a block, a stashed block or an app frame: unique pointers, at most `MAX_PINNED`. */
+const PinnedListSchema = z.array(PinnedPointerSchema).max(MAX_PINNED).refine(unique, "Pinned props must be unique");
+
 /**
- * Props of a block that has no element of its own because another block's section absorbed it (a media inside
- * a hero), kept by `buildPageFromLayout` so moving the block back out restores its copy and pinned values.
+ * The last props of a block without an element of that type, kept by `buildPageFromLayout` so they come back:
+ * a block another block's section absorbed (a media inside a hero) until it is moved back out, a block whose
+ * type changed (its old-type props, until the change is undone) and a block a «Generar» removed (until a Layout
+ * undo brings it back, at most `MAX_REMOVED_STASH`). Only a removed block carries `pinned`: its layout block is
+ * gone, so its pinned props travel with it.
  */
 export const StashedElementSchema = z.strictObject({
   type: z.string().regex(ELEMENT_TYPE, "Element types are namespaced, e.g. 'landing.hero' or 'ui.button'"),
   props: z.record(z.string(), z.unknown()),
+  pinned: PinnedListSchema.optional(),
 });
+
+/** Absorbed and retyped blocks (at most one per block), removed ones and the app frame. */
+const STASH_MAX = MAX_BLOCKS + MAX_REMOVED_STASH + 1;
 
 /** The members of a page, without its rules: `PageSchema` adds the v1 rules, `ScreenSchema` the screen-page ones. */
 const PageShapeSchema = z.strictObject({
@@ -518,10 +539,16 @@ const PageShapeSchema = z.strictObject({
   root: ElementIdSchema,
   elements: z.record(ElementIdSchema, ElementSchema),
   hidden: z.array(ElementIdSchema).optional(),
-  /** Screen pages only: absorbed blocks' props by block id (never an element id of the page). */
+  /**
+   * Screen pages only: props of absorbed, retyped and removed blocks by block id (`StashedElementSchema`), and
+   * of the app frame (`shell`) while the screen has no navigation.
+   */
   stash: z
     .record(ElementIdSchema, StashedElementSchema)
-    .refine((stash) => Object.keys(stash).length <= MAX_BLOCKS, `At most ${MAX_BLOCKS} stashed blocks`)
+    .refine(
+      (stash) => Object.keys(stash).length <= STASH_MAX,
+      `At most ${STASH_MAX} stashed blocks`,
+    )
     .optional(),
 });
 
@@ -584,12 +611,6 @@ const GeneratedFingerprintSchema = z.strictObject({
   noteHash: z.string().regex(/^[0-9a-z]{1,13}$/, "Expected a base36 hash").optional(),
 });
 
-/** A prop the user edited, as a JSON Pointer relative to the element's props (`/title`, `/items/2/title`). */
-const PinnedPointerSchema = z
-  .string()
-  .max(256)
-  .refine((pointer) => pointer.length > 0 && JSON_POINTER.test(pointer), "Pinned props are JSON Pointers relative to props, e.g. /title");
-
 export const LayoutBlockSchema = z.strictObject({
   type: LibraryBlockTypeSchema,
   /** Max length (`LABEL_MAX`) is checked by `validateLayout`. */
@@ -601,7 +622,7 @@ export const LayoutBlockSchema = z.strictObject({
   parentId: z.string().optional(),
   z: z.number(),
   hidden: z.boolean().optional(),
-  pinned: z.array(PinnedPointerSchema).max(MAX_PINNED).refine(unique, "Pinned props must be unique").optional(),
+  pinned: PinnedListSchema.optional(),
   generated: GeneratedFingerprintSchema.optional(),
   responsive: z.strictObject({ tablet: BlockOverrideSchema.optional(), mobile: BlockOverrideSchema.optional() }).optional(),
   /** Screen this block links to (preview navigation and export). Checked against `screens` by the document. */
@@ -636,6 +657,8 @@ export const AppShellSchema = z.strictObject({
   /** Page header (title and primary action) above the content. */
   header: z.boolean(),
   activeItem: SingleLineText(64).optional(),
+  /** Frame props edited in «Ajustar» (pointers relative to the `app.shell` props): regenerating keeps them. */
+  pinned: PinnedListSchema.optional(),
 });
 
 /** `/` or `/` + lowercase slug segments (`/precios`, `/app/ajustes-2`), at most `ROUTE_MAX` characters. */
@@ -778,6 +801,24 @@ function screensIssues(doc: ScreensDocShape): Issue[] {
 }
 
 /**
+ * Rules of `screenStash` (screens a «Generar» removed): record keys are the ids, at most `MAX_STASHED_SCREENS`,
+ * and never a screen the document still has (bringing one back takes it out of the stash in the same write).
+ * The document rules of the screens (routes, links, shared navigation) do not apply: nothing renders them.
+ */
+function screenStashIssues(doc: { screens: Record<string, unknown>; screenStash?: Record<string, ScreenShape> | undefined }): Issue[] {
+  const issues: Issue[] = [];
+  const stash = doc.screenStash ?? {};
+  const keys = Object.keys(stash);
+  if (keys.length > MAX_STASHED_SCREENS) issues.push({ message: `At most ${MAX_STASHED_SCREENS} stashed screens`, path: ["screenStash"] });
+  for (const key of keys) {
+    const id = stash[key]?.id;
+    if (id !== key) issues.push({ message: `Stashed screen key "${key}" and id "${id}" differ`, path: ["screenStash", key, "id"] });
+    if (Object.hasOwn(doc.screens, key)) issues.push({ message: `"${key}" is a screen of the document: it cannot be stashed too`, path: ["screenStash", key] });
+  }
+  return issues;
+}
+
+/**
  * Cheap bounds checked before the full parse (`safeParseDesignDoc`, `applyPatch`): more than `MAX_SCREENS`
  * screens (or `screenOrder` entries), or a layout with more than `MAX_BLOCKS` blocks, is rejected without
  * validating a single screen, so an oversized document never pays for the whole parse. Same paths and
@@ -794,8 +835,21 @@ export function documentSizeIssues(input: unknown): z.core.$ZodIssue[] {
     input: undefined,
     ...(params && { params }),
   });
-  const { screens, screenOrder } = input;
+  const { screens, screenOrder, screenStash } = input;
   if (Array.isArray(screenOrder) && screenOrder.length > MAX_SCREENS) issues.push(custom(["screenOrder"], `At most ${MAX_SCREENS} screens`));
+  if (isPlainObject(screenStash)) {
+    const keys = Object.keys(screenStash);
+    if (keys.length > MAX_STASHED_SCREENS) issues.push(custom(["screenStash"], `At most ${MAX_STASHED_SCREENS} stashed screens`));
+    else {
+      for (const key of keys) {
+        const screen = screenStash[key];
+        const blocks = isPlainObject(screen) && isPlainObject(screen.layout) ? screen.layout.blocks : undefined;
+        if (isPlainObject(blocks) && Object.keys(blocks).length > MAX_BLOCKS) {
+          issues.push(custom(["screenStash", key, "layout", "blocks"], `At most ${MAX_BLOCKS} blocks`, { layoutCode: "too-many-blocks" }));
+        }
+      }
+    }
+  }
   if (isPlainObject(screens)) {
     const keys = Object.keys(screens);
     if (keys.length > MAX_SCREENS) issues.push(custom(["screens"], `At most ${MAX_SCREENS} screens`));
@@ -855,10 +909,17 @@ export const DesignDocSchema = z
     /** Screens of Modo Layout, by id. Their order is `screenOrder`. */
     screens: z.record(ElementIdSchema, ScreenSchema).prefault({}),
     screenOrder: z.array(ElementIdSchema).max(MAX_SCREENS).default([]),
+    /**
+     * Screens a «Generar» removed, by id, oldest first (at most `MAX_STASHED_SCREENS`): when a Layout undo
+     * brings one back, the next «Generar» rebuilds it from its last page and pins (critique: never lose edits).
+     * Never rendered, exported or sent to the AI.
+     */
+    screenStash: z.record(ElementIdSchema, ScreenSchema).optional(),
   })
   .superRefine((doc, ctx) => {
     checkImports(doc.provenance.imports ?? [], ctx);
     addIssues(ctx, screensIssues(doc));
+    addIssues(ctx, screenStashIssues(doc));
     const { productType, recipeId, pairingId } = doc.brief;
     if (productType !== GENERIC_PRODUCT_ID && !getProductType(productType)) {
       ctx.addIssue({ code: "custom", message: `Unknown product type "${productType}"`, path: ["brief", "productType"] });

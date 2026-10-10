@@ -1,7 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Button, DialogPanel, DialogPreview } from "@dialmade/ui";
+import { Button, DialogPanel, DialogPreview, buttonStyleProps } from "@dialmade/ui";
+import { linkProps } from "../../context";
 import { EditInert } from "../../PageRenderer/EditInert";
 import type { SectionComponentProps } from "../../types";
 import type { ConfirmDialogProps } from "./schema";
@@ -10,7 +11,8 @@ import "./ConfirmDialog.css";
 /**
  * A confirmation, drawn open and static: over a dimmed page (modal) or as a bare panel. As a container
  * (a «Modal» block of Layout mode with a form or a list inside), the child elements go in its body; in edit
- * mode only its buttons are inert, so the children stay selectable.
+ * mode only its buttons are inert, so the children stay selectable. When the block links to a screen
+ * (`linkTo`), the confirm button is a link to it (preview and export).
  */
 export function ConfirmDialog({
   title,
@@ -21,10 +23,13 @@ export function ConfirmDialog({
   destructive,
   variant,
   ctx,
+  elementId,
   children,
 }: SectionComponentProps<ConfirmDialogProps>) {
   const titleId = useId();
   const descriptionId = useId();
+  const confirmVariant = destructive ? "destructive" : "primary";
+  const linked = (ctx.linkTarget?.(elementId) ?? null) !== null;
   const panel = {
     title,
     description,
@@ -34,7 +39,13 @@ export function ConfirmDialog({
     footer: (
       <EditInert ctx={ctx}>
         <Button variant="outline">{cancelLabel}</Button>
-        <Button variant={destructive ? "destructive" : "primary"}>{confirmLabel}</Button>
+        {linked ? (
+          <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: confirmVariant })}>
+            <span className="dl-button__label">{confirmLabel}</span>
+          </a>
+        ) : (
+          <Button variant={confirmVariant}>{confirmLabel}</Button>
+        )}
       </EditInert>
     ),
     children:

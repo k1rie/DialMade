@@ -1,4 +1,5 @@
 import type { OutputKind } from "@dialmade/catalog";
+import { sanitizeLabel } from "@dialmade/layout";
 import { OUTPUT_KIND_IDS } from "./constants";
 import type { PatchOperation } from "./patch";
 import { coversPointer, toPointer, type DocPointer } from "./pointer";
@@ -89,5 +90,76 @@ export function removeScreenOps(doc: DesignDoc, id: ScreenId): PatchOperation[] 
   const at = doc.screenOrder.indexOf(id);
   if (at >= 0) ops.push({ op: "remove", path: `/screenOrder/${at}` });
   ops.push({ op: "remove", path: root });
+  return ops;
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Renaming a screen outside the Layout step                                                        */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** Longest slug of an automatic route (the Layout store's rule). */
+const ROUTE_SLUG_MAX = 48;
+
+/** `"Ajustes (copia)"` → `"ajustes-copia"`; `"screen"` when nothing is left. */
+function routeSlug(name: string): string {
+  const slug = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, ROUTE_SLUG_MAX)
+    .replace(/-+$/, "");
+  return slug || "screen";
+}
+
+/** `/ajustes` or `/ajustes-2` for «Ajustes»: a route made from the name, which follows a rename. */
+function isAutoRoute(route: string, name: string): boolean {
+  const base = `/${routeSlug(name)}`;
+  if (route === base) return true;
+  const suffix = route.startsWith(`${base}-`) ? route.slice(base.length + 1) : "";
+  return /^\d+$/.test(suffix);
+}
+
+function uniqueRoute(base: string, taken: ReadonlySet<string>): string {
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+}
+
+/** `name`, else `name 2`, `name 3`…, shortening `name` so the number always fits the label limit. */
+function uniqueScreenName(name: string, taken: ReadonlySet<string>): string {
+  if (!taken.has(name)) return name;
+  for (let n = 2; n <= taken.size + 2; n++) {
+    const suffix = ` ${n}`;
+    let base = [...name];
+    let candidate = sanitizeLabel(`${base.join("")}${suffix}`);
+    while (!candidate.endsWith(suffix) && base.length > 0) {
+      base = base.slice(0, -1);
+      candidate = sanitizeLabel(`${base.join("").trimEnd()}${suffix}`);
+    }
+    if (!taken.has(candidate)) return candidate;
+  }
+  return name;
+}
+
+/**
+ * The patch that renames a screen with the Layout step's rules (decision 43): the name is cleaned
+ * (`sanitizeLabel`) and kept unique («Ajustes» next to another «Ajustes» becomes «Ajustes 2»), and an
+ * automatic route (`/<slug of the old name>`, never `/`) follows the new name, unique among the routes.
+ * Empty when the screen does not exist, the name cleans to nothing or nothing changes. A lock on the name
+ * makes `applyPatch` fail with `locked`.
+ */
+export function renameScreenOps(doc: Pick<DesignDoc, "screens">, id: ScreenId, rawName: string): PatchOperation[] {
+  const screen = Object.hasOwn(doc.screens, id) ? doc.screens[id] : undefined;
+  const sanitized = sanitizeLabel(rawName);
+  if (!screen || !sanitized) return [];
+  const others = Object.values(doc.screens).filter((other) => other.id !== id);
+  const name = uniqueScreenName(sanitized, new Set(others.map((other) => other.name)));
+  if (name === screen.name) return [];
+  const ops: PatchOperation[] = [{ op: "replace", path: screenPointer(id, "name"), value: name }];
+  if (screen.route !== "/" && isAutoRoute(screen.route, screen.name)) {
+    const route = uniqueRoute(`/${routeSlug(name)}`, new Set(others.map((other) => other.route)));
+    if (route !== screen.route) ops.push({ op: "replace", path: screenPointer(id, "route"), value: route });
+  }
   return ops;
 }

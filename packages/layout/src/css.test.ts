@@ -83,6 +83,35 @@ describe("toCss", () => {
     expect(ruleOf(app, '.dl-layout [data-dl-id="plans"]')).toContain("min-height: 320px;");
   });
 
+  test("landing: a media beside a taller block keeps its columns (the ratio never sets the width)", () => {
+    // Review B #10: «Características» 7 columns wide and a Media at column 8, 5 wide, in the same row. The
+    // row stretches its items; without `justify-self: stretch` the Media took its width from the row height
+    // through the ratio and spilled out of the page (1315 px in a 1440 px page). Also in the export.
+    const layout = makeLayout([
+      { id: "nav", type: "navbar", rect: [0, 0, 12, 8] },
+      { id: "features", type: "features", rect: [0, 80, 7, 40] },
+      { id: "media", type: "media", rect: [7, 80, 5, 40] },
+      { id: "chart", type: "chart", rect: [0, 130, 4, 30] },
+      { id: "text", type: "text", rect: [4, 130, 8, 60] },
+    ]);
+    const css = toCss(layout, { kind: "landing" });
+    expect(css).toContain("align-items: stretch;");
+    for (const id of ["media", "chart"]) {
+      const rule = ruleOf(css, `.dl-layout [data-dl-id="${id}"]`) ?? "";
+      expect(rule).toContain("justify-self: stretch;");
+      expect(rule).toMatch(/aspect-ratio: \d+ \/ \d+;/);
+    }
+    expect(ruleOf(css, '.dl-layout [data-dl-id="features"]')).not.toContain("justify-self");
+    // Nothing to undo on tablet or mobile: the declaration holds (a flex column ignores it).
+    expect(chunk(css, "(width < 64rem)")).not.toContain("justify-self");
+    expect(chunk(css, "(width < 40rem)")).not.toContain("justify-self");
+    // App heights are literal (no ratio), so nothing to keep in check.
+    expect(toCss(layout, { kind: "app" })).not.toContain("justify-self");
+    // A lone media on the scope (no grid around it) keeps its percentage width only.
+    const lone = toCss(makeLayout([{ id: "m", type: "media", rect: [2, 0, 6, 30] }]), { kind: "landing" });
+    expect(ruleOf(lone, '.dl-layout [data-dl-id="m"]')).not.toContain("justify-self");
+  });
+
   test("app: a modal with a form inside keeps its drawn height on every breakpoint", () => {
     const css = toCss(fixture("modal-overlay").layout, { kind: "app" });
     expect(ruleOf(css, '.dl-layout [data-dl-id="dialog"]')).toContain("min-height: 240px;");

@@ -1,5 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { acceptsChild, BLOCK_CATEGORIES, blockDefOrFree, blocksInCategory, getBlockDef, isLibraryBlockType, LIBRARY } from "./library";
+import {
+  acceptsChild,
+  BLOCK_CATEGORIES,
+  blockDefOrFree,
+  blocksInCategory,
+  getBlockDef,
+  isLibraryBlockType,
+  isLinkableBlockType,
+  LIBRARY,
+  LINKABLE_BLOCK_TYPES,
+} from "./library";
 import type { LibraryBlockType, ReadyBlockType, SoonBlockType } from "./types";
 
 const READY: readonly ReadyBlockType[] = [
@@ -72,5 +82,20 @@ describe("LIBRARY", () => {
     expect(acceptsChild("hero", "table")).toBe(false);
     expect(acceptsChild("container", "table")).toBe(true);
     expect(acceptsChild("modal", "kpis")).toBe(true);
+  });
+
+  test("linkable blocks: only ready blocks whose section draws a primary action (review B #11)", () => {
+    expect([...LINKABLE_BLOCK_TYPES].sort()).toEqual(
+      ["activity", "cards", "cta", "empty", "form", "hero", "list", "modal", "navbar", "pricing", "settings", "text"],
+    );
+    for (const type of LINKABLE_BLOCK_TYPES) expect(getBlockDef(type).status, type).toBe("ready");
+    // Nothing to click: a link there would do nothing in the preview or the export.
+    for (const type of ["table", "kpis", "chart", "media", "features", "logos", "testimonials", "calendar", "footer", "sidebar", "free", "container", ...SOON]) {
+      expect(isLinkableBlockType(type), type).toBe(false);
+    }
+    expect(isLinkableBlockType("banana")).toBe(false);
+    expect(isLinkableBlockType(undefined)).toBe(false);
+    // The library carries it too, in step with the set.
+    for (const def of LIBRARY) expect(def.linkable, def.type).toBe(LINKABLE_BLOCK_TYPES.has(def.type));
   });
 });

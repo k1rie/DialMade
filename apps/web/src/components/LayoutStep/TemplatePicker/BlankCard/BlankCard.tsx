@@ -34,6 +34,8 @@ export function BlankCard({ onChoose }: BlankCardProps) {
           type="button"
           aria-expanded={open}
           aria-controls={open ? questionId : undefined}
+          // Named by the title alone: the hint is the description, so it is not read twice.
+          aria-labelledby={`${id}-title`}
           aria-describedby={`${id}-hint`}
           onClick={() => setOpen((value) => !value)}
           className="flex w-full flex-col gap-4 rounded-card text-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
@@ -47,7 +49,9 @@ export function BlankCard({ onChoose }: BlankCardProps) {
             </span>
           </span>
           <span className="flex flex-col gap-1 px-1.5">
-            <span className="text-h3 text-fg">{t.templatePicker.blank}</span>
+            <span id={`${id}-title`} className="text-h3 text-fg">
+              {t.templatePicker.blank}
+            </span>
             <span id={`${id}-hint`} className="text-small text-pretty text-muted">
               {t.templatePicker.blankHint}
             </span>

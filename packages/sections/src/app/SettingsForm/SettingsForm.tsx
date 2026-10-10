@@ -14,7 +14,9 @@ const preventSubmit = (event: FormEvent<HTMLFormElement>) => event.preventDefaul
 /**
  * Workspace settings: text fields, selects and switches with the theme applied. Fields are
  * uncontrolled and keyed by their value, so an edit in the inspector shows up at once. `count` shows the
- * first fields (name, email, language, time zone, about) and then the switches.
+ * first fields (name, email, language, time zone, about) and then the switches. A block linked to a screen
+ * saves there, like `ui.form`: the static export submits to it (`action`, no JS); in React the submit is
+ * prevented and the button's `data-dl-screen-link` lets the navigable preview switch screens.
  */
 export function SettingsForm({
   title,
@@ -39,11 +41,18 @@ export function SettingsForm({
   const shown = settingsShown(count, notifications.length);
   const has = (field: (typeof shown.fields)[number]) => shown.fields.includes(field);
   const toggles = notifications.slice(0, shown.toggles);
+  const href = ctx.blockLink?.(elementId) ?? null;
+  const target = ctx.linkTarget?.(elementId) ?? null;
 
   return (
     <Card as="section" className="dl-app-settings" data-layout={variant === "split" ? "split" : "stacked"} aria-labelledby={titleId}>
       <WidgetHeader id={titleId} title={title} description={description} />
-      <form className="dl-app-settings__form" onSubmit={preventSubmit} aria-labelledby={titleId}>
+      <form
+        className="dl-app-settings__form"
+        onSubmit={preventSubmit}
+        aria-labelledby={titleId}
+        {...(href ? { action: href, method: "get" } : {})}
+      >
         <div className="dl-app-settings__group" role="group" aria-labelledby={generalId}>
           <div className="dl-app-settings__group-head">
             <h3 id={generalId} className="dl-app-settings__group-title">
@@ -117,7 +126,9 @@ export function SettingsForm({
         ) : null}
         <div className="dl-app-settings__footer">
           <Button variant="ghost">{strings.cancel}</Button>
-          <Button type="submit">{strings.save}</Button>
+          <Button type="submit" data-dl-screen-link={target ?? undefined}>
+            {strings.save}
+          </Button>
         </div>
       </form>
     </Card>

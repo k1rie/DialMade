@@ -18,11 +18,7 @@ export const AI_TARGETS = [
 ] as const;
 export type AiTargetId = (typeof AI_TARGETS)[number]["id"];
 
-/**
- * A modal <dialog> sits in the top layer, above the app's Toaster: the dialog mounts its own one
- * (same look as Providers) and its toasts target it.
- */
-export const EXPORT_TOASTER_ID = "export-dialog";
+export { EXPORT_TOASTER_ID } from "@/lib/toasters";
 
 export const TOASTER_STYLE = {
   "--normal-bg": "var(--app-bg-elevated)",

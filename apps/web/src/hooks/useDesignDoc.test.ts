@@ -128,6 +128,28 @@ describe("active page key", () => {
   });
 });
 
+describe("undo history memory (review B #20)", () => {
+  it("each step keeps only what changed: untouched screens are shared with the current document", () => {
+    const { actions, history, doc } = setup();
+    actions.applyGenerate({ screens: draft() });
+    const generated = doc();
+    const snapshot = JSON.stringify(generated);
+    for (let i = 1; i <= 5; i++) expect(actions.setDials({ density: i }).ok).toBe(true);
+    expect(actions.setBrandText({ name: "Lumen Pro" }).ok).toBe(true);
+    const past = history().pastStates.map((state) => state.doc!);
+    expect(past).toHaveLength(6);
+    for (const version of past) {
+      expect(version.screens["s-pricing"]).toBe(doc().screens["s-pricing"]);
+      expect(version.screens["s-home"]!.layout).toBe(doc().screens["s-home"]!.layout);
+    }
+    // Sharing never leaks edits backwards: undo to the start gives the generated document back, byte for byte.
+    for (let i = 0; i < 6; i++) history().undo();
+    expect(JSON.stringify(doc())).toBe(snapshot);
+    for (let i = 0; i < 6; i++) history().redo();
+    expect(doc().brand.name).toBe("Lumen Pro");
+  });
+});
+
 function removeScreen(doc: DesignDoc, id: string) {
   return [
     { op: "remove" as const, path: `/screenOrder/${doc.screenOrder.indexOf(id)}` },

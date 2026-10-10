@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sectionLevelSchema } from "../lib/heading";
 import { FIELD_IDS, FIELD_KINDS, FORM_PURPOSES } from "../content";
 import { UI_FRAMES } from "../lib/fit";
 
@@ -29,6 +30,8 @@ export const formSchema = z.strictObject({
   /** Fields shown, in the purpose's order. */
   count: z.number().int().min(1).max(FIELD_IDS.length + 1),
   frame: z.enum(UI_FRAMES),
+  /** Heading level of the title (`sectionLevelSchema`): absent is h2. */
+  level: sectionLevelSchema,
 });
 
 export type FormProps = z.infer<typeof formSchema>;

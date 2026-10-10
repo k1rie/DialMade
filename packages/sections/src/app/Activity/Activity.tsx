@@ -1,16 +1,19 @@
 "use client";
 
-import { Avatar, Button, Card, Icon } from "@dialmade/ui";
+import { Avatar, Button, Card, Icon, buttonStyleProps } from "@dialmade/ui";
+import { linkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import { appStrings } from "../content";
 import { WidgetHeader } from "../WidgetHeader";
 import type { ActivityProps } from "./schema";
 import "./Activity.css";
 
-/** Recent activity: a timeline of tinted icons by tone, or a list of people. */
+/** Recent activity: a timeline of tinted icons by tone, or a list of people. «Ver todo» follows the block's `linkTo`. */
 export function Activity({ title, description, items, count, showViewAll, variant, ctx, elementId }: SectionComponentProps<ActivityProps>) {
   const titleId = `${elementId}-title`;
   const timeline = variant !== "list";
+  const linked = (ctx.linkTarget?.(elementId) ?? null) !== null;
+  const viewAll = appStrings(ctx.locale).viewAll;
   return (
     <Card as="section" className="dl-app-activity" data-layout={timeline ? "timeline" : "list"} aria-labelledby={titleId}>
       <WidgetHeader
@@ -19,9 +22,16 @@ export function Activity({ title, description, items, count, showViewAll, varian
         description={description}
         actions={
           showViewAll ? (
-            <Button variant="ghost" size="sm" iconEnd="arrow-right">
-              {appStrings(ctx.locale).viewAll}
-            </Button>
+            linked ? (
+              <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "ghost", size: "sm" })}>
+                <span className="dl-button__label">{viewAll}</span>
+                <Icon name="arrow-right" className="dl-button__icon" />
+              </a>
+            ) : (
+              <Button variant="ghost" size="sm" iconEnd="arrow-right">
+                {viewAll}
+              </Button>
+            )
           ) : null
         }
       />

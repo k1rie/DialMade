@@ -10,6 +10,7 @@ import {
 } from "@dialmade/catalog";
 import {
   DesignDocError,
+  MAX_STASHED_SCREENS,
   applyPatch,
   createDesignDoc,
   hardLocks,
@@ -35,6 +36,7 @@ import type { AppShell, BlockId, GeneratedFingerprint, LayoutBlock, LayoutDoc, R
 import { generateTheme, type PaletteStyleId } from "@dialmade/palette";
 import {
   APP_SHELL_TYPE,
+  LAYOUT_SCOPE_ID,
   SHELL_ELEMENT_ID,
   addDefaultPage,
   buildDefaultPage,
@@ -258,6 +260,12 @@ export type GeneratedScreenInput = {
   /** Precomputed for this layout's geometry (the canvas cache); computed again when missing. */
   structure?: Structure;
   responsive?: ResponsiveLayout;
+  /**
+   * A «Duplicar» copy the document does not store yet: its source screen and the copied blocks (copy block id →
+   * source block id). The copy compiles over the source's stored page (`copyBaseline`), so it keeps what the user
+   * wrote there. Ignored once the document stores the screen.
+   */
+  copyOf?: { screenId: string; blocks: Readonly<Record<BlockId, BlockId>> };
 };
 
 export type GenerateOptions = {
@@ -283,30 +291,86 @@ const SHARED_SHELL_KEYS = ["brandName", "workspace", "searchPlaceholder", "user"
 
 const hasFrame = (page: Page | undefined) => page?.elements[SHELL_ELEMENT_ID]?.type === APP_SHELL_TYPE;
 
-function sharedShellProps(doc: DesignDoc): Record<string, unknown> | undefined {
+/** The first app frame's shared props, and its pins on them (a new frame takes both: the edit stays pinned). */
+function sharedShellProps(doc: DesignDoc): { props: Record<string, unknown>; pinned: string[] } | undefined {
   for (const screen of orderedScreens(doc)) {
     if (!hasFrame(screen.page)) continue;
     const props = screen.page.elements[SHELL_ELEMENT_ID]!.props;
     const out: Record<string, unknown> = {};
     for (const key of SHARED_SHELL_KEYS) if (Object.hasOwn(props, key)) out[key] = props[key];
-    return out;
+    const shared = new Set<string>(SHARED_SHELL_KEYS);
+    const pinned = (screen.shell?.pinned ?? []).filter((pointer) => shared.has(pointerSegments(pointer)[0] ?? ""));
+    return { props: out, pinned };
   }
   return undefined;
 }
 
 /**
+ * The screen a build compiles over: the document's screen with that id or, when a Layout undo brought back a
+ * screen a «Generar» removed, its copy in `screenStash` (its last page, pins and fingerprints).
+ */
+function storedScreen(doc: DesignDoc, id: string): Screen | undefined {
+  if (Object.hasOwn(doc.screens, id)) return doc.screens[id];
+  return doc.screenStash && Object.hasOwn(doc.screenStash, id) ? doc.screenStash[id] : undefined;
+}
+
+/**
+ * What a «Duplicar» copy compiles over before the document stores it (review B #26): its source's stored screen
+ * with the copied blocks under their new ids (`copyOf.blocks`), so the copy keeps the source's copy, pins,
+ * fingerprints, frame and dials instead of fresh copy. Only the copied blocks' elements and stash entries come
+ * along, with the root, the layout scope and the frame (whose ids the copy shares): the source's other blocks are
+ * not the copy's, so they never land in its stash. `undefined` when there is nothing to carry over.
+ */
+function copyBaseline(doc: DesignDoc, source: GeneratedScreenInput): Screen | undefined {
+  const copyOf = source.copyOf;
+  if (!copyOf || copyOf.screenId === source.screenId) return undefined;
+  const from = storedScreen(doc, copyOf.screenId);
+  if (!from || from.kind !== source.kind) return undefined;
+  /** Source block id → copy block id, for the copied blocks still on the copy. */
+  const rename = new Map<string, string>();
+  for (const [copyId, sourceId] of Object.entries(copyOf.blocks)) {
+    if (Object.hasOwn(source.layout.blocks, copyId) && !rename.has(sourceId) && Object.hasOwn(from.layout.blocks, sourceId)) rename.set(sourceId, copyId);
+  }
+  if (rename.size === 0) return undefined;
+  const shared = new Set([from.page.root, LAYOUT_SCOPE_ID, SHELL_ELEMENT_ID]);
+  const idOf = (id: string) => rename.get(id) ?? (shared.has(id) ? id : undefined);
+  const elements: Page["elements"] = {};
+  for (const [id, element] of Object.entries(from.page.elements)) {
+    const next = idOf(id);
+    if (next === undefined) continue;
+    elements[next] = { ...element, children: element.children.map(idOf).filter((child): child is string => child !== undefined) };
+  }
+  const stash: NonNullable<Page["stash"]> = {};
+  for (const [id, entry] of Object.entries(from.page.stash ?? {})) {
+    const next = idOf(id);
+    if (next !== undefined) stash[next] = entry;
+  }
+  const hidden = (from.page.hidden ?? []).map(idOf).filter((id): id is string => id !== undefined && Object.hasOwn(elements, id));
+  const blocks: Record<BlockId, LayoutBlock> = {};
+  for (const [sourceId, copyId] of rename) blocks[copyId] = from.layout.blocks[sourceId]!;
+  const page: Page = { ...from.page, elements };
+  if (Object.keys(stash).length > 0) page.stash = stash;
+  else delete page.stash;
+  if (hidden.length > 0) page.hidden = hidden;
+  else delete page.hidden;
+  return { ...from, id: source.screenId, layout: { ...from.layout, blocks }, page };
+}
+
+/**
  * The layout as the document last compiled it, for the blocks it knows: `generated` (the fingerprint
  * `buildPageFromLayout` compares, so only what changed is refitted) and `pinned` (written by «Ajustar»: the
- * document is their only source) come from the screen's stored layout; a block the document does not know
- * has neither. Geometry, type, label, note, count, hidden and links stay as given. Same object when nothing
- * changes.
+ * document is their only source) come from the screen's stored layout. A block the stored layout does not know
+ * takes the pins of its entry in the stored page's `stash` (a block an earlier «Generar» removed and a Layout
+ * undo brought back), else none. Geometry, type, label, note, count, hidden and links stay as given. Same object
+ * when nothing changes.
  */
-function withDocBaseline(layout: LayoutDoc, stored: LayoutDoc | undefined): LayoutDoc {
+function withDocBaseline(layout: LayoutDoc, stored: Screen | undefined): LayoutDoc {
   let blocks: Record<BlockId, LayoutBlock> | undefined;
   for (const [id, block] of Object.entries(layout.blocks)) {
-    const known = stored && Object.hasOwn(stored.blocks, id) ? stored.blocks[id] : undefined;
+    const known = stored && Object.hasOwn(stored.layout.blocks, id) ? stored.layout.blocks[id] : undefined;
+    const stashed = !known && stored?.page.stash && Object.hasOwn(stored.page.stash, id) ? stored.page.stash[id] : undefined;
     const generated = known?.generated;
-    const pinned = known?.pinned;
+    const pinned = known ? known.pinned : stashed?.pinned;
     if (block.generated === generated && block.pinned === pinned) continue;
     if (sameJson(block.generated, generated) && sameJson(block.pinned, pinned)) continue;
     const next: LayoutBlock = { ...block };
@@ -317,6 +381,22 @@ function withDocBaseline(layout: LayoutDoc, stored: LayoutDoc | undefined): Layo
     (blocks ??= { ...layout.blocks })[id] = next;
   }
   return blocks ? { ...layout, blocks } : layout;
+}
+
+/**
+ * The frame as the document knows it: `pinned` (frame props edited in «Ajustar») comes from the stored screen's
+ * frame, never from the draft; a screen that gets its frame now also takes the pins of the shared props it copies
+ * (`inherited`). Navigation, page header and active item stay as given (the layout owns them). Same object when
+ * nothing changes.
+ */
+function withShellBaseline(shell: AppShell | null, stored: Screen | undefined, inherited: readonly string[]): AppShell | null {
+  if (!shell) return shell;
+  const pinned = [...new Set([...(stored?.shell?.pinned ?? []), ...inherited])];
+  if (sameJson(shell.pinned ?? [], pinned)) return shell;
+  const next: AppShell = { ...shell };
+  if (pinned.length > 0) next.pinned = pinned;
+  else delete next.pinned;
+  return next;
 }
 
 /** The layout with the fingerprints of the build written to `block.generated` (the same write as the page). */
@@ -332,29 +412,47 @@ function withFingerprints(layout: LayoutDoc, fingerprints: Readonly<Record<Block
 
 const sameJson = (a: unknown, b: unknown) => a === b || JSON.stringify(a) === JSON.stringify(b);
 
+/** The screens of a navigation: app screens with navigation (the frame's items) and landing screens (navbar links). */
+function navigationOf(sources: readonly GeneratedScreenInput[]): { app: NavScreen[]; landing: NavScreen[] } {
+  return {
+    app: sources
+      .filter((source) => source.kind === "app" && source.shell !== null && source.shell.nav !== "none")
+      .map((source) => ({ id: source.screenId, name: source.name })),
+    landing: sources.filter((source) => source.kind === "landing").map((source) => ({ id: source.screenId, name: source.name })),
+  };
+}
+
 /**
- * Compiles screens to their pages with `buildPageFromLayout`: each one with its previous page (same id) so
- * edits, pinned values, hidden blocks and dials survive, a new frame taking the props of the existing ones, the
- * nav built from the app screens that have one, and the fingerprints written back into the layouts.
+ * Compiles screens to their pages with `buildPageFromLayout`: each one over its stored screen (same id, its
+ * copy in `screenStash`, or for a «Duplicar» copy not stored yet its source: `copyBaseline`) so edits, pinned
+ * values, hidden blocks and dials survive, a new frame taking the props
+ * (and pins) of the existing ones, the app nav and the landing navbars built from the screens (`navigation`,
+ * by default the sources' own), and the fingerprints written back into the layouts.
  */
-function buildScreens(doc: DesignDoc, sources: readonly GeneratedScreenInput[], ctx: ContentContext, mode: "layout" | "content"): ScreenRecord {
-  const navScreens: NavScreen[] = sources
-    .filter((source) => source.kind === "app" && source.shell !== null && source.shell.nav !== "none")
-    .map((source) => ({ id: source.screenId, name: source.name }));
-  const shellProps = sharedShellProps(doc);
+function buildScreens(
+  doc: DesignDoc,
+  sources: readonly GeneratedScreenInput[],
+  ctx: ContentContext,
+  mode: "layout" | "content",
+  navigation = navigationOf(sources),
+): ScreenRecord {
+  const shared = sharedShellProps(doc);
   const out: ScreenRecord = {};
   for (const source of sources) {
-    const stored = Object.hasOwn(doc.screens, source.screenId) ? doc.screens[source.screenId] : undefined;
-    const layout = withDocBaseline(source.layout, stored?.layout);
-    const result = buildPageFromLayout(layout, source.kind, source.shell, ctx, {
-      ...(stored && { previous: stored.page }),
+    const stored = storedScreen(doc, source.screenId) ?? copyBaseline(doc, source);
+    const layout = withDocBaseline(source.layout, stored);
+    const newFrame = shared !== undefined && source.kind === "app" && !hasFrame(stored?.page);
+    const shell = withShellBaseline(source.shell, stored, newFrame ? shared.pinned : []);
+    const result = buildPageFromLayout(layout, source.kind, shell, ctx, {
+      ...(stored && { previous: stored.page, previousLayout: stored.layout }),
       ...(source.structure && { structure: source.structure }),
       ...(source.responsive && { responsive: source.responsive }),
       mode,
-      ...(shellProps && source.kind === "app" && !hasFrame(stored?.page) && { shellProps }),
+      ...(newFrame && { shellProps: shared.props }),
       screenTitle: source.name,
       screenId: source.screenId,
-      navScreens,
+      navScreens: navigation.app,
+      landingScreens: navigation.landing,
     });
     out[source.screenId] = {
       id: source.screenId,
@@ -363,10 +461,36 @@ function buildScreens(doc: DesignDoc, sources: readonly GeneratedScreenInput[], 
       route: source.route,
       layout: withFingerprints(layout, result.fingerprints),
       page: result.page,
-      shell: source.shell,
+      shell,
     };
   }
   return out;
+}
+
+/**
+ * `screenStash` after a «Generar» that writes `sources`: the screens it removes join it (their last version,
+ * newest last), the ones it brings back leave it, and only the newest `MAX_STASHED_SCREENS` stay.
+ */
+function nextScreenStash(doc: DesignDoc, sources: readonly GeneratedScreenInput[]): ScreenRecord {
+  const kept = new Set(sources.map((source) => source.screenId));
+  const out: ScreenRecord = {};
+  for (const [id, screen] of Object.entries(doc.screenStash ?? {})) if (!kept.has(id)) out[id] = screen;
+  const current = [...new Set([...doc.screenOrder, ...Object.keys(doc.screens)])];
+  for (const id of current) {
+    if (kept.has(id) || !Object.hasOwn(doc.screens, id)) continue;
+    delete out[id];
+    out[id] = doc.screens[id]!;
+  }
+  const ids = Object.keys(out);
+  for (const id of ids.slice(0, Math.max(0, ids.length - MAX_STASHED_SCREENS))) delete out[id];
+  return out;
+}
+
+/** The op that writes `next` as the document's `screenStash` (removed when empty); none when it does not change. */
+function screenStashOps(doc: DesignDoc, next: ScreenRecord): PatchOperation[] {
+  const empty = Object.keys(next).length === 0;
+  if (empty) return doc.screenStash ? [{ op: "remove", path: "/screenStash" }] : [];
+  return sameJson(doc.screenStash, next) ? [] : [{ op: "add", path: "/screenStash", value: next }];
 }
 
 /** The screens of `doc` as build sources (rebuilding from their own layouts). */
@@ -428,11 +552,13 @@ function danglingLockOps(doc: DesignDoc, next: { screens: ScreenRecord; pages: D
 
 /**
  * «Generar» (Modo Layout) as ONE validated write: `screens` + `screenOrder` (every screen's page compiled by
- * `buildPageFromLayout` with its previous page, new app frames like the existing ones, the nav built from the
- * app screens, and the `block.generated` fingerprints),
- * the style guide (`pages.brand`) when it is missing, `brief.focus` = the kind of the first screen, and
- * `pages.landing` / `pages.app` removed (screens replace them: an explicit conversion). Pinned values come from
- * the document (the Layout draft never edits them), hidden blocks and links from the given layouts.
+ * `buildPageFromLayout` with its previous page, new app frames like the existing ones, the app nav and the landing
+ * navbars built from the screens, and the `block.generated` fingerprints), `screenStash` (removed screens wait
+ * there for a Layout undo; restored ones leave it), the style guide (`pages.brand`) when it is missing,
+ * `brief.focus` = the kind of the first screen, and `pages.landing` / `pages.app` removed (screens replace them:
+ * an explicit conversion). Pinned values (blocks' and frames') come from the document (the Layout draft never
+ * edits them; a block brought back by an undo takes its stash entry's), hidden blocks and links from the given
+ * layouts. Removed and retyped blocks keep their last props in `page.stash`.
  *
  * Hard locks: a locked value that would change keeps its value; removing a block (or page) that holds a lock
  * fails with `locked` (and the lock) unless `allowLocked` (the user confirmed «¿Desbloquear y borrar?»), which
@@ -443,6 +569,7 @@ export function withGeneratedScreens(doc: DesignDoc, screens: readonly Generated
   return guardResult(() => {
     const ctx = options.contentContext ?? contentContextFromDoc(doc);
     const built = buildScreens(doc, screens, ctx, "layout");
+    const stash = nextScreenStash(doc, screens);
     const pages: DesignDoc["pages"] = { ...doc.pages };
     delete pages.landing;
     delete pages.app;
@@ -457,9 +584,28 @@ export function withGeneratedScreens(doc: DesignDoc, screens: readonly Generated
     for (const kind of ["landing", "app"] as const) if (doc.pages[kind]) ops.push({ op: "remove", path: `/pages/${kind}` });
     if (!doc.pages.brand && next.pages.brand) ops.push({ op: "add", path: "/pages/brand", value: next.pages.brand });
     if (doc.brief.focus !== focus && !isLocked(doc, "/brief/focus", { hardOnly: true })) ops.push({ op: "replace", path: "/brief/focus", value: focus });
+    ops.push(...screenStashOps(doc, stash));
     if (options.allowLocked) ops.push(...danglingLockOps(doc, next));
     return applyPatch(doc, ops, { allowLocked: options.allowLocked ?? false });
   });
+}
+
+/**
+ * `screenStash` in the document's (new) locale or product: each stashed screen rebuilt in mode "content" over
+ * itself (pins, variants and hidden blocks kept, the rest of its copy new), so a Layout undo never brings back
+ * copy in the old language. A stashed screen that fails to build is dropped (never the whole rebuild).
+ */
+function rebuiltScreenStash(doc: DesignDoc, ctx: ContentContext, navigation: ReturnType<typeof navigationOf>): ScreenRecord {
+  const out: ScreenRecord = {};
+  for (const [id, screen] of Object.entries(doc.screenStash ?? {})) {
+    const source: GeneratedScreenInput = { screenId: id, name: screen.name, kind: screen.kind, route: screen.route, shell: screen.shell, layout: screen.layout };
+    try {
+      Object.assign(out, buildScreens(doc, [source], ctx, "content", navigation));
+    } catch {
+      // Dropped: its copy cannot be rebuilt (the screen itself is gone from the document anyway).
+    }
+  }
+  return out;
 }
 
 /**
@@ -477,10 +623,12 @@ function rebuildPages(doc: DesignDoc, options: { keepLayout: boolean }): PatchRe
       const page: Page = buildDefaultPage(kind, ctx, options.keepLayout ? previous.layoutId : undefined);
       pages[kind] = previous.dials ? { ...page, dials: previous.dials } : page;
     }
-    const screens = hasScreens(doc) ? buildScreens(doc, sourcesOf(doc), ctx, "content") : doc.screens;
+    const sources = sourcesOf(doc);
+    const screens = hasScreens(doc) ? buildScreens(doc, sources, ctx, "content") : doc.screens;
     const next = keepLockedValues(doc, { screens, pages });
     const ops: PatchOperation[] = pageKinds(doc).map((kind) => ({ op: "replace", path: `/pages/${kind}`, value: next.pages[kind] }));
     if (hasScreens(doc)) ops.push({ op: "replace", path: "/screens", value: next.screens });
+    ops.push(...screenStashOps(doc, rebuiltScreenStash(doc, ctx, navigationOf(sources))));
     return patch(doc, ops);
   });
 }

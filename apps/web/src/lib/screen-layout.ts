@@ -1,7 +1,7 @@
 // A Modo Layout screen's layout compiled the way `buildPageFromLayout` (@dialmade/sections) compiles it, and the
 // element → screen links of its page. Shared by the Composer's preview and the export packs, so what the user
 // adjusts and what they download use the same CSS and the same links.
-import type { DesignDoc, Screen, ScreenId } from "@dialmade/doc";
+import { MAX_SCREENS, type DesignDoc, type Screen, type ScreenId } from "@dialmade/doc";
 import {
   absorbChildren,
   DEFAULT_SCOPE,
@@ -29,29 +29,81 @@ export type CompiledScreenLayout = {
   warnings: LayoutWarning[];
 };
 
-// Docs are immutable: one compile per layout object and kind.
-const compiledCache = new WeakMap<LayoutDoc, Partial<Record<Screen["kind"], CompiledScreenLayout>>>();
+type CompiledByKind = Partial<Record<Screen["kind"], CompiledScreenLayout>>;
+
+// Docs are immutable: one compile per layout object and kind…
+const compiledCache = new WeakMap<LayoutDoc, CompiledByKind>();
 
 /**
- * The same compile `buildPageFromLayout` runs before building the page, so the CSS targets exactly the elements
- * the page has. The raw layout would also style absorbed blocks and lay out children inside a hero that has none.
- * Memoized per layout object and kind; treat the result as read-only.
+ * …and one per layout content: a patch anywhere else (the brief, another screen, a knob) gives every screen a new
+ * but equal layout object, which must not recompile. The newest `CONTENT_CACHE_SIZE` contents are kept (twice
+ * `MAX_SCREENS`: every screen of a document plus as many recent versions); the least recently used goes first.
  */
-export function compileScreenLayout(screen: Pick<Screen, "layout" | "kind">): CompiledScreenLayout {
-  const cached = compiledCache.get(screen.layout)?.[screen.kind];
-  if (cached) return cached;
-  const absorb = absorbChildren(screen.layout);
+export const CONTENT_CACHE_SIZE = MAX_SCREENS * 2;
+const signatures = new WeakMap<LayoutDoc, string>();
+const contentCache = new Map<string, CompiledByKind>();
+
+/**
+ * JSON blurs a few values into others (`undefined` into nothing or `null`, `-0` into `0`, `NaN` and `±Infinity`
+ * into `null`). Tagging every string and every such number keeps the signature one-to-one with the content.
+ */
+function exactValue(_key: string, value: unknown): unknown {
+  if (typeof value === "string") return `s${value}`;
+  if (value === undefined) return "u";
+  if (typeof value === "number" && (!Number.isFinite(value) || Object.is(value, -0))) return Object.is(value, -0) ? "n-0" : `n${value}`;
+  return value;
+}
+
+/** Exact content of a layout, key order included (a different order is a different key, never a wrong hit). */
+function layoutSignature(layout: LayoutDoc): string {
+  let signature = signatures.get(layout);
+  if (signature === undefined) {
+    signature = JSON.stringify(layout, exactValue);
+    signatures.set(layout, signature);
+  }
+  return signature;
+}
+
+/** Marks a content as just used (a Map keeps insertion order: the first key is the least recently used). */
+function touch(signature: string, byKind: CompiledByKind): void {
+  contentCache.delete(signature);
+  contentCache.set(signature, byKind);
+  while (contentCache.size > CONTENT_CACHE_SIZE) {
+    const oldest = contentCache.keys().next().value;
+    if (oldest === undefined) break;
+    contentCache.delete(oldest);
+  }
+}
+
+function compile(layout: LayoutDoc, kind: Screen["kind"]): CompiledScreenLayout {
+  const absorb = absorbChildren(layout);
   const structure = inferStructure(absorb.layout);
   const responsive = deriveResponsive(absorb.layout, structure);
-  const compiled: CompiledScreenLayout = {
+  return {
     layout: absorb.layout,
     absorbed: absorb.absorbed,
     structure,
     responsive,
-    css: toCss(absorb.layout, { kind: screen.kind, structure, responsive }),
+    css: toCss(absorb.layout, { kind, structure, responsive }),
     warnings: [...absorb.warnings, ...structure.warnings],
   };
-  compiledCache.set(screen.layout, { ...compiledCache.get(screen.layout), [screen.kind]: compiled });
+}
+
+/**
+ * The same compile `buildPageFromLayout` runs before building the page, so the CSS targets exactly the elements
+ * the page has. The raw layout would also style absorbed blocks and lay out children inside a hero that has none.
+ * Memoized per layout object and kind, and per layout content and kind (equal layouts share one result, so
+ * `scopedScreenCss` is reused too); treat the result as read-only.
+ */
+export function compileScreenLayout(screen: Pick<Screen, "layout" | "kind">): CompiledScreenLayout {
+  const { layout, kind } = screen;
+  const signature = layoutSignature(layout);
+  const byObject = compiledCache.get(layout);
+  const byContent = contentCache.get(signature) ?? {};
+  const compiled = byObject?.[kind] ?? byContent[kind] ?? compile(layout, kind);
+  if (byContent[kind] !== compiled) byContent[kind] = compiled;
+  touch(signature, byContent);
+  if (byObject?.[kind] !== compiled) compiledCache.set(layout, { ...byObject, [kind]: compiled });
   return compiled;
 }
 

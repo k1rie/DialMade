@@ -1,6 +1,7 @@
 import type { OutputKind } from "@dialmade/catalog";
 import { coversPointer, isBinding, orderedScreens, type DesignDoc, type Page, type PageElement } from "@dialmade/doc";
 import {
+  SHELL_ELEMENT_ID,
   VARIANT_PROP,
   contentContextFromDoc,
   isStructuralElement,
@@ -325,6 +326,19 @@ export type ScreenCopyPlan = {
   truncated: boolean;
 };
 
+/**
+ * The leaf sits inside an object (an array item, a nested object) that links to a screen (`linkTo`): its label
+ * mirrors that screen's name (a landing navbar's link to a screen), which the build writes on every «Generar».
+ */
+function insideScreenLink(props: Readonly<Record<string, unknown>>, path: readonly string[]): boolean {
+  let node: unknown = props;
+  for (const segment of path.slice(0, -1)) {
+    node = Array.isArray(node) ? node[Number(segment)] : node && typeof node === "object" ? (node as Record<string, unknown>)[segment] : undefined;
+    if (node && typeof node === "object" && !Array.isArray(node) && typeof (node as { linkTo?: unknown }).linkTo === "string") return true;
+  }
+  return false;
+}
+
 /** A `PageElement` is a section with copy of its own (not the layout scope or an inferred region). */
 const isCopySection = (def: AnySectionDefinition | undefined, element: PageElement): def is AnySectionDefinition =>
   def !== undefined && !isStructuralElement(def, element);
@@ -334,7 +348,8 @@ const isCopySection = (def: AnySectionDefinition | undefined, element: PageEleme
  * each screen's visible sections in render order, through `visibleProps` (only what renders: lists cut to
  * `count`, copy hidden by a flag left out). Pointers are `/screens/{sid}/page/elements/{eid}/props/…`, one id
  * counter and one cap for all screens, and the brand tagline once. Skips structural regions, props the user
- * edited (`layout.blocks[eid].pinned`) and the data keys of `SCREEN_SKIP_KEYS`.
+ * edited (`layout.blocks[eid].pinned`, and the app frame's `shell.pinned`), the data keys of `SCREEN_SKIP_KEYS`
+ * and the labels of links to screens (they mirror the screens' names).
  */
 export function screenCopyPlan(doc: DesignDoc, targets: readonly ScreenCopyTarget[], options: Omit<CollectCopyFieldsOptions, "sectionIds"> = {}): ScreenCopyPlan {
   const registry = options.registry ?? sectionRegistry;
@@ -358,11 +373,16 @@ export function screenCopyPlan(doc: DesignDoc, targets: readonly ScreenCopyTarge
       const extraSkip = SCREEN_SKIP_KEYS[element.type];
       const skip = extraSkip ? new Set([...SKIP_KEYS, ...extraSkip]) : SKIP_KEYS;
       const bound = new Set(Object.keys(def.bindings ?? {}));
-      const pinned = Object.hasOwn(layout.blocks, elementId) ? (layout.blocks[elementId]!.pinned ?? []) : [];
+      const pinned = Object.hasOwn(layout.blocks, elementId)
+        ? (layout.blocks[elementId]!.pinned ?? [])
+        : elementId === SHELL_ELEMENT_ID
+          ? (screen.shell?.pinned ?? [])
+          : [];
       const leaves = function* () {
         for (const leaf of visibleLeaves(element.props, visibleProps(element, registry), skip, bound)) {
           const relative = toPointer(leaf.path);
-          if (!pinned.some((pin) => coversPointer(pin, relative))) yield leaf;
+          if (pinned.some((pin) => coversPointer(pin, relative)) || insideScreenLink(element.props, leaf.path)) continue;
+          yield leaf;
         }
       };
       const pointer = (path: readonly string[]) => toPointer(["screens", screen.id, "page", "elements", elementId, "props", ...path]);

@@ -1,7 +1,7 @@
 import { OUTPUT_KINDS, type OutputKind } from "@dialmade/catalog";
-import { MAX_PINNED, type DesignDoc, type Page, type PageKey, type PatchOperation, type Screen } from "@dialmade/doc";
-import { getBlockDef, isLibraryBlockType } from "@dialmade/layout";
-import { SHELL_ELEMENT_ID, SHELL_SCREEN_KEYS, isStructuralElement, type SectionRegistry } from "@dialmade/sections";
+import { MAX_PINNED, orderedScreens, renameScreenOps, type DesignDoc, type Page, type PageKey, type PatchOperation, type Screen } from "@dialmade/doc";
+import { getBlockDef, isLibraryBlockType, type AppNav } from "@dialmade/layout";
+import { APP_SHELL_TYPE, SHELL_ELEMENT_ID, SHELL_SCREEN_KEYS, VARIANT_PROP, isStructuralElement, type SectionRegistry } from "@dialmade/sections";
 
 /**
  * The page the Composer shows and edits: a page kind's page (`"brand"`, legacy `"landing"`/`"app"`), or a
@@ -78,25 +78,104 @@ function countOps(target: PageTarget, id: string, prop: string, value: unknown):
 const isScreenShellKey = (prop: string) => (SHELL_SCREEN_KEYS as readonly string[]).includes(prop);
 
 /**
+ * App frame props that are not copy: the layout owns the navigation (`variant` ↔ `shell.nav`), the page header
+ * (`shell.header`), the title (the screen's name), the nav items and the active item, and the settings (tone,
+ * density, search) survive every rebuild as they are. Every other frame prop the user edits is pinned.
+ */
+const FRAME_UNPINNED: ReadonlySet<string> = new Set([VARIANT_PROP, "showPageHeader", "title", "nav", "activeId", "tone", "density", "showSearch"]);
+
+/** The navigation (`shell.nav`) each frame variant draws: «Panel flotante» is a sidebar. */
+const NAV_OF_VARIANT: Readonly<Record<string, AppNav>> = { sidebar: "sidebar", inset: "sidebar", rail: "rail", topnav: "topnav" };
+
+const shellPath = (screen: Screen, ...segments: string[]) => `/screens/${pointer(screen.id)}/shell${segments.map((segment) => `/${pointer(segment)}`).join("")}`;
+
+/** The frame is an `app.shell` element of an app screen with navigation (not a loose Sidebar block). */
+const isFrame = (target: PageTarget, id: string): target is PageTarget & { screen: Screen } =>
+  id === SHELL_ELEMENT_ID &&
+  target.screen?.kind === "app" &&
+  target.screen.shell !== null &&
+  target.screen.shell.nav !== "none" &&
+  target.page.elements[id]?.type === APP_SHELL_TYPE;
+
+/** Ops that add `/prop` to a screen frame's `shell.pinned` (its copy edited in «Ajustar»). */
+function framePinOps(screen: Screen, prop: string): PatchOperation[] {
+  const shell = screen.shell;
+  if (!shell || FRAME_UNPINNED.has(prop)) return [];
+  const pin = `/${pointer(prop)}`;
+  const pinned = shell.pinned ?? [];
+  if (pinned.includes(pin) || pinned.length >= MAX_PINNED) return [];
+  return shell.pinned ? [{ op: "add", path: `${shellPath(screen, "pinned")}/-`, value: pin }] : [{ op: "add", path: shellPath(screen, "pinned"), value: [pin] }];
+}
+
+/** Every app screen with a frame like `screen`'s (the frame edit of a shared key goes to all of them). */
+function framedScreens(doc: DesignDoc, screen: Screen): Screen[] {
+  const type = screen.page.elements[SHELL_ELEMENT_ID]?.type;
+  return orderedScreens(doc).filter((other) => other.kind === "app" && other.page.elements[SHELL_ELEMENT_ID]?.type === type);
+}
+
+/**
+ * An edit of a screen's app frame, as layout data where the layout owns it, so «Generar» never reverts it:
+ * - «Navegación» (`variant`): the variant on every frame and `shell.nav` on every app screen with navigation
+ *   (they share it, decision 40; «Panel flotante» is a sidebar);
+ * - «Cabecera de página» (`showPageHeader`): this screen's `shell.header`;
+ * - «Título de la página» (`title`): renames the screen (`renameScreenOps`: unique name, an automatic route
+ *   follows) and updates the frames' nav items; nothing when the name cleans to nothing or does not change;
+ * - copy (primary action, subtitle…): written and pinned (`shell.pinned`) on this screen, or on every frame for
+ *   a shared key, so a rebuild (also a language or product change) and the AI keep it.
+ */
+function frameOps(doc: DesignDoc, target: PageTarget & { screen: Screen }, prop: string, value: unknown): PatchOperation[] {
+  const { screen } = target;
+  if (prop === "title") {
+    if (typeof value !== "string") return [];
+    const rename = renameScreenOps(doc, screen.id, value);
+    const name = rename.find((op) => op.path.endsWith("/name"));
+    if (!name || name.op !== "replace") return [];
+    const ops: PatchOperation[] = [...rename, { op: "add", path: propPath(target.key, SHELL_ELEMENT_ID, "title"), value: name.value }];
+    for (const other of framedScreens(doc, screen)) {
+      const nav = other.page.elements[SHELL_ELEMENT_ID]!.props.nav;
+      if (!Array.isArray(nav)) continue;
+      nav.forEach((item: unknown, index) => {
+        if (item && typeof item === "object" && (item as { id?: unknown }).id === screen.id) {
+          ops.push({ op: "add", path: `${elementPath(other.id, SHELL_ELEMENT_ID)}/props/nav/${index}/label`, value: name.value });
+        }
+      });
+    }
+    return ops;
+  }
+  const ops: PatchOperation[] = [{ op: "add", path: propPath(target.key, SHELL_ELEMENT_ID, prop), value }];
+  if (prop === "showPageHeader") {
+    if (typeof value === "boolean" && screen.shell?.header !== value) ops.push({ op: "replace", path: shellPath(screen, "header"), value });
+    return ops;
+  }
+  const shared = !isScreenShellKey(prop);
+  const others = shared ? framedScreens(doc, screen).filter((other) => other.id !== screen.id) : [];
+  for (const other of others) ops.push({ op: "add", path: propPath(other.id, SHELL_ELEMENT_ID, prop), value });
+  if (prop === VARIANT_PROP) {
+    const nav = typeof value === "string" && Object.hasOwn(NAV_OF_VARIANT, value) ? NAV_OF_VARIANT[value]! : undefined;
+    if (!nav) return ops;
+    for (const other of orderedScreens(doc)) {
+      if (other.kind !== "app" || !other.shell || other.shell.nav === "none" || other.shell.nav === nav) continue;
+      ops.push({ op: "replace", path: shellPath(other, "nav"), value: nav });
+    }
+    return ops;
+  }
+  for (const pinned of [screen, ...others]) ops.push(...framePinOps(pinned, prop));
+  return ops;
+}
+
+/**
  * Sets one prop (`add` creates or replaces an object member, so it works for stored and default-only props).
  * On a screen, in the same patch: a block's edited prop is pinned, so «Generar» again keeps it, except a
- * repeatable block's count, which is written to `block.count` instead (`countOps`); and the app frame (`shell`)
- * is shared, so its edit goes to every app screen that has one, except the keys of one screen
- * (`SHELL_SCREEN_KEYS`: title, subtitle, primary action, active item, page header), which stay on it.
+ * repeatable block's count, which is written to `block.count` instead (`countOps`); and the app frame's edits
+ * go where the layout owns them, or are pinned on the frame (`frameOps`). A frame edit of a shared key goes to
+ * every app screen that has a frame; the keys of one screen (`SHELL_SCREEN_KEYS`: title, subtitle, primary
+ * action, active item, page header) stay on it. Can be empty (a title that cleans to the current name).
  */
 export function setPropOps(doc: DesignDoc, target: PageTarget, id: string, prop: string, value: unknown): PatchOperation[] {
+  if (isFrame(target, id)) return frameOps(doc, target, prop, value);
   const ops: PatchOperation[] = [{ op: "add", path: propPath(target.key, id, prop), value }];
-  const screen = target.screen;
-  if (!screen) return ops;
+  if (!target.screen) return ops;
   ops.push(...(countOps(target, id, prop, value) ?? pinOps(target, id, prop)));
-  if (id === SHELL_ELEMENT_ID && screen.kind === "app" && !isScreenShellKey(prop)) {
-    for (const other of doc.screenOrder) {
-      const page = other !== screen.id && Object.hasOwn(doc.screens, other) ? doc.screens[other]!.page : undefined;
-      if (page?.elements[SHELL_ELEMENT_ID]?.type === screen.page.elements[SHELL_ELEMENT_ID]?.type) {
-        ops.push({ op: "add", path: propPath(other, SHELL_ELEMENT_ID, prop), value });
-      }
-    }
-  }
   return ops;
 }
 

@@ -13,7 +13,8 @@ export function fitText(input: FitInput): FitResult<TextProps> {
       level: "h2",
       align: input.kind === "landing" && wide ? "center" : "start",
       showBody: hpx > 64,
-      showAction: hpx >= 160,
+      // A linked block keeps its action at any size: it is what follows the link (review B #11).
+      showAction: hpx >= 160 || input.linked === true,
       frame: frameFor(input, "plain"),
     },
   };

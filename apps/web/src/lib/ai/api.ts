@@ -8,7 +8,10 @@ const KINDS = ["brand", "landing", "app"] as const satisfies readonly OutputKind
 
 export const COPY_ENDPOINT = "/api/ai/copy";
 export const STATUS_ENDPOINT = "/api/ai/status";
-/** The doc travels whole; a large one is ~100 KB. */
+/**
+ * Body limit of /api/ai/copy. The doc travels reduced (`aiRequestDoc`: the requested screens whole, the others as
+ * stubs), about 260 KB per requested 200-block screen, so roughly 3–4 such screens fit in one request.
+ */
 export const MAX_COPY_BODY_BYTES = 1_000_000;
 
 const SectionIdsSchema = z.array(z.string().min(1).max(64)).min(1).max(MAX_SECTION_IDS);

@@ -10,6 +10,8 @@ export interface RenderScope {
   content: ContentContext;
   registry: SectionRegistry;
   hidden: ReadonlySet<string>;
+  /** Selected element (edit mode). Kept out of `ctx` so a new selection only re-renders the two frames. */
+  selectedId?: string;
   exclude?: ReadonlySet<string>;
   onSectionError?: (id: string, error: unknown) => void;
 }

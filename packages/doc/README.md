@@ -39,10 +39,12 @@ DesignDoc v2 {
   pages: { brand?, landing?, app? },   // pages[k].kind === k (superRefine); con pantallas, solo brand
   screens: { [ScreenId]: Screen },     // Modo Layout (v2); {} por defecto
   screenOrder: ScreenId[],             // permutación de las claves de screens, ≤ MAX_SCREENS (24)
+  screenStash?: { [ScreenId]: Screen } // pantallas que quitó un «Generar», ≤ MAX_STASHED_SCREENS (4)
 }
 Page { kind, layoutId, dials?: Partial<Dials>, root, elements: { [id]: { type, props, children } }, hidden?,
-       stash?: { [blockId]: { type, props } } }   // solo páginas de pantalla: props de los bloques absorbidos
+       stash?: { [blockId]: { type, props, pinned? } } }   // solo páginas de pantalla (ver «Stash»)
 Screen { id, name, kind: landing | app, route, layout: LayoutDoc, page: Page, shell: AppShell | null }
+AppShell { nav, header, activeItem?, pinned? }   // pinned: props del marco editadas en «Ajustar»
 ```
 
 - **Tokens derivados.** Solo se guardan las ediciones explícitas del usuario y los valores importados que aceptó (un valor, un sitio; `provenance.imports` dice de dónde salió). Todo lo demás se recalcula con `resolveTokens` a partir de `brand`, `brief`, la receta, el pairing y los diales: colores (de @dialmade/palette), escala tipográfica, radios, espacios, sombras, duraciones y tokens de componente. Así nunca queda desfasado. Un valor guardado gana siempre a la receta, al pairing y a los diales.
@@ -62,8 +64,10 @@ Cada pantalla es lo que el usuario dibujó en el lienzo (`layout`, el `LayoutDoc
 - **Layout.** `LayoutDocSchema` comprueba tipos y formatos (bloques de la librería, etiquetas y notas en una línea limpia, `pinned` como JSON Pointers relativos a las props, huella `generated`, overrides `responsive`, `linkTo`) y su `superRefine` añade los errores de `validateLayout` (rects dentro de la rejilla, `MAX_ROW`, `MAX_HEIGHT_ROWS`, padres y ciclos, `count`, `LABEL_MAX`, `NOTE_MAX`, `MAX_BLOCKS`, ids `r-`), cada uno con su código en `params.layoutCode`. Los tipos de salida son los de @dialmade/layout: `screen.layout` va directo a `inferStructure`, `toCss` o `toAsciiWireframe`.
 - **Reglas del documento.** Las claves de `screens` son los ids; `screenOrder` es una permutación de ellas; las rutas no se repiten; los ids de bloque no se repiten entre pantallas (decisión #42; se informa en la pantalla posterior: `Block id "b-1" is already used by screen "s-a"…`); cada `linkTo` apunta a una pantalla que existe; las pantallas de app con navegación comparten el mismo `nav`; y con pantallas, `pages.landing` y `pages.app` no existen (una sola fuente de verdad; `pages.brand` se queda).
 - **Candados.** `POINTER_ROOTS` incluye `screens`: un candado puede apuntar a `/screens/{id}/…` (nunca a `/screenOrder`).
-- **Stash.** `page.stash` guarda, por id de bloque, las props de los bloques absorbidos por otro (sin elemento propio), para que `buildPageFromLayout` las devuelva al sacarlos. Sus ids nunca son ids de elementos de la página, sus tipos siguen las reglas de espacios de nombres de la página y sus props son JSON. Las páginas antiguas (`pages.*`) no lo admiten.
-- **Tamaño.** `documentSizeIssues(input)` rechaza antes del parse completo más de `MAX_SCREENS` pantallas (o entradas de `screenOrder`) y más de `MAX_BLOCKS` bloques en una pantalla, con las mismas rutas y mensajes del parse. Lo usan `safeParseDesignDoc` y `applyPatch`.
+- **Stash.** `page.stash` guarda, por id de bloque, las últimas props de un bloque sin elemento de ese tipo, para que `buildPageFromLayout` se las devuelva: un bloque absorbido por otro (hasta que se saca), un bloque que cambió de tipo (las del tipo anterior, junto a su elemento del tipo nuevo, hasta que se deshace el cambio), un bloque que quitó un «Generar» (con sus `pinned`, porque su bloque del layout ya no existe; como mucho `MAX_REMOVED_STASH`, los más antiguos salen primero) y el marco de app (`shell`) mientras la pantalla no tiene navegación. Una entrada nunca tiene el mismo tipo que el elemento de su id, sus tipos siguen las reglas de espacios de nombres de la página y sus props son JSON. Las páginas antiguas (`pages.*`) no lo admiten.
+- **Pantallas quitadas.** `screenStash` guarda, por id, la última versión de las pantallas que quitó un «Generar» (como mucho `MAX_STASHED_SCREENS`, las más antiguas salen primero), validadas como pantallas pero fuera de las reglas del documento (rutas, enlaces, navegación compartida): nada las pinta, exporta ni manda a la IA. Si un deshacer en Layout trae una de vuelta con el mismo id, el siguiente «Generar» la compila sobre ella (copy, valores fijados y huellas) y sale del stash. Una clave nunca es una pantalla del documento.
+- **Marco fijado.** `AppShell.pinned` son JSON Pointers relativos a las props del `app.shell` de la pantalla: el copy del marco que el usuario editó en «Ajustar» (acción principal, subtítulo…). El documento es su única fuente; el draft de Layout no los toca.
+- **Tamaño.** `documentSizeIssues(input)` rechaza antes del parse completo más de `MAX_SCREENS` pantallas (o entradas de `screenOrder`), más de `MAX_STASHED_SCREENS` en `screenStash` y más de `MAX_BLOCKS` bloques en una pantalla (también en las de `screenStash`), con las mismas rutas y mensajes del parse. Lo usan `safeParseDesignDoc` y `applyPatch`.
 - **Migración.** `parseDesignDoc` y `safeParseDesignDoc` pasan antes por `migrateDesignDoc`: un documento v1 sube a v2 cambiando solo `version`. `applyPatch` valida contra v2 sin migrar. `createDesignDoc` escribe v2 (acepta `screens`, en orden).
 
 | Helper | Qué hace |
@@ -73,6 +77,7 @@ Cada pantalla es lo que el usuario dibujó en el lienzo (`layout`, el `LayoutDoc
 | `pageForKey(doc, key)` | La página de una `PageKey` (`"brand"`, un id de pantalla o, en documentos antiguos, `"landing"`/`"app"`) |
 | `screenPointer(id, ...segs)` | `/screens/{id}/…` con los segmentos escapados |
 | `removeScreenOps(doc, id)` | El parche que borra una pantalla: quita los `linkTo` que la apuntan, sus candados y su sitio en `screenOrder`. Con un candado debajo, `applyPatch` devuelve `locked`: se aplica con `allowLocked` después de preguntar «¿Desbloquear y borrar?» |
+| `renameScreenOps(doc, id, name)` | El parche que renombra una pantalla con las reglas de Layout (decisión 43): nombre limpio y único («Ajustes 2»), y una ruta automática sigue al nombre (nunca `/`). Vacío si el nombre queda vacío o no cambia |
 | `hasScreens(doc)` / `hasDesign(doc)` | Hay pantallas / hay pantallas o alguna página |
 
 ## Candados e importación

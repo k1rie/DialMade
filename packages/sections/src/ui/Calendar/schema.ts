@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sectionLevelSchema } from "../lib/heading";
 import { toneSchema } from "../../app/content";
 import { UI_CALENDAR_MAX } from "../content";
 import { UI_FRAMES } from "../lib/fit";
@@ -27,6 +28,8 @@ export const calendarSchema = z.strictObject({
   /** Below the layout's mobile breakpoint: switch to the agenda (always in the markup) or keep the view. */
   mobile: z.enum(CALENDAR_MOBILE),
   frame: z.enum(UI_FRAMES),
+  /** Heading level of the title (`sectionLevelSchema`): absent is h2. */
+  level: sectionLevelSchema,
 });
 
 export type CalendarProps = z.infer<typeof calendarSchema>;

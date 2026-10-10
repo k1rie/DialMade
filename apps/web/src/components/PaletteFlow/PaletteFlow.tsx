@@ -27,11 +27,16 @@ import { flow } from "@/i18n/flow";
 import { importText } from "@/i18n/import";
 import { LogoFileError, MAX_LOGO_MB, readLogoFile } from "@/lib/image";
 import { fadeVariants, stageVariants } from "@/lib/motion";
+import { EXPORT_TOASTER_ID } from "@/lib/toasters";
 import { FlowStepper, type FlowStepperStep } from "./FlowStepper";
+import { enterLayout } from "./layoutEntry";
+import { PendingLayoutNotice } from "./PendingLayoutNotice";
+import { canTakeStepFocus, focusStranded } from "./stepFocus";
 import { useCroppedLogoUrl } from "./useCroppedLogoUrl";
 import { useDesignDocSync } from "./useDesignDocSync";
 import { useFileDropGuard } from "./useFileDropGuard";
 import { useLogoExtraction } from "./useLogoExtraction";
+import { usePendingLayout } from "./usePendingLayout";
 
 // «Layout», «Ajustar» and «Exportar» pull @dialmade/sections, @dialmade/ui, @dialmade/doc and @dialmade/layout:
 // they load on demand through one chunk boundary (./designHalf) so the Home stays light and their CSS ships once.
@@ -72,7 +77,9 @@ const FOCUS_TRIES = 30;
 /**
  * One step of the flow. Entering it after a step change, when the focused control went away with the
  * previous step (or nothing is focused), focus lands on its title (or on the step region itself), so
- * keyboard and screen reader users keep their place. Focus on the stepper is left alone.
+ * keyboard and screen reader users keep their place. Focus on the stepper is left alone. A title is only
+ * one that can take focus and belongs to the app (`canTakeStepFocus`): the user's own page headings in
+ * Ajustar's preview sit in an inert subtree, and focusing them would leave focus on <body>.
  */
 function Stage({ step, label, focusOnEnter, children }: StageProps) {
   const ref = useRef<HTMLElement>(null);
@@ -83,16 +90,16 @@ function Stage({ step, label, focusOnEnter, children }: StageProps) {
     let tries = 0;
     const settle = () => {
       const active = document.activeElement;
-      const stranded =
-        !active || active === document.body || active === section || (active.closest("[data-step]") !== null && !section.contains(active));
+      const stranded = focusStranded(active, active === document.body, active !== null && section.contains(active), active === section);
       if (!stranded) return;
-      const heading = section.querySelector<HTMLElement>("h1") ?? section.querySelector<HTMLElement>("h2");
+      const headings = [...section.querySelectorAll<HTMLElement>("h1"), ...section.querySelectorAll<HTMLElement>("h2")];
+      const heading = headings.find(canTakeStepFocus);
       if (heading) {
         if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
         heading.focus({ preventScroll: true });
-        return;
+        if (document.activeElement === heading) return;
       }
-      if (active !== section) section.focus({ preventScroll: true });
+      if (document.activeElement !== section) section.focus({ preventScroll: true });
       if (++tries < FOCUS_TRIES) frame = requestAnimationFrame(settle);
     };
     settle();
@@ -273,21 +280,29 @@ function FlowStage() {
     [docId, designActions, layoutStore, layoutStyle, composerText],
   );
 
-  /** «Generar»: one write of the screens into the doc. `false` keeps the user in «Layout». */
-  const handleGenerate = useCallback(
-    (result: GenerateResult): boolean => {
-      const activeKey = activeScreenOf(layoutStore);
+  /**
+   * One write of the screens into the doc, then the draft is marked as synced. `false` when it could not be written
+   * (its toast says why). `fromLayout`: Ajustar opens on the draft's screen; otherwise (Ajustar's own «Generar»)
+   * it stays on the screen it shows.
+   */
+  const writeGenerate = useCallback(
+    (result: GenerateResult, fromLayout: boolean): boolean => {
+      // From the notice inside «Exportar» (a modal, above the app's Toaster): its toasts go to the dialog's.
+      const toastTarget = exportOpen ? { toasterId: EXPORT_TOASTER_ID } : {};
+      const activeKey = fromLayout ? activeScreenOf(layoutStore) : undefined;
       const applied = designActions.applyGenerate(result, activeKey ? { activeKey } : {});
       if (applied.ok) {
         layoutStore?.getState().actions.markSynced(applied.doc);
         return true;
       }
       if (applied.error.reason !== "locked") {
-        toast.error(t.errors.generic);
+        // Not a «try again»: the same draft would fail the same way. Its edits stay in Layout.
+        toast.error(f.generate.invalid, toastTarget);
         return false;
       }
       // A removed block holds a value locked by the guide: deleting it is the user's call.
       toast.warning(f.generate.locked, {
+        ...toastTarget,
         duration: LOCKED_TOAST_MS,
         action: {
           label: f.generate.unlockAndDelete,
@@ -295,7 +310,7 @@ function FlowStage() {
             // The draft may have changed since that Generar: no markSynced, the next visit merges instead.
             const again = designActions.applyGenerate(result, { allowLocked: true, ...(activeKey && { activeKey }) });
             if (!again.ok) {
-              toast.error(t.errors.generic);
+              toast.error(t.errors.generic, toastTarget);
               return;
             }
             actions.goToCompose();
@@ -304,20 +319,66 @@ function FlowStage() {
       });
       return false;
     },
-    [designActions, layoutStore, actions, t, f],
+    [designActions, layoutStore, actions, t, f, exportOpen],
   );
+
+  /** «Generar» of the Layout step. `false` keeps the user in «Layout». */
+  const handleGenerate = useCallback((result: GenerateResult) => writeGenerate(result, true), [writeGenerate]);
+
+  /* ---- Ajustar and Exportar while the draft has layout changes that are not generated yet ---- */
+  const pendingLayout = usePendingLayout(layoutStore, doc, designStep === "compose" || exportOpen);
+  // The notice's «Generar» goes away with the notice: once it is gone, focus goes back to Ajustar.
+  const refocusAfterNotice = useRef(false);
+  const generateFromNotice = useCallback(() => {
+    const store = layoutStore;
+    if (!store || !pendingLayout) return;
+    let asked = false;
+    let written = false;
+    store.getState().actions.generate({
+      accept: (result) => {
+        asked = true;
+        written = writeGenerate(result, false);
+        return written;
+      },
+    });
+    const toastTarget = exportOpen ? { toasterId: EXPORT_TOASTER_ID } : {};
+    // Refused before asking (a document limit): Layout says why.
+    if (!asked) toast.error(f.pending.blocked, toastTarget);
+    if (!written) return;
+    toast.success(f.pending.generated, toastTarget);
+    // Inside «Exportar», the dialog keeps focus itself (`ExportDialog`'s `notice`).
+    if (!exportOpen) refocusAfterNotice.current = true;
+  }, [layoutStore, pendingLayout, writeGenerate, f, exportOpen]);
+  /** The notice changes the height above the step: the Composer, which fills the viewport, measures again. */
+  const remeasure = useCallback(() => window.dispatchEvent(new Event("resize")), []);
+  const onNoticeGone = useCallback(() => {
+    remeasure();
+    if (!refocusAfterNotice.current) return;
+    refocusAfterNotice.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body) document.querySelector<HTMLElement>('[data-step="compose"]')?.focus({ preventScroll: true });
+  }, [remeasure]);
+
+  /* ---- The stepper waits while Layout's «Generar» moment holds the flow (leaving would cancel its AI request) ---- */
+  const [layoutHeld, setLayoutHeld] = useState(false);
 
   const stepperStep: FlowStepperStep = exportOpen ? "export" : (designStep ?? "brand");
   const showStepper = state.step !== "drop";
   const errorMessage = state.error ? t.errors.extractFailed : undefined;
 
-  /** «Editar layout» (and «Layout» in Ajustar): back to the draft, on the screen Ajustar was showing. */
-  const editLayout = useCallback(() => {
-    const key = selectActiveKey(designStore.getState());
-    const draft = layoutStore?.getState();
-    if (key && draft && Object.hasOwn(draft.screens, key)) draft.actions.setActiveScreen(key);
-    actions.goToLayout();
-  }, [designStore, layoutStore, actions]);
+  /**
+   * «Editar layout» (and «Layout» in the stepper from Ajustar or Exportar): back to the draft, synced with the doc,
+   * on the screen Ajustar was showing. From «Marca» the draft keeps its own screen, like the lab's «Crear layout».
+   */
+  const openLayout = useCallback(
+    (fromCompose: boolean) => {
+      const design = designStore.getState();
+      enterLayout(layoutStore, design.doc, fromCompose ? selectActiveKey(design) : null);
+      actions.goToLayout();
+    },
+    [designStore, layoutStore, actions],
+  );
+  const editLayout = useCallback(() => openLayout(true), [openLayout]);
 
   const selectStep = useCallback(
     (step: FlowStepperStep) => {
@@ -327,10 +388,10 @@ function FlowStage() {
       }
       setExportOpen(false);
       if (step === "brand") actions.showPalette();
-      else if (step === "layout") editLayout();
+      else if (step === "layout") openLayout(designStep === "compose");
       else actions.goToCompose();
     },
-    [actions, setExportOpen, editLayout],
+    [actions, setExportOpen, openLayout, designStep],
   );
 
   return (
@@ -344,8 +405,16 @@ function FlowStage() {
                 <FlowStepper
                   current={stepperStep}
                   available={{ brand: !!state.primary, layout: !!state.primary, compose: hasDesign, export: hasDesign }}
+                  busy={layoutHeld && designStep === "layout"}
                   onSelect={selectStep}
                 />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false} onExitComplete={onNoticeGone}>
+            {pendingLayout && designStep === "compose" && (
+              <motion.div key="pending" variants={fadeVariants} initial="initial" animate="animate" exit="exit" onAnimationComplete={remeasure} className="mx-auto w-full max-w-[1760px]">
+                <PendingLayoutNotice onGenerate={generateFromNotice} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -386,7 +455,7 @@ function FlowStage() {
                     logo={state.logo}
                     initialCrop={state.crop}
                     onConfirm={actions.startExtract}
-                    onCancel={actions.reset}
+                    onCancel={actions.cancelCrop}
                     error={errorMessage}
                   />
                 </Stage>
@@ -415,6 +484,8 @@ function FlowStage() {
                     onGenerate={handleGenerate}
                     onGenerateIntent={preloadDesignStages}
                     onRevealEnd={actions.goToCompose}
+                    onMomentChange={setLayoutHeld}
+                    landmark={false}
                   />
                 </Stage>
               )}
@@ -432,7 +503,13 @@ function FlowStage() {
           </div>
         </main>
       </LayoutGroup>
-      {doc && <ExportDialog open={exportOpen} onOpenChange={setExportOpen} />}
+      {doc && (
+        <ExportDialog
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          notice={pendingLayout ? <PendingLayoutNotice onGenerate={generateFromNotice} /> : null}
+        />
+      )}
     </>
   );
 }

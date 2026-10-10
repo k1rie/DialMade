@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sectionLevelSchema } from "../lib/heading";
 import { toneSchema } from "../../app/content";
 import { UI_LIST_MAX } from "../content";
 import { UI_FRAMES } from "../lib/fit";
@@ -23,6 +24,8 @@ export const listSchema = z.strictObject({
   /** Link label in the header («Ver todo»); empty hides it. */
   action: z.string(),
   frame: z.enum(UI_FRAMES),
+  /** Heading level of the title (`sectionLevelSchema`): absent is h2. */
+  level: sectionLevelSchema,
 });
 
 export type ListProps = z.infer<typeof listSchema>;

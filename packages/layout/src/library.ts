@@ -23,6 +23,34 @@ const APP: readonly ScreenKind[] = ["app"];
 const BOTH: readonly ScreenKind[] = ["landing", "app"];
 const APP_FIRST: readonly ScreenKind[] = ["app", "landing"];
 
+/**
+ * Block types whose section draws a primary action that follows the block's `linkTo` to another screen: the
+ * CTA of a navbar, hero, CTA band or pricing plans, the action link of a text (a linked text shows it at any size),
+ * list or cards (else each card's title), the submit of a form or settings, the confirm button of a modal,
+ * the primary button of an empty state and «Ver todo» of the activity. Other sections have nothing to click,
+ * so the inspector does not offer «Enlaza a» for them. Kept in step with the sections by a test in
+ * `@dialmade/sections` (PageRenderer `links.test.tsx`).
+ */
+export const LINKABLE_BLOCK_TYPES: ReadonlySet<LibraryBlockType> = new Set<LibraryBlockType>([
+  "navbar",
+  "hero",
+  "pricing",
+  "cta",
+  "text",
+  "cards",
+  "list",
+  "settings",
+  "form",
+  "modal",
+  "empty",
+  "activity",
+]);
+
+/** Does a block of this type render a primary action that its `linkTo` can point to another screen? (`LibraryBlockDef.linkable`) */
+export function isLinkableBlockType(type: unknown): boolean {
+  return typeof type === "string" && LINKABLE_BLOCK_TYPES.has(type as LibraryBlockType);
+}
+
 type DefInput = {
   sectionType: string;
   size: [w: number, h: number];
@@ -57,6 +85,7 @@ function def(type: LibraryBlockType, category: BlockCategory, status: "ready" | 
     overlay: input.overlay ?? false,
     frame: input.frame ?? null,
     kinds: input.kinds,
+    linkable: LINKABLE_BLOCK_TYPES.has(type),
   };
 }
 

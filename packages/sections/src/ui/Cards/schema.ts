@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sectionLevelSchema } from "../lib/heading";
 import { iconSchema } from "../../app/content";
 import { UI_CARDS_MAX } from "../content";
 import { UI_FRAMES } from "../lib/fit";
@@ -26,6 +27,8 @@ export const cardsSchema = z.strictObject({
   /** Link label at the end of each card; empty hides it. */
   action: z.string(),
   frame: z.enum(UI_FRAMES),
+  /** Heading level of the title (`sectionLevelSchema`): absent is h2. */
+  level: sectionLevelSchema,
 });
 
 export type CardsProps = z.infer<typeof cardsSchema>;

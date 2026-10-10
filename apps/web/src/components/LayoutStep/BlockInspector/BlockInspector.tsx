@@ -1,7 +1,7 @@
 "use client";
 
-import { estimateContent, getBlockDef, isLibraryBlockType } from "@dialmade/layout";
-import { useId } from "react";
+import { absorbChildren, estimateContent, getBlockDef, isLibraryBlockType } from "@dialmade/layout";
+import { useId, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { PanelSection } from "@/components/ui/PanelSection";
 import { useDictionary } from "@/i18n";
@@ -16,6 +16,7 @@ import { DeviceFields } from "./DeviceFields";
 import { FineAdjust } from "./FineAdjust";
 import { InspectorHeader } from "./InspectorHeader";
 import { LinkField } from "./LinkField";
+import { linkFieldMode } from "./linkable";
 import { MoveToMenu } from "./MoveToMenu";
 import { NameField } from "./NameField";
 import { NoteField } from "./NoteField";
@@ -28,7 +29,7 @@ export type BlockInspectorProps = { className?: string };
 /**
  * Right panel while a block is selected: what the block is and says (type, name, note, count), where it
  * sits (numeric position and size, «Ajuste fino», «Mover a…»), where it shows (tablet, mobile, mobile
- * behavior) and where it links. Nothing aesthetic. Every edit is one undo step; text and numbers apply on
+ * behavior) and where it links (only blocks with a primary action to link, `linkFieldMode`). Nothing aesthetic. Every edit is one undo step; text and numbers apply on
  * blur or Enter. Lives inside the inspector area of LayoutStep (which owns the landmark and F6).
  */
 export function BlockInspector({ className }: BlockInspectorProps) {
@@ -38,6 +39,8 @@ export function BlockInspector({ className }: BlockInspectorProps) {
   const screen = useActiveScreen();
   const device = useLayoutStore((state) => state.device);
   const actions = useLayoutActions();
+  const screenLayout = screen?.layout;
+  const absorbed = useMemo(() => (screenLayout ? absorbChildren(screenLayout).absorbed : {}), [screenLayout]);
 
   if (!selection || !screen) return null;
   const { id, block } = selection;
@@ -46,6 +49,7 @@ export function BlockInspector({ className }: BlockInspectorProps) {
   const estimate = estimateContent(block, screen.layout, id);
   const parent = block.parentId !== undefined ? screen.layout.blocks[block.parentId] : undefined;
   const desktop = device === "desktop";
+  const linkMode = linkFieldMode(screen.layout, id, absorbed);
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -116,9 +120,11 @@ export function BlockInspector({ className }: BlockInspectorProps) {
         <DeviceFields blockId={id} block={block} def={def} screenId={screen.id} />
       </PanelSection>
 
-      <PanelSection semantics="group" title={t.inspector.linkTo}>
-        <LinkField blockId={id} linkTo={block.linkTo} screenId={screen.id} label={t.inspector.linkTo} />
-      </PanelSection>
+      {linkMode !== "none" && (
+        <PanelSection semantics="group" title={t.inspector.linkTo}>
+          <LinkField blockId={id} linkTo={block.linkTo} screenId={screen.id} label={t.inspector.linkTo} supported={linkMode === "link"} />
+        </PanelSection>
+      )}
     </div>
   );
 }

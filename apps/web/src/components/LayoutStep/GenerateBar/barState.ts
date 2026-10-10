@@ -57,6 +57,21 @@ export function ctaState({ blocks, generated, changed, activeKind }: CtaInput): 
   return changed > 0 ? { kind: "regenerate", count: changed } : { kind: "again" };
 }
 
+/** Which hint goes under the primary action (see `ctaHint`). */
+export type CtaHint = "empty" | "ai" | "upToDate" | "noAi";
+
+/**
+ * The hint under the primary action: the template's while the screens are empty, the AI's when it writes the copy,
+ * «No hay cambios desde el último Generar» only when nothing would change (`pending`: the draft has no layout change
+ * the document lacks, also the ones «Regenerar N» does not count: moves, renames, routes, links, hiding), else
+ * «Sin IA y sin créditos».
+ */
+export function ctaHint(cta: CtaState, { aiOn, pending }: { aiOn: boolean; pending: boolean }): CtaHint {
+  if (cta.kind === "template") return "empty";
+  if (aiOn) return "ai";
+  return cta.kind === "again" && !pending ? "upToDate" : "noAi";
+}
+
 /** «SaaS app» for an app screen, «Landing» otherwise. */
 export const templateSetFor = (kind: ScreenKind | null): SetTemplateId => (kind === "app" ? "saas-app" : "landing");
 

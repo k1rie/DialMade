@@ -16,7 +16,7 @@
 // `useDesignDocActions().applyPatch` (one undo step), right after the promise resolves; `useLayoutAiCopy`
 // does that for the layout step. Without AI the app works fully (`available: false`).
 import type { OutputKind } from "@dialmade/catalog";
-import type { DesignDoc, PatchOperation } from "@dialmade/doc";
+import { safeParseDesignDoc, type DesignDoc, type PatchOperation, type Screen } from "@dialmade/doc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadAiStatus, updateAiCounters, useAiStatus } from "@/hooks/useAiStatus";
 import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
@@ -155,7 +155,7 @@ const CODE_OF: Record<AiApiErrorCode, AiCopyErrorCode> = {
 
 const isAbort = (error: unknown) => error instanceof DOMException && error.name === "AbortError";
 
-type CleanTarget = { kind: OutputKind; sectionIds?: string[]; screens?: never } | { screens: ScreenCopyTarget[]; kind?: never; sectionIds?: never };
+export type CleanTarget = { kind: OutputKind; sectionIds?: string[]; screens?: never } | { screens: ScreenCopyTarget[]; kind?: never; sectionIds?: never };
 
 /** The request as the wire takes it: deduplicated ids within the caps, trimmed instructions. */
 function cleanRequest(request: AiCopyRequest): { target: CleanTarget; instructions: string | undefined } {
@@ -170,6 +170,52 @@ function targetProblem(doc: DesignDoc, target: CleanTarget): "no-page" | "no-fie
   if (!target.screens) return doc.pages[target.kind] ? null : "no-page";
   if (target.screens.length === 0) return "no-fields";
   return target.screens.some((screen) => !Object.hasOwn(doc.screens, screen.id)) ? "no-page" : null;
+}
+
+/** A screen the request does not target: what keeps links, routes and the shared navigation valid, nothing else. */
+function stubScreen(screen: Screen): Screen {
+  const { page } = screen;
+  const root = Object.hasOwn(page.elements, page.root) ? page.elements[page.root] : undefined;
+  return {
+    ...screen,
+    layout: { ...screen.layout, blocks: {} },
+    page: {
+      kind: page.kind,
+      layoutId: page.layoutId,
+      root: page.root,
+      elements: root ? { [page.root]: { ...root, children: [] } } : {},
+    },
+  };
+}
+
+/**
+ * The document the hosted route gets (review B #21: the whole document of a 4×200 project is over the 1 MB
+ * body limit, even for one section). The route reads the brand, the brief and the requested screens (or the
+ * requested page) and validates the answer against them, so the rest goes as little as the schema allows:
+ * every other screen keeps its id, name, kind, route and frame (links, routes and the shared navigation stay
+ * valid; the prompt names a linked screen) with no blocks and a bare page root; the requested screens lose
+ * only their stash of absorbed blocks; a screens request drops the legacy pages (the style guide), and
+ * `screenStash` (never sent to the AI) goes. Same fields, same field ids and the same prompt as the whole
+ * document. When the reduced document would not validate, the whole document goes, as before.
+ */
+export function aiRequestDoc(doc: DesignDoc, target: CleanTarget): DesignDoc {
+  const screenIds = Object.keys(doc.screens);
+  if (screenIds.length === 0 && doc.screenStash === undefined) return doc;
+  const wanted = new Set(target.screens?.map((screen) => screen.id) ?? []);
+  const screens: Record<string, Screen> = {};
+  for (const id of screenIds) {
+    const screen = doc.screens[id]!;
+    if (!wanted.has(id)) screens[id] = stubScreen(screen);
+    else if (screen.page.stash === undefined) screens[id] = screen;
+    else {
+      const page = { ...screen.page };
+      delete page.stash;
+      screens[id] = { ...screen, page };
+    }
+  }
+  const reduced: DesignDoc = { ...doc, screens, ...(target.screens && { pages: {} }) };
+  delete reduced.screenStash;
+  return safeParseDesignDoc(reduced).success ? reduced : doc;
 }
 
 /** The fields the request offers, computed with the same pure collector as the server. */
@@ -245,7 +291,7 @@ export function useAiCopy(): UseAiCopy {
           const response = await fetch(COPY_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ doc, ...target, ...(instructions && { instructions }), locale: doc.brief.locale }),
+            body: JSON.stringify({ doc: aiRequestDoc(doc, target), ...target, ...(instructions && { instructions }), locale: doc.brief.locale }),
             signal: own.signal,
           });
           const body: unknown = await response.json().catch(() => null);

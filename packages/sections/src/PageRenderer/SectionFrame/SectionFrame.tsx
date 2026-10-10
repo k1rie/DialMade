@@ -21,6 +21,8 @@ export interface SectionFrameProps {
   structural?: boolean;
   /** Extra `data-*` attributes of the wrapper (a region's layout kind…). */
   attributes?: Readonly<Record<`data-${string}`, string>>;
+  /** Selected in edit mode (`data-dl-selected`). Defaults to `ctx.selectedId === id`. */
+  selected?: boolean;
   children: ReactNode;
 }
 
@@ -30,7 +32,7 @@ export interface SectionFrameProps {
  * In edit mode the content of a leaf section is `inert`: its buttons, links and fields are neither
  * clickable nor tabbable (one tab stop per section; a demo dialog cannot open over the app).
  */
-export function SectionFrame({ id, type, label, ctx, container = false, structural = false, attributes, children }: SectionFrameProps) {
+export function SectionFrame({ id, type, label, ctx, container = false, structural = false, attributes, selected: selectedProp, children }: SectionFrameProps) {
   const className = cx("dl-el", `dl-el--${typeClass(type)}`);
   if (!ctx.interactive || structural) {
     return (
@@ -40,7 +42,7 @@ export function SectionFrame({ id, type, label, ctx, container = false, structur
     );
   }
 
-  const selected = ctx.selectedId === id;
+  const selected = selectedProp ?? ctx.selectedId === id;
   const select = (event: MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     ctx.onSelect?.(id);

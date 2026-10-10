@@ -97,6 +97,7 @@ export type PaletteFlowAction =
   | { type: "setLogo"; logo: FlowLogo }
   | { type: "setCrop"; crop?: CropRect | null }
   | { type: "editCrop" }
+  | { type: "cancelCrop" }
   | { type: "startExtract"; crop?: CropRect | null }
   | { type: "setExtract"; extract: ExtractResult }
   | { type: "failExtract"; error: string }
@@ -142,6 +143,11 @@ export function paletteFlowReducer(state: PaletteFlowState, action: PaletteFlowA
       return { ...state, crop: action.crop ? normalizeCrop(action.crop) : undefined };
     case "editCrop":
       return state.logo ? { ...state, step: "crop", error: undefined } : state;
+    case "cancelCrop":
+      // «Recortar de nuevo» from the lab: back to it with the colors and crop it had (the doc and its screens stay).
+      // A first crop (no colors yet) goes back to the start.
+      if (state.step !== "crop") return state;
+      return state.primary ? { ...state, step: "palette", error: undefined } : initialPaletteFlowState;
     case "startExtract": {
       if (!state.logo) return state;
       const crop = action.crop === undefined ? state.crop : action.crop ? normalizeCrop(action.crop) : undefined;
@@ -243,6 +249,11 @@ export type PaletteFlowActions = {
   setCrop: (crop?: CropRect | null) => void;
   /** Back to "crop" with the current logo (e.g. «Recortar de nuevo» from the lab). */
   editCrop: () => void;
+  /**
+   * «Volver» in the cropper: with colors already (cropping again from the lab) back to "palette", keeping the
+   * previous crop, the DesignDoc and its screens; on a first crop, back to "drop" (like `reset`).
+   */
+  cancelCrop: () => void;
   /** → step "extracting". Pass a crop to set it, `null` for the full image, omit to keep the current one. */
   startExtract: (crop?: CropRect | null) => void;
   /** Stores the worker result and its seeds as primary/secondary. Does not change step. */
@@ -310,6 +321,7 @@ export function PaletteFlowProvider({ children, initialState }: { children: Reac
       setLogo: (logo) => dispatch({ type: "setLogo", logo }),
       setCrop: (crop) => dispatch({ type: "setCrop", crop }),
       editCrop: () => dispatch({ type: "editCrop" }),
+      cancelCrop: () => dispatch({ type: "cancelCrop" }),
       startExtract: (crop) => dispatch({ type: "startExtract", crop }),
       setExtract: (extract) => dispatch({ type: "setExtract", extract }),
       failExtract: (error) => dispatch({ type: "failExtract", error }),
