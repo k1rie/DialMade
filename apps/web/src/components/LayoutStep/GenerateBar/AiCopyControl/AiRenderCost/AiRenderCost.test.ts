@@ -10,7 +10,7 @@ const text = (markup: string) => markup.replace(/<[^>]+>/g, "\n").split("\n").fi
 describe("AiRenderCost", () => {
   it("says the cost, the use, the screens and the time before any call", () => {
     const lines = text(render({ cost: { cost: "$0.013", left: 5, total: 5, screens: 3, seconds: 30 }, blocked: null }));
-    expect(lines[0]).toBe("≈ $0.013 · 1 uso de 5 · 3 pantallas · ≈ 30 s");
+    expect(lines[0]!.replace(/\u00a0/g, " ")).toBe("≈ $0.013 · 1 uso de 5 · 3 pantallas · ≈ 30 s");
     expect(lines[1]).toContain("10 cambios");
   });
 

@@ -9,6 +9,9 @@ import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
 import { AiCellBadge } from "../AiCellBadge";
 
+/** The island's own color-scheme, equal to the one its runtime sets, so the frame stays transparent. */
+export const islandScheme = (mode: "light" | "dark") => (mode === "dark" ? "scheme-dark!" : "scheme-light!");
+
 export type AiBlockIslandProps = {
   blockId: string;
   /** Block label of the layout («Hero»): the island's accessible name and the chip's. */
@@ -58,6 +61,9 @@ export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref
         editable={editable}
         lang={lang}
         title={t.island(label)}
+        // The 24 px bleed overlaps the neighbours: the frame must stay transparent there. Chrome paints an opaque
+        // backdrop when the frame's color-scheme («normal» → the app's dark) differs from its document's (`mode`).
+        className={islandScheme(mode)}
         onSelect={() => onSelect(blockId)}
         {...(onNavigate && { onNavigate })}
       />

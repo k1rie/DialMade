@@ -94,7 +94,7 @@ export function AiRunBar({ className }: AiRunBarProps) {
             <div
               role="group"
               aria-label={t.label}
-              className="glass pointer-events-auto flex max-w-2xl min-w-0 flex-wrap items-center justify-end gap-2 rounded-panel border border-app p-2 shadow-lift"
+              className="glass pointer-events-auto flex max-w-2xl min-w-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap rounded-panel border border-app p-2 shadow-lift"
             >
               <div className="flex min-w-0 flex-1 basis-64 flex-col gap-0.5 px-2">
                 <AnimatePresence mode="wait" initial={false}>

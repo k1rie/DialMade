@@ -250,11 +250,11 @@ export const ai = defineDictionary({
       },
       cost: {
         line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
-          `≈ ${cost} · 1 uso de ${left} · ${screens} ${plural(screens, "pantalla", "pantallas")} · ≈ ${seconds} s`,
+          `≈\u00a0${cost} · 1\u00a0uso de ${left} · ${screens}\u00a0${plural(screens, "pantalla", "pantallas")} · ≈\u00a0${seconds}\u00a0s`,
         usesTotal: (total: number) => `Tienes ${total} ${plural(total, "uso gratis", "usos gratis")} al mes.`,
         session: "El uso incluye 10 cambios por bloque («Otra versión», «Pedir cambio») durante 24 h.",
         withKey: (cost: string, screens: number, seconds: number) =>
-          `≈ ${cost} con tu key · ${screens} ${plural(screens, "pantalla", "pantallas")} · ≈ ${seconds} s`,
+          `≈\u00a0${cost} con tu key · ${screens}\u00a0${plural(screens, "pantalla", "pantallas")} · ≈\u00a0${seconds}\u00a0s`,
       },
       run: {
         label: "Diseño con IA",
@@ -520,11 +520,11 @@ export const ai = defineDictionary({
       },
       cost: {
         line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
-          `≈ ${cost} · 1 use of ${left} · ${screens} ${plural(screens, "screen", "screens")} · ≈ ${seconds} s`,
+          `≈\u00a0${cost} · 1\u00a0use of ${left} · ${screens}\u00a0${plural(screens, "screen", "screens")} · ≈\u00a0${seconds}\u00a0s`,
         usesTotal: (total: number) => `You get ${total} free ${plural(total, "use", "uses")} a month.`,
         session: "The use includes 10 block changes («Another version», «Ask for a change») for 24 h.",
         withKey: (cost: string, screens: number, seconds: number) =>
-          `≈ ${cost} with your key · ${screens} ${plural(screens, "screen", "screens")} · ≈ ${seconds} s`,
+          `≈\u00a0${cost} with your key · ${screens}\u00a0${plural(screens, "screen", "screens")} · ≈\u00a0${seconds}\u00a0s`,
       },
       run: {
         label: "Design with AI",

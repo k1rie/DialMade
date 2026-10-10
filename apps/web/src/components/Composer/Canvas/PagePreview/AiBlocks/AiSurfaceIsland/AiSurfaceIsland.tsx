@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { AiIsland } from "@/components/AiIsland";
 import { tween } from "@/lib/motion";
+import { islandScheme } from "../AiBlockIsland";
 
 export type AiSurfaceIslandProps = {
   blockId: string;
@@ -44,7 +45,7 @@ export function AiSurfaceIsland({ blockId, surfaceClasses, css, vars, mode, font
         editable={false}
         lang={lang}
         title={title}
-        className="h-[calc(100%+48px)]!"
+        className={`h-[calc(100%+48px)]! ${islandScheme(mode)}`}
       />
     </motion.div>
   );

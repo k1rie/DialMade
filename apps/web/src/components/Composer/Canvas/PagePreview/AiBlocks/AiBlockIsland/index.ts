@@ -1,1 +1,1 @@
-export { AiBlockIsland, type AiBlockIslandProps } from "./AiBlockIsland";
+export { AiBlockIsland, islandScheme, type AiBlockIslandProps } from "./AiBlockIsland";
