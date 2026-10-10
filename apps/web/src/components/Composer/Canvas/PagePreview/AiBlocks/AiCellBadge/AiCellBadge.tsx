@@ -17,6 +17,10 @@ export type AiCellBadgeProps = {
   kind: "designing" | "failed" | "inactive";
   /** Block label («Hero»), for the buttons' names. */
   label: string;
+  /** The block's id: its button is where focus lands after a swap (`data-ai-focus`, @/lib/ai/render/focus). */
+  blockId?: string;
+  /** `failed`: the retry is billed to the user's key (else it spends 1 change of the session). */
+  byok?: boolean;
   /** `failed`: a retry is in flight. */
   busy?: boolean;
   onAction?: () => void;
@@ -28,7 +32,7 @@ const stop = (event: MouseEvent) => event.stopPropagation();
  * The app's marks on a block cell of the user's page (inside ThemeScope, so `.app-chrome`). Buttons are real app
  * buttons, reachable with Tab and Enter; their clicks never select the block underneath.
  */
-export function AiCellBadge({ kind, label, busy = false, onAction }: AiCellBadgeProps) {
+export function AiCellBadge({ kind, label, blockId, byok = false, busy = false, onAction }: AiCellBadgeProps) {
   const t = useDictionary(aiText).aiRender.block;
   const reduce = useReducedMotion();
 
@@ -66,16 +70,19 @@ export function AiCellBadge({ kind, label, busy = false, onAction }: AiCellBadge
         )}
         <button
           type="button"
-          disabled={busy}
-          aria-label={failed ? t.retryLabel(label) : t.useAiLabel(label)}
+          // aria-disabled, not disabled, while the retry runs: focus stays on the button.
+          aria-disabled={busy || undefined}
+          data-ai-focus={blockId}
+          aria-label={failed ? (byok ? t.retryLabelByok(label) : t.retryLabel(label)) : t.useAiLabel(label)}
           onClick={(event) => {
             stop(event);
-            onAction?.();
+            if (!busy) onAction?.();
           }}
-          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-chip px-2 font-medium text-fg transition-colors duration-150 hover:bg-white/10 disabled:opacity-60"
+          className="inline-flex h-6 shrink-0 items-center gap-1 rounded-chip px-2 font-medium text-fg transition-colors duration-150 hover:bg-white/10 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
         >
           {busy && <Spinner className="size-3" />}
           {failed ? t.retry : t.useAi}
+          {failed && <span className="font-normal text-muted">· {byok ? t.retryCostByok : t.retryCost}</span>}
         </button>
       </div>
     </div>

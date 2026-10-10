@@ -31,4 +31,15 @@ describe("supabase design sessions (rpc mocked, no network)", () => {
     expect(refused).toMatchObject({ ok: false, reason: "screens-exhausted" });
     expect(await sessions.refundSession("s", "d", "screen")).toMatchObject({ screensUsed: 0 });
   });
+
+  it("peeks a session read-only before any upstream work, and a refund past the cap returns the counters", async () => {
+    const rpc = vi.fn<RpcCall>(async (fn) => {
+      if (fn === "dialmade_ai_session_peek") return { data: { ok: false, reason: "expired", session: sessionRow }, error: null };
+      return { data: { ok: false, reason: "refunds-exhausted", session: sessionRow }, error: null };
+    });
+    const sessions = supabaseAiLedger(rpc).sessions!;
+    expect(await sessions.peekSession({ sessionId: "s", deviceId: "d", kind: "action", monthlyBudgetUsd: 5 })).toMatchObject({ ok: false, reason: "expired", session: { screensUsed: 1 } });
+    expect(rpc.mock.calls[0]).toEqual(["dialmade_ai_session_peek", { p_session_id: "s", p_device_id: "d", p_kind: "action", p_monthly_budget_usd: 5 }]);
+    expect(await sessions.refundSession("s", "d", "screen")).toMatchObject({ screensUsed: 1 });
+  });
 });

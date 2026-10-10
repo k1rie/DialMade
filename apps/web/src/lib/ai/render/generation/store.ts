@@ -37,6 +37,8 @@ export type GenerationStore = StoreApi<GenerationStoreState>;
 export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null };
 
 let transportOverride: RenderTransport | null = null;
+/** The transport of the NEXT run only (consumed when it starts): «mi Claude»'s pasted answer is good for one run. */
+let nextRunTransport: RenderTransport | null = null;
 
 /**
  * A transport for the next runs instead of the current paid path (e.g. «mi Claude»: `fromAccessTransport(
@@ -44,6 +46,17 @@ let transportOverride: RenderTransport | null = null;
  */
 export function setRenderTransport(transport: RenderTransport | null): void {
   transportOverride = transport;
+}
+
+/** A transport for the next run only (e.g. «mi Claude» with its pasted answer); later runs use the paid path again. */
+export function setNextRunTransport(transport: RenderTransport | null): void {
+  nextRunTransport = transport;
+}
+
+function takeTransport(): RenderTransport | Promise<RenderTransport> {
+  const once = nextRunTransport;
+  nextRunTransport = null;
+  return once ?? transportOverride ?? currentGenerationTransport();
 }
 
 export type GenerationStoreOptions = Partial<Omit<GenerationDeps, "getDoc" | "applyPatch">> & {
@@ -54,7 +67,7 @@ export type GenerationStoreOptions = Partial<Omit<GenerationDeps, "getDoc" | "ap
 /** A generation store bound to one DesignDoc store. */
 export function createGenerationStore(docStore: Pick<DesignDocStore, "getState">, options: GenerationStoreOptions = {}): GenerationStore {
   const deps: GenerationDeps = {
-    transport: options.transport ?? (() => transportOverride ?? currentGenerationTransport()),
+    transport: options.transport ?? takeTransport,
     process: options.process ?? processBlockOffThread,
     getDoc: () => docStore.getState().doc,
     applyPatch: (ops) => docStore.getState().actions.applyPatch(ops).ok,

@@ -115,6 +115,12 @@ export type GenerationState = {
   error: RenderErrorCode | null;
   announcement: ScreenAnnouncement | null;
   costUsd: number;
+  /**
+   * What «Cancelar» did once screens were asked for: the free tier's call `finishes` and bills the screen, BYOK's
+   * `stops` (only what was generated is billed), «mi Claude» bills `none`. Null when nothing was cancelled, or the
+   * cancel came before any screen was asked for.
+   */
+  cancel?: { billing: "finishes" | "stops" | "none" } | null;
 };
 
 /** What the «IA» control remembers for the next «Generar» (per document, survives Layout → Ajustar). */

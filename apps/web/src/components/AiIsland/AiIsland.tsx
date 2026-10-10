@@ -32,6 +32,12 @@ export type AiIslandProps = {
    * `onMeasure` per width (`useResponsiveGate` turns them into the verdict).
    */
   measureWidths?: readonly number[];
+  /**
+   * Keyboard way into the inline text edit (editable islands): every new `n` focuses the island and asks it to edit
+   * text `t` (or its first text). `onEditEnd` fires when that edit ends from the keyboard (Enter, Escape, Tab out).
+   */
+  edit?: { n: number; t: number | null } | null;
+  onEditEnd?: () => void;
   className?: string;
 };
 
@@ -42,7 +48,7 @@ export type AiIslandProps = {
  * height, and keeps a compensated 24 px margin so shadows are not clipped. Renders nothing when there is no preview
  * origin (the feature is then not offered at all).
  */
-export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, measureWidths, className }: AiIslandProps) {
+export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, measureWidths, edit, onEditEnd, className }: AiIslandProps) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [height, setHeight] = useState(0);
@@ -62,6 +68,7 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
     else if (message.type === "textEdit") onTextEdit?.(message.t, message.text);
     else if (message.type === "navigate") onNavigate?.(message.screenId);
     else if (message.type === "measure") onMeasure?.(message);
+    else if (message.type === "editEnd") onEditEnd?.();
   });
 
   // Fluid type (`vw`) sized like the page around the island, not like the iframe (the cell): see pinViewportUnits.
@@ -84,6 +91,18 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, pinned, mode, fontsHref]);
 
+  // «Editar textos»: the frame takes focus (so the island may focus its text), then the island starts the edit.
+  // A request made before this island mounted (another screen, an earlier visit) is not replayed.
+  const editN = edit?.n ?? 0;
+  const handledEdit = useRef(editN);
+  useEffect(() => {
+    if (!ready || !editable || !edit || editN <= handledEdit.current) return;
+    handledEdit.current = editN;
+    frame.current?.focus();
+    post({ type: "edit", v: 1, t: edit.t });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, editable, editN]);
+
   if (!src) return null;
   return (
     <iframe
@@ -93,6 +112,9 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
       sandbox="allow-scripts"
       referrerPolicy="no-referrer"
       loading="lazy"
+      // In Ajustar the block is selected through its cell (one tab stop per block, like a base section); its texts
+      // are reached with «Editar textos». Elsewhere (public links) its links are reachable as usual.
+      tabIndex={editable ? -1 : undefined}
       className={className}
       style={{ display: "block", width: `calc(100% + ${ISLAND_BLEED * 2}px)`, height: height || 1, margin: -ISLAND_BLEED, border: 0, background: "transparent", colorScheme: mode }}
     />

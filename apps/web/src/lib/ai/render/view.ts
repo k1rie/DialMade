@@ -18,11 +18,16 @@ type AiViewState = {
   target: AiTextTarget | null;
   /** Blocks with an AI action in flight (`screenId/blockId`): the island shows its shimmer, the card its progress. */
   busy: Readonly<Record<string, true>>;
+  /** «Editar textos» (keyboard way into the inline edit): the island of that block edits text `t` (or its first). */
+  editRequest: AiTextEditRequest | null;
 };
+
+/** `n` grows with every request, so asking again for the same text edits it again. */
+export type AiTextEditRequest = { screenId: string; blockId: string; t: number | null; n: number };
 
 const blockKey = (screenId: string, blockId: string) => `${screenId}/${blockId}`;
 
-export const aiViewStore = createStore<AiViewState>(() => ({ baseScreens: {}, blockViews: {}, target: null, busy: {} }));
+export const aiViewStore = createStore<AiViewState>(() => ({ baseScreens: {}, blockViews: {}, target: null, busy: {}, editRequest: null }));
 
 const toggled = (record: Readonly<Record<string, true>>, key: string, on: boolean): Record<string, true> => {
   const next = { ...record };
@@ -60,6 +65,12 @@ export function setAiBusy(screenId: string, blockId: string, busy: boolean) {
   aiViewStore.setState({ busy: toggled(aiViewStore.getState().busy, blockKey(screenId, blockId), busy) });
 }
 
+/** Starts the inline text edit of an AI block from the keyboard (its island receives `edit {t}`). */
+export function requestAiTextEdit(screenId: string, blockId: string, t: number | null) {
+  const n = (aiViewStore.getState().editRequest?.n ?? 0) + 1;
+  aiViewStore.setState({ editRequest: { screenId, blockId, t, n } });
+}
+
 export const isAiBusy = (state: Pick<AiViewState, "busy">, screenId: string, blockId: string): boolean => state.busy[blockKey(screenId, blockId)] === true;
 
 export function useAiView<T>(selector: (state: AiViewState) => T): T {
@@ -68,5 +79,5 @@ export function useAiView<T>(selector: (state: AiViewState) => T): T {
 
 /** Tests. */
 export function resetAiView() {
-  aiViewStore.setState({ baseScreens: {}, blockViews: {}, target: null, busy: {} });
+  aiViewStore.setState({ baseScreens: {}, blockViews: {}, target: null, busy: {}, editRequest: null });
 }

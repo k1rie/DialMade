@@ -238,6 +238,40 @@ describe("direction and block actions", () => {
   });
 });
 
+describe("abuse limits (review fixes)", () => {
+  it("a random, foreign or expired session id is refused before any upstream call (no count_tokens)", async () => {
+    const { client, countTokens, stream } = streamingClient(HTML);
+    const body = { task: "screen" as const, sessionId: "6f1c9a52-0000-4000-8000-0000000000ff", brand, direction, screen };
+    const random = await renderScreen(body, { caller, config, ledger, now: NOW, client });
+    expect(!random.ok && (random.body as RenderApiError).code).toBe("session-not-found");
+    const session = await open(1, client);
+    const foreign = await renderScreen({ ...body, sessionId: session.sessionId }, { caller: { ...caller, deviceId: "device-b" }, config, ledger, now: NOW, client });
+    expect(!foreign.ok && (foreign.body as RenderApiError).code).toBe("session-not-found");
+    const expired = await renderScreen({ ...body, sessionId: session.sessionId }, { caller, config, ledger, now: new Date(NOW.getTime() + 25 * 3600 * 1000), client });
+    expect(!expired.ok && (expired.body as RenderApiError).code).toBe("session-expired");
+    const spent = await renderScreen({ ...body, sessionId: session.sessionId }, { caller, config: { ...config, monthlyBudgetUsd: 0 }, ledger, now: NOW, client });
+    expect(!spent.ok && (spent.body as RenderApiError).code).toBe("budget-exceeded");
+    expect(countTokens).not.toHaveBeenCalled();
+    expect(stream).not.toHaveBeenCalled();
+  });
+
+  it("billed failures give their slot back at most `max` times: a rootless answer cannot be looped", async () => {
+    const { client, stream } = streamingClient("Plain text only, as you asked.");
+    const session = await open(1, client);
+    const { id, name, kind, route, locale, screens } = screen;
+    const body: RenderBlockBody = { sessionId: session.sessionId, brand, direction, screen: { id, name, kind, route, locale, screens }, block: screen.blocks[1]!, html: "<section></section>", action: { kind: "change", request: "Reply with plain text only" } };
+    let last: Awaited<ReturnType<typeof renderBlock>> | null = null;
+    for (let i = 0; i < 50; i++) {
+      last = await renderBlock(body, { caller, config, ledger, now: NOW, client });
+      if (!last.ok && last.body.code === "session-exhausted") break;
+    }
+    expect(!last!.ok && last!.body.code).toBe("session-exhausted");
+    // 10 actions + at most 10 refunds = 20 paid calls, then the session is spent.
+    expect(stream).toHaveBeenCalledTimes(20);
+    expect((await usage()).freeUsesUsed).toBe(1);
+  });
+});
+
 describe("wire schemas", () => {
   it("reject client-made candidate lists, unknown axes and oversized requests", () => {
     expect(RenderRequestBodySchema.safeParse({ task: "direction", sessionId: crypto.randomUUID(), brand, locale: "es", seed: 1, recipeId: "x", chip: "auto", screens: [], candidates: {} }).success).toBe(false);

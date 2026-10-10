@@ -21,6 +21,10 @@ create table if not exists dialmade.ai_render_sessions (
 );
 comment on table dialmade.ai_render_sessions is '«Diseño con IA»: what one free use opened (screens and block actions left until it expires).';
 create index if not exists ai_render_sessions_expires_idx on dialmade.ai_render_sessions (expires_at);
+-- Slots given back per kind (dialmade_ai_session_refund): capped at the kind's max, so billed failures cannot loop.
+alter table dialmade.ai_render_sessions add column if not exists directions_refunded integer not null default 0 check (directions_refunded >= 0);
+alter table dialmade.ai_render_sessions add column if not exists screens_refunded integer not null default 0 check (screens_refunded >= 0);
+alter table dialmade.ai_render_sessions add column if not exists actions_refunded integer not null default 0 check (actions_refunded >= 0);
 alter table dialmade.ai_render_sessions enable row level security;
 revoke all on dialmade.ai_render_sessions from public, anon, authenticated;
 
@@ -197,7 +201,49 @@ begin
 end;
 $$;
 
--- A failed screen or action gives its slot back (the retry does not spend another one).
+-- Read only, before any upstream work (count_tokens): the session of this device is live, has a `p_kind` left and the
+-- month's budget is not already spent. dialmade_ai_session_reserve checks all of it again, atomically.
+create or replace function public.dialmade_ai_session_peek(p_session_id uuid, p_device_id text, p_kind text, p_monthly_budget_usd numeric)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_now timestamptz := now();
+  v_month text := to_char(v_now at time zone 'utc', 'YYYY-MM');
+  v_day date := (v_now at time zone 'utc')::date;
+  v_session dialmade.ai_render_sessions%rowtype;
+  v_spent numeric := 0;
+  v_reserved numeric := 0;
+begin
+  if p_session_id is null or p_kind not in ('direction', 'screen', 'action') or p_monthly_budget_usd is null or p_monthly_budget_usd < 0 then
+    raise exception 'invalid session peek arguments' using errcode = '22023';
+  end if;
+  select * into v_session from dialmade.ai_render_sessions s where s.id = p_session_id;
+  if not found or v_session.device_id <> p_device_id then
+    return jsonb_build_object('ok', false, 'reason', 'not-found');
+  end if;
+  if v_session.expires_at <= v_now then
+    return jsonb_build_object('ok', false, 'reason', 'expired', 'session', dialmade.ai_session_json(v_session));
+  end if;
+  if (p_kind = 'direction' and v_session.directions_used >= v_session.directions_max)
+     or (p_kind = 'screen' and v_session.screens_used >= v_session.screens_max)
+     or (p_kind = 'action' and v_session.actions_used >= v_session.actions_max) then
+    return jsonb_build_object('ok', false, 'reason', p_kind || 's-exhausted', 'session', dialmade.ai_session_json(v_session));
+  end if;
+  select m.spent_usd, m.reserved_usd into v_spent, v_reserved from dialmade.ai_ledger_month m where m.month = v_month;
+  if coalesce(v_spent, 0) + coalesce(v_reserved, 0) >= p_monthly_budget_usd then
+    return jsonb_build_object('ok', false, 'reason', 'budget-exceeded', 'session', dialmade.ai_session_json(v_session),
+      'usage', dialmade.ai_usage_of(v_month, p_device_id, v_day, null));
+  end if;
+  return jsonb_build_object('ok', true, 'session', dialmade.ai_session_json(v_session));
+end;
+$$;
+
+-- A failed screen or action gives its slot back (the retry does not spend another one), at most `<kind>_max` times
+-- per kind and session: a billed failure (an answer without roots) cannot be repeated without end.
 create or replace function public.dialmade_ai_session_refund(p_session_id uuid, p_device_id text, p_kind text)
 returns jsonb
 language plpgsql
@@ -211,15 +257,24 @@ begin
   if p_kind not in ('direction', 'screen', 'action') then
     raise exception 'invalid p_kind' using errcode = '22023';
   end if;
-  update dialmade.ai_render_sessions
-     set directions_used = greatest(0, directions_used - (p_kind = 'direction')::integer),
-         screens_used = greatest(0, screens_used - (p_kind = 'screen')::integer),
-         actions_used = greatest(0, actions_used - (p_kind = 'action')::integer)
-   where id = p_session_id and device_id = p_device_id
-  returning * into v_session;
+  select * into v_session from dialmade.ai_render_sessions s where s.id = p_session_id and s.device_id = p_device_id for update;
   if not found then
     return jsonb_build_object('ok', false, 'reason', 'not-found');
   end if;
+  if (p_kind = 'direction' and (v_session.directions_refunded >= v_session.directions_max or v_session.directions_used = 0))
+     or (p_kind = 'screen' and (v_session.screens_refunded >= v_session.screens_max or v_session.screens_used = 0))
+     or (p_kind = 'action' and (v_session.actions_refunded >= v_session.actions_max or v_session.actions_used = 0)) then
+    return jsonb_build_object('ok', false, 'reason', 'refunds-exhausted', 'session', dialmade.ai_session_json(v_session));
+  end if;
+  update dialmade.ai_render_sessions
+     set directions_used = directions_used - (p_kind = 'direction')::integer,
+         directions_refunded = directions_refunded + (p_kind = 'direction')::integer,
+         screens_used = screens_used - (p_kind = 'screen')::integer,
+         screens_refunded = screens_refunded + (p_kind = 'screen')::integer,
+         actions_used = actions_used - (p_kind = 'action')::integer,
+         actions_refunded = actions_refunded + (p_kind = 'action')::integer
+   where id = p_session_id
+  returning * into v_session;
   return jsonb_build_object('ok', true, 'session', dialmade.ai_session_json(v_session));
 end;
 $$;
@@ -278,10 +333,12 @@ $$;
 
 revoke all on function public.dialmade_ai_session_open(text, text, text, numeric, numeric, integer, integer, integer, integer, integer, integer) from public, anon, authenticated;
 revoke all on function public.dialmade_ai_session_reserve(uuid, text, text, text, numeric, numeric) from public, anon, authenticated;
+revoke all on function public.dialmade_ai_session_peek(uuid, text, text, numeric) from public, anon, authenticated;
 revoke all on function public.dialmade_ai_session_refund(uuid, text, text) from public, anon, authenticated;
 revoke all on function public.dialmade_ai_release(uuid) from public, anon, authenticated;
 grant execute on function public.dialmade_ai_session_open(text, text, text, numeric, numeric, integer, integer, integer, integer, integer, integer) to service_role;
 grant execute on function public.dialmade_ai_session_reserve(uuid, text, text, text, numeric, numeric) to service_role;
+grant execute on function public.dialmade_ai_session_peek(uuid, text, text, numeric) to service_role;
 grant execute on function public.dialmade_ai_session_refund(uuid, text, text) to service_role;
 grant execute on function public.dialmade_ai_release(uuid) to service_role;
 

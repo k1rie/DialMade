@@ -46,6 +46,11 @@ export const ParentMessageSchema = z.discriminatedUnion("type", [
      */
     widths: z.array(z.number().int().min(MIN_MEASURE_WIDTH).max(MAX_MEASURE_WIDTH)).max(3).optional(),
   }),
+  /**
+   * The keyboard way into the inline text edit (WCAG 2.1.1): edit text `t` (`data-dl-t`), or the block's first text
+   * when null. Only in an editable island; Tab / Shift+Tab move to the next / previous text, Enter or Escape end.
+   */
+  z.strictObject({ type: z.literal("edit"), v: z.literal(ISLAND_PROTOCOL_VERSION), t: z.number().int().min(0).max(1000).nullable() }),
 ]);
 
 /** Island → app. */
@@ -55,6 +60,8 @@ export const IslandMessageSchema = z.discriminatedUnion("type", [
   z.strictObject({ type: z.literal("select"), blockId: BlockId, t: z.number().int().min(0).max(1000).nullable(), text: z.string().max(200).nullable() }),
   z.strictObject({ type: z.literal("textEdit"), blockId: BlockId, t: z.number().int().min(0).max(1000), text: z.string().max(2000) }),
   z.strictObject({ type: z.literal("navigate"), blockId: BlockId, screenId: BlockId }),
+  /** An inline edit started from the keyboard ended (Enter, Escape, Tab past the last text): focus goes back to the app. */
+  z.strictObject({ type: z.literal("editEnd"), blockId: BlockId }),
   z.strictObject({
     type: z.literal("measure"),
     blockId: BlockId,

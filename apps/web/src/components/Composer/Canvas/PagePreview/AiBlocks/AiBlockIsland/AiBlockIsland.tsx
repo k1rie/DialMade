@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import type { MouseEvent } from "react";
+import { useRef, type MouseEvent } from "react";
 import { AiIsland, useResponsiveGate } from "@/components/AiIsland";
 import type { CellWidths, ResponsiveVerdict } from "@/lib/ai/render/responsive";
 import { useDictionary } from "@/i18n";
@@ -39,6 +39,8 @@ export type AiBlockIslandProps = {
   onTextEdit?: ((t: number, text: string) => void) | undefined;
   /** «Volver al diseño base». */
   onUseBase: () => void;
+  /** «Editar textos» of the «Bloque de IA» card for this block (keyboard way into the inline edit). */
+  edit?: { n: number; t: number | null } | null;
 };
 
 /**
@@ -50,7 +52,8 @@ export type AiBlockIslandProps = {
 const NO_WIDTHS: CellWidths = {};
 const ignore = () => {};
 
-export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onSelectText, widths, onVerdict, onNavigate, onTextEdit, onUseBase }: AiBlockIslandProps) {
+export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onSelectText, widths, onVerdict, onNavigate, onTextEdit, onUseBase, edit }: AiBlockIslandProps) {
+  const root = useRef<HTMLDivElement>(null);
   const t = useDictionary(aiText).aiRender.block;
   const onMeasure = useResponsiveGate(widths ?? NO_WIDTHS, undefined, onVerdict ?? ignore);
   const measureWidths = widths && onVerdict ? [...new Set(Object.values(widths))].sort((a, b) => b - a) : undefined;
@@ -58,6 +61,7 @@ export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref
   const stop = (event: MouseEvent) => event.stopPropagation();
   return (
     <motion.div
+      ref={root}
       data-dl-ai-island=""
       className="group/ai relative min-h-0 flex-1"
       initial={reduce ? false : { opacity: 0 }}
@@ -84,12 +88,16 @@ export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref
         {...(measureWidths && measureWidths.length > 0 && { measureWidths, onMeasure })}
         {...(onNavigate && { onNavigate })}
         {...(onTextEdit && { onTextEdit })}
+        edit={edit ?? null}
+        // A keyboard edit ended: focus goes back to the block's cell (the frame the user selected it from).
+        onEditEnd={() => root.current?.closest<HTMLElement>("[data-dl-id][tabindex]")?.focus({ preventScroll: true })}
       />
       {pending && <AiCellBadge kind="designing" label={label} />}
       {editable && (
         <div className="app-chrome pointer-events-none absolute top-2 right-2 z-10 flex">
           <button
             type="button"
+            data-ai-focus={blockId}
             aria-label={t.toBaseLabel(label)}
             onClick={(event) => {
               stop(event);

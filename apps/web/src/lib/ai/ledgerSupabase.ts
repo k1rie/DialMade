@@ -64,6 +64,15 @@ const SessionReserveRow = z.discriminatedUnion("ok", [
     usage: UsageRow.optional(),
   }),
 ]);
+const PeekRow = z.discriminatedUnion("ok", [
+  z.object({ ok: z.literal(true), session: SessionRow }),
+  z.object({
+    ok: z.literal(false),
+    reason: z.enum(["not-found", "expired", "directions-exhausted", "screens-exhausted", "actions-exhausted", "budget-exceeded"]),
+    session: SessionRow.optional(),
+    usage: UsageRow.optional(),
+  }),
+]);
 const RefundRow = z.object({ ok: z.boolean(), session: SessionRow.optional() });
 
 export function supabaseAiLedger(rpc: RpcCall): AiLedger {
@@ -117,6 +126,15 @@ export function supabaseAiLedger(rpc: RpcCall): AiLedger {
         SessionReserveRow,
       );
       if (row.ok) return { ok: true, reservationId: row.reservation_id, session: toSession(row.session), usage: toUsage(row.usage) };
+      return { ok: false, reason: row.reason, ...(row.session && { session: toSession(row.session) }), ...(row.usage && { usage: toUsage(row.usage) }) };
+    },
+    async peekSession(request) {
+      const row = await call(
+        "dialmade_ai_session_peek",
+        { p_session_id: request.sessionId, p_device_id: request.deviceId, p_kind: request.kind, p_monthly_budget_usd: request.monthlyBudgetUsd },
+        PeekRow,
+      );
+      if (row.ok) return { ok: true, session: toSession(row.session) };
       return { ok: false, reason: row.reason, ...(row.session && { session: toSession(row.session) }), ...(row.usage && { usage: toUsage(row.usage) }) };
     },
     async refundSession(sessionId, deviceId, kind) {

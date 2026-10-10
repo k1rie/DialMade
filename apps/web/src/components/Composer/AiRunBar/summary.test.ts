@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GenerationState, ScreenRun } from "@/lib/ai/render/generation";
-import { failedScreens, runCounts, runProgress } from "./summary";
+import { ai } from "@/i18n/ai";
+import { cancelDetail, failedScreens, runCounts, runProgress } from "./summary";
 
 const screen = (screenId: string, phase: ScreenRun["phase"], blocks: Record<string, ScreenRun["blocks"][string]>, error?: ScreenRun["error"]): ScreenRun => ({
   screenId,
@@ -41,5 +42,15 @@ describe("run bar summary", () => {
       screen("s-c", "cancelled", {}),
     ]);
     expect(failedScreens(value)).toEqual(["s-a"]);
+  });
+});
+
+describe("cancelDetail", () => {
+  it("says the screen was paid only on the free tier after screens were asked for", () => {
+    const t = ai.es.aiRender.run;
+    expect(cancelDetail("finishes", t)).toBe(t.cancelledPaid);
+    expect(cancelDetail("stops", t)).toContain("tu key");
+    expect(cancelDetail("none", t)).toBe(t.cancelledFree);
+    expect(cancelDetail(null, t)).toBe(t.cancelledEarly);
   });
 });

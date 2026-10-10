@@ -236,6 +236,14 @@ export const ai = defineDictionary({
         "Claude diseña cada bloque de tu layout con tu marca: el layout sigue siendo tuyo (qué bloques, dónde y en qué orden), la IA decide cómo se ve. Incluye los textos.",
       cta: "Generar con IA",
       ctaHint: "Primero sale tu diseño base; después Claude diseña cada bloque en Ajustar.",
+      ctaNoAi: "Generar sin IA",
+      access: {
+        useKey: "Usar mi key",
+        manageKey: "Gestionar mi key",
+        useClaude: "Copiar prompt para mi Claude",
+        claudeHint: "Gratis con tu cuenta de Claude: copias el prompt, pegas aquí su respuesta y pasa las mismas comprobaciones.",
+        noScreens: "Elige al menos una pantalla para preparar el prompt.",
+      },
       chips: {
         label: "Dirección de arte",
         hint: "Opcional. «Automática» deja que tu marca y una semilla elijan.",
@@ -269,6 +277,9 @@ export const ai = defineDictionary({
         cancelHint: "Se cobra lo generado hasta ahora.",
         cancelled: "Cancelado. Lo terminado se queda; el resto sigue en tu diseño base.",
         cancelledPaid: "Ya se pagó esta pantalla; no gasta otra de tu sesión.",
+        cancelledByok: "Se paró la llamada: tu key solo paga lo generado hasta ahora.",
+        cancelledFree: "No se cobró nada.",
+        cancelledEarly: "Ninguna pantalla se llegó a pedir.",
         summary: (ai: number, base: number, warnings: number) =>
           [
             `${ai} ${plural(ai, "bloque con IA", "bloques con IA")}`,
@@ -290,6 +301,9 @@ export const ai = defineDictionary({
         failed: "La IA falló aquí",
         retry: "Reintentar",
         retryLabel: (label: string) => `Reintentar ${label} con IA: gasta 1 cambio de tu sesión`,
+        retryLabelByok: (label: string) => `Reintentar ${label} con IA: se cobra a tu key`,
+        retryCost: "1 cambio",
+        retryCostByok: "con tu key",
         toBase: "Volver al diseño base",
         toBaseLabel: (label: string) => `Volver al diseño base en ${label}`,
         useAi: "Usar IA otra vez",
@@ -555,6 +569,14 @@ export const ai = defineDictionary({
         "Claude designs every block of your layout with your brand: the layout stays yours (which blocks, where and in what order), the AI decides how it looks. Copy included.",
       cta: "Generate with AI",
       ctaHint: "Your base design comes first; then Claude designs every block in Adjust.",
+      ctaNoAi: "Generate without AI",
+      access: {
+        useKey: "Use my key",
+        manageKey: "Manage my key",
+        useClaude: "Copy prompt for my Claude",
+        claudeHint: "Free with your Claude account: copy the prompt, paste its answer here and it goes through the same checks.",
+        noScreens: "Pick at least one screen to prepare the prompt.",
+      },
       chips: {
         label: "Art direction",
         hint: "Optional. «Automatic» lets your brand and a seed choose.",
@@ -588,6 +610,9 @@ export const ai = defineDictionary({
         cancelHint: "What was generated so far is billed.",
         cancelled: "Cancelled. What is done stays; the rest keeps your base design.",
         cancelledPaid: "This screen is already paid; it does not spend another one of your session.",
+        cancelledByok: "The call stopped: your key only pays for what was generated so far.",
+        cancelledFree: "Nothing was billed.",
+        cancelledEarly: "No screen had been asked for yet.",
         summary: (ai: number, base: number, warnings: number) =>
           [
             `${ai} ${plural(ai, "block with AI", "blocks with AI")}`,
@@ -609,6 +634,9 @@ export const ai = defineDictionary({
         failed: "The AI failed here",
         retry: "Retry",
         retryLabel: (label: string) => `Retry ${label} with AI: spends 1 change of your session`,
+        retryLabelByok: (label: string) => `Retry ${label} with AI: billed to your key`,
+        retryCost: "1 change",
+        retryCostByok: "with your key",
         toBase: "Back to the base design",
         toBaseLabel: (label: string) => `Back to the base design in ${label}`,
         useAi: "Use AI again",

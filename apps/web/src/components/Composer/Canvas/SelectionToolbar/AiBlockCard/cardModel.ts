@@ -1,8 +1,10 @@
 // What the «Bloque de IA» card shows, as plain data (tested without a DOM): the gate warnings in words, the
 // provenance line, the session's cost line and the quick chips.
 import { getStyleRecipe, type Locale } from "@dialmade/catalog";
-import type { AiBlock, AiGateWarning } from "@dialmade/doc";
+import type { AiBlock, AiGateWarning, DesignDoc } from "@dialmade/doc";
 import type { ComposerDictionary } from "@/i18n/composer";
+import { byokBlockActionsCost } from "@/lib/ai/render/blockAction";
+import { formatRange } from "@/lib/ai/render/costLine";
 import { actionsLeft, type LiveSession } from "@/lib/ai/render/liveSession";
 import { formatUsd } from "@/lib/money";
 
@@ -35,13 +37,19 @@ export function provenanceLine(block: AiBlock, texts: Texts, locale: Locale): st
     .join(" · ");
 }
 
-export type SessionLine = { state: "none" } | { state: "exhausted" } | { state: "ok"; left: number; max: number };
+export type SessionLine = { state: "none" } | { state: "exhausted" } | { state: "ok"; left: number; max: number } | { state: "byok"; cost: string | null };
 
 /** The session the next action spends (free tier). */
 export function sessionLine(session: LiveSession | null): SessionLine {
   if (!session) return { state: "none" };
   const left = actionsLeft(session.counters);
   return left > 0 ? { state: "ok", left, max: session.counters.actionsMax } : { state: "exhausted" };
+}
+
+/** BYOK (no session): what one action of this block costs with the user's key («$0.04–0.05»), or null. */
+export function byokActionCost(doc: DesignDoc, screenId: string, blockId: string, model: string | undefined, locale: Locale): string | null {
+  const range = byokBlockActionsCost(doc, screenId, [blockId], model);
+  return range ? formatRange(range, locale) : null;
 }
 
 /** The recipe's name in the UI language (falls back to its id). */

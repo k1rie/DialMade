@@ -228,6 +228,8 @@ describe("«Generar con IA» (engine)", () => {
     await started;
     const state = store.getState();
     expect(state.phase).toBe("cancelled");
+    // The free tier's screen call finishes and is paid (the bar says so); BYOK's would stop.
+    expect(state.cancel).toEqual({ billing: "finishes" });
     const run = state.screens["s-home"]!;
     expect(run.phase).toBe("cancelled");
     expect(ids(doc(), "s-home")).toEqual([run.order[0]]);

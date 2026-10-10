@@ -11,13 +11,22 @@ import { useAiGeneration } from "@/lib/ai/render/generation";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
 import { SparklesIcon } from "../icons";
-import { failedScreens, runCounts, runProgress } from "./summary";
+import { cancelDetail, failedScreens, runCounts, runProgress } from "./summary";
 
 export type AiRunBarProps = { className?: string };
 
 const RUNNING = new Set(["session", "direction", "screens"]);
 type SessionCode = (typeof RENDER_SESSION_ERROR_CODES)[number];
 const isSessionCode = (code: RenderErrorCode): code is SessionCode => (RENDER_SESSION_ERROR_CODES as readonly string[]).includes(code);
+
+/** «Cerrar» unmounts the bar: focus goes back to the canvas (the selected block, else the first one). */
+function focusCanvas(): void {
+  const target = document.querySelector<HTMLElement>("[data-dl-selected][tabindex]") ?? document.querySelector<HTMLElement>("[data-dl-id][tabindex]");
+  requestAnimationFrame(() => {
+    const active = document.activeElement;
+    if (!active || active === document.body) target?.focus({ preventScroll: true });
+  });
+}
 
 /**
  * The floating progress bar of «Generar con IA» in Ajustar (spec §10.2): honest progress from the stream's real
@@ -62,7 +71,7 @@ export function AiRunBar({ className }: AiRunBarProps) {
     state.phase === "screens" && state.direction?.rationale
       ? t.direction(state.direction.rationale)
       : state.phase === "cancelled"
-        ? t.cancelledPaid
+        ? cancelDetail(state.cancel?.billing ?? null, t)
         : state.phase === "done" && state.error
           ? errorText(state.error)
           : null;
@@ -133,7 +142,15 @@ export function AiRunBar({ className }: AiRunBarProps) {
                       {failed.length > 1 ? `${t.retryScreen} · ${nameOf(screenId)}` : t.retryScreen}
                     </Button>
                   ))}
-                  <Button ref={closeRef} size="md" variant="ghost" onClick={state.actions.dismiss}>
+                  <Button
+                    ref={closeRef}
+                    size="md"
+                    variant="ghost"
+                    onClick={() => {
+                      focusCanvas();
+                      state.actions.dismiss();
+                    }}
+                  >
                     {t.close}
                   </Button>
                 </>

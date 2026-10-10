@@ -10,7 +10,7 @@ import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { ArrowLeftIcon, ExportIcon, PaletteIcon, RedoIcon, UndoIcon } from "../icons";
-import { AiScreenBar } from "../AiScreenBar";
+import { AiScreenBar } from "./AiScreenBar";
 import type { PageTarget } from "../pageOps";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { AiCopyMenu } from "./AiCopyMenu";

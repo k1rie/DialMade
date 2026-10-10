@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useId, useState } from "react";
+import type { AiKeyDialogView } from "@/components/AiKeyDialog";
 import { AiUsageMeter } from "@/components/AiUsageMeter";
 import { Popover } from "@/components/ui/Popover";
 import { Segmented } from "@/components/ui/Segmented";
@@ -12,6 +13,7 @@ import { tween } from "@/lib/motion";
 import type { AiRenderPlan } from "../useAiRenderPlan";
 import { AiCopyTrigger } from "./AiCopyTrigger";
 import { CopyDetails } from "./CopyDetails";
+import { DesignAccessDialog } from "./DesignAccessDialog";
 import { DesignDetails } from "./DesignDetails";
 
 export type AiCopyControlProps = {
@@ -32,10 +34,17 @@ export type AiCopyControlProps = {
 export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps) {
   const t = useDictionary(aiText).aiRender;
   const [open, setOpen] = useState(false);
+  // «Diseño»'s key / «mi Claude» dialog lives here: the popover closes before it opens.
+  const [access, setAccess] = useState<AiKeyDialogView | null>(null);
+  const openAccess = (view: AiKeyDialogView) => {
+    setOpen(false);
+    setAccess(view);
+  };
   const layoutId = useId();
   const modes: AiGenerateMode[] = plan.designAvailable ? ["off", "copy", "design"] : ["off", "copy"];
 
   return (
+    <>
     <Popover
       open={open}
       onOpenChange={setOpen}
@@ -71,10 +80,12 @@ export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps)
           >
             {plan.mode === "off" && <p className="m-0 text-caption text-muted">{t.offDescription}</p>}
             {plan.mode === "copy" && <CopyDetails open={open} close={() => setOpen(false)} />}
-            {plan.mode === "design" && <DesignDetails plan={plan} />}
+            {plan.mode === "design" && <DesignDetails plan={plan} onUseKey={() => openAccess("key")} onUseClaude={() => openAccess("manual")} />}
           </motion.div>
         </AnimatePresence>
       </div>
     </Popover>
+    {plan.designAvailable && <DesignAccessDialog plan={plan} view={access} onClose={() => setAccess(null)} />}
+    </>
   );
 }

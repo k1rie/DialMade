@@ -14,7 +14,10 @@ export type AskChangeProps = {
   /** The text the user clicked in the island («Ver demo»): travels as a hint of what «this» is. */
   target: string | null;
   onClearTarget: () => void;
+  /** Nothing to spend (no session): the field and its button are off. */
   disabled: boolean;
+  /** Another action is in flight: the field and the button stay focusable but do nothing (focus never drops). */
+  waiting?: boolean;
   busy: boolean;
   /** Resolves `true` when the change was applied (the field then clears). */
   onSubmit: (request: string) => Promise<boolean>;
@@ -24,7 +27,7 @@ export type AskChangeProps = {
  * «Pedir cambio…» (spec §8.2): free text of up to 500 characters for this block, sent as data. ⌘/Ctrl+Enter or the
  * button sends it; Enter alone writes a new line. The selected text in the island narrows what «esto» means.
  */
-export function AskChange({ target, onClearTarget, disabled, busy, onSubmit }: AskChangeProps) {
+export function AskChange({ target, onClearTarget, disabled, waiting = false, busy, onSubmit }: AskChangeProps) {
   const t = useDictionary(composer).aiBlock;
   const keys = usePlatformKeys();
   const id = useId();
@@ -32,7 +35,7 @@ export function AskChange({ target, onClearTarget, disabled, busy, onSubmit }: A
   const trimmed = request.trim();
 
   const submit = async () => {
-    if (!trimmed || disabled) return;
+    if (!trimmed || disabled || waiting) return;
     if (await onSubmit(trimmed)) setRequest("");
   };
 
@@ -60,11 +63,13 @@ export function AskChange({ target, onClearTarget, disabled, busy, onSubmit }: A
         maxLength={MAX_AI_REQUEST_LENGTH}
         rows={3}
         disabled={disabled}
+        readOnly={waiting}
+        aria-disabled={waiting || undefined}
         placeholder={t.askPlaceholder}
         aria-describedby={`${id}-hint ${id}-count`}
         onChange={(event) => setRequest(event.target.value)}
         onKeyDown={onKeyDown}
-        className="resize-none rounded-control border border-app-strong bg-white/[0.03] px-2.5 py-1.5 text-small text-fg placeholder:text-subtle disabled:opacity-60"
+        className="resize-none rounded-control border border-app-strong bg-white/[0.03] px-2.5 py-1.5 text-small text-fg placeholder:text-subtle disabled:opacity-60 aria-disabled:opacity-60"
       />
       <div className="flex items-start justify-between gap-2">
         <p id={`${id}-hint`} className="text-caption text-subtle">
@@ -77,7 +82,15 @@ export function AskChange({ target, onClearTarget, disabled, busy, onSubmit }: A
           <span className="sr-only">{t.counter(request.length, MAX_AI_REQUEST_LENGTH)}</span>
         </span>
       </div>
-      <Button size="sm" variant="secondary" className="self-end" disabled={disabled || !trimmed} loading={busy} onClick={() => void submit()}>
+      <Button
+        size="sm"
+        variant="secondary"
+        className="self-end aria-disabled:cursor-not-allowed aria-disabled:opacity-45"
+        disabled={disabled}
+        aria-disabled={waiting || !trimmed || undefined}
+        loading={busy}
+        onClick={() => void submit()}
+      >
         {t.ask}
         <Kbd aria-hidden>{keys.combo(keys.mod, "↵")}</Kbd>
       </Button>

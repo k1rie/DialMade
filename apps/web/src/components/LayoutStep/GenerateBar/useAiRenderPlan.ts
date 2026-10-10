@@ -9,7 +9,16 @@ import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
 import { renderPathFor } from "@/lib/ai/render/transport";
-import { estimateGenerate, formatRenderCost, useAiGeneration, useGenerationStore, type AiGenerateMode, type RenderEstimate } from "@/lib/ai/render/generation";
+import {
+  estimateGenerate,
+  formatRenderCost,
+  setNextRunTransport,
+  useAiGeneration,
+  useGenerationStore,
+  type AiGenerateMode,
+  type RenderEstimate,
+  type RenderTransport,
+} from "@/lib/ai/render/generation";
 import { aiRenderAvailable } from "@/lib/ai/render/preview";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { useGenerateAi } from "../useGenerateFlow";
@@ -40,6 +49,11 @@ export type AiRenderPlan = {
   ready: boolean;
   /** Starts the generation for the current pick (call right after «Generar» wrote the screens). */
   start: () => void;
+  /**
+   * Starts it through `transport` for this run only, even when the paid paths are blocked («Copiar prompt para mi
+   * Claude»: the pasted answer). Call right after «Generar» wrote the screens.
+   */
+  startWith: (transport: RenderTransport) => void;
 };
 
 /** Blocks of a draft screen that get their own element (absorbed blocks and hidden ones do not). */
@@ -139,5 +153,14 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     void store.getState().actions.start({ screenIds: selected, chip: prefs.chip });
   }, [store, ready, selected, prefs.chip]);
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, screens, selected, toggleScreen, blocked, estimate, cost, ready, start };
+  const startWith = useCallback(
+    (transport: RenderTransport) => {
+      if (!store || mode !== "design" || selected.length === 0 || busy) return;
+      setNextRunTransport(transport);
+      void store.getState().actions.start({ screenIds: selected, chip: prefs.chip });
+    },
+    [store, mode, selected, busy, prefs.chip],
+  );
+
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }

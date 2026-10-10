@@ -18,7 +18,15 @@ type Reservation = {
   sessionId?: string;
 };
 
-type Session = AiSessionCounters & { deviceId: string; ipHash: string; month: string; day: string; expiresAtMs: number };
+type Session = AiSessionCounters & {
+  deviceId: string;
+  ipHash: string;
+  month: string;
+  day: string;
+  expiresAtMs: number;
+  /** Slots given back per kind (capped at the kind's max). */
+  refunded: Record<AiSessionKind, number>;
+};
 
 type State = {
   months: Map<string, { spentUsd: number; reservedUsd: number }>;
@@ -193,9 +201,22 @@ function memorySessions(): AiSessionLedger {
         screensMax: request.screens,
         actionsUsed: 0,
         actionsMax: request.actions,
+        refunded: { direction: 0, screen: 0, action: 0 },
       };
       s.sessions.set(sessionId, session);
       return { ok: true, sessionId, session: counters(session), usage: usageOf(s, month, request.deviceId, day, request.ipHash) };
+    },
+    async peekSession(request) {
+      const now = request.now ?? new Date();
+      const s = state();
+      const session = s.sessions.get(request.sessionId);
+      if (!session || session.deviceId !== request.deviceId) return { ok: false, reason: "not-found" };
+      if (now.getTime() >= session.expiresAtMs) return { ok: false, reason: "expired", session: counters(session) };
+      const [used, max] = FIELD[request.kind];
+      if (session[used] >= session[max]) return { ok: false, reason: `${request.kind}s-exhausted` as const, session: counters(session) };
+      const usage = usageOf(s, monthOf(now), session.deviceId, dayOf(now), session.ipHash);
+      if (usage.spentUsd + usage.reservedUsd >= request.monthlyBudgetUsd) return { ok: false, reason: "budget-exceeded", session: counters(session), usage };
+      return { ok: true, session: counters(session) };
     },
     async reserveInSession(request) {
       const now = request.now ?? new Date();
@@ -232,8 +253,10 @@ function memorySessions(): AiSessionLedger {
     async refundSession(sessionId, deviceId, kind) {
       const session = state().sessions.get(sessionId);
       if (!session || session.deviceId !== deviceId) return null;
-      const [used] = FIELD[kind];
-      session[used] = Math.max(0, session[used] - 1);
+      const [used, max] = FIELD[kind];
+      if (session.refunded[kind] >= session[max] || session[used] === 0) return counters(session);
+      session.refunded[kind]++;
+      session[used]--;
       return counters(session);
     },
   };

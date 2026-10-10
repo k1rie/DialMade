@@ -10,8 +10,16 @@ describe("AiCellBadge", () => {
   it("«La IA falló aquí · Reintentar»: a real button whose name says what it spends", () => {
     const markup = render({ kind: "failed", label: "Hero", onAction: () => {} });
     expect(markup).toContain("La IA falló aquí");
-    expect(markup).toMatch(/<button type="button" aria-label="Reintentar Hero con IA: gasta 1 cambio de tu sesión"[^>]*>Reintentar<\/button>/);
+    expect(markup).toMatch(/<button type="button" aria-label="Reintentar Hero con IA: gasta 1 cambio de tu sesión"[^>]*>Reintentar<span[^>]*>· 1 cambio<\/span><\/button>/);
     expect(markup).toContain("app-chrome");
+  });
+
+  it("the retry's cost is visible, also with the user's key; while it runs the button stays focusable", () => {
+    const markup = render({ kind: "failed", label: "Hero", byok: true, busy: true, onAction: () => {} });
+    expect(markup).toContain("se cobra a tu key");
+    expect(markup).toContain("· con tu key");
+    expect(markup).toContain('aria-disabled="true"');
+    expect(markup).not.toMatch(/ disabled=""/);
   });
 
   it("«Usar IA otra vez» on a block sent back to the base design", () => {

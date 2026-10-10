@@ -2,10 +2,14 @@
 
 import type { DesignDoc, Screen } from "@dialmade/doc";
 import { useCallback, useMemo, type ReactNode } from "react";
+import { toast } from "sonner";
 import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
 import { useAiIslandHandlers } from "@/hooks/useAiBlockEdit";
 import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
+import { composer } from "@/i18n/composer";
+import { useByokKey } from "@/lib/ai/byokKey";
+import { focusAiControlAfterSwap } from "@/lib/ai/render/focus";
 import { responsiveGateOps, useAiGeneration } from "@/lib/ai/render/generation";
 import { cellWidths, type ResponsiveVerdict } from "@/lib/ai/render/responsive";
 import { isAiBusy, showsAi, useAiView } from "@/lib/ai/render/view";
@@ -50,6 +54,8 @@ const RUNNING = new Set(["session", "direction", "screens"]);
  */
 export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect, onNavigate, onTextEdit }: UseAiBlocksOptions): AiBlockLayers {
   const t = useDictionary(aiText).aiRender.block;
+  const composerT = useDictionary(composer);
+  const byok = useByokKey().active;
   const available = aiRenderAvailable();
   const screenId = screen?.id ?? null;
   const run = useAiGeneration((state) => (screenId ? state.screens[screenId] : undefined));
@@ -78,6 +84,28 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
     },
     [docStore, screenId],
   );
+  // «Volver al diseño base» / «Usar IA otra vez» on the canvas: one undo step, said aloud like the card's (toast) and
+  // focus on the control that replaces the pressed one.
+  const setActive = useCallback(
+    (blockId: string, label: string, active: boolean) => {
+      if (!screenId) return;
+      const from = typeof document === "undefined" ? null : document.activeElement;
+      if (!actions.setBlockActive(screenId, blockId, active)) return;
+      const undo = docStore ? { label: composerT.undoAction, onClick: () => docStore.temporal.getState().undo() } : undefined;
+      toast(active ? composerT.aiBlock.aiDone(label) : composerT.aiBlock.baseDone(label), undo ? { action: undo } : {});
+      focusAiControlAfterSwap(blockId, from);
+    },
+    [actions, composerT, docStore, screenId],
+  );
+  const retry = useCallback(
+    async (blockId: string) => {
+      if (!screenId) return;
+      const from = typeof document === "undefined" ? null : document.activeElement;
+      await actions.retryBlock(screenId, blockId);
+      focusAiControlAfterSwap(blockId, from);
+    },
+    [actions, screenId],
+  );
 
   const blocks = screen?.aiRender?.blocks;
   // The screen's theme (its dials included), as ThemeScope paints the base sections around the islands.
@@ -103,7 +131,7 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
     for (const [id, block] of Object.entries(blocks ?? {})) {
       if (!screen.page.elements[id]) continue;
       if (!block.active) {
-        if (editable) marks.push({ id, kind: "inactive", label: labelOf(id), onAction: () => actions.setBlockActive(screenId, id, true) });
+        if (editable) marks.push({ id, kind: "inactive", label: labelOf(id), onAction: () => setActive(id, labelOf(id), true) });
         continue;
       }
       // «Base» in the comparator: the base section paints, nothing else changes.
@@ -139,7 +167,8 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
           onVerdict={editable ? (verdict) => writeVerdict(id, verdict) : undefined}
           onNavigate={onNavigate}
           onTextEdit={editable ? (t, text) => textEdit(id, t, text) : undefined}
-          onUseBase={() => actions.setBlockActive(screenId, id, false)}
+          onUseBase={() => setActive(id, labelOf(id), false)}
+          edit={editable && view.editRequest?.screenId === screenId && view.editRequest.blockId === id ? { n: view.editRequest.n, t: view.editRequest.t } : null}
         />,
       );
     }
@@ -149,9 +178,9 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
       if (replace.has(id) || !screen.page.elements[id] || !editable) continue;
       if (blocks?.[id] && !blocks[id]!.active) continue;
       if (running && (state.phase === "waiting" || state.phase === "processing")) marks.push({ id, kind: "designing", label: labelOf(id) });
-      else if (state.phase === "failed") marks.push({ id, kind: "failed", label: labelOf(id), busy: state.retrying === true, onAction: () => void actions.retryBlock(screenId, id) });
+      else if (state.phase === "failed") marks.push({ id, kind: "failed", label: labelOf(id), busy: state.retrying === true, byok, onAction: () => void retry(id) });
     }
 
     return { replace: replace.size > 0 ? replace : undefined, underlay: underlay.size > 0 ? underlay : undefined, marks };
-  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, actions, onSelect, onNavigate, textEdit, handlers, view, writeVerdict, t]);
+  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, onSelect, onNavigate, textEdit, handlers, view, writeVerdict, t, setActive, retry, byok]);
 }

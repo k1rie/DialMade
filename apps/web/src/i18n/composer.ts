@@ -203,6 +203,7 @@ export const composer = defineDictionary({
         open: "Abrir sesión",
         openHint: "Gasta 1 uso gratis: 1 «Generar con IA» de hasta 3 pantallas y 10 acciones de bloque en 24 h.",
         exhausted: "Esta sesión ya no tiene acciones. Abre otra (1 uso gratis).",
+        byok: (usd: string) => `≈ ${usd} con tu key`,
       },
       busy: {
         reroll: (block: string) => `Diseñando otra versión de «${block}»…`,
@@ -217,6 +218,8 @@ export const composer = defineDictionary({
         text: "Texto actualizado",
       },
       useBase: "Usar diseño base",
+      editTexts: "Editar textos",
+      editTextsHint: "Desde el teclado: Tab pasa al texto siguiente, Enter guarda y Esc deshace. Con el ratón, doble clic en el texto.",
       useBaseHint: "Vuelven los ajustes de la sección. El diseño de la IA se guarda.",
       useAi: "Usar IA otra vez",
       baseDone: (block: string) => `«${block}» usa el diseño base`,
@@ -478,6 +481,7 @@ export const composer = defineDictionary({
         open: "Open session",
         openHint: "Spends 1 free use: 1 “Generate with AI” of up to 3 screens and 10 block actions in 24 h.",
         exhausted: "This session has no actions left. Open another one (1 free use).",
+        byok: (usd: string) => `≈ ${usd} with your key`,
       },
       busy: {
         reroll: (block: string) => `Designing another version of “${block}”…`,
@@ -492,6 +496,8 @@ export const composer = defineDictionary({
         text: "Text updated",
       },
       useBase: "Use base design",
+      editTexts: "Edit texts",
+      editTextsHint: "From the keyboard: Tab moves to the next text, Enter saves and Esc undoes. With the mouse, double click the text.",
       useBaseHint: "The section settings come back. The AI design is kept.",
       useAi: "Use AI again",
       baseDone: (block: string) => `“${block}” uses the base design`,

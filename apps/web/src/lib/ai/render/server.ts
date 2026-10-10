@@ -2,7 +2,8 @@
 // (POST /api/ai/render/session); every paid call inside it (the art direction, each screen, each block action)
 // presents the session id, reserves its own worst case against the global monthly budget (no other free use), runs
 // once and is settled at its real cost. Built on ../access (device cookie, IP hash, ledger, error mapping) and
-// ../pricing. A failed screen or action (API error, refusal, no root at all) gives its slot back.
+// ../pricing. A failed screen or action (API error, refusal, no root at all) gives its slot back, up to the kind's max
+// per session.
 import type Anthropic from "@anthropic-ai/sdk";
 import {
   DIRECTION_MAX_TOKENS,
@@ -28,7 +29,16 @@ import {
 import { AI_SESSION_ACTIONS, AI_SESSION_DIRECTIONS, AI_SESSION_TTL_SECONDS, supportsDefaultFallbacks, supportsEffort } from "../config";
 import { AiOutputError } from "../errors";
 import { getAiLedger } from "../getAiLedger";
-import { freeUsesLeft, remainingUsd, type AiLedger, type AiSessionCounters, type AiSessionKind, type AiSessionLedger } from "../ledger";
+import {
+  freeUsesLeft,
+  remainingUsd,
+  type AiLedger,
+  type AiLedgerUsage,
+  type AiSessionCounters,
+  type AiSessionKind,
+  type AiSessionLedger,
+  type AiSessionRefusal,
+} from "../ledger";
 import { maxRequestCostUsd, messageCostUsd, messageTokens, roundUsd } from "../pricing";
 import { readAiServerConfig, type AiServerConfig } from "../serverConfig";
 import {
@@ -128,7 +138,23 @@ function sessionRefusal(reason: string, session?: AiSessionCounters): RenderFail
 
 type SessionCall = { reservationId: string; session: AiSessionCounters; maxCostUsd: number; ready: Ready };
 
-/** count_tokens (free) → the worst case → one slot of the session and its reservation. */
+/** A refused peek or reserve, as the route's answer. */
+function sessionOutcomeFailure(
+  outcome: { reason: AiSessionRefusal | "budget-exceeded"; session?: AiSessionCounters; usage?: AiLedgerUsage },
+  config: AiServerConfig,
+): RenderFailure {
+  if (outcome.reason === "budget-exceeded") {
+    return aiFailure(402, "budget-exceeded", "The monthly AI budget cannot pay for this call", {
+      ...(outcome.usage && { remainingBudgetUsd: roundUsd(remainingUsd(outcome.usage, config.monthlyBudgetUsd)) }),
+    });
+  }
+  return sessionRefusal(outcome.reason, outcome.session);
+}
+
+/**
+ * The session is checked first (a read, no upstream work: a random or expired session id never reaches Anthropic),
+ * then count_tokens (free) → the worst case → one slot of the session and its reservation (checked again, atomically).
+ */
 async function reserveCall(
   context: RenderContext,
   sessionId: string,
@@ -138,6 +164,12 @@ async function reserveCall(
   const ready = prepare(context);
   if ("ok" in ready) return ready;
   const { config, ledger, caller, client, now } = ready;
+  try {
+    const peek = await ledger.sessions.peekSession({ sessionId, deviceId: caller.deviceId, kind, monthlyBudgetUsd: config.monthlyBudgetUsd, now });
+    if (!peek.ok) return sessionOutcomeFailure(peek, config);
+  } catch (error) {
+    return aiFailureFromError(error);
+  }
   let maxCostUsd: number;
   try {
     const { max_tokens: maxTokens, ...countable } = params;
@@ -152,21 +184,18 @@ async function reserveCall(
   }
   try {
     const outcome = await ledger.sessions.reserveInSession({ sessionId, deviceId: caller.deviceId, kind, model: config.freeModel, amountUsd: maxCostUsd, monthlyBudgetUsd: config.monthlyBudgetUsd, now });
-    if (!outcome.ok) {
-      if (outcome.reason === "budget-exceeded") {
-        return aiFailure(402, "budget-exceeded", "The monthly AI budget cannot pay for this call", {
-          ...(outcome.usage && { remainingBudgetUsd: roundUsd(remainingUsd(outcome.usage, config.monthlyBudgetUsd)) }),
-        });
-      }
-      return sessionRefusal(outcome.reason, outcome.session);
-    }
+    if (!outcome.ok) return sessionOutcomeFailure(outcome, config);
     return { reservationId: outcome.reservationId, session: outcome.session, maxCostUsd, ready };
   } catch (error) {
     return aiFailureFromError(error);
   }
 }
 
-/** Settles a finished, failed or unknown call, and gives a failed screen/action its slot back. */
+/**
+ * Settles a finished, failed or unknown call, and gives a failed screen/action its slot back. The ledger caps the
+ * refunds per kind at the kind's max, so an answer that is billed but never usable (e.g. «reply with plain text») can
+ * not be looped on one free use.
+ */
 async function closeCall(call: SessionCall, kind: AiSessionKind, sessionId: string, outcome: { costUsd: number } | { error: unknown }): Promise<AiSessionCounters> {
   const { ledger, caller, now } = call.ready;
   if ("costUsd" in outcome) {

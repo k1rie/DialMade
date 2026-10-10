@@ -1,17 +1,14 @@
 "use client";
 
-import type { DesignDoc } from "@dialmade/doc";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { useDictionary, useI18n } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
-import { withGeneratedScreens, type GeneratedScreenInput } from "@/lib/design-engine";
 import { formatUsd } from "@/lib/money";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { aiTargetsFor } from "../../../generateFlow";
-import { getResponsive, getStructure } from "../../../structureCache";
-import type { Screen } from "../../../types";
 import { useGenerateAi } from "../../../useGenerateFlow";
+import { documentAfterGenerate } from "../documentAfterGenerate";
 import { selectChangedBlocks, useChangedCount, useHasGenerated, useLayoutEnv, useLayoutStore, type LayoutState } from "../../../useLayoutStore";
 
 export type CopyDetailsProps = {
@@ -20,19 +17,6 @@ export type CopyDetailsProps = {
   /** Closes the popover (before a dialog takes over). */
   close: () => void;
 };
-
-/** The document as «Generar» would write it now (the AI estimate must count the copy it will rewrite). */
-function documentAfterGenerate(doc: DesignDoc, screens: Readonly<Record<string, Screen>>, order: readonly string[]): DesignDoc {
-  const inputs: GeneratedScreenInput[] = order.flatMap((id) => {
-    const screen = screens[id];
-    if (!screen) return [];
-    const { layout } = screen;
-    return [{ screenId: id, name: screen.name, kind: screen.kind, route: screen.route, shell: screen.shell, layout, structure: getStructure(layout), responsive: getResponsive(layout) }];
-  });
-  if (inputs.length === 0) return doc;
-  const result = withGeneratedScreens(doc, inputs);
-  return result.ok ? result.doc : doc;
-}
 
 /** «Textos con IA»: the cost and scope of the one copy request (critique #7), as before the «IA» control. */
 export function CopyDetails({ open, close }: CopyDetailsProps) {

@@ -9,12 +9,15 @@ import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { aiBlockOf, isAiBlockStale, isAiBlockStyleChanged } from "@/lib/ai/render/edit";
 import { useLiveSession } from "@/lib/ai/render/liveSession";
-import { setAiTarget, useAiView } from "@/lib/ai/render/view";
+import { requestAiTextEdit, setAiTarget, useAiView } from "@/lib/ai/render/view";
 import { durations, tween } from "@/lib/motion";
 import { SparklesIcon } from "../../../icons";
 import { AskChange } from "./AskChange";
 import { BlockNotes } from "./BlockNotes";
-import { QUICK_CHIPS, recipeLabel, sessionLine } from "./cardModel";
+import { QUICK_CHIPS, byokActionCost, recipeLabel, sessionLine, type SessionLine } from "./cardModel";
+
+/** While an action runs the triggers stay focusable (aria-disabled, not disabled): focus never drops to <body>. */
+const WAITING = "aria-disabled:cursor-not-allowed aria-disabled:opacity-45";
 
 export type AiBlockCardProps = {
   doc: DesignDoc;
@@ -33,7 +36,8 @@ export type AiBlockCardProps = {
  * chips and «Pedir cambio…» (≤ 500, about the text selected in the island, if any) and «Otra versión» each spend 1
  * action of the design session and land as ONE undo step; «Usar diseño base» keeps the HTML for «Usar IA otra vez».
  * It also says when the block is «Desactualizado» or its style changed (never redone on its own), the quality notes
- * of the gates and where it came from. Everything works with the keyboard; the progress is announced.
+ * of the gates and where it came from. Everything works with the keyboard; the progress is announced. With the
+ * user's key (BYOK) no session is needed: the card shows what one action costs with that key instead.
  */
 export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUseBase }: AiBlockCardProps) {
   const { locale } = useI18n();
@@ -43,16 +47,22 @@ export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUse
   const block = aiBlockOf(doc, screenId, blockId);
   if (!block) return null;
 
-  const { running, opening, run, openSession, stop, setActive } = blockActions;
+  const { transport, running, opening, run, openSession, stop, setActive } = blockActions;
   const busy = running?.screenId === screenId && running.blockId === blockId ? running : null;
-  const line = sessionLine(session);
-  const blocked = running !== null || opening || line.state !== "ok";
+  const line: SessionLine = transport.usesSession ? sessionLine(session) : { state: "byok", cost: byokActionCost(doc, screenId, blockId, transport.model, locale) };
+  /** No session to spend (free tier): the paid actions are off until the user opens one. */
+  const unavailable = line.state === "none" || line.state === "exhausted";
+  /** Another action (or opening a session) is in flight: the triggers wait, focusable. */
+  const waiting = running !== null || opening;
+  const waitingProps = { "aria-disabled": waiting || undefined, className: WAITING };
   const stale = isAiBlockStale(doc, screenId, blockId);
   const styleChanged = isAiBlockStyleChanged(doc, screenId, blockId);
   const targetText = target?.text?.trim() || null;
 
-  const reroll = () => void run(screenId, blockId, label, { kind: "reroll" });
-  const change = (request: string) => run(screenId, blockId, label, { kind: "change", request, ...(targetText && { target: { text: targetText } }) });
+  const reroll = () => {
+    if (!waiting) void run(screenId, blockId, label, { kind: "reroll" });
+  };
+  const change = async (request: string) => (waiting ? false : run(screenId, blockId, label, { kind: "change", request, ...(targetText && { target: { text: targetText } }) }));
 
   return (
     <div className="flex flex-col gap-3" aria-busy={busy ? true : undefined}>
@@ -77,13 +87,13 @@ export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUse
               <strong className="font-semibold text-fg">{t.stale}.</strong> <span className="text-muted">{t.staleHint}</span>
             </p>
           )}
-          <Button size="sm" variant="secondary" className="self-start" disabled={blocked} onClick={reroll}>
+          <Button size="sm" variant="secondary" disabled={unavailable} onClick={reroll} {...waitingProps} className={`self-start ${WAITING}`}>
             {t.redo}
           </Button>
         </div>
       )}
 
-      {line.state !== "ok" && (
+      {unavailable && (
         <div className="flex flex-col gap-1.5 rounded-control border border-app bg-white/[0.02] px-2.5 py-2 text-caption">
           <p className="text-fg">{line.state === "none" ? t.cost.none : t.cost.exhausted}</p>
           <p className="text-muted">{t.cost.openHint}</p>
@@ -97,17 +107,35 @@ export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUse
         <p className="text-caption font-medium text-muted">{t.quick}</p>
         <div className="flex flex-wrap gap-1">
           {QUICK_CHIPS.map((chip) => (
-            <Chip key={chip} size="sm" disabled={blocked} onClick={() => void change(t.chips[chip].request)}>
+            <Chip key={chip} size="sm" disabled={unavailable} {...waitingProps} onClick={() => void change(t.chips[chip].request)}>
               {t.chips[chip].label}
             </Chip>
           ))}
         </div>
       </section>
 
-      <AskChange target={targetText} onClearTarget={() => setAiTarget(null)} disabled={blocked} busy={busy?.kind === "change"} onSubmit={change} />
+      <div className="flex flex-col gap-1">
+        <Button
+          size="sm"
+          variant="secondary"
+          className={`self-start ${WAITING}`}
+          aria-disabled={waiting || undefined}
+          aria-describedby={`${screenId}-${blockId}-edit-hint`}
+          onClick={() => {
+            if (!waiting) requestAiTextEdit(screenId, blockId, target?.t ?? null);
+          }}
+        >
+          {t.editTexts}
+        </Button>
+        <p id={`${screenId}-${blockId}-edit-hint`} className="text-caption text-subtle">
+          {t.editTextsHint}
+        </p>
+      </div>
+
+      <AskChange target={targetText} onClearTarget={() => setAiTarget(null)} disabled={unavailable} waiting={waiting} busy={busy?.kind === "change"} onSubmit={change} />
 
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <Button size="sm" variant="secondary" leadingIcon={<SparklesIcon />} disabled={blocked} loading={busy?.kind === "reroll"} onClick={reroll} title={t.rerollHint}>
+        <Button size="sm" variant="secondary" leadingIcon={<SparklesIcon />} disabled={unavailable} loading={busy?.kind === "reroll"} onClick={reroll} title={t.rerollHint} {...waitingProps}>
           {t.reroll}
         </Button>
         {line.state === "ok" && (
@@ -115,6 +143,7 @@ export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUse
             {t.cost.action} · {t.cost.left(line.left, line.max)}
           </span>
         )}
+        {line.state === "byok" && line.cost && <span className="text-caption whitespace-nowrap text-subtle">{t.cost.byok(line.cost)}</span>}
       </div>
 
       <p role="status" aria-live="polite" className="sr-only">
@@ -142,9 +171,10 @@ export function AiBlockCard({ doc, screenId, blockId, label, blockActions, onUse
         <Button
           size="sm"
           variant="ghost"
-          className="self-start px-2"
-          disabled={running !== null}
+          aria-disabled={running !== null || undefined}
+          className={`self-start px-2 ${WAITING}`}
           onClick={() => {
+            if (running !== null) return;
             setActive(screenId, blockId, label, false);
             onUseBase?.();
           }}

@@ -122,12 +122,17 @@ export function GenerateBar({ className }: GenerateBarProps) {
   };
 
   const designCta = designMode && plan.ready && cta.kind !== "template";
+  // «Diseño» picked but no paid path can answer: the CTA says it generates without AI (the hint says why; the «IA»
+  // popover offers the key and «mi Claude»), never a silent swap.
+  const designBlocked = designMode && plan.blocked !== null && cta.kind !== "template";
   const ctaLabel =
     cta.kind === "template"
       ? t.generate.useTemplate(t.sets[cta.set].name)
       : designCta
         ? renderT.cta
-        : cta.kind === "generate"
+        : designBlocked
+          ? renderT.ctaNoAi
+          : cta.kind === "generate"
         ? t.generate.button
         : cta.kind === "regenerate"
           ? t.generate.regenerate(cta.count)

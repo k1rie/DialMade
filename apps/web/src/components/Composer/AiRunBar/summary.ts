@@ -1,4 +1,5 @@
 // What the run bar says, from the generation state (pure, so vitest checks it without React).
+import type { AiDictionary } from "@/i18n/ai";
 import type { GenerationState } from "@/lib/ai/render/generation";
 
 export type RunCounts = { ai: number; base: number; warnings: number };
@@ -36,3 +37,11 @@ export function runProgress(state: Pick<GenerationState, "screens" | "screenOrde
 /** Screens whose call failed (a retry of them is free). */
 export const failedScreens = (state: Pick<GenerationState, "screens" | "screenOrder">): string[] =>
   state.screenOrder.filter((id) => state.screens[id]?.phase === "failed" && state.screens[id]?.error !== undefined);
+
+/** What «Cancelar» cost, by path: only the free tier finishes (and pays) the screens it had asked for. */
+export function cancelDetail(billing: NonNullable<GenerationState["cancel"]>["billing"] | null, t: AiDictionary["aiRender"]["run"]): string {
+  if (billing === "finishes") return t.cancelledPaid;
+  if (billing === "stops") return t.cancelledByok;
+  if (billing === "none") return t.cancelledFree;
+  return t.cancelledEarly;
+}

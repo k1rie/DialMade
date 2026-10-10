@@ -179,7 +179,8 @@ function childLines(children: readonly AiNode[], depth: number, context: Context
   return out;
 }
 
-const oneLine = (text: string) => text.replace(/[\r\n]+/g, " ").replace(/\*\//g, "*\\/").trim();
+/** One line of a `//` comment: every JS line terminator (CR, LF, U+2028, U+2029) would end it and turn the rest into code. */
+const oneLine = (text: string) => text.replace(/[\r\n\u2028\u2029]+/g, " ").replace(/\*\//g, "*\\/").trim();
 
 /**
  * A sanitized AI block (`AiBlock.html`) as a TSX module with one exported component. Deterministic: same HTML and

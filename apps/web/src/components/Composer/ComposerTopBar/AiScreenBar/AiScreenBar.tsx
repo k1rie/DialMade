@@ -12,11 +12,13 @@ import { useAiBlockActions } from "@/hooks/useAiBlockEdit";
 import { useDesignDocStore } from "@/hooks/useDesignDoc";
 import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
+import { byokBlockActionsCost } from "@/lib/ai/render/blockAction";
+import { formatRange } from "@/lib/ai/render/costLine";
 import { actionsLeft, useLiveSession } from "@/lib/ai/render/liveSession";
 import { setScreenView, useAiView, type AiView } from "@/lib/ai/render/view";
 import { cn } from "@/lib/cn";
-import type { PageTarget } from "../pageOps";
-import { sectionInfo } from "../sectionInfo";
+import type { PageTarget } from "../../pageOps";
+import { sectionInfo } from "../../sectionInfo";
 import { affordable, redoPlan } from "./redoPlan";
 
 export type AiScreenBarProps = {
@@ -29,7 +31,8 @@ export type AiScreenBarProps = {
  * «Diseño con IA» in the Composer's top bar (spec §8.2): «Base | IA» for the whole screen (one state visible at a
  * time, keyboard radio group) and, when the style recipe changed or blocks are «Desactualizado», the notice «El
  * estilo cambió · ¿Rehacer con IA?» with what it costs before anything runs. Nothing is ever redone on its own.
- * Renders nothing on a screen without active AI blocks.
+ * Renders nothing on a screen without active AI blocks. With the user's key (BYOK) no session is needed: it redoes
+ * every block and says what that costs with the key.
  */
 export function AiScreenBar({ doc, target, className }: AiScreenBarProps) {
   const { locale } = useI18n();
@@ -48,9 +51,11 @@ export function AiScreenBar({ doc, target, className }: AiScreenBarProps) {
   const activeCount = screen ? Object.values(screen.aiRender?.blocks ?? {}).filter((block) => block.active).length : 0;
   if (!screen || !screenId || !plan || activeCount === 0) return null;
 
+  const byok = !blockActions.transport.usesSession;
   const left = session ? actionsLeft(session.counters) : 0;
-  // Without a session the button says what a redo would cover; it runs once a session is open.
-  const todo = session ? affordable(plan.all, left) : plan.all;
+  // Without a session the button says what a redo would cover; it runs once a session is open. BYOK: all of them.
+  const todo = !byok && session ? affordable(plan.all, left) : plan.all;
+  const byokCost = byok && open ? byokBlockActionsCost(doc, screenId, todo, blockActions.transport.model) : null;
   const label = (id: string) => sectionInfo(screen.page, id, locale, screen).label;
 
   const redo = async () => {
@@ -106,7 +111,9 @@ export function AiScreenBar({ doc, target, className }: AiScreenBarProps) {
               <p className="text-muted">{t.screen.styleBody(plan.styleChanged.length, getStyleRecipe(recipeOfChanged)?.label[locale] ?? recipeOfChanged)}</p>
             )}
             {plan.stale.length > 0 && <p className="text-muted">{t.screen.staleBody(plan.stale.length)}</p>}
-            {session ? (
+            {byok ? (
+              byokCost && <p className="text-subtle">{t.cost.byok(formatRange(byokCost, locale))}</p>
+            ) : session ? (
               <p className="text-subtle">
                 {t.screen.redoCost(todo.length, left)}
                 {todo.length < plan.all.length && ` · ${t.screen.notEnough(left)}`}
@@ -127,7 +134,7 @@ export function AiScreenBar({ doc, target, className }: AiScreenBarProps) {
               <Button size="sm" variant="ghost" disabled={progress !== null} onClick={() => setOpen(false)}>
                 {t.screen.notNow}
               </Button>
-              <Button size="sm" variant="primary" disabled={!session || todo.length === 0} loading={progress !== null} onClick={() => void redo()}>
+              <Button size="sm" variant="primary" disabled={(blockActions.transport.usesSession && !session) || todo.length === 0} loading={progress !== null} onClick={() => void redo()}>
                 {t.screen.redoN(todo.length)}
               </Button>
             </div>

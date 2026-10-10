@@ -17,6 +17,8 @@ import {
   type RenderSessionSuccess,
   type RenderUsage,
 } from "./api";
+import { DEFAULT_BYOK_RENDER_MODEL } from "./byokModel";
+import { estimateBlockAction, type CostRange } from "./estimate";
 import { RenderTransportError, type RenderTransport as AccessTransport } from "./transport";
 import { aiBlockInputs, aiBlockOf, aiDraftOf, currentBasis } from "./edit";
 
@@ -139,6 +141,34 @@ export function blockActionBody(doc: DesignDoc, screenId: string, blockId: strin
             ...(request.target?.text && { target: { text: request.target.text.slice(0, 200) } }),
           },
   };
+}
+
+/**
+ * BYOK (no session to count): what «Otra versión» of these blocks costs with the user's key, summed (spec §10.1: the
+ * cost is shown before every call). Null when none of them can be redone (no direction, no AI block).
+ */
+export function byokBlockActionsCost(doc: DesignDoc, screenId: string, blockIds: readonly string[], model: string | undefined): CostRange | null {
+  let minUsd = 0;
+  let maxUsd = 0;
+  let any = false;
+  for (const blockId of blockIds) {
+    try {
+      const body = blockActionBody(doc, screenId, blockId, { kind: "reroll" }, { sessionId: "00000000-0000-4000-8000-000000000000", seed: 1 });
+      const one = estimateBlockAction({
+        path: "byok",
+        model: model ?? DEFAULT_BYOK_RENDER_MODEL,
+        brand: body.brand,
+        direction: body.direction,
+        action: { screen: body.screen, block: body.block, html: body.html, action: body.action },
+      });
+      minUsd += one.minUsd;
+      maxUsd += one.maxUsd;
+      any = true;
+    } catch {
+      // Not redoable: it costs nothing.
+    }
+  }
+  return any ? { minUsd, maxUsd } : null;
 }
 
 export type BlockActionDeps = {

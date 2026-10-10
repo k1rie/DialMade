@@ -2,11 +2,12 @@ export { estimateGenerate, formatRenderCost, type RenderEstimate } from "./cost"
 export { currentAccessTransport, currentGenerationTransport, fromAccessTransport } from "./accessTransport";
 export { createFreeTierTransport } from "./freeTier";
 export { aiBlockActiveOps, aiBlockOps, directionOps, responsiveGateOps, type PatchOp } from "./patches";
-export { blockCount, defaultScreenPick, pickedScreens } from "./plan";
+export { blockCount, defaultScreenPick, pickedScreens, requestBrand, screenBlocks } from "./plan";
 export {
   DEFAULT_PREFS,
   createGenerationStore,
   generationStoreFor,
+  setNextRunTransport,
   setRenderTransport,
   useAiGeneration,
   useGenerationStore,

@@ -85,12 +85,26 @@ export type AiSessionReserveOutcome =
   | { ok: true; reservationId: string; session: AiSessionCounters; usage: AiLedgerUsage }
   | { ok: false; reason: AiSessionRefusal | "budget-exceeded"; session?: AiSessionCounters; usage?: AiLedgerUsage };
 
+export type AiSessionPeekRequest = Omit<AiSessionReserveRequest, "model" | "amountUsd">;
+export type AiSessionPeekOutcome =
+  | { ok: true; session: AiSessionCounters }
+  | { ok: false; reason: AiSessionRefusal | "budget-exceeded"; session?: AiSessionCounters; usage?: AiLedgerUsage };
+
 export interface AiSessionLedger {
   /** Atomic: the device's free uses, the IP's daily limit and the budget, then one free use, one IP request and the session. */
   openSession(request: AiSessionOpenRequest): Promise<AiSessionOpenOutcome>;
   /** Atomic: counts one `kind` of the session (same device, not expired, under its max) and reserves `amountUsd`. */
   reserveInSession(request: AiSessionReserveRequest): Promise<AiSessionReserveOutcome>;
-  /** A screen or action that FAILED (API error, refusal, 0 valid blocks) gives its slot back: the retry is free. */
+  /**
+   * Read only, before any upstream work (count_tokens): the session exists for this device, is live, has a `kind`
+   * left and the month's budget is not already spent. `reserveInSession` checks all of it again, atomically.
+   */
+  peekSession(request: AiSessionPeekRequest): Promise<AiSessionPeekOutcome>;
+  /**
+   * A screen or action that FAILED (API error, refusal, 0 valid blocks) gives its slot back: the retry is free. At
+   * most `<kind>Max` refunds per kind and session, so a billed failure cannot be repeated without end (a session
+   * makes at most twice its slots of paid calls). Past the cap it changes nothing and returns the counters.
+   */
   refundSession(sessionId: string, deviceId: string, kind: AiSessionKind, now?: Date): Promise<AiSessionCounters | null>;
 }
 

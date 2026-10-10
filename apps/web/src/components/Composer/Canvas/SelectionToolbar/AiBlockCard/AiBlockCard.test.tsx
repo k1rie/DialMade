@@ -7,7 +7,7 @@ import { I18nProvider } from "@/i18n";
 import { designedDoc, unwrap } from "@/lib/ai/render/editFixtures";
 import { AiBlockCard } from "./AiBlockCard";
 
-const idle: UseAiBlockActions = { running: null, opening: false, run: async () => true, openSession: async () => true, stop: () => {}, setActive: () => {} };
+const idle: UseAiBlockActions = { transport: { path: "free", usesSession: true }, running: null, opening: false, run: async () => true, openSession: async () => true, stop: () => {}, setActive: () => {} };
 
 const render = (doc: ReturnType<typeof designedDoc>["doc"], blockId: string, actions = idle) =>
   renderToStaticMarkup(
@@ -43,6 +43,21 @@ describe("«Bloque de IA» card", () => {
     const html = render(doc, hero, { ...idle, running: { screenId: "s-home", blockId: hero, kind: "reroll" } });
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Diseñando otra versión de «Hero»…");
+  });
+
+  it("with the user's key (BYOK) and no free session, the actions are enabled and the cost is the key's", () => {
+    const { doc, hero } = designedDoc({ direction: true });
+    const html = render(doc, hero, { ...idle, transport: { path: "byok", usesSession: false, model: "claude-opus-5-5" } });
+    expect(html).not.toContain("Abrir sesión");
+    expect(html.match(/<button[^>]*disabled=""[^>]*>[^<]*Más aire/)).toBeNull();
+    expect(html).toMatch(/≈ \$[\d.]+(–[\d.]+)? con tu key/);
+  });
+
+  it("while an action runs, the triggers stay focusable (aria-disabled, never disabled)", () => {
+    const { doc, hero } = designedDoc({ direction: true });
+    const html = render(doc, hero, { ...idle, transport: { path: "byok", usesSession: false }, running: { screenId: "s-home", blockId: hero, kind: "change" } });
+    expect(html.match(/<button[^>]*disabled=""[^>]*>[^<]*Más aire/)).toBeNull();
+    expect(html.match(/<button[^>]*aria-disabled="true"[^>]*>[^<]*Más aire/)).not.toBeNull();
   });
 
   it("renders nothing for a block without AI design", () => {

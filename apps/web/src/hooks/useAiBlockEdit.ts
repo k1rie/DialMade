@@ -35,6 +35,8 @@ const overCap = (result: PatchResult) => !result.ok && result.error.reason === "
 export type AiBlockRun = { screenId: string; blockId: string; kind: BlockActionRequest["kind"] };
 
 export type UseAiBlockActions = {
+  /** The path the next action takes: the free tier spends the live session's actions; BYOK needs no session. */
+  transport: Pick<BlockActionTransport, "path" | "usesSession" | "model">;
   /** The action in flight on this hook (one at a time), or null. */
   running: AiBlockRun | null;
   opening: boolean;
@@ -160,7 +162,7 @@ export function useAiBlockActions(override?: BlockActionTransport): UseAiBlockAc
       toast(active ? texts.aiDone(label) : texts.baseDone(label), { action: undo });
     };
 
-    return { running, opening, run, openSession, stop, setActive };
+    return { transport: { path: transport.path, usesSession: transport.usesSession, model: transport.model }, running, opening, run, openSession, stop, setActive };
   }, [store, actions, t, aiT, transport, running, opening]);
 }
 

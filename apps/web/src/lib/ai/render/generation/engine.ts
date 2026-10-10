@@ -66,6 +66,7 @@ export const IDLE_GENERATION: GenerationState = {
   error: null,
   announcement: null,
   costUsd: 0,
+  cancel: null,
 };
 
 /** Everything a run needs after its start (screen retries and block actions reuse it). */
@@ -416,8 +417,10 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       return;
     }
     target.controller.abort();
+    const billing = target.transport.path === "manual" ? "none" : target.transport.cancelStopsBilling ? "stops" : "finishes";
     update(target.id, (now) => ({
       phase: now.phase === "done" ? "done" : "cancelled",
+      ...(now.phase !== "done" && { cancel: { billing } }),
       screens: Object.fromEntries(
         Object.entries(now.screens).map(([key, screen]) => [
           key,

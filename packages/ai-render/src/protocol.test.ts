@@ -26,4 +26,12 @@ describe("island protocol", () => {
     expect(ParentMessageSchema.safeParse({ type: "measure", v: 1, widths: [100_000] }).success).toBe(false);
     expect(IslandMessageSchema.safeParse({ type: "measure", blockId: "b", width: 390, overflowX: true, smallTargets: 1, clipped: 0, height: 812 }).success).toBe(true);
   });
+
+  it("the keyboard way into the inline edit: edit {t} and editEnd", () => {
+    expect(ParentMessageSchema.safeParse({ type: "edit", v: 1, t: null }).success).toBe(true);
+    expect(ParentMessageSchema.safeParse({ type: "edit", v: 1, t: 3 }).success).toBe(true);
+    expect(ParentMessageSchema.safeParse({ type: "edit", v: 1, t: -1 }).success).toBe(false);
+    expect(IslandMessageSchema.safeParse({ type: "editEnd", blockId: "b-hero" }).success).toBe(true);
+    expect(IslandMessageSchema.safeParse({ type: "editEnd", blockId: "b-hero", text: "x" }).success).toBe(false);
+  });
 });

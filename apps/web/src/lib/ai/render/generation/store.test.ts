@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { withGeneratedScreens } from "@/lib/design-engine";
 import type { GenerationEngine } from "./engine";
 import { aiBlockOps } from "./patches";
-import { createGenerationStore } from "./store";
+import { createGenerationStore, setNextRunTransport, setRenderTransport } from "./store";
+import type { GenerationDeps } from "./engine";
+import type { RenderTransport } from "./types";
 
 function docWithAiHero(): { doc: DesignDoc; hero: string } {
   let n = 0;
@@ -71,6 +73,26 @@ describe("generation store", () => {
     expect(engine.start).toHaveBeenCalledWith({ screenIds: ["s-home"], chip: "luxury" });
     expect(engine.retryScreen).toHaveBeenCalledWith("s-home");
     expect(factory).toHaveBeenCalledOnce();
+  });
+});
+
+describe("«mi Claude» transport for one run", () => {
+  it("is used by the next run only; the run after goes back to the paid path", async () => {
+    const { doc } = docWithAiHero();
+    let deps: GenerationDeps | null = null;
+    const factory = vi.fn((_store: unknown, d: GenerationDeps) => {
+      deps = d;
+      return { start: vi.fn(async () => {}), cancel: vi.fn(), retryScreen: vi.fn(async () => {}), retryBlock: vi.fn(async () => {}), dismiss: vi.fn() } as unknown as GenerationEngine;
+    });
+    createGenerationStore(docStore(doc).store, { engine: factory }).getState().actions.dismiss();
+    await vi.waitFor(() => expect(deps).not.toBeNull());
+    const manual = { path: "manual" } as RenderTransport;
+    const paid = { path: "byok" } as RenderTransport;
+    setRenderTransport(paid);
+    setNextRunTransport(manual);
+    expect(await deps!.transport()).toBe(manual);
+    expect(await deps!.transport()).toBe(paid);
+    setRenderTransport(null);
   });
 });
 

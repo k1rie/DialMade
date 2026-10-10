@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { AiCellBadge, type AiCellBadgeProps } from "./AiCellBadge";
 
 /** A mark of the live generation on one base cell of the page. */
-export type AiCellMark = { id: string; kind: AiCellBadgeProps["kind"]; label: string; busy?: boolean; onAction?: () => void };
+export type AiCellMark = { id: string; kind: AiCellBadgeProps["kind"]; label: string; busy?: boolean; byok?: boolean; onAction?: () => void };
 
 export type AiBlocksProps = {
   /** The element that holds the rendered page (its cells carry `data-dl-id`). */
@@ -52,7 +52,7 @@ export function AiBlocks({ rootRef, marks }: AiBlocksProps) {
         const cell = cells.get(mark.id);
         if (!cell || !cell.isConnected) return null;
         return createPortal(
-          <AiCellBadge kind={mark.kind} label={mark.label} {...(mark.busy !== undefined && { busy: mark.busy })} {...(mark.onAction && { onAction: mark.onAction })} />,
+          <AiCellBadge kind={mark.kind} label={mark.label} blockId={mark.id} byok={mark.byok === true} {...(mark.busy !== undefined && { busy: mark.busy })} {...(mark.onAction && { onAction: mark.onAction })} />,
           cell,
           `${mark.kind}:${mark.id}`,
         );
