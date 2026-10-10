@@ -1,0 +1,52 @@
+// Formulario de acceso · «Diseño con IA» (Dialmade)
+// Tailwind v4 with Dialmade's theme.css (the variables) and ai-theme.css (the vocabulary of the AI blocks).
+import { Icon } from "./dialmade-assets";
+
+export function FormularioDeAccesoY0l() {
+  return (
+    <div className="@container rounded-card bg-card p-6 shadow-card" data-block-id="b-login">
+      <h2 className="text-h2">Entrar</h2>
+      <label className="text-small" htmlFor="ai-b-login-email">Email</label>
+      {" "}
+      <input className="rounded-input border border-input px-3 py-2" id="ai-b-login-email" type="email" name="email" placeholder="tu@correo.com" defaultValue="ana@brisa.es" />
+      {" "}
+      <label className="flex items-center gap-2">
+        <input type="checkbox" defaultChecked />
+        {" "}
+        Recordarme
+      </label>
+      <textarea className="rounded-input border border-input" name="note" defaultValue={"Hola \"amigos\" {x}"} />
+      <select name="plan" disabled>
+        <option value="pro">Pro</option>
+        <option value="team" aria-selected="true">Equipo</option>
+      </select>
+      <table className="w-full">
+        <thead>
+          <tr>
+            <th scope="col" colSpan={2}>Plan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td tabIndex={0}>A</td>
+            <td>B</td>
+          </tr>
+        </tbody>
+      </table>
+      <button className="w-full rounded-button bg-primary py-3 text-primary-foreground" type="button">
+        Entrar
+        {" "}
+        <Icon name="arrow-right" aria-hidden="true" />
+      </button>
+      <p className="text-caption">
+        ¿Sin cuenta?
+        {" "}
+        <a href="/registro">Crea una</a>
+        .
+        <br />
+        Gratis.
+      </p>
+      <hr className="border-border" />
+    </div>
+  );
+}

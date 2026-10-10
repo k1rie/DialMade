@@ -37,3 +37,13 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+
+/*
+ * «Diseño con IA» (spec §7 [C17]): a cell painted by an AI block contains it. Nothing it draws can leave its box or
+ * cover a neighbour, except 24px of bleed so shadows show (the island in Ajustar keeps the same margin).
+ */
+.dl-el[data-dl-ai] {
+  contain: layout paint;
+  overflow: clip;
+  overflow-clip-margin: 24px;
+}

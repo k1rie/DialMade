@@ -5,6 +5,7 @@ import { createPage } from "../doc";
 import type { DesignDoc, Page } from "../schema";
 import { hasScreens, renderTargets } from "../screens";
 import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, fontsUrlFor, type ResolvedTokens } from "../tokens";
+import { aiDesignLines, aiReferenceLines } from "./aiRender";
 import { plainText, screenNames, screensLayoutLines } from "./layoutBlock";
 import {
   kindLabel,
@@ -410,6 +411,9 @@ const EN: Copy = {
 
 const COPY: Record<Locale, Copy> = { es: ES, en: EN };
 
+/** Packs for coding agents, which get the reference HTML of the AI blocks (spec §9). */
+const AI_REFERENCE_TARGETS: ReadonlySet<PromptTarget> = new Set(["claude", "claude-design", "v0", "cursor"]);
+
 const shadowLine = (t: ResolvedTokens, copy: Copy) =>
   SHADOW_NAMES.every((name) => t.shadows[name].length === 0)
     ? copy.flat
@@ -551,6 +555,9 @@ export function toPromptPack(
       motionLabel: inputs.motionTier.label[locale],
       ...(options.visibleProps && { visibleProps: options.visibleProps }),
     }),
+    // «Diseño con IA»: direction and AI blocks per screen; coding agents also get each block's HTML (≤ 60 KB).
+    ...aiDesignLines(doc, locale),
+    ...(AI_REFERENCE_TARGETS.has(target) ? aiReferenceLines(doc, locale) : []),
     `## ${copy.rulesTitle}`,
     "",
     ...copy.rules.map((line) => `- ${line}`),

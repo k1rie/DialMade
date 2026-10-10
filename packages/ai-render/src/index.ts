@@ -83,4 +83,5 @@ export { BlockStreamParser, blockIdOfTag, splitBlocks, type StreamBlock } from "
 export { exportThemeCss, themeBlock } from "./theme";
 export { attr, elements, parseSanitized, serialize, textOf, type AiElement, type AiNode, type AiText } from "./tree";
 export { checkClass, colorOfClass, splitClass, type ClassCheck, type ClassRejection } from "./vocabulary";
-export { inlineAssets, provenanceComment, type InlineAssetsOptions } from "./export";
+export { exportBlockHtml, inlineAssets, provenanceComment, type ExportBlockOptions, type InlineAssetsOptions } from "./export";
+export { blockToTsx, componentName, tsxAssetsModule, type TsxOptions } from "./tsx";
