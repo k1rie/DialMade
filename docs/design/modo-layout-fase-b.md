@@ -2,6 +2,8 @@
 
 **Fecha:** 2026-10-10. **Rama:** `feat/layout-mode`.
 
+> **Estado (fin de la Fase B):** todo lo de esta lista quedó resuelto en la Fase B (primitivas en `components/ui/`, geometría y dispositivos con una sola fuente, `DraggableItem` con instrucciones por prop, anuncios `polite`, animación de soltar a la celda, toasts por encima de la barra, conexión con el flujo). Solo queda pendiente el cambio propuesto a `CLAUDE.md` del final, que necesita tu visto bueno.
+
 La Fase A solo puede tocar su zona (`LayoutStep/`, `lib/geometry/`, `lib/devices.ts`, `i18n/layout.ts`, `packages/layout/` y los documentos nuevos). Aquí se apunta lo que se duplicó o se tocó fuera de esa zona, para resolverlo cuando `import` esté en `main`.
 
 ## Cambios fuera de la zona de la Fase A
@@ -69,3 +71,12 @@ La Fase A solo puede tocar su zona (`LayoutStep/`, `lib/geometry/`, `lib/devices
 - `LayoutStep` recibe `doc`, `initialScreens`, `hasImportedGuide`, `style`/`onStyleChange`, `onGenerate` y `onGenerateIntent`. `onStyleChange(id)` → `actions.setRecipe(id, { cascade: true })`; `"guide"` = conservar la guía importada.
 - Las huellas de «Generar» viven hoy en el store de `LayoutStep`. Con DesignDoc v2 pasan a `block.generated`, en el mismo batch que `elements`.
 - `toElementTree(structure)` da el árbol de elementos que espera `toCss`: `buildPageFromLayout` debe crear una región `ui.region` por cada región inferida y aplicar el CSS de `toCss` al `.dl-layout` del render.
+
+## Cambio propuesto a `CLAUDE.md` (no aplicado)
+
+El handoff pide no editar `CLAUDE.md`, así que lo dejo propuesto. Tras la Fase B, estas líneas quedan desactualizadas:
+
+- `packages/doc`: «DesignDoc v1 (Zod)…» → «DesignDoc v2 (Zod): `pages` (guía de estilo y documentos antiguos) más `screens`/`screenOrder` del Modo Layout; los documentos v1 se migran al parsear. Parches RFC 6902 (con candados que pueden apuntar dentro de `/screens`)…».
+- Añadir: «`packages/layout` (`@dialmade/layout`): motor del Modo Layout en TS puro, sin React: `LayoutDoc`, librería de bloques, XY-cut (`inferStructure`), responsive derivado, `toCss` y wireframe ASCII.»
+- `packages/sections`: añadir «`buildPageFromLayout` compila cada pantalla desde su layout; `addDefaultPage` queda para la guía de estilo y los documentos sin pantallas.»
+- Mitad de diseño: «(Crear, Ajustar, Exportar)» → «(Layout, Ajustar, Exportar)».

@@ -2,6 +2,26 @@
 
 **Fecha:** 2026-10-10. **Rama:** `feat/layout-mode`.
 
+## Resumen (léelo primero)
+
+- **Fase A y Fase B terminadas** en `feat/layout-mode`, sin push ni merge a `main`.
+- **Qué hay:**
+  - el paquete `@dialmade/layout`: motor del lienzo con XY-cut, responsive, CSS y wireframe;
+  - el lienzo en el paso **Layout** del flujo (Marca → Layout → Ajustar → Exportar), con varias pantallas, librería, inspector, capas, selector de estilo y plantillas;
+  - **DesignDoc v2** con pantallas y migración desde v1;
+  - las 8 secciones `ui.*` y `buildPageFromLayout`;
+  - **Generar** determinista (~6–9 ms con 200 bloques) con momento firma dentro del lienzo;
+  - IA opcional con **una sola** petición y las notas en `<layout_notes>`;
+  - preview navegable entre pantallas («Probar»);
+  - ZIP multipágina con enlaces reales, `layout.css` y `layout.json`;
+  - DESIGN.md y prompt packs con el layout y el flujo.
+- **Calidad:**
+  - dos revisiones adversariales con verificación (58 hallazgos en la Fase A y 41 en la B), todos arreglados con tests;
+  - typecheck, lint y tests en verde en los 8 paquetes (unos 2.700 tests);
+  - el build de producción compila, y `/dev/layout` da 404 en producción.
+- **Cómo probarlo:** en el worktree, ejecuta `corepack pnpm --filter web exec next dev --port 3500` y abre `http://localhost:3500/` (el flujo completo) o `/dev/layout` (el lienzo aislado, solo en desarrollo).
+- **Lo que necesita tu decisión** está al final: «Pendiente para el usuario».
+
 Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definía, y la opción que elegí. La regla fue: la opción más simple que no cierre puertas para la Fase B. Los cambios que hacen falta fuera de la zona de la Fase A están en `modo-layout-fase-b.md`.
 
 ## Repo y paquetes
@@ -151,7 +171,7 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 90. **Selector de inicio:** `KindCard` es ahora la carta de conjunto (mini con la marca, nombre, descripción y «Para ti si…»). La pestaña del Palette Lab recomienda: landing → «Landing», app → «SaaS app». Si la respuesta a «¿No sabes cuál?» es «Pasárselo a mi diseñador o a mi IA», no se recomienda ninguno y una nota explica que la guía de estilo se genera siempre.
 91. **El draft del layout vive a nivel del flujo,** uno por documento, así que salir de Layout no lo pierde. Al volver se sincroniza con `doc.screens` (comparando contenido):
     - Draft sin cambios desde la última sincronización: pasa a ser lo del documento.
-    - Los dos cambiaron: geometría, tipo, nombre, nota, `count` y enlaces vienen del draft; `pinned` y `generated`, del documento; `hidden` se fusiona a tres bandas. No se añade ningún paso de deshacer.
+    - Los dos cambiaron: geometría, tipo, nombre, nota y enlaces vienen del draft; `pinned` y `generated`, del documento; `hidden` y `count` se fusionan a tres bandas (gana el lado que cambió; si cambiaron los dos, el draft). No se añade ningún paso de deshacer.
 92. **Generar** escribe todo en una sola escritura validada (pantallas, huellas, marco de app compartido, guía de estilo y foco) y tarda unos 6–9 ms con 200 bloques. La primera vez reinicia el historial, para no poder deshacer hasta un documento vacío.
 93. **Candados al generar:** un valor bloqueado que Generar cambiaría conserva su valor. Si un bloque borrado tiene un candado, la escritura falla y aparece un toast con «Desbloquear y borrar»; el reintento usa `allowLocked` y quita los candados que quedan colgando.
 94. **Estilo:** «Tu guía de estilo» es la opción por defecto si hay una guía importada (`provenance.imports` no vacío), hasta que el usuario elige una receta. Elegir receta llama a `setRecipe(id, { cascade: true })`; si está bloqueada, el selector vuelve atrás y un toast ofrece «Desbloquear».
@@ -169,3 +189,50 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 100. **Estados por bloque:** un bloque que el usuario editó durante la petición queda en «Sin cambios»; «Error» solo cuando reintentar puede ayudar (red, saturación, respuesta inútil). Sin usos gratis, sin clave o sin configuración, se abre el menú de la IA en lugar de marcar error.
 101. **El CSS del export y de la preview sale del layout compilado** (sin los bloques absorbidos), con la misma función en los dos sitios (`lib/screen-layout.ts`), para que el HTML exportado y la preview coincidan.
 102. **ZIP:** la raíz es la pantalla con ruta `/` (si no hay, la primera). En el pack de Claude Design, `preview.html` es siempre la primera pantalla. `layout.json` añade `absorbed` (bloque → anfitrión), que explica por qué algunos bloques no salen en `order`. Los textos del usuario en el README pierden comillas invertidas y saltos de línea.
+
+## Generar, Ajustar y cabos sueltos (ola 3)
+
+103. **Momento firma:** la capa con la pantalla generada se pinta al ancho del dispositivo y se escala al marco (es la única capa con `scale()`; el lienzo editable sigue sin él). Con más de unos 20 bloques se abren por oleadas para no pasar de 900 ms.
+104. **Con IA activada, la página generada se queda en el lienzo** al terminar el momento firma, con los chips por bloque, hasta pulsar «Ir a Ajustar» o «Seguir editando el layout». Salir antes desmontaría el paso y `useAiCopy` cancelaría la petición. Mientras tanto los paneles laterales están `inert`.
+105. **Qué recibe la IA al regenerar:** una pantalla nunca generada va entera; una pantalla con cambios manda solo sus bloques cambiados (un bloque absorbido se manda como su anfitrión); «Generar de nuevo» sin cambios, o si solo se borraron bloques, manda todas las pantallas enteras. «Reintentar» reintenta todos los bloques en error en una sola petición (un uso).
+106. **El interruptor de IA empieza apagado** en cada visita a Layout y aparece apagado mientras la IA esté bloqueada (sin key ni usos gratis). «Copiar prompt para mi Claude» antes del primer Generar genera primero, porque el prompt necesita las páginas escritas.
+107. **«Probar» es un modo explícito** de Ajustar, solo en documentos con pantallas; en «Editar» los enlaces nunca navegan. Un enlace a la pantalla actual sube al principio y lo anuncia.
+108. **CSS por pantalla en la app:** la preview, la capa del momento firma y la mini del export usan el CSS del layout con ámbito `[data-dl-screen="<id>"]` (con `:where()`, así que la especificidad es la misma que en el export). El ZIP usa el CSS sin ámbito.
+109. **×N desde Ajustar** escribe también `layout.blocks[id].count` en el mismo parche; la huella no se toca, así que al regenerar el bloque cuenta como cambiado y se recalculan las claves que dependen del tamaño (salvo las fijadas).
+110. **Marco de app por pantalla:** el título del marco es el nombre de la pantalla; el subtítulo y la acción principal salen del propósito de la pantalla (detalle, ajustes, perfil, formulario, checkout, lista, calendario o genérico) y del tipo de producto. Las claves por pantalla (título, subtítulo, acción, ítem activo, cabecera) no se copian a las otras pantallas al editarlas en Ajustar; las demás (tono, densidad…) sí.
+111. **`page.stash`:** cuando un bloque se absorbe (un media dentro de un hero), sus props se guardan en `page.stash`; si se vuelve a sacar, recupera su copy y sus valores fijados. Solo existe en páginas de pantalla.
+112. **Formulario de ajustes:** `count` de 1 a 11 (por defecto 8, que es el formulario completo de antes; el knob va de 2 a 8).
+113. **Ids de bloque únicos en todo el documento** (decisión 42) como regla del schema. Más de 24 pantallas o más de 200 bloques en una pantalla se rechazan antes del parseo completo.
+114. **Los wireframes de DESIGN.md usan el layout compilado** (sin cajas para los bloques absorbidos, que se nombran «con X dentro»), igual que la página. Los archivos por pantalla (`layout.css`, `layout.json`) van en `SCREEN_EXPORT_FILES`, aparte de `EXPORT_FILES`, para no romper sus tipos.
+
+## Ajustes tras la revisión final de la Fase B
+
+115. **Nada se pierde al deshacer después de Generar.** Si Generar quita un elemento (bloque borrado o con otro tipo), sus props y sus valores fijados quedan en `page.stash` (máximo 32 entradas de bloques quitados; las más antiguas salen primero). Las pantallas borradas quedan en `screenStash` del documento (las 4 más recientes). Si un deshacer en Layout devuelve el bloque o la pantalla con el mismo id, vuelve con su copy y sus valores fijados. Un cambio de idioma o de producto regenera también lo guardado.
+116. **Knobs del marco de app en Ajustar:**
+    - «Navegación» escribe la navegación compartida de las pantallas de app; «Cabecera de página», la de esa pantalla; «Título de la página» renombra la pantalla (nombre único, y la ruta automática la sigue).
+    - El resto del copy del marco (subtítulo, acción principal…) queda fijado por pantalla (`AppShell.pinned`): se conserva al regenerar y al cambiar idioma o producto, y la IA no lo toca.
+117. **Fusión del draft a nivel de pantalla:** nombre, ruta, navegación y cabecera también se fusionan a tres bandas. Si un nombre o una ruta que viene del documento ya lo usa otra pantalla del draft, se numera («Ajustes 2», `/ajustes-2`).
+118. **Duplicar una pantalla** conserva en la copia las ediciones de Ajustar de la original (copy, valores fijados, ocultos, dials y marco).
+119. **Topes en el lienzo:** 24 pantallas y 200 bloques por pantalla, con un aviso claro al llegar; Generar ya no falla con un error genérico.
+120. **Aviso de cambios sin generar:** si Ajustar o Exportar muestran una generación más antigua que el layout, aparece un aviso con «Generar».
+121. **Filas de pantallas:** Space o Enter coge y suelta (para reordenar con las flechas); las flechas sin coger mueven el foco y abren la pantalla, como unas pestañas. Alt+↑/↓ y el menú siguen como alternativas.
+122. **Un h1 por pantalla:** el primer texto visible; si no hay, el título de la primera sección que lo admite (formulario, lista, tarjetas o calendario, con la prop `level`, mismo aspecto).
+123. **Copy por pantalla:** los textos y las listas de cada pantalla usan su propia semilla y el propósito de la pantalla (las pantallas de app nunca reciben copy de marketing). Navbar, hero, footer, precios y KPIs mantienen la semilla del documento, para que botones y precios coincidan entre pantallas.
+124. **Navbar de landing:** con dos o más pantallas de landing, sus enlaces abren esas pantallas primero.
+125. **«Enlaza a»** solo aparece en los bloques cuya sección pinta un enlace (`linkable` en la librería); si el bloque no lo pinta, el inspector lo dice.
+126. **Media y gráficas en una fila:** la proporción va en un elemento interior, así que ya no desbordan la rejilla cuando el bloque de al lado es más alto.
+
+## Límites conocidos (medidos)
+
+- `applyPatch` con 10 pantallas × 200 bloques: unos 5–8 ms por cambio de knob (objetivo de la crítica: < 16 ms). La validación completa del documento sigue en cada edición.
+- Historial de deshacer: comparte las partes que no cambian; un Generar sí guarda una copia nueva de las pantallas.
+- Petición de IA: unos 258 KB por pantalla de 200 bloques, así que caben 3–4 pantallas así por petición (límite de 1 MB). Si no cabe, se ofrece la key propia o «Copiar prompt para mi Claude».
+- Render de una pantalla de 200 bloques en Ajustar: cambiar la selección cuesta unos 3 ms; una edición, unos 29 ms, porque `PageRenderer` rehace su contexto con todo el documento. Bajarlo a ~3 ms exige un contexto estable, con riesgo de mostrar contenido viejo, y lo dejé para después.
+
+## Pendiente para el usuario
+
+- **Revisar los textos nuevos** de la UI (es/en): están en `src/i18n/layout.ts`, `flow.ts`, `ai.ts` (`layoutCopy`), `composer.ts` y `export.ts`.
+- **Probar con VoiceOver y NVDA** (handoff §7). Aquí solo pude revisar el árbol de accesibilidad, el foco y las regiones `aria-live` en el navegador.
+- **Contraste del `Segmented` del Composer:** la pastilla elegida tiene ~1,1:1 respecto al resto. El de `LayoutStep` usa una barra de acento; para el Composer hace falta tu decisión, porque cambia su aspecto.
+- **`CLAUDE.md`:** está desactualizado (DesignDoc v1, paso «Crear», falta `@dialmade/layout`). El cambio propuesto está en `modo-layout-fase-b.md`.
+- **Push y merge a `main`:** no hice ninguno. La rama tiene todos los commits.
