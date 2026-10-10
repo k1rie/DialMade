@@ -6,7 +6,7 @@ import { ICONS } from "@dialmade/ui";
 import { resolveExport, type DesignDoc } from "@dialmade/doc";
 import { buildDesignTree, type DesignTreeOptions } from "../tree/build";
 import type { DesignNode, DesignPage, DesignTree, FrameNode, ShapeNode, TextNode } from "../tree/types";
-import { boxClasses, layoutClasses, paddingClasses, textClasses } from "./classes";
+import { boxClasses, isOverlay, layoutClasses, paddingClasses, textClasses, type Parent } from "./classes";
 import { tsxCss } from "./css";
 
 export type TsxOptions = DesignTreeOptions;
@@ -49,21 +49,27 @@ type Emit = {
   icons: Set<string>;
   /** Section component of each section frame (by identity) while emitting a page. */
   components: Map<FrameNode, SectionComponent>;
+  /** HTML context of the node being written, so the markup stays valid (the HTML parser repairs invalid nesting). */
+  inList: boolean;
+  inInteractive: boolean;
 };
 
 type SectionComponent = { name: string; file: string; node: FrameNode; hasSlot: boolean };
 
-type Parent = Parameters<typeof boxClasses>[1];
-
 const parentOf = (node: FrameNode): Parent => {
   const layout = node.layout ?? { kind: "flex", direction: "column" };
+  if (isOverlay(node)) return "overlay";
   return layout.kind === "flex" ? (layout.direction === "row" ? "row" : "column") : layout.kind;
 };
 
 const HEADING_TAG: Partial<Record<TextNode["style"], string>> = { display: "h1", h1: "h2", h2: "h2", h3: "h3" };
 
 function textJsx(e: Emit, node: TextNode, parent: Parent, depth: number): string {
-  const tag = node.tag ?? HEADING_TAG[node.style] ?? (parent === "row" ? "span" : "p");
+  let tag: string = node.tag ?? HEADING_TAG[node.style] ?? (parent === "row" ? "span" : "p");
+  // Cells only exist inside a real <table>; the tree's tables are ARIA tables of boxes.
+  if (tag === "th" || tag === "td") tag = "span";
+  if (e.inList) tag = "li";
+  else if (e.inInteractive && tag !== "span" && tag !== "strong" && tag !== "small" && tag !== "code") tag = "span";
   return `${INDENT.repeat(depth)}<${tag}${classAttr(textClasses(node, parent))}>${jsxText(node.text)}</${tag}>`;
 }
 
@@ -81,12 +87,18 @@ function iconJsx(e: Emit, node: Extract<DesignNode, { type: "icon" }>, depth: nu
   return `${INDENT.repeat(depth)}<Icon name=${attr(name)}${classAttr([`size-[${size}px]`, "shrink-0", `text-${node.color.startsWith("color-") ? `(--${node.color})` : node.color}`])} />`;
 }
 
-function frameTag(node: FrameNode): { tag: string; extra: string } {
-  if (node.linkTo !== undefined) return { tag: "a", extra: "" };
-  const tag = node.tag ?? "div";
-  if (tag === "button") return { tag, extra: ' type="button"' };
-  if (tag === "a") return { tag, extra: ' href="#"' };
-  return { tag, extra: "" };
+/** The element of a box: its semantic tag, made valid where it sits (no nested links, no `<div>` in a `<table>`). */
+function frameTag(e: Emit, node: FrameNode): { tag: string; extra: string; interactive: boolean } {
+  if (e.inList) return { tag: "li", extra: "", interactive: false };
+  const wanted = node.linkTo !== undefined ? "a" : (node.tag ?? "div");
+  if ((wanted === "a" || wanted === "button") && e.inInteractive) return { tag: "span", extra: "", interactive: false };
+  if (wanted === "a" && node.linkTo === undefined) return { tag: "a", extra: ' href="#"', interactive: true };
+  if (wanted === "a") return { tag: "a", extra: "", interactive: true };
+  if (wanted === "button") return { tag: "button", extra: ' type="button"', interactive: true };
+  if (wanted === "table") return { tag: "div", extra: ' role="table"', interactive: false };
+  if (wanted === "dialog") return { tag: "div", extra: ' role="dialog"', interactive: false };
+  if (wanted === "li") return { tag: "div", extra: ' role="listitem"', interactive: false };
+  return { tag: wanted, extra: "", interactive: false };
 }
 
 function frameJsx(e: Emit, node: FrameNode, parent: Parent, depth: number, inSection: SectionComponent | null, extraClasses: readonly string[] = []): string {
@@ -100,8 +112,8 @@ function frameJsx(e: Emit, node: FrameNode, parent: Parent, depth: number, inSec
     const inner = slots.map((child) => nodeJsx(e, child, "column", depth + 1, null)).join("\n");
     return `${pad}<${component.name}${placement}>\n${inner}\n${pad}</${component.name}>`;
   }
-  const { tag, extra } = frameTag(node);
-  const href = node.linkTo !== undefined ? ` href=${attr(e.routes.get(node.linkTo) ?? "#")}` : "";
+  const { tag, extra, interactive } = frameTag(e, node);
+  const href = node.linkTo !== undefined && tag === "a" ? ` href=${attr(e.routes.get(node.linkTo) ?? "#")}` : "";
   const label = node.label ? ` aria-label=${attr(node.label)}` : "";
   const hasAbsolute = node.children.some((child) => child.type === "frame" && child.absolute);
   const root = component === inSection && inSection !== null && node === inSection.node;
@@ -118,6 +130,9 @@ function frameJsx(e: Emit, node: FrameNode, parent: Parent, depth: number, inSec
   const own = parentOf(node);
   const childLines: string[] = [];
   let slotDone = false;
+  const saved = { inList: e.inList, inInteractive: e.inInteractive };
+  e.inList = tag === "ul" || tag === "ol";
+  e.inInteractive = saved.inInteractive || interactive;
   for (const child of node.children) {
     if (inSection && child.type === "frame" && child.slot) {
       if (!slotDone) childLines.push(`${INDENT.repeat(depth + 1)}{children}`);
@@ -126,6 +141,8 @@ function frameJsx(e: Emit, node: FrameNode, parent: Parent, depth: number, inSec
     }
     childLines.push(nodeJsx(e, child, own, depth + 1, inSection));
   }
+  e.inList = saved.inList;
+  e.inInteractive = saved.inInteractive;
   const classText = root ? rootClassAttr(classes) : classAttr(classes);
   const open = `${pad}<${tag}${extra}${href}${label}${classText}`;
   if (childLines.length === 0) return `${open} />`;
@@ -286,7 +303,7 @@ function readme(tree: DesignTree, screens: { page: DesignPage; name: string; fil
 /** The TSX files of a design tree. */
 export function filesFromTree(doc: DesignDoc, tree: DesignTree, options: TsxOptions = {}): TsxFiles {
   const routes = new Map(tree.pages.filter((page) => page.route !== undefined).map((page) => [page.id, page.route!]));
-  const e: Emit = { routes, icons: new Set(), components: new Map() };
+  const e: Emit = { routes, icons: new Set(), components: new Map(), inList: false, inInteractive: false };
   const files: TsxFiles = {};
   const taken = new Set<string>(["Icon"]);
   const screens: { page: DesignPage; name: string; file: string }[] = [];

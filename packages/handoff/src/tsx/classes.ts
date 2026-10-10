@@ -90,7 +90,7 @@ export function strokeClasses(stroke: Stroke | undefined): string[] {
   return [...widthClasses, colorClass("border", stroke.color, stroke.opacity), ...(stroke.dashed ? ["border-dashed"] : [])];
 }
 
-type Parent = "row" | "column" | "grid" | "tracks" | "root";
+export type Parent = "row" | "column" | "grid" | "tracks" | "overlay" | "root";
 
 /** Width, height and box classes shared by frames and shapes. */
 export function boxClasses(node: FrameNode | Extract<DesignNode, { type: "shape" }>, parent: Parent): string[] {
@@ -109,14 +109,14 @@ export function boxClasses(node: FrameNode | Extract<DesignNode, { type: "shape"
   }
   if (node.shadow) out.push(SHADOW[node.shadow]);
   if (node.opacity !== undefined && node.opacity < 1) out.push(`opacity-${Math.round(node.opacity * 100)}`);
-  out.push(...placeClasses(node));
+  out.push(...placeClasses(node, parent === "overlay"));
   return out;
 }
 
 export function widthClasses(width: Size | undefined, parent: Parent, isText: boolean): string[] {
   if (typeof width === "number") return [`w-[${fmt(width)}px]`, "shrink-0"];
   if (width === "hug") return parent === "row" ? ["shrink-0"] : ["w-fit"];
-  if (width === "fill") return parent === "row" ? ["min-w-0", "flex-1"] : parent === "grid" || parent === "tracks" ? ["min-w-0"] : ["w-full"];
+  if (width === "fill") return parent === "row" ? ["min-w-0", "flex-1"] : parent === "grid" || parent === "tracks" || parent === "overlay" ? ["min-w-0"] : ["w-full"];
   // Defaults: fill in a column, hug in a row.
   if (parent === "row") return isText ? [] : ["shrink-0"];
   return [];
@@ -128,7 +128,7 @@ export function heightClasses(height: Size | undefined, parent: Parent): string[
   return [];
 }
 
-export function placeClasses(node: DesignNode): string[] {
+export function placeClasses(node: DesignNode, overlayChild = false): string[] {
   const out: string[] = [];
   if (node.offsetTop !== undefined) out.push(...spaceClass("mt", node.offsetTop));
   if (node.place) {
@@ -137,13 +137,24 @@ export function placeClasses(node: DesignNode): string[] {
   }
   if ((node.type === "frame" || node.type === "shape") && node.area) {
     const { colStart, colEnd, rowStart, rowEnd } = node.area;
-    out.push(`col-[${colStart}/${colEnd}]`, `row-[${rowStart}/${rowEnd}]`);
+    out.push(overlayChild ? "col-start-1 row-start-1" : `col-[${colStart}/${colEnd}] row-[${rowStart}/${rowEnd}]`);
   }
   if (node.type === "frame" && node.absolute) {
     const { left, top, width } = node.absolute;
     out.push("absolute", `left-[${fmt(left * 100)}%]`, `top-[${fmt(top)}px]`, `w-[${fmt(width * 100)}%]`, `${MOBILE}left-0`, `${MOBILE}w-full`);
   }
   return out;
+}
+
+/** A `tracks` box whose children all share one cell: layers on top of each other (a chart and its axis, a badge dot). */
+export function isOverlay(node: FrameNode): boolean {
+  if (node.layout?.kind !== "tracks" || node.children.length === 0) return false;
+  const first = node.children[0]!;
+  const key = (child: DesignNode) => {
+    const area = child.type === "frame" || child.type === "shape" ? child.area : undefined;
+    return area ? `${area.colStart}/${area.colEnd}/${area.rowStart}/${area.rowEnd}` : "";
+  };
+  return node.children.every((child) => key(child) !== "" && key(child) === key(first));
 }
 
 const ALIGN = { start: "items-start", center: "items-center", end: "items-end", stretch: "items-stretch", baseline: "items-baseline" } as const;
@@ -176,6 +187,7 @@ export function layoutClasses(node: FrameNode): string[] {
     else if (layout.columns === 2) out.push(`${MOBILE}grid-cols-1`);
     return out;
   }
+  if (isOverlay(node)) return ["grid", "grid-cols-1", "grid-rows-1"];
   out.push(
     "grid",
     `grid-cols-[${layout.columns.map((n) => `minmax(0,${fmt(n)}fr)`).join("_")}]`,
@@ -224,6 +236,6 @@ export function textClasses(node: TextNode, parent: Parent): string[] {
   const align = TEXT_ALIGN[node.align ?? "start"];
   if (align) out.push(align);
   if (node.strike) out.push("line-through");
-  out.push(...placeClasses(node));
+  out.push(...placeClasses(node, parent === "overlay"));
   return out;
 }

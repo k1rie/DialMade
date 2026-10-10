@@ -58,8 +58,8 @@ function linkFirst(layout: LayoutDoc, links: Record<string, string>): LayoutDoc 
 }
 
 /** The document the app writes after «Generar»: screens in order and the style guide in `pages.brand`. */
-export function screensDoc(specs: readonly ScreenSpec[] = SCREEN_SPECS): DesignDoc {
-  const base = addDefaultPage(baseDoc(), "brand");
+export function screensDoc(specs: readonly ScreenSpec[] = SCREEN_SPECS, options: { styleGuide?: boolean } = {}): DesignDoc {
+  const base = options.styleGuide === false ? baseDoc() : addDefaultPage(baseDoc(), "brand");
   const ctx = contentContextFromDoc(base);
   const navScreens: NavScreen[] = [];
   const made = specs.map((spec) => {
@@ -90,6 +90,13 @@ export function screensDoc(specs: readonly ScreenSpec[] = SCREEN_SPECS): DesignD
     screenOrder: screens.map((screen) => screen.id),
   });
 }
+
+/** Two linked screens (Precios → Entrar) without the style guide: small enough for a full golden. */
+export const goldenDoc = (): DesignDoc =>
+  screensDoc(
+    SCREEN_SPECS.filter((spec) => spec.id === "s-pricing" || spec.id === "s-login").map((spec) => (spec.id === "s-login" ? { ...spec, links: {} } : spec)),
+    { styleGuide: false },
+  );
 
 /** A document without screens: the default landing, dashboard and style guide pages. */
 export function legacyDoc(): DesignDoc {

@@ -5,9 +5,12 @@ import type { DesignDoc, ThemeInputs } from "@dialmade/doc";
 
 export { FIGMA_PLUGIN_ZIP, HANDOFF_FILES } from "./handoffFiles.constants";
 
-/** `figma-plan.json`: every screen (or page) and the style guide, for the Dialmade Figma plugin. */
+/**
+ * `figma-plan.json`: every screen (or page) and the style guide, for the Dialmade Figma plugin. Compact: the tree
+ * is deep, and indenting it multiplies its size several times over.
+ */
 export function figmaPlanJson(doc: DesignDoc, inputs: ThemeInputs): string {
-  return `${JSON.stringify(toFigmaPlan(doc, inputs), null, 2)}\n`;
+  return `${JSON.stringify(toFigmaPlan(doc, inputs))}\n`;
 }
 
 /** React + Tailwind v4 files (path → content), relative to the TSX folder. */

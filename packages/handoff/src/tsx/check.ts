@@ -75,7 +75,8 @@ export async function unknownClasses(files: TsxFiles): Promise<string[]> {
   });
   const unknown: string[] = [];
   let previous = compiler.build([]);
-  for (const name of classesOf(files)) {
+  // `dark` and `light` are selectors of dialmade.css (a subtree's color mode), not utilities.
+  for (const name of classesOf(files).filter((value) => value !== "dark" && value !== "light")) {
     const next = compiler.build([name]);
     if (next === previous) unknown.push(name);
     previous = next;
