@@ -153,11 +153,14 @@ export function TemplatePicker({ className }: TemplatePickerProps) {
                 {t.templatePicker.templatesTitle}
               </h2>
               <p className="m-0 max-w-xl text-body text-pretty text-muted">{t.templatePicker.subtitle}</p>
+              <p id={`${baseId}-sketch`} className="m-0 max-w-xl text-small text-pretty text-muted">
+                {t.templatePicker.sketchNote}
+              </p>
             </div>
           </header>
 
           <div className="flex flex-col gap-4">
-            <div role="group" aria-label={t.templatePicker.startWith} className="grid gap-3 md:grid-cols-3 md:gap-4">
+            <div role="group" aria-label={t.templatePicker.startWith} aria-describedby={`${baseId}-sketch`} className="grid gap-3 md:grid-cols-3 md:gap-4">
               {SET_TEMPLATES.map((set) => (
                 <KindCard key={set.id} setId={set.id} doc={doc} ctx={ctx} recommended={set.id === recommended} onChoose={applySet} />
               ))}
