@@ -84,7 +84,7 @@
 - `@dialmade/ai-render` (`screenInput`, `processBlock`, `blockBasis`, `directionCandidates`, `StructureTracker`);
 - `src/lib/ai/render/{api,worker}.ts`;
 - `AiIsland`;
-- el transporte de C: `renderTransport.ts`. Mientras no exista, se programa contra el free tier con `fetch` a las rutas actuales.
+- el transporte de C: `src/lib/ai/render/transport.ts`, a través de `generation/accessTransport.ts` (integración, 2026-10-10).
 
 **Stub hoy:**
 - nada de UI;

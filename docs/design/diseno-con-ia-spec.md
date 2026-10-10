@@ -428,6 +428,7 @@ Como hoy: la key vive solo en la memoria de la pestaña, la llamada va del naveg
 AiScreenRender = {
   version: 1,
   blocks: Record<BlockId, AiBlock>,     // claves = ids del layout
+  stash?: Record<BlockId, AiBlock>,     // ≤ 12: los AiBlock de bloques borrados, para que vuelvan con el bloque (track B)
 }
 AiBlock = {
   html: string,                // saneado y canónico, ≤ 16 KB; o `surfaceClasses` en contenedores
@@ -439,6 +440,7 @@ AiBlock = {
     kind: 'generate' | 'reroll' | 'change', path: 'free' | 'byok' | 'manual',
     model?: string, createdAt: string, costUsd?: number, inputTokens?: number, outputTokens?: number,
     promptVersion: string, directionId: string, seed: number, request?: string,   // ≤ 500
+    recipeId?: string,         // receta con la que se diseñó: si cambia, «El estilo cambió · ¿Rehacer con IA?» (track B)
   },
 }
 // Top level: doc.aiRender?: { version: 1, direction?: AiDirection }
@@ -638,7 +640,11 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 | Kit (navbar y pie) generado en la petición de dirección | El primer navbar o pie generado se clona en las demás pantallas (track A) | La dirección sale en 3 s y no retrasa las pantallas |
 | `srcdoc` como fallback de desarrollo | Sin fallback: sin `NEXT_PUBLIC_PREVIEW_ORIGIN` válido, la feature no se ofrece | Nunca hay HTML de la IA en el origen de la app, tampoco en desarrollo |
 | `parse5` + DOMPurify como referencia | Solo parse5 y la lista blanca propia | Nada que añadir a la superficie |
+| `vw` del tema dentro del iframe | La isla fija los `vw` del tema al ancho de la ventana de la app (`pinViewportUnits`, track D) | Dentro de un iframe, `vw` es el ancho de la celda: la tipografía fluida no coincidiría con la base ni con el export |
+| Puerta 5 en 3 iframes ocultos | La isla del bloque mide en los 3 anchos en una sola tarea y la app escribe el veredicto en `gates` sin paso de deshacer (tracks D y A) | Sin iframes de más; el veredicto se repite en cada render y solo se escribe si cambia |
 | Contenedores con `surfaceClasses` en el DOM de la app | La superficie también va en una isla (`underlay`) en Ajustar; en el export, como `div` | El CSS de la IA no debe tocar el DOM de la app |
+
+Los exportadores y DESIGN.md leen solo `aiRender.blocks` (nunca `stash`).
 
 Reparto del resto del MVP: `diseno-con-ia-tracks.md`.
 
