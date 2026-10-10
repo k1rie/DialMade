@@ -9,8 +9,8 @@ import { layout } from "@/i18n/layout";
 import type { LayoutProposal } from "@/lib/ai/layout/normalize";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
-import { KindBadge } from "../../KindBadge";
-import { LayoutThumbnail } from "../../LayoutThumbnail";
+import { KindBadge } from "../../../KindBadge";
+import { LayoutThumbnail } from "../../../LayoutThumbnail";
 import { warningText } from "./warningText";
 
 export type VariantCardProps = {
@@ -20,8 +20,8 @@ export type VariantCardProps = {
   /** Shows the recommended style (otherwise «Mantiene tu estilo»). */
   withStyle: boolean;
   onApply: (proposal: LayoutProposal) => void;
-  /** Focus lands here when the results appear. */
-  autoFocus?: boolean;
+  /** The «Elige una» screen: taller thumbnails. */
+  large?: boolean;
 };
 
 /** Screens drawn as thumbnails on a card; the rest are named. */
@@ -32,7 +32,7 @@ const THUMBS = 3;
  * and one-line rationale, the recommended style and why, and what normalization adjusted («3 ajustes», listed,
  * never silent). «Usar esta» applies it (one undo step).
  */
-export function VariantCard({ proposal, index, withStyle, onApply, autoFocus }: VariantCardProps) {
+export function VariantCard({ proposal, index, withStyle, onApply, large = false }: VariantCardProps) {
   const t = useDictionary(layout);
   const d = t.describe;
   const { locale } = useI18n();
@@ -59,7 +59,7 @@ export function VariantCard({ proposal, index, withStyle, onApply, autoFocus }: 
             <LayoutThumbnail
               layout={screen.layout}
               shell={screen.shell}
-              className={cn("w-full overflow-hidden rounded-[6px]", thumbs.length === 1 ? "aspect-[16/7]" : "aspect-[4/3]")}
+              className={cn("w-full overflow-hidden rounded-[6px]", thumbs.length === 1 ? (large ? "aspect-[16/9]" : "aspect-[16/7]") : large ? "aspect-[3/4]" : "aspect-[4/3]")}
             />
             <span className="flex min-w-0 items-center gap-1 px-0.5">
               <span className="min-w-0 truncate text-caption text-fg/85">{screen.name}</span>
@@ -109,7 +109,7 @@ export function VariantCard({ proposal, index, withStyle, onApply, autoFocus }: 
         )}
       </div>
 
-      <Button variant={index === 0 ? "primary" : "secondary"} size="md" autoFocus={autoFocus} aria-label={d.applyLabel(proposal.name)} onClick={() => onApply(proposal)} className="mx-1">
+      <Button variant={index === 0 ? "primary" : "secondary"} size="md" aria-label={d.applyLabel(proposal.name)} onClick={() => onApply(proposal)} className="mx-1">
         {d.apply}
       </Button>
     </motion.article>

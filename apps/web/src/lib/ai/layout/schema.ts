@@ -2,7 +2,7 @@
 // JSON pasted back from «mi Claude»; a strict twin (enums for block types and recipes) is compiled to the JSON
 // Schema sent as structured output, so the hosted and BYOK paths can only name library blocks. Everything is
 // bounded here (arrays sliced, strings cut) before `normalize.ts` turns it into layouts. Client-safe.
-import { styleRecipes } from "@dialmade/catalog";
+import { productChips, styleRecipes } from "@dialmade/catalog";
 import { z } from "zod";
 import {
   LAYOUT_MAX_BLOCKS,
@@ -16,6 +16,8 @@ import {
 export const LAYOUT_NAVS = ["sidebar", "rail", "topnav", "none"] as const;
 export const LAYOUT_SCREEN_KINDS = ["landing", "app"] as const;
 export const LAYOUT_RECIPE_IDS = styleRecipes.map((recipe) => recipe.id) as [string, ...string[]];
+/** Product types the AI may infer: the chips of «Detalles» («generic» = «Otro»). */
+export const LAYOUT_PRODUCT_TYPE_IDS = productChips.map((chip) => chip.id) as [string, ...string[]];
 
 /* ---- Strict: compiled to the JSON Schema of the structured output ---- */
 
@@ -47,7 +49,14 @@ const StrictVariant = z.object({
   screens: z.array(StrictScreen),
 });
 
-export const StrictProposalAnswerSchema = z.object({ variants: z.array(StrictVariant) });
+/** «Detalles» inferred from the description (additive, v1.1): the user can correct them before choosing. */
+const StrictDetails = z.object({
+  brandName: z.string().describe("The product's name if the description gives one, else a short fictional name; never a real company"),
+  tagline: z.string().describe("One short line that says what the product does, in the request's language"),
+  productType: z.enum(LAYOUT_PRODUCT_TYPE_IDS).describe("The product type that fits best; generic when none does"),
+});
+
+export const StrictProposalAnswerSchema = z.object({ variants: z.array(StrictVariant), details: StrictDetails });
 
 export const StrictMapAnswerSchema = z.object({
   blocks: z.array(z.object({ index: z.int().describe("index of the box in <free_blocks>"), type: z.enum(MAP_BLOCK_TYPES) })),
@@ -113,13 +122,17 @@ const VariantSchema = z.object({
   screens: z.array(ScreenSchema),
 });
 
-export const ProposalAnswerSchema = z.object({ variants: z.array(VariantSchema) });
+/** Optional: answers recorded before v1.1 «Detalles», or pasted without it, still validate. */
+const DetailsSchema = z.object({ brandName: Text.default(""), tagline: Text.default(""), productType: Text.default("") });
+
+export const ProposalAnswerSchema = z.object({ variants: z.array(VariantSchema), details: DetailsSchema.optional().catch(undefined) });
 export const MapAnswerSchema = z.object({ blocks: z.array(z.object({ index: Num, type: z.string().max(60) })) });
 
 export type ProposalBlockAnswer = z.output<typeof BlockSchema>;
 export type ProposalScreenAnswer = z.output<typeof ScreenSchema>;
 export type ProposalVariantAnswer = z.output<typeof VariantSchema>;
 export type ProposalAnswer = z.output<typeof ProposalAnswerSchema>;
+export type ProposalDetailsAnswer = z.output<typeof DetailsSchema>;
 export type MapAnswer = z.output<typeof MapAnswerSchema>;
 
 export type LayoutAnswerProblem = "invalid-schema" | "no-result";
@@ -155,7 +168,8 @@ export function parseProposalAnswer(raw: unknown): ParsedAnswer<ProposalAnswer> 
     return [{ ...variant, screens }];
   });
   if (variants.length === 0) return { ok: false, problem: "no-result" };
-  return { ok: true, answer: { variants }, dropped };
+  const { details } = parsed.data;
+  return { ok: true, answer: { variants, ...(details && { details }) }, dropped };
 }
 
 /** Validates a map answer: at most `MAP_MAX_BLOCKS` entries. `no-result` when it has none. */

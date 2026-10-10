@@ -5,7 +5,7 @@ import type { LibraryBlockType, ReadyBlockType } from "@dialmade/layout";
 export const LAYOUT_AI_ENDPOINT = "/api/ai/layout";
 
 /** Bump it when the meaning of the answer changes. */
-export const LAYOUT_PROMPT_VERSION = "layout-1";
+export const LAYOUT_PROMPT_VERSION = "layout-2";
 
 /** The user's description, in UTF-16 code units (like a short brief, not a spec). */
 export const MAX_DESCRIPTION_LENGTH = 500;

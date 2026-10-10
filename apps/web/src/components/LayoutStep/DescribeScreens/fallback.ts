@@ -49,6 +49,36 @@ const DOMAIN: ReadonlyMap<string, LibraryBlockType> = new Map(
   ).flatMap(([type, words]) => words.split(" ").map((word) => [word, type] as const)),
 );
 
+/**
+ * Words that name a product type of «Detalles» (normalized, es/en), first match wins in this order: the more specific
+ * types first, the general SaaS last.
+ */
+const PRODUCT_WORDS: readonly (readonly [string, string])[] = [
+  ["restaurant-food-service", "restaurante restaurant cafeteria cafe bar barberia barbershop peluqueria salon local panaderia bakery pizzeria comida food"],
+  ["healthcare-app", "clinica clinic salud health medico medica doctor pacientes patients veterinaria vet dental dentista hospital terapia fisioterapia"],
+  ["portfolio-personal", "portfolio portafolio cv curriculum resume personal fotografo fotografa photographer disenadora disenador designer"],
+  ["e-commerce", "tienda shop store ecommerce e-commerce carrito cart productos products catalogo checkout"],
+  ["online-course-e-learning", "curso cursos course courses academia academy escuela school alumnos students clases lessons e-learning"],
+  ["fintech-crypto", "fintech banco bank finanzas finance cripto crypto inversiones investments wallet billetera prestamos"],
+  ["ai-chatbot-platform", "ia ai chatbot chat bot llm agente agent api devtools developer desarrolladores"],
+  ["membership-community", "comunidad community membresia membership miembros members foro forum club"],
+  ["creative-agency", "agencia agency estudio studio creativa creative marketing branding"],
+  ["habit-tracker", "habitos habits tracker movil mobile ios android"],
+  ["analytics-dashboard", "analitica analytics metricas metrics kpis estadisticas stats informes reports dashboard"],
+  ["saas-general", "saas b2b software plataforma platform suscripcion subscription facturacion billing crm erp"],
+];
+
+/** «Detalles» without AI: the product type the description's words point at, or `null` («Otro»). */
+export function inferProductType(description: string): string | null {
+  const words = new Set(normalizeSearchText(description).split(" "));
+  // Plurals count too: «barberías», «clinics».
+  const has = (word: string) => words.has(word) || words.has(`${word}s`) || words.has(`${word}es`);
+  for (const [id, list] of PRODUCT_WORDS) {
+    if (list.split(" ").some(has)) return id;
+  }
+  return null;
+}
+
 const PROPOSAL: ReadonlySet<string> = new Set(PROPOSAL_BLOCK_TYPES);
 /** Blocks that only make sense on a public web page: never a need of an app screen. */
 const LANDING_ONLY: ReadonlySet<LibraryBlockType> = new Set(["navbar", "footer", "hero", "pricing", "logos", "testimonials"]);
@@ -230,5 +260,6 @@ export function fallbackAnswer(description: string, options: FallbackOptions): P
       );
     }
   }
-  return { variants };
+  const productType = inferProductType(description);
+  return { variants, ...(productType && { details: { brandName: "", tagline: "", productType } }) };
 }

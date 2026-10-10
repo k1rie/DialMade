@@ -1,7 +1,7 @@
 import { inferStructure, validateLayout } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { LAYOUT_MAX_BLOCKS, LAYOUT_MAX_SCREENS, PROPOSAL_MAX_HEIGHT, PROPOSAL_MAX_ROW } from "./constants";
-import { normalizeMapAnswer, normalizeProposals, slugOf, type LayoutProposal, type ProposalWarning } from "./normalize";
+import { normalizeDetails, normalizeMapAnswer, normalizeProposals, slugOf, type LayoutProposal, type ProposalWarning } from "./normalize";
 import { MAP_JSON_SCHEMA, PROPOSAL_JSON_SCHEMA, parseMapAnswer, parseProposalAnswer, type ProposalAnswer } from "./schema";
 import { barberAnswer, block, screen, variant } from "./testing";
 
@@ -21,7 +21,8 @@ describe("structured output schemas", () => {
     expect(text).not.toContain('"free"');
     expect(text).not.toContain('"container"');
     expect(text).not.toMatch(/"(minimum|maximum)"/);
-    expect(PROPOSAL_JSON_SCHEMA).toMatchObject({ type: "object", additionalProperties: false, required: ["variants"] });
+    expect(PROPOSAL_JSON_SCHEMA).toMatchObject({ type: "object", additionalProperties: false, required: ["variants", "details"] });
+    expect(text).toContain('"saas-general"');
     expect(JSON.stringify(MAP_JSON_SCHEMA)).toContain('"free"');
   });
 });
@@ -228,5 +229,18 @@ describe("a real answer of Claude Haiku 5.5 (recorded once, «app de reservas pa
         expect(inferStructure(proposed.layout).warnings.filter((w) => w.code === "overlap")).toEqual([]);
       }
     }
+  });
+});
+
+describe("«Detalles» in the answer (additive)", () => {
+  it("validates answers with and without details, and keeps only clean text and a known product type", () => {
+    expect(parse(barberAnswer()).details).toBeUndefined();
+    const withDetails = parse({ ...barberAnswer(), details: { brandName: " Navaja\nClub ", tagline: "Reserva tu corte en 30 s", productType: "restaurant-food-service" } });
+    expect(normalizeDetails(withDetails.details)).toEqual({ brandName: "Navaja Club", tagline: "Reserva tu corte en 30 s", productType: "restaurant-food-service" });
+    expect(normalizeDetails({ brandName: "", tagline: "", productType: "generic" })).toBeNull();
+    expect(normalizeDetails({ brandName: "X", tagline: "", productType: "spaceship" })).toEqual({ brandName: "X", tagline: "", productType: null });
+    // A broken «details» never sinks the variants.
+    expect(parse({ ...barberAnswer(), details: 42 }).variants).toHaveLength(2);
+    expect(normalizeDetails({ brandName: "a".repeat(500), tagline: "", productType: "" })!.brandName.length).toBeLessThanOrEqual(80);
   });
 });

@@ -166,7 +166,7 @@ export const ai = defineDictionary({
     layoutAi: {
       /* «Describe tu producto» and «Sugerir con IA» (Modo Layout v1.1). */
       estimate: (cost: string) => `≈ ${cost}`,
-      oneUsePropose: "Cuenta como 1 uso, para todas las variantes.",
+      oneUsePropose: "1 uso = 3 variantes",
       oneUseMap: "Cuenta como 1 uso, para todos los bloques.",
       usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
       withKey: "con tu key",
@@ -356,7 +356,7 @@ export const ai = defineDictionary({
     },
     layoutAi: {
       estimate: (cost: string) => `≈ ${cost}`,
-      oneUsePropose: "Counts as 1 use, for every variant.",
+      oneUsePropose: "1 use = 3 variants",
       oneUseMap: "Counts as 1 use, for every block.",
       usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
       withKey: "with your key",

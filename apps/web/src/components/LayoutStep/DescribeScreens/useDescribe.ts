@@ -6,11 +6,13 @@
 import type { LayoutBrief } from "@dialmade/doc";
 import { GENERIC_PRODUCT_ID, getStyleRecipe } from "@dialmade/catalog";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDictionary, useI18n } from "@/i18n";
+import { docHasDesign, useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
+import { locales, useDictionary, useI18n } from "@/i18n";
+import { flow as flowText } from "@/i18n/flow";
 import { layout as layoutText, type DescribeKind } from "@/i18n/layout";
 import type { ProposeRequestBody } from "@/lib/ai/layout/api";
 import { LAYOUT_MAX_EXISTING, MIN_DESCRIPTION_LENGTH, PROPOSAL_BLOCK_TYPES } from "@/lib/ai/layout/constants";
-import { normalizeProposals, type LayoutProposal } from "@/lib/ai/layout/normalize";
+import { normalizeDetails, normalizeProposals, type LayoutProposal, type ProposalDetails } from "@/lib/ai/layout/normalize";
 import { cleanDescription } from "@/lib/ai/layout/prompt";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { searchBlocks } from "../searchBlocks";
@@ -25,7 +27,15 @@ export type DescribeBy = LayoutBrief["source"];
 export type DescribePhase =
   | { kind: "idle" }
   | { kind: "proposing"; spends: boolean }
-  | { kind: "results"; proposals: LayoutProposal[]; by: DescribeBy; model: string; description: string }
+  | {
+      kind: "results";
+      proposals: LayoutProposal[];
+      by: DescribeBy;
+      model: string;
+      description: string;
+      /** «Detalles» written to the document from this answer (only the fields the user had not set). */
+      filled: Partial<ProposalDetails> | null;
+    }
   | { kind: "empty"; by: DescribeBy }
   | { kind: "failed"; message: string; fallback: AiFallbackReason | null }
   | { kind: "cancelled"; spent: boolean };
@@ -42,6 +52,8 @@ export type AppliedProposal = {
 const SEARCH_DICTS = [layoutText.es.blocks, layoutText.en.blocks] as const;
 const PROPOSAL: ReadonlySet<string> = new Set(PROPOSAL_BLOCK_TYPES);
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+/** A brand name nobody chose: «Mi marca» / «My brand». */
+const DEFAULT_NAMES: ReadonlySet<string> = new Set(locales.map((locale) => flowText[locale].doc.defaultName));
 
 let proposalRun = 0;
 
@@ -53,11 +65,38 @@ export function useDescribe(mode: "start" | "add") {
   const store = useLayoutStoreApi();
   const actions = useLayoutActions();
   const { doc } = useLayoutEnv();
+  const designStore = useOptionalDesignDocStore();
   const [phase, setPhase] = useState<DescribePhase>({ kind: "idle" });
   const controller = useRef<AbortController | null>(null);
   // «Usar mi propia key» proposes again once the key is saved.
   const proposeRef = useRef<((description: string, kind: DescribeKind) => Promise<void>) | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
+
+  /**
+   * «Detalles» inferred from the description (the AI, or the product type without it) fill the fields the user has
+   * not set: a default brand name, an empty tagline, «Otro» as product type. Only when starting a project, as one undo
+   * step of the document; the user corrects them in «Detalles».
+   */
+  const fillDetails = useCallback(
+    (details: ProposalDetails | null): Partial<ProposalDetails> | null => {
+      if (mode !== "start" || !details || !designStore) return null;
+      const { doc: current, actions: docActions } = designStore.getState();
+      if (!current) return null;
+      const filled: Partial<ProposalDetails> = {};
+      if (details.brandName && DEFAULT_NAMES.has(current.brand.name)) filled.brandName = details.brandName;
+      if (details.tagline && !current.brand.tagline) filled.tagline = details.tagline;
+      if (details.productType && current.brief.productType === GENERIC_PRODUCT_ID) filled.productType = details.productType;
+      if (Object.keys(filled).length === 0) return null;
+      docActions.beginBatch();
+      if (filled.brandName || filled.tagline) {
+        docActions.setBrandText({ ...(filled.brandName && { name: filled.brandName }), ...(filled.tagline && { tagline: filled.tagline }) });
+      }
+      if (filled.productType) docActions.setProductType(filled.productType, { applyDefaults: !docHasDesign(current) });
+      docActions.commitBatch();
+      return filled;
+    },
+    [mode, designStore],
+  );
 
   const normalize = useCallback(
     (result: LayoutAiResult["answer"], by: DescribeBy, model: string, description: string) => {
@@ -68,9 +107,10 @@ export function useDescribe(mode: "start" | "add") {
         screenName: (index) => t.describe.fallback.screen(index + 1),
         idPrefix: `p${++proposalRun}-`,
       });
-      setPhase(proposals.length > 0 ? { kind: "results", proposals, by, model, description } : { kind: "empty", by });
+      if (proposals.length === 0) return setPhase({ kind: "empty", by });
+      setPhase({ kind: "results", proposals, by, model, description, filled: fillDetails(normalizeDetails(result.answer.details)) });
     },
-    [t],
+    [t, fillDetails],
   );
 
   /** The request for the current inputs; `null` while the description is too short. */
@@ -187,14 +227,18 @@ export function useDescribe(mode: "start" | "add") {
 
   /** ONE undo step of the layout: the screens of `proposal` (and its style when `withStyle`). `null` past the limits. */
   const apply = useCallback(
-    (proposal: LayoutProposal, options: { mode: ProposalMode; withStyle: boolean }): AppliedProposal | null => {
-      if (phase.kind !== "results") return null;
+    (
+      proposal: LayoutProposal,
+      options: { mode: ProposalMode; withStyle: boolean; from?: Extract<DescribePhase, { kind: "results" }> | null },
+    ): AppliedProposal | null => {
+      const from = options.from ?? (phase.kind === "results" ? phase : null);
+      if (!from) return null;
       const brief: LayoutBrief = {
-        description: phase.description.slice(0, 500),
-        source: phase.by,
+        description: from.description.slice(0, 500),
+        source: from.by,
         variant: proposal.name.slice(0, 80),
         ...(proposal.rationale && { rationale: proposal.rationale.slice(0, 300) }),
-        ...(phase.model && { model: phase.model.slice(0, 80) }),
+        ...(from.model && { model: from.model.slice(0, 80) }),
       };
       const created = actions.applyProposal(proposal.screens, { mode: options.mode, brief });
       if (created.length === 0) return null;
@@ -205,6 +249,10 @@ export function useDescribe(mode: "start" | "add") {
         previousStyle = before;
         actions.setStyle(proposal.recipeId);
       }
+      // «Proponer otras» may still be running: its answer would land on screens nobody looks at.
+      const running = controller.current;
+      controller.current = null;
+      running?.abort();
       setPhase({ kind: "idle" });
       return { screens: created.length, adjustments: proposal.warnings.length, previousStyle, token };
     },

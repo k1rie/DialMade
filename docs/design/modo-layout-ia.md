@@ -4,12 +4,26 @@ Nota de diseño corta. Contexto: `modo-layout.md` (fase v1.1) y la «Política d
 
 ## Qué hace
 
-1. **«Describe tu producto»**
-   - Dónde: en el estado vacío del paso Layout (debajo de los sets de plantillas) y en el botón «Describir» de la barra superior, que abre un modal para añadir pantallas o reemplazarlas todas.
-   - Entrada: texto libre de hasta 500 caracteres y el tipo de pantallas (Elige tú, App, Web pública).
-   - Salida: 2–3 variantes. Cada una trae pantallas (nombre, tipo, ruta, navegación), bloques solo de la librería (etiqueta, nota y rect en 12 columnas × filas de 8 px), enlaces entre pantallas y una receta del catálogo con su motivo.
-   - Cada variante sale como tarjeta con miniaturas (`LayoutThumbnail`), su motivo, el estilo y la lista de ajustes.
-   - «Usar esta» aplica la variante en **un solo paso de deshacer** (`applyProposal`) y, si el interruptor está activo, también la receta. Después sale el toast «Ajustado · Deshacer».
+1. **«Describe tu producto»**, en dos pantallas cuando el proyecto está vacío (decisión del usuario, 2026-10-10):
+   - **«¿Qué vas a construir?»** es lo único que se ve al abrir Layout sin pantallas. Trae:
+     - un textarea grande y 4 ejemplos es/en que lo rellenan;
+     - «Proponer con IA» y «Sin IA», con la línea de coste («≈ $0,002 · te quedan 4 usos gratis · 1 uso = 3 variantes»);
+     - «Usar mi propia key» y «Copiar prompt para mi Claude», más discretos;
+     - el bloque «Detalles» plegado: nombre, tagline y tipo de producto.
+     Debajo están «o usa una plantilla» (los sets y «Una pantalla» en su propia vista; Volver o Esc regresa) y «empieza vacío».
+   - **«Elige una»** muestra 2–3 tarjetas grandes con miniaturas por pantalla, nombre y motivo, estilo, ajustes y «Usar esta». Además trae:
+     - el interruptor «Aplicar también el estilo recomendado»;
+     - «Volver a describir» (o Esc), que conserva el texto;
+     - «Proponer otras», que vuelve a mostrar el coste.
+   - Las transiciones usan `motion` (200 ms; con movimiento reducido, solo fundido). Cada pantalla lleva el foco a su título.
+   - Con pantallas en el proyecto, «Describir» en la barra superior abre el modal para añadir pantallas o reemplazarlas todas, con las variantes debajo del formulario.
+   - Variantes: pantallas (nombre, tipo, ruta, navegación), bloques solo de la librería (rect en 12 columnas × filas de 8 px), enlaces y una receta del catálogo con su motivo.
+   - «Usar esta» aplica la variante en **un solo paso de deshacer** (`applyProposal`) y, si el interruptor está activo, también la receta. Después sale «Ajustado · Deshacer».
+   - **«Detalles» inferidos:**
+     - la respuesta trae `details` (`brandName`, `tagline`, `productType` de los chips). El cambio es aditivo: el esquema laxo acepta respuestas sin `details`;
+     - «Sin IA» deduce el tipo de producto por palabras clave;
+     - solo se rellenan los campos que el usuario no ha tocado (nombre por defecto, tagline vacía, tipo «Otro»), en un paso de deshacer del documento;
+     - se corrigen en «Detalles», y «Elige una» los resume con «Corregir».
 2. **«Sugerir con IA» para bloques libres**
    - En el popover «¿Qué es esto?» (una caja). Lo escrito en el buscador viaja como nota.
    - En el panel de pantalla, «Sugerir tipos con IA» lanza un lote con todos los bloques libres del proyecto (máximo 24).

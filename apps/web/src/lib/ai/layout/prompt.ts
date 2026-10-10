@@ -1,7 +1,7 @@
 // The one prompt of the layout AI, shared by the hosted route, BYOK and «Copiar prompt para mi Claude». The system
 // prompt is stable (no per-request data), so it is cached and shared by both tasks; the user's text travels as JSON
 // inside tags, with `<` and `>` escaped, so it can never close a block or open a new one. Client-safe.
-import { getProductType, styleRecipes, type Locale } from "@dialmade/catalog";
+import { getProductType, productChips, styleRecipes, type Locale } from "@dialmade/catalog";
 import { getBlockDef, sanitizeLabel, sanitizeLine, sanitizeNote, type GridRect, type ScreenKind } from "@dialmade/layout";
 import type { LayoutRequestBody, MapRequestBody, ProposeRequestBody } from "./api";
 import {
@@ -51,6 +51,8 @@ const mapOnlyLines = MAP_BLOCK_TYPES.filter((type): type is "sidebar" | "modal" 
   .map((type) => `- ${type} (default ${sizeOf(type)}): ${BLOCK_GUIDE[type]}`)
   .join("\n");
 
+const productLines = productChips.map((chip) => `- ${chip.id}: ${chip.label.en}`).join("\n");
+
 const recipeLines = styleRecipes
   .map((recipe) => `- ${recipe.id}: ${recipe.label.en}. ${recipe.description.en} Tags: ${recipe.tags.join(", ")}.`)
   .join("\n");
@@ -84,6 +86,9 @@ ${mapOnlyLines}
 Style recipes (id: name, description, tags):
 ${recipeLines}
 
+Product types (id: name):
+${productLines}
+
 Task "propose" (the request has <task>propose</task>):
 - Read the product description and propose the number of variants given in <settings>. Each variant is a complete, different structure for the same product, not a copy with small changes: for example one that leads with the most used screen, one that groups everything in fewer screens, one that adds a public landing page to win customers.
 - Each variant has two to five screens and each screen two to nine blocks. Cover every need the description names (an "agenda" needs a calendar, "clients" a table or a list, "payments" a table or a form, "stats" KPIs and a chart). Add sign in only when the description implies accounts.
@@ -92,6 +97,7 @@ Task "propose" (the request has <task>propose</task>):
 - Labels name the block for this product ("Agenda semanal", "Próximas citas", "Clientes") and notes say in one short line what it shows ("vista semanal con huecos libres"). Write names, labels, notes and rationales in the language given by "language" ("es" is Spanish, "en" is English), whatever the language of the description.
 - "rationale" says in one sentence why this structure fits, and "recipeId" picks the style recipe that best fits the product and its audience, with "recipeReason" saying why in one sentence.
 - Never use the names of real companies, products or people.
+- "details" describes the product once for every variant: "brandName" is the product's name when the description gives one, otherwise a short fictional name (one or two words); "tagline" is one short line in the request's language that says what it does; "productType" is the product type id that fits best, or "generic" when none does.
 
 Task "map" (the request has <task>map</task>):
 - <free_blocks> lists boxes the developer drew without choosing a type, each with its "index", its screen and screen kind, its rect, its "label" and "note" (what the developer typed, possibly empty) and the types of the blocks around it.

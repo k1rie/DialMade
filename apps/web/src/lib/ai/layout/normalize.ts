@@ -3,7 +3,7 @@
 // or becomes a «Bloque libre»), rects are rounded and clamped, small overlaps are clipped and large ones moved
 // below by @dialmade/layout (`normalizeDrop`, `applyFix`), and every change is reported as a warning the variant
 // card shows before the user applies it. Pure and client-safe.
-import { getStyleRecipe } from "@dialmade/catalog";
+import { GENERIC_PRODUCT_ID, getStyleRecipe, productChips } from "@dialmade/catalog";
 import {
   applyFix,
   DESKTOP_COLUMNS,
@@ -28,7 +28,7 @@ import {
   type ScreenKind,
 } from "@dialmade/layout";
 import { KEEP_FREE, MAP_BLOCK_TYPES, PROPOSAL_BLOCK_TYPES, PROPOSAL_MAX_HEIGHT, PROPOSAL_MAX_ROW } from "./constants";
-import type { MapAnswer, ProposalAnswer, ProposalScreenAnswer } from "./schema";
+import type { MapAnswer, ProposalAnswer, ProposalDetailsAnswer, ProposalScreenAnswer } from "./schema";
 
 /** What normalization changed or could not keep, per variant. Shown on its card («3 ajustes»). */
 export type ProposalWarning =
@@ -325,4 +325,27 @@ export function normalizeMapAnswer(answer: MapAnswer, kinds: readonly ScreenKind
     suggestions.push({ index, type });
   }
   return { suggestions, unchanged, dropped };
+}
+
+/** «Detalles» inferred from the description, ready for the fields (empty or `null` = nothing inferred). */
+export type ProposalDetails = { brandName: string; tagline: string; productType: string | null };
+
+const CHIP_IDS: ReadonlySet<string> = new Set(productChips.map((chip) => chip.id));
+/** The limits of `doc.brand` (name 80, tagline 200). */
+const BRAND_NAME_MAX = 80;
+const TAGLINE_MAX = 200;
+
+/**
+ * The answer's «Detalles» as one-line, bounded text, and a product type only when it is one of the chips and not
+ * «Otro» (`generic` says nothing). `null` when the answer has none or says nothing.
+ */
+export function normalizeDetails(details: ProposalDetailsAnswer | undefined): ProposalDetails | null {
+  if (!details) return null;
+  const type = details.productType.trim();
+  const result: ProposalDetails = {
+    brandName: sanitizeLine(details.brandName, BRAND_NAME_MAX),
+    tagline: sanitizeLine(details.tagline, TAGLINE_MAX),
+    productType: CHIP_IDS.has(type) && type !== GENERIC_PRODUCT_ID ? type : null,
+  };
+  return result.brandName || result.tagline || result.productType ? result : null;
 }

@@ -9,7 +9,7 @@ const CHARS_PER_TOKEN = 3.6;
 /** Tags, settings and JSON punctuation of the user message. */
 const MESSAGE_OVERHEAD_TOKENS = 120;
 /** Thinking at effort `low` plus the JSON: per variant for «propose», per box for «map». */
-const OUTPUT_TOKENS = { proposeBase: 400, perVariant: 1100, mapBase: 150, perBlock: 30 } as const;
+const OUTPUT_TOKENS = { proposeBase: 460, perVariant: 1100, mapBase: 150, perBlock: 30 } as const;
 /** Characters of one free block in the request (rect, screen, label, note, neighbors). */
 const MAP_BLOCK_CHARS = 220;
 

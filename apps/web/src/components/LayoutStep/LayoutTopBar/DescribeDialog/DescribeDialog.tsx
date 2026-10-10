@@ -65,7 +65,7 @@ export function DescribeDialog({ open, onOpenChange }: DescribeDialogProps) {
             </div>
             <IconButton label={t.describe.close} icon={<CloseIcon />} tooltip={false} className="-mt-1 -mr-1" onClick={close} />
           </header>
-          <DescribeScreens mode="add" showHeader={false} titleId={titleId} onApplied={close} />
+          <DescribeScreens mode="add" onApplied={close} />
         </motion.div>
       )}
     </dialog>

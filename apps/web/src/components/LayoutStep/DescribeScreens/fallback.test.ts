@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { layout as layoutText } from "@/i18n/layout";
 import { normalizeProposals } from "@/lib/ai/layout/normalize";
 import { searchBlocks } from "../searchBlocks";
-import { detectKind, fallbackAnswer, resolveNeed, splitNeeds } from "./fallback";
+import { detectKind, fallbackAnswer, inferProductType, resolveNeed, splitNeeds } from "./fallback";
 
 const dicts = [layoutText.es.blocks, layoutText.en.blocks] as const;
 const search = (query: string) => searchBlocks(query, dicts);
@@ -54,6 +54,16 @@ describe("«Describe» without AI", () => {
     }
     expect(Object.values(onePanel!.screens[0]!.layout.blocks).map((b) => b.type)).toEqual(["kpis", "calendar", "table", "table"]);
     expect(run("landing para mi cafetería: menú, galería, contacto", "any", 2)).toHaveLength(2);
+  });
+
+  it("infers the product type of «Detalles» from the words, es and en", () => {
+    expect(inferProductType("app de reservas para barberías")).toBe("restaurant-food-service");
+    expect(inferProductType("SaaS B2B de facturación para pymes")).toBe("saas-general");
+    expect(inferProductType("portfolio de una diseñadora")).toBe("portfolio-personal");
+    expect(inferProductType("online shop for handmade mugs")).toBe("e-commerce");
+    expect(inferProductType("algo raro")).toBeNull();
+    const answer = fallbackAnswer("clínica veterinaria: citas y pacientes", { kind: "any", variants: 2, search, text });
+    expect(answer.details).toEqual({ brandName: "", tagline: "", productType: "healthcare-app" });
   });
 
   it("is deterministic", () => {
