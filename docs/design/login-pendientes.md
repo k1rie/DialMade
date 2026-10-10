@@ -26,6 +26,7 @@ Rama `feat/auth` (2026-10-10). Better Auth 1.7.7 en el Postgres de Supabase, sch
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Login con GitHub | No |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login con Google | No |
 | `DIALMADE_EMAIL_FROM` + `RESEND_API_KEY` o `SMTP_URL` | Envío del magic link | En producción |
+| `DIALMADE_EMAIL_DAILY_CAP` | Magic links al día para toda la app (90) | No |
 | `DIALMADE_FEATURE_BILLING`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Suscripciones (apagadas) | No (`billing.md`) |
 
 `turbo.json` ya las declara (`build.env` y `dev.passThroughEnv`).
@@ -45,6 +46,33 @@ Hoy la IA cuenta los usos gratis por **dispositivo anónimo**: la cookie firmada
    - el presupuesto global mensual;
    - el throttle de magic links por email y por IP.
 5. **Tests.** Los de `access.test.ts` añaden el caso «con sesión»: el caller es el usuario y el dispositivo enlazado no regala usos.
+
+## Revisión de seguridad (2026-10-10)
+
+Una revisión adversarial de la rama encontró estos puntos y ya están corregidos:
+
+- **Login CSRF con magic link (alto).** El link de otra persona, abierto en un dispositivo anónimo, se llevaba sus diseños a esa cuenta. Ahora:
+  - `verify` solo se acepta desde `/login/confirm`, que muestra «Vas a entrar como …» con el email firmado;
+  - el traspaso exige que **este** dispositivo haya pedido el link con ese email (cookie firmada `dialmade.link_intent`);
+  - si no, el usuario anónimo y sus diseños se quedan donde estaban.
+- **Open redirect** en `safeCallbackPath` (`/.//evil.com`, `%2f`, `%5c`).
+- **Llenar la base:**
+  - cuota por usuario: 200 diseños / 25 MB, y 20 / 3 MB sin cuenta;
+  - 120 escrituras cada 10 min por usuario;
+  - el traspaso respeta los límites;
+  - el body se lee con tope.
+- **Cupo de emails:** tope diario global (`DIALMADE_EMAIL_DAILY_CAP`, 90) e IPv6 agrupado por /56.
+- **POST cross-site** a `/api/auth/*` rechazados aunque no haya cookies.
+- **Passkeys** solo para cuentas con email verificado, y no se crean cuentas no anónimas con email sin verificar.
+- **Tokens OAuth** cifrados en la base (`encryptOAuthTokens`).
+
+Abiertos, con decisión pendiente:
+
+- [ ] **Captcha (Turnstile, gratis)** en magic link y anónimo: el plugin `captcha` de Better Auth con `TURNSTILE_SECRET_KEY` y el widget en `AuthForm`. Frena scripts que rotan IPs. Hoy los frenan el rate limit por IP (/56), el tope por email y el tope diario.
+- [ ] **Bloqueo por email.** Cualquiera puede gastar los 5 links por hora de una dirección y bloquear su magic link durante esa hora. Es el precio del límite por email. GitHub, Google o una passkey siguen funcionando.
+- [ ] **Self-hosting sin proxy.** En producción fuera de Vercel sin `DIALMADE_TRUSTED_PROXY_HOPS`, todos los clientes comparten un único cubo de rate limit (avisa una vez en el log). En Vercel se usa `x-real-ip`.
+- [ ] **Tokens de sesión** en claro en `dialmade_auth.session` (lo normal en Better Auth). Mitigación: que `DATABASE_URL` use un rol con lo justo en lugar de `postgres`. Crear el rol `dialmade_app` con permisos solo sobre `dialmade_auth` y `dialmade` necesita la aprobación del usuario.
+- [ ] **`import "server-only"`** en `lib/auth`, `lib/db` y `lib/designs`. Hoy solo llegan booleanos al cliente; el paquete daría un error de build si alguien importa un secreto desde el cliente.
 
 ## Mejoras anotadas (no bloquean)
 

@@ -12,6 +12,8 @@ const FALLBACK = "/";
 export function safeCallbackPath(value: unknown, fallback = FALLBACK): string {
   if (typeof value !== "string" || value.length === 0 || value.length > 512) return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
+  // Encoded slashes and backslashes in the path could turn into `//host` after decoding somewhere else.
+  if (/%2f|%5c/i.test(value.split(/[?#]/)[0]!)) return fallback;
   if (/[\u0000-\u001f\u007f]/.test(value)) return fallback;
   try {
     const base = "https://dialmade.invalid";
@@ -19,6 +21,8 @@ export function safeCallbackPath(value: unknown, fallback = FALLBACK): string {
     if (url.origin !== base) return fallback;
     // Better Auth's own endpoints are not destinations.
     if (url.pathname.startsWith("/api/")) return fallback;
+    // `/.//evil.com` normalizes to `//evil.com`: a protocol-relative URL is never a path of this app.
+    if (url.pathname.startsWith("//")) return fallback;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return fallback;

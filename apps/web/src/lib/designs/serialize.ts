@@ -11,6 +11,14 @@ export const MAX_NAME_LENGTH = 120;
 export const MAX_DESIGNS_PER_USER = 200;
 /** «Guardar sin cuenta»: a smaller shelf, until the device signs in. */
 export const MAX_DESIGNS_ANONYMOUS = 20;
+/** Storage per account: what keeps a script from filling the database with large documents. */
+export const MAX_BYTES_PER_USER = 25_000_000;
+export const MAX_BYTES_ANONYMOUS = 3_000_000;
+
+export type DesignLimits = { maxDesigns: number; maxBytes: number };
+
+export const limitsFor = (user: { isAnonymous: boolean }): DesignLimits =>
+  user.isAnonymous ? { maxDesigns: MAX_DESIGNS_ANONYMOUS, maxBytes: MAX_BYTES_ANONYMOUS } : { maxDesigns: MAX_DESIGNS_PER_USER, maxBytes: MAX_BYTES_PER_USER };
 
 export type PreparedDesign = { doc: DesignDoc; json: string; sizeBytes: number; preview: DesignPreview; version: number };
 export type PrepareFailure = { ok: false; reason: "invalid-document" | "too-large"; message: string };

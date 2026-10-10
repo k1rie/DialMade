@@ -81,22 +81,32 @@ describe("magic link", () => {
     const sixth = await t.browser("198.51.100.99").call("/api/auth/sign-in/magic-link", { json: { email: "Victim@Example.com" } });
     expect(sixth.status).toBe(429);
     expect(t.outbox).toHaveLength(5);
-    const stored = await sql<{ email_hash: string }>`select email_hash from dialmade.auth_email_throttle`.execute(t.db);
+    const stored = await sql<{ key: string }>`select key from dialmade.rate_limits`.execute(t.db);
     expect(JSON.stringify(stored.rows)).not.toContain("victim");
   });
 });
 
+describe("email quota", () => {
+  it("stops at the daily cap for the whole app", async () => {
+    const { takeMagicLinkSend } = await import("./emailThrottle");
+    const limits = { perEmail: 5, perDay: 3 };
+    const results = [];
+    for (let i = 0; i < 4; i += 1) results.push(await takeMagicLinkSend(t.db, `user${i}@example.com`, t.config.secret, limits));
+    expect(results).toEqual([true, true, true, false]);
+  });
+});
+
 describe("rate limit per IP", () => {
-  it("groups IPv6 addresses by /64, so rotating the interface id does not reset it", async () => {
+  it("groups IPv6 addresses by /56, so rotating addresses inside one site does not reset it", async () => {
     const statuses: number[] = [];
     for (let i = 0; i < 6; i += 1) {
-      const response = await t.browser(`2001:db8:1:2::${(i + 1).toString(16)}`).call("/api/auth/sign-in/magic-link", { json: { email: `user${i}@example.com` } });
+      const response = await t.browser(`2001:db8:1:${(i + 1).toString(16)}::${(i + 1).toString(16)}`).call("/api/auth/sign-in/magic-link", { json: { email: `user${i}@example.com` } });
       statuses.push(response.status);
     }
     expect(statuses.slice(0, 5)).toEqual([200, 200, 200, 200, 200]);
     expect(statuses[5]).toBe(429);
-    // Another /64 has its own bucket.
-    const other = await t.browser("2001:db8:1:3::1").call("/api/auth/sign-in/magic-link", { json: { email: "other@example.com" } });
+    // Another /56 has its own bucket.
+    const other = await t.browser("2001:db8:2::1").call("/api/auth/sign-in/magic-link", { json: { email: "other@example.com" } });
     expect(other.status).toBe(200);
   });
 
@@ -137,8 +147,8 @@ describe("anonymous device → account", () => {
     expect(anon.status).toBe(200);
     const anonUser = (await session(browser))!.user;
     expect(anonUser.isAnonymous).toBe(true);
-    await t.repo.create(anonUser.id, "Brisa", prepared(), { maxDesigns: 20 });
-    await t.repo.create(anonUser.id, "Brisa 2", prepared(), { maxDesigns: 20 });
+    await t.repo.create(anonUser.id, "Brisa", prepared(), { maxDesigns: 20, maxBytes: 3_000_000 });
+    await t.repo.create(anonUser.id, "Brisa 2", prepared(), { maxDesigns: 20, maxBytes: 3_000_000 });
 
     const verified = await signInWithMagicLink(browser, "ada@example.com", "/?resume=save");
     expect(verified.status).toBe(302);
@@ -156,16 +166,70 @@ describe("anonymous device → account", () => {
     const first = t.browser("192.0.2.20");
     await signInWithMagicLink(first, "ada@example.com", "/");
     const accountId = (await session(first))!.user.id;
-    await t.repo.create(accountId, "Old", prepared(), { maxDesigns: 200 });
+    await t.repo.create(accountId, "Old", prepared(), { maxDesigns: 200, maxBytes: 25_000_000 });
 
     const device = t.browser("192.0.2.21");
     await device.call("/api/auth/sign-in/anonymous", { method: "POST" });
     const anonId = (await session(device))!.user.id;
-    await t.repo.create(anonId, "From device", prepared(), { maxDesigns: 20 });
+    await t.repo.create(anonId, "From device", prepared(), { maxDesigns: 20, maxBytes: 3_000_000 });
     await signInWithMagicLink(device, "ada@example.com", "/");
 
     expect((await session(device))!.user.id).toBe(accountId);
     expect((await t.repo.list(accountId)).map((design) => design.name).sort()).toEqual(["From device", "Old"]);
+  });
+});
+
+describe("someone else's magic link (login CSRF)", () => {
+  it("signs the visitor in but never hands the device's designs to that account", async () => {
+    // The attacker asks for a link to their own email, from their own browser.
+    const attacker = t.browser("198.51.100.50");
+    await attacker.call("/api/auth/sign-in/magic-link", { json: { email: "mallory@example.com", callbackURL: "/" } });
+    const link = t.lastLink("mallory@example.com");
+
+    // The victim saves on this device without an account, then opens the attacker's link.
+    const victim = t.browser("192.0.2.77");
+    await victim.call("/api/auth/sign-in/anonymous", { method: "POST" });
+    const victimAnon = (await session(victim))!.user.id;
+    await t.repo.create(victimAnon, "Secreto", prepared(), { maxDesigns: 20, maxBytes: 3_000_000 });
+    await victim.call(link, { method: "GET", origin: null });
+
+    const mallory = await sql<{ id: string }>`select id from dialmade_auth."user" where email = 'mallory@example.com'`.execute(t.db);
+    expect(await t.repo.list(mallory.rows[0]!.id)).toEqual([]);
+    // The anonymous user and its design are left alone (the purge removes them later).
+    expect((await t.repo.list(victimAnon)).map((design) => design.name)).toEqual(["Secreto"]);
+  });
+
+  it("the emailed link carries its email, signed with the token", async () => {
+    await t.browser().call("/api/auth/sign-in/magic-link", { json: { email: "Ada@Example.com" } });
+    const url = new URL(t.lastLink("Ada@Example.com"));
+    const { verifyMagicLinkSignature } = await import("./magicLink");
+    expect(url.searchParams.get("email")?.toLowerCase()).toBe("ada@example.com");
+    expect(verifyMagicLinkSignature(t.config.secret, url.searchParams.get("token")!, "ada@example.com", url.searchParams.get("sig")!)).toBe(true);
+    expect(verifyMagicLinkSignature(t.config.secret, url.searchParams.get("token")!, "eve@example.com", url.searchParams.get("sig")!)).toBe(false);
+  });
+});
+
+describe("passkeys and unverified accounts", () => {
+  it("an anonymous device cannot register a passkey", async () => {
+    const browser = t.browser();
+    await browser.call("/api/auth/sign-in/anonymous", { method: "POST" });
+    const response = await browser.call("/api/auth/passkey/generate-register-options", { method: "GET" });
+    expect(response.status).toBe(403);
+  });
+
+  it("an account with a verified email can", async () => {
+    const browser = t.browser();
+    await signInWithMagicLink(browser, "ada@example.com", "/");
+    const response = await browser.call("/api/auth/passkey/generate-register-options", { method: "GET" });
+    expect(response.status).toBe(200);
+  });
+
+  it("no account is created with an unverified email", async () => {
+    const context = await t.auth.$context;
+    const created = await context.internalAdapter.createUser({ email: "eve@example.com", name: "Eve", emailVerified: false }, { method: "oauth", oauth: { providerId: "github", profile: {} } } as never).catch(() => null);
+    expect(created).toBeFalsy();
+    const rows = await sql<{ id: string }>`select id from dialmade_auth."user" where email = 'eve@example.com'`.execute(t.db);
+    expect(rows.rows).toEqual([]);
   });
 });
 

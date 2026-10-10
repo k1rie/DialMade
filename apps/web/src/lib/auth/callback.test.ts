@@ -22,9 +22,17 @@ describe("safeCallbackPath", () => {
       null,
       42,
       "/api/auth/sign-out",
+      "/.//evil.com",
+      "/..//evil.com",
+      "/%2e//evil.com",
+      "/a/..//evil.com",
+      "/%2F%2Fevil.com",
+      "/%5cevil.com",
     ]) {
       expect(safeCallbackPath(value), String(value)).toBe("/");
     }
     expect(safeCallbackPath("https://evil.example", "/designs")).toBe("/designs");
+    // Encoded characters in the query stay (Better Auth's callbackURL to /login?next=…).
+    expect(safeCallbackPath("/login?next=%2Fdesigns")).toBe("/login?next=%2Fdesigns");
   });
 });

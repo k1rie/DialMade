@@ -12,7 +12,8 @@
 -- (apps/web/src/lib/designs/repository.ts): there is no Supabase Auth, so no auth.uid() for RLS.
 --
 -- Personal data: email, name and avatar URL of accounts; IP and user agent of sessions (Better Auth's
--- session list). Anonymous devices get a placeholder email. Emails in the throttle table are HMACs.
+-- session list). Anonymous devices get a placeholder email. Emails in the rate limit table are HMACs.
+-- OAuth tokens are stored encrypted (Better Auth's account.encryptOAuthTokens).
 
 create schema if not exists dialmade_auth;
 revoke all on schema dialmade_auth from public;
@@ -123,16 +124,17 @@ comment on table dialmade.designs is 'Saved DesignDocs of «Mis diseños». Ever
 
 create index if not exists designs_user_updated_idx on dialmade.designs (user_id, updated_at desc);
 
--- Magic links per email address per UTC hour (on top of the per-IP limit). HMAC of the address, never the
--- address. Rows older than a day are deleted by the server.
-create table if not exists dialmade.auth_email_throttle (
-  email_hash text not null check (char_length(email_hash) between 1 and 128),
+-- Fixed-window counters of the server's own limits: magic links per email address (as an HMAC, never the
+-- address) and per day overall, and writes to «Mis diseños» per user. Rows older than two days are deleted by
+-- the server.
+create table if not exists dialmade.rate_limits (
+  key text not null check (char_length(key) between 1 and 200),
   window_start timestamptz not null,
-  sends integer not null default 0 check (sends >= 0),
-  primary key (email_hash, window_start)
+  hits integer not null default 0 check (hits >= 0),
+  primary key (key, window_start)
 );
 
-create index if not exists auth_email_throttle_window_idx on dialmade.auth_email_throttle (window_start);
+create index if not exists rate_limits_window_idx on dialmade.rate_limits (window_start);
 
 -- ---- Housekeeping -----------------------------------------------------------------------------------------
 
@@ -167,7 +169,7 @@ begin
   delete from dialmade_auth."session" where "expiresAt" < now();
   delete from dialmade_auth."verification" where "expiresAt" < now() - interval '1 day';
   delete from dialmade_auth."rateLimit" where "lastRequest" < (extract(epoch from now()) * 1000)::bigint - 86400000;
-  delete from dialmade.auth_email_throttle where window_start < now() - interval '1 day';
+  delete from dialmade.rate_limits where window_start < now() - interval '2 days';
 
   return v_count;
 end;
@@ -183,7 +185,7 @@ alter table dialmade_auth."verification" enable row level security;
 alter table dialmade_auth."passkey" enable row level security;
 alter table dialmade_auth."rateLimit" enable row level security;
 alter table dialmade.designs enable row level security;
-alter table dialmade.auth_email_throttle enable row level security;
+alter table dialmade.rate_limits enable row level security;
 
 revoke all on all tables in schema dialmade_auth from public;
 revoke all on all tables in schema dialmade_auth from anon, authenticated;

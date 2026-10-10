@@ -7,6 +7,7 @@ export const supportsPasskeys = () => typeof window !== "undefined" && typeof wi
 
 /** A Better Auth error (status + code) in the user's words. Never echoes the server's message. */
 export function authErrorMessage(t: AuthText["login"], status: number | undefined, code?: string): string {
+  if (code === "TOO_MANY_EMAILS") return t.errors.quota;
   if (status === 429) return t.errors.rateLimited;
   if (code && /PASSKEY|AUTH_CANCEL|NotAllowed/i.test(code)) return t.errors.passkeyCanceled;
   if (code && /INVALID_EMAIL/i.test(code)) return t.errors.invalidEmail;

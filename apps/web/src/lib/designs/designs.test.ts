@@ -4,13 +4,15 @@ import { sampleDoc, sampleScreensDoc } from "@/lib/ai/testing";
 import { applyMigrations, createTestDatabase, type TestDatabase } from "@/lib/db/testing";
 import { createDesignsHandlers, type SessionUser } from "./handlers";
 import { createDesignRepository, escapeLike, type DesignRepository } from "./repository";
-import { MAX_DOC_BYTES, cleanDesignName, prepareDesign, readStoredDoc } from "./serialize";
+import { MAX_DOC_BYTES, cleanDesignName, prepareDesign, readStoredDoc, type DesignLimits } from "./serialize";
 
 vi.setConfig({ testTimeout: 30_000 });
 
 const ORIGIN = "http://localhost:3700";
 const A: SessionUser = { id: "user-a", isAnonymous: false };
 const B: SessionUser = { id: "user-b", isAnonymous: false };
+
+const L = (maxDesigns: number, maxBytes = 25_000_000): DesignLimits => ({ maxDesigns, maxBytes });
 
 let database: TestDatabase;
 let repo: DesignRepository;
@@ -39,7 +41,7 @@ afterEach(async () => {
 describe("serialization", () => {
   it("a saved DesignDoc v2 comes back identical", async () => {
     const doc = sampleScreensDoc();
-    const created = await repo.create(A.id, "Brisa", prepared(doc), { maxDesigns: 10 });
+    const created = await repo.create(A.id, "Brisa", prepared(doc), L(10));
     if (!created.ok) throw new Error("not created");
     const loaded = await repo.get(A.id, created.design.id);
     expect(loaded?.doc).toEqual(prepared(doc).doc);
@@ -77,17 +79,17 @@ describe("serialization", () => {
 
 describe("repository: one user never reaches another's designs", () => {
   it("B cannot list, read, rename, overwrite, duplicate or delete A's design", async () => {
-    const created = await repo.create(A.id, "Secreto de A", prepared(), { maxDesigns: 10 });
+    const created = await repo.create(A.id, "Secreto de A", prepared(), L(10));
     if (!created.ok) throw new Error("not created");
     const id = created.design.id;
 
     expect(await repo.list(B.id)).toEqual([]);
     expect(await repo.get(B.id, id)).toBeNull();
-    expect(await repo.update(B.id, id, { name: "Mío" })).toBeNull();
-    expect(await repo.update(B.id, id, { design: prepared(sampleDoc(["app"])) })).toBeNull();
-    expect(await repo.duplicate(B.id, id, "Copia", { maxDesigns: 10 })).toBeNull();
+    expect(await repo.update(B.id, id, { name: "Mío" }, L(10))).toEqual({ ok: false, reason: "not-found" });
+    expect(await repo.update(B.id, id, { design: prepared(sampleDoc(["app"])) }, L(10))).toEqual({ ok: false, reason: "not-found" });
+    expect(await repo.duplicate(B.id, id, "Copia", L(10))).toBeNull();
     expect(await repo.remove(B.id, id)).toBe(false);
-    expect(await repo.transferAll(B.id, A.id)).toBe(0);
+    expect(await repo.transferAll(B.id, A.id, L(10))).toBe(0);
 
     const intact = await repo.get(A.id, id);
     expect(intact?.name).toBe("Secreto de A");
@@ -96,11 +98,11 @@ describe("repository: one user never reaches another's designs", () => {
   });
 
   it("A can rename, duplicate and delete its own", async () => {
-    const created = await repo.create(A.id, "Brisa", prepared(), { maxDesigns: 10 });
+    const created = await repo.create(A.id, "Brisa", prepared(), L(10));
     if (!created.ok) throw new Error("not created");
-    const renamed = await repo.update(A.id, created.design.id, { name: "Brisa 2" });
-    expect(renamed?.name).toBe("Brisa 2");
-    const copy = await repo.duplicate(A.id, created.design.id, "Brisa (copia)", { maxDesigns: 10 });
+    const renamed = await repo.update(A.id, created.design.id, { name: "Brisa 2" }, L(10));
+    expect(renamed).toMatchObject({ ok: true, design: { name: "Brisa 2" } });
+    const copy = await repo.duplicate(A.id, created.design.id, "Brisa (copia)", L(10));
     expect(copy).toMatchObject({ ok: true, design: { name: "Brisa (copia)" } });
     expect((await repo.list(A.id)).map((design) => design.name).sort()).toEqual(["Brisa (copia)", "Brisa 2"]);
     expect(await repo.remove(A.id, created.design.id)).toBe(true);
@@ -108,7 +110,7 @@ describe("repository: one user never reaches another's designs", () => {
   });
 
   it("searches by name with % and _ taken literally, and sorts", async () => {
-    for (const name of ["Zeta", "alfa 100%", "Beta_x", "betaxx"]) await repo.create(A.id, name, prepared(), { maxDesigns: 10 });
+    for (const name of ["Zeta", "alfa 100%", "Beta_x", "betaxx"]) await repo.create(A.id, name, prepared(), L(10));
     expect((await repo.list(A.id, { query: "100%" })).map((design) => design.name)).toEqual(["alfa 100%"]);
     expect((await repo.list(A.id, { query: "beta_" })).map((design) => design.name)).toEqual(["Beta_x"]);
     expect((await repo.list(A.id, { sort: "name" })).map((design) => design.name)).toEqual(["alfa 100%", "Beta_x", "betaxx", "Zeta"]);
@@ -116,13 +118,39 @@ describe("repository: one user never reaches another's designs", () => {
   });
 
   it("enforces the per-user limit, also on duplicate", async () => {
-    const first = await repo.create(A.id, "1", prepared(), { maxDesigns: 2 });
-    await repo.create(A.id, "2", prepared(), { maxDesigns: 2 });
-    expect(await repo.create(A.id, "3", prepared(), { maxDesigns: 2 })).toEqual({ ok: false, reason: "limit" });
+    const first = await repo.create(A.id, "1", prepared(), L(2));
+    await repo.create(A.id, "2", prepared(), L(2));
+    expect(await repo.create(A.id, "3", prepared(), L(2))).toEqual({ ok: false, reason: "limit" });
     if (!first.ok) throw new Error("not created");
-    expect(await repo.duplicate(A.id, first.design.id, "copy", { maxDesigns: 2 })).toEqual({ ok: false, reason: "limit" });
+    expect(await repo.duplicate(A.id, first.design.id, "copy", L(2))).toEqual({ ok: false, reason: "limit" });
     // B's shelf is separate.
-    expect((await repo.create(B.id, "b", prepared(), { maxDesigns: 2 })).ok).toBe(true);
+    expect((await repo.create(B.id, "b", prepared(), L(2))).ok).toBe(true);
+  });
+
+  it("enforces the storage quota on create, update and duplicate", async () => {
+    const design = prepared();
+    const room = L(10, design.sizeBytes * 2 + 10);
+    const first = await repo.create(A.id, "1", design, room);
+    await repo.create(A.id, "2", design, room);
+    expect(await repo.create(A.id, "3", design, room)).toEqual({ ok: false, reason: "quota" });
+    if (!first.ok) throw new Error("not created");
+    expect(await repo.duplicate(A.id, first.design.id, "copy", room)).toEqual({ ok: false, reason: "quota" });
+    // Replacing a document counts without the old one.
+    expect((await repo.update(A.id, first.design.id, { design }, room)).ok).toBe(true);
+    const bigger = prepared(sampleScreensDoc());
+    expect(await repo.update(A.id, first.design.id, { design: bigger }, L(10, design.sizeBytes + bigger.sizeBytes - 1))).toEqual({ ok: false, reason: "quota" });
+  });
+
+  it("moving a device's designs respects the account's limits (newest first)", async () => {
+    await addUser("anon-x", true);
+    for (const name of ["old", "mid", "new"]) {
+      await repo.create("anon-x", name, prepared(), L(20));
+      await sql`select pg_sleep(0.01)`.execute(database.db);
+    }
+    await repo.create(A.id, "mine", prepared(), L(10));
+    expect(await repo.transferAll("anon-x", A.id, L(3))).toBe(2);
+    expect((await repo.list(A.id)).map((design) => design.name).sort()).toEqual(["mid", "mine", "new"]);
+    expect((await repo.list("anon-x")).map((design) => design.name)).toEqual(["old"]);
   });
 
   it("ids that are not uuids are just «not found»", async () => {
@@ -131,7 +159,7 @@ describe("repository: one user never reaches another's designs", () => {
   });
 
   it("deleting the user deletes their designs", async () => {
-    await repo.create(A.id, "Brisa", prepared(), { maxDesigns: 10 });
+    await repo.create(A.id, "Brisa", prepared(), L(10));
     await sql`delete from dialmade_auth."user" where id = ${A.id}`.execute(database.db);
     expect(await repo.list(A.id)).toEqual([]);
   });
@@ -200,15 +228,48 @@ describe("HTTP handlers", () => {
     const anonymous: SessionUser = { id: "anon-1", isAnonymous: true };
     await addUser(anonymous.id, true);
     sessions.set("token-anon", anonymous);
-    for (let i = 0; i < 20; i += 1) await repo.create(anonymous.id, `d${i}`, prepared(), { maxDesigns: 20 });
+    for (let i = 0; i < 20; i += 1) await repo.create(anonymous.id, `d${i}`, prepared(), L(20));
     const full = await h.create(req("/api/designs", { method: "POST", as: "token-anon", body: { name: "one more", doc: sampleDoc() } }));
     expect(full.status).toBe(409);
     expect(await full.json()).toMatchObject({ code: "limit", max: 20 });
   });
 
+  it("limits writes per user (429) when asked to", async () => {
+    let left = 2;
+    const h = createDesignsHandlers({ repo, trustedOrigins: [ORIGIN], getUser: async () => A, allowWrite: async () => left-- > 0 });
+    const save = () => h.create(req("/api/designs", { method: "POST", as: "token-a", body: { name: "x", doc: sampleDoc() } }));
+    expect((await save()).status).toBe(201);
+    expect((await save()).status).toBe(201);
+    const third = await save();
+    expect(third.status).toBe(429);
+    expect(await third.json()).toMatchObject({ code: "rate-limited" });
+  });
+
+  it("stops reading a chunked body past the limit", async () => {
+    const h = handlers();
+    let pulled = 0;
+    const chunk = new TextEncoder().encode("x".repeat(256 * 1024));
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 100) controller.close();
+        else controller.enqueue(chunk);
+      },
+    });
+    const request = new Request(`${ORIGIN}/api/designs`, {
+      method: "POST",
+      headers: { cookie: "session=token-a", origin: ORIGIN, "content-type": "application/json" },
+      body,
+      duplex: "half",
+    } as RequestInit);
+    const response = await h.create(request);
+    expect(response.status).toBe(413);
+    expect(pulled).toBeLessThan(20);
+  });
+
   it("PATCH updates the document of one's own design", async () => {
     const h = handlers();
-    const created = await repo.create(A.id, "Brisa", prepared(), { maxDesigns: 10 });
+    const created = await repo.create(A.id, "Brisa", prepared(), L(10));
     if (!created.ok) throw new Error("not created");
     const next = sampleDoc(["app"]);
     const response = await h.update(req(`/api/designs/${created.design.id}`, { method: "PATCH", as: "token-a", body: { doc: next } }), created.design.id);

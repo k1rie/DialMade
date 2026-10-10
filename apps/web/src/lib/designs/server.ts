@@ -3,7 +3,8 @@ import { getAuth } from "@/lib/auth/auth";
 import { readAuthConfig } from "@/lib/auth/config";
 import { getSessionUser } from "@/lib/auth/server";
 import { getDatabase } from "@/lib/db/database";
-import { createDesignsHandlers, type DesignsHandlers } from "./handlers";
+import { takeRateLimit } from "@/lib/db/rateLimit";
+import { WRITES_PER_USER, createDesignsHandlers, type DesignsHandlers } from "./handlers";
 import { createDesignRepository } from "./repository";
 
 const HANDLERS_KEY = Symbol.for("dialmade.designs.handlers");
@@ -21,6 +22,7 @@ export function getDesignsHandlers(): DesignsHandlers | null {
     getUser: (request) => getSessionUser(request, auth),
     repo: createDesignRepository(database.db),
     trustedOrigins: config.trustedOrigins,
+    allowWrite: (user) => takeRateLimit(database.db, `designs:${user.id}`, WRITES_PER_USER.windowSeconds, WRITES_PER_USER.max),
   });
   host[HANDLERS_KEY] = { auth, handlers };
   return handlers;

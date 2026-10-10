@@ -47,6 +47,8 @@ export function SaveButton() {
       if (error.status === 401) retryWithLogin();
       else if (error.code === "limit") toast.error(t.limit(error.max ?? 0));
       else if (error.code === "too-large") toast.error(t.tooLarge);
+      else if (error.code === "quota") toast.error(t.quota);
+      else if (error.code === "rate-limited") toast.error(t.rateLimited);
       else toast.error(t.failed);
     },
     [t, router],

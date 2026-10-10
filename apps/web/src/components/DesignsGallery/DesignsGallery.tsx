@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { useDictionary, useI18n } from "@/i18n";
 import { authText } from "@/i18n/auth";
-import { designsApi, type DesignSummary } from "@/lib/designs/client";
+import { designsApi, DesignsApiError, type DesignSummary } from "@/lib/designs/client";
 import { stageVariants, tween } from "@/lib/motion";
 import { ConfirmDelete } from "./ConfirmDelete";
 import { DesignCard } from "./DesignCard";
@@ -41,8 +41,10 @@ export function DesignsGallery() {
     setBusyId(id);
     try {
       await action();
-    } catch {
-      toast.error(t.failed);
+    } catch (error) {
+      const code = error instanceof DesignsApiError ? error.code : null;
+      const save = text.save;
+      toast.error(code === "limit" ? save.limit((error as DesignsApiError).max ?? 0) : code === "quota" ? save.quota : code === "rate-limited" ? save.rateLimited : t.failed);
     } finally {
       setBusyId(null);
     }
