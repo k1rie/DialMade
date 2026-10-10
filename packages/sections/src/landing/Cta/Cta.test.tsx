@@ -26,4 +26,10 @@ describe("landing.cta", () => {
     const { props } = renderSection(ctaSection, { productType: "e-commerce" });
     expect(props.showForm).toBe(true);
   });
+
+  it("el botón usa cta solo con énfasis «bold» (sobre el panel primario) y primary en el resto", () => {
+    const variantOf = (container: HTMLElement) => container.querySelector('[data-dl-prop="button"]')?.closest("a")?.getAttribute("data-variant");
+    expect(variantOf(renderSection(ctaSection, { locale: "es" }).container)).toBe("cta");
+    expect(variantOf(renderSection(ctaSection, { locale: "es", props: { emphasis: "default" } }).container)).toBe("primary");
+  });
 });

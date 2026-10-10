@@ -1,0 +1,149 @@
+/*
+ * Sketch minis: named boxes tinted with the brand scale. Mode-agnostic: lines come from --color-brand-500 and
+ * the ink mixes it with --foreground, so the same rules read on light and dark. Sizes in cqi of a 320×200 mini.
+ */
+.dl-sketch {
+  --_line: var(--color-brand-500, var(--primary));
+  --_ink: color-mix(in oklab, var(--_line) 45%, var(--foreground));
+  container-type: inline-size;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  border-radius: var(--dl-radius-lg, 12px);
+  background: color-mix(in oklab, var(--_line) 7%, var(--background));
+  color: var(--_ink);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+  line-height: 1.2;
+  user-select: none;
+}
+
+/* cqi on the container itself would resolve against the outer container: the base size goes on a child. */
+.dl-sketch__canvas {
+  height: 100%;
+  font-size: 2.5cqi;
+}
+
+.dl-sketch *,
+.dl-sketch *::before,
+.dl-sketch *::after {
+  box-sizing: border-box;
+}
+
+.dl-sketch__tag {
+  position: absolute;
+  top: 2.4cqi;
+  right: 2.6cqi;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8cqi;
+  height: 4.6cqi;
+  padding: 0 1.8cqi;
+  border-radius: 1.4cqi;
+  background: var(--background);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--_line) 55%, transparent);
+  color: var(--_ink);
+  font-size: 2.1cqi;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dl-sketch__tag svg {
+  width: 2.4cqi;
+  height: 2.4cqi;
+}
+
+.dl-sketch__box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2cqi;
+  min-width: 0;
+  min-height: 0;
+  border: 1px dashed color-mix(in oklab, var(--_line) 70%, transparent);
+  border-radius: 2cqi;
+  background: color-mix(in oklab, var(--_line) 10%, transparent);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.dl-sketch__box[data-solid] {
+  border-style: solid;
+  border-color: transparent;
+}
+
+.dl-sketch__fill {
+  border-style: solid;
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+.dl-sketch__hint {
+  font-size: 0.8em;
+  opacity: 0.75;
+}
+
+.dl-sketch__strong {
+  color: var(--foreground);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.dl-sketch__row {
+  display: flex;
+  gap: 2cqi;
+  min-height: 0;
+}
+
+.dl-sketch__row > .dl-sketch__box {
+  flex: 1;
+}
+
+.dl-sketch__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2cqi;
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 2.8cqi;
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: -0.01em;
+}
+
+.dl-sketch__logo-plate {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 5cqi;
+  height: 5cqi;
+  border-radius: 1.4cqi;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 2cqi;
+  font-weight: 700;
+}
+
+.dl-sketch__logo-plate[data-logo] {
+  padding: 0.5cqi;
+  background: var(--color-neutral-50, #fafafa);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--_line) 30%, transparent);
+}
+
+.dl-sketch__logo-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dl-sketch__logo-name {
+  overflow: hidden;
+  white-space: nowrap;
+}

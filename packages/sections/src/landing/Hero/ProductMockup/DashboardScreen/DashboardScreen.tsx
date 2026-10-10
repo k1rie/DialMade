@@ -33,7 +33,7 @@ export function DashboardScreen({ ctx, data }: DashboardScreenProps) {
             <Icon name="search" />
             {strings.search}
           </span>
-          <Button size="sm" variant="cta" iconStart="plus">
+          <Button size="sm" variant="primary" iconStart="plus">
             {strings.create}
           </Button>
           {user ? <Avatar name={user.actor} size="sm" /> : null}

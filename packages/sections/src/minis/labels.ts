@@ -11,3 +11,11 @@ export function miniLabel(kind: OutputKind, locale: Locale, brandName: string): 
   const kindLabel = KIND_LABELS[kind][locale];
   return locale === "es" ? `Vista previa de ${kindLabel}: ${brandName}` : `${kindLabel} preview: ${brandName}`;
 }
+
+/** Accessible name of a sketch: «Esquema de Landing page con los colores de Acme (no es el diseño final)». */
+export function sketchLabel(kind: OutputKind, locale: Locale, brandName: string): string {
+  const kindLabel = KIND_LABELS[kind][locale];
+  return locale === "es"
+    ? `Esquema de ${kindLabel} con los colores de ${brandName} (no es el diseño final)`
+    : `${kindLabel} sketch in ${brandName}'s colors (not the final design)`;
+}
