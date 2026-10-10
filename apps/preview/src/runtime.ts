@@ -3,12 +3,9 @@
 // sanitized HTML, the CSS compiled for it and the theme variables. The runtime paints it, reports its height, and in
 // Ajustar sends the selection and inline text edits back. It accepts messages only from the app origin it was given
 // (`?parent=`), which the CSP's `frame-ancestors` already pins, and validates every message with the shared schemas.
+import "./zodConfig";
 import { ISLAND_BLEED, IslandMessageSchema, MAX_ISLAND_HEIGHT, ParentMessageSchema, type IslandMessage, type ParentMessage } from "@dialmade/ai-render/protocol";
-import { z } from "zod";
 import { insertBlock } from "./insert";
-
-// No `new Function` fast paths: the island's CSP (Trusted Types, no unsafe-eval) forbids them.
-z.config({ jitless: true });
 import { measureAtWidths, measureBlock } from "./measure";
 
 const params = new URLSearchParams(location.search);

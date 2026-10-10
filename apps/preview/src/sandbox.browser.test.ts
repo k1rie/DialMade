@@ -31,6 +31,10 @@ describe.skipIf(!hasChromium)("the island in a real browser (CSP + sandbox)", ()
     await harness?.close();
   });
 
+  it("the runtime itself breaks no policy (no CSP or Trusted Types violation on load)", () => {
+    expect(harness.consoleErrors).toEqual([]);
+  });
+
   /** Runs `attack` inside the island, waits for stray requests, and returns its result. */
   async function insideIsland<T>(attack: (attacker: string) => Promise<T> | T): Promise<T> {
     const result = await island.evaluate(attack, attackerUrl);

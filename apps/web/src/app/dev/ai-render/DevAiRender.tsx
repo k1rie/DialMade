@@ -1,10 +1,16 @@
 "use client";
 
 import { themeColorsFromVars, type RenderBlockInput } from "@dialmade/ai-render";
-import { compileThemeVars, createDesignDoc } from "@dialmade/doc";
+import { compileThemeVars, createDesignDoc, type AiBlock } from "@dialmade/doc";
 import { fontsUrlForDoc } from "@dialmade/sections";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AiIsland, useResponsiveGate } from "@/components/AiIsland";
+import { AiBlocksCard } from "@/components/ExportDialog/AiBlocksCard";
+import { useDictionary } from "@/i18n";
+import { exportDialog } from "@/i18n/export";
+import { Toaster } from "sonner";
+import { EXPORT_TOASTER_ID } from "@/lib/toasters";
+import { devExportDoc } from "./devExportDoc";
 import { compileCssOffThread, processBlockOffThread } from "@/lib/ai/render/worker";
 
 const RAW = `<section data-block-id="b-hero" class="@container bg-linear-to-r from-primary to-accent py-section" onclick="alert(1)">
@@ -24,8 +30,11 @@ export function DevAiRender() {
   const doc = useMemo(() => createDesignDoc({ brand: { name: "Brisa", seeds: { primary: "#0f766e", secondary: "#f59e0b" } }, brief: { productType: "saas-general", locale: "es", recipeId: "soft-ui" } }), []);
   const [mode, setMode] = useState<"light" | "dark">("light");
   const vars = useMemo(() => compileThemeVars(doc, { mode }), [doc, mode]);
-  const [state, setState] = useState<{ html: string; css: string; ms: number; note: string } | null>(null);
+  const [state, setState] = useState<{ html: string; css: string; ms: number; note: string; gates?: AiBlock["gates"] } | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const exportTexts = useDictionary(exportDialog);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const exportDoc = useMemo(() => (state?.html && state.gates ? devExportDoc(state.html, state.gates) : null), [state]);
   // Gate 5 at the 3 device widths of a full-width cell.
   const onMeasure = useResponsiveGate({ desktop: 1440, tablet: 768, mobile: 390 }, undefined, (verdict) => setLog((l) => [...l, `gate5 ${JSON.stringify(verdict)}`]));
 
@@ -39,7 +48,7 @@ export function DevAiRender() {
         return;
       }
       const css = await compileCssOffThread([...processed.html.matchAll(/class="([^"]*)"/g)].flatMap((m) => m[1]!.split(" ")));
-      setState({ html: processed.html, css, ms: performance.now() - t0, note: JSON.stringify(processed.gates) });
+      setState({ html: processed.html, css, ms: performance.now() - t0, note: JSON.stringify(processed.gates), gates: processed.gates });
     })().catch((error: unknown) => setState({ html: "", css: "", ms: 0, note: `error: ${String(error)}` }));
   }, [doc]);
 
@@ -74,6 +83,12 @@ export function DevAiRender() {
           />
         ) : null}
       </div>
+      {exportDoc ? (
+        <ul data-testid="export-card" className="m-0 grid max-w-md list-none p-0">
+          <AiBlocksCard doc={exportDoc!} texts={exportTexts.aiExport} recommendedLabel={exportTexts.destinations.recommended} dialog={dialog} />
+        </ul>
+      ) : null}
+      <Toaster id={EXPORT_TOASTER_ID} />
       <pre data-testid="island-log" className="text-caption whitespace-pre-wrap text-muted">{log.join("\n")}</pre>
     </main>
   );

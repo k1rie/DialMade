@@ -43,6 +43,8 @@ export type Harness = {
   appUrl: string;
   attackerUrl: string;
   attackerHits: string[];
+  /** Console errors of the app page and the island (CSP and Trusted Types violations land here). */
+  consoleErrors: string[];
   close: () => Promise<void>;
 };
 
@@ -68,6 +70,10 @@ export async function startHarness(): Promise<Harness> {
 
   const browser = await chromium.launch();
   const page = await browser.newPage();
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
   await page.goto(appUrl);
   await page.waitForFunction(() => (window as unknown as { messages: { type: string }[] }).messages.some((m) => m.type === "ready"));
   const island = page.frames().find((frame) => frame.url().includes("/island.html"))!;
@@ -78,6 +84,7 @@ export async function startHarness(): Promise<Harness> {
     appUrl,
     attackerUrl,
     attackerHits,
+    consoleErrors,
     close: async () => {
       await browser.close();
       await Promise.all(servers.map(close));
