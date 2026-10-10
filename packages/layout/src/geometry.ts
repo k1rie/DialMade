@@ -1,4 +1,4 @@
-import { DESKTOP_COLUMNS } from "./constants";
+import { DESKTOP_COLUMNS, MAX_HEIGHT_ROWS, MAX_ROW } from "./constants";
 import { compareStrings } from "./ids";
 import type { GridRect } from "./types";
 
@@ -82,13 +82,21 @@ export function roundRect(rect: unknown): GridRect {
 }
 
 export function isInBounds(r: GridRect, columns = DESKTOP_COLUMNS): boolean {
-  return r.col >= 0 && r.row >= 0 && r.w >= 1 && r.h >= 1 && r.col + r.w <= columns;
+  return (
+    r.col >= 0 &&
+    r.row >= 0 &&
+    r.row <= MAX_ROW &&
+    r.w >= 1 &&
+    r.h >= 1 &&
+    r.h <= MAX_HEIGHT_ROWS &&
+    r.col + r.w <= columns
+  );
 }
 
-/** Puts an integer rect inside the grid: width ≤ columns, col in range, row ≥ 0. */
+/** Puts an integer rect inside the grid: width ≤ columns, col in range, row in 0…`MAX_ROW`, h in 1…`MAX_HEIGHT_ROWS`. */
 export function clampToGrid(r: GridRect, columns = DESKTOP_COLUMNS): GridRect {
   const w = clamp(r.w, 1, columns);
-  return { col: clamp(r.col, 0, columns - w), row: Math.max(0, r.row), w, h: Math.max(1, r.h) };
+  return { col: clamp(r.col, 0, columns - w), row: clamp(r.row, 0, MAX_ROW), w, h: clamp(r.h, 1, MAX_HEIGHT_ROWS) };
 }
 
 /** Puts `r` inside `outer`, shrinking it when it is bigger. */
@@ -101,6 +109,15 @@ export function clampInto(r: GridRect, outer: GridRect): GridRect {
     w,
     h,
   };
+}
+
+/**
+ * Would shrinking (or moving) a block from `from` to `to` leave out one of the `inner` rects that was inside
+ * it? Used so a clip never strands a container's children. Rects that were already outside don't count.
+ */
+export function leavesOut(from: GridRect, to: GridRect, inner: Iterable<GridRect>): boolean {
+  for (const r of inner) if (contains(from, r) && !contains(to, r)) return true;
+  return false;
 }
 
 /**

@@ -6,6 +6,8 @@ export const MAX_BLOCKS = 200;
 export const NOTE_MAX = 200;
 /** Max length of a block label, in UTF-16 code units. */
 export const LABEL_MAX = 60;
+/** Max ×N on blocks that are not repeatable (stored and validated, but it means nothing there). */
+export const LOOSE_COUNT_MAX = 99;
 /** XY-cut tolerance, in grid units: an overlap of up to τ still cuts when it is small next to the blocks. */
 export const TAU = 1;
 
@@ -20,6 +22,13 @@ export const COLUMNS: Readonly<Record<Breakpoint, 12 | 8 | 4>> = {
 };
 /** px per grid row. */
 export const ROW_UNIT = 8;
+/**
+ * Highest top row of a block (32,000 px). Rows have no other upper limit, so this keeps typed values like
+ * «999999999999 px» from reaching the engine: `validateLayout` rejects more, and `prepare`/`normalizeDrop` clamp.
+ */
+export const MAX_ROW = 4000;
+/** Tallest block, in rows (16,000 px). Same role as `MAX_ROW` for heights. */
+export const MAX_HEIGHT_ROWS = 2000;
 /** Width of one desktop column in px, used only to estimate aspect ratios (12 × 120 = 1440). */
 export const COL_PX = 120;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { sanitizeLabel, type LibraryBlockType } from "@dialmade/layout";
 import { motion } from "motion/react";
 import {
   useCallback,
@@ -14,13 +15,13 @@ import {
 } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/Button";
-import { useDictionary } from "@/i18n";
+import { locales, useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { snappy, tween } from "@/lib/motion";
 import { BlockInspector } from "./BlockInspector";
 import { BlockLibrary } from "./BlockLibrary";
-import { LAYOUT_BOTTOM_GAP, LAYOUT_MIN_HEIGHT, NARROW_QUERY } from "./constants";
+import { LAYOUT_BOTTOM_GAP, LAYOUT_MIN_HEIGHT, NARROW_QUERY, WIDE_QUERY } from "./constants";
 import { GenerateBar } from "./GenerateBar";
 import { BlocksIcon, LayersIcon } from "./icons";
 import { LayersList } from "./LayersList";
@@ -35,6 +36,10 @@ import { TAB_REGION, useLayoutShortcuts } from "./useLayoutShortcuts";
 import { useMediaQuery } from "./useMediaQuery";
 
 const LEFT_TABS: readonly LeftTab[] = ["blocks", "layers"];
+
+/** A label that is still a type's default name in any UI language: a type change renames it. */
+const isDefaultLabel = (type: LibraryBlockType, label: string) =>
+  locales.some((locale) => sanitizeLabel(layout[locale].blocks[type].name) === label);
 
 /** Look of the side panels, the same as the Composer's. */
 const PANEL = "flex min-h-0 flex-col overflow-hidden rounded-panel border border-app bg-app-elevated/90 shadow-surface";
@@ -63,6 +68,8 @@ export function LayoutStep({
   const t = useDictionary(layout);
   const baseId = useId();
   const narrow = useMediaQuery(NARROW_QUERY);
+  // Desktop first on the server: the three columns side by side.
+  const wide = useMediaQuery(WIDE_QUERY, true);
 
   // Ids are only created inside actions (handlers), never here: creating the store makes none.
   const [store] = useState(() =>
@@ -72,6 +79,7 @@ export function LayoutStep({
       labelFor: (type) => t.blocks[type].name,
       screenNameFor: (templateId) => t.templates[templateId].name,
       copyName: t.screens.copyName,
+      isDefaultLabel,
     }),
   );
   const actions = useStore(store, (state) => state.actions);
@@ -306,27 +314,38 @@ export function LayoutStep({
       </div>
     );
   } else {
+    const sideColumn = (
+      <div key="side" className="order-2 flex min-h-0 flex-col gap-3 lg:order-none">
+        {screensArea}
+        {leftArea}
+      </div>
+    );
+    const canvasColumn = (
+      <div key="canvas" className="relative order-1 flex min-h-[36rem] min-w-0 flex-col lg:order-none lg:min-h-0">
+        <section
+          data-layout-region="canvas"
+          aria-label={activeScreenName !== null ? t.canvas.region(activeScreenName) : t.regions.canvas}
+          tabIndex={-1}
+          className="relative flex min-h-0 flex-1 flex-col rounded-panel"
+        >
+          {parts.canvas}
+        </section>
+        {/* Floats over the canvas but stays outside its area: canvas-only shortcuts do not fire from the bar. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto">
+          {parts.generateBar}
+        </div>
+      </div>
+    );
+    const inspectorColumn = (
+      <div key="inspector" className="order-3 flex min-h-0 flex-col lg:order-none">
+        {inspectorArea}
+      </div>
+    );
     body = (
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[18rem_minmax(0,1fr)_18rem]">
-        <div className="order-2 flex min-h-0 flex-col gap-3 lg:order-none">
-          {screensArea}
-          {leftArea}
-        </div>
-        <div className="relative order-1 flex min-h-[36rem] min-w-0 flex-col lg:order-none lg:min-h-0">
-          <section
-            data-layout-region="canvas"
-            aria-label={activeScreenName !== null ? t.canvas.region(activeScreenName) : t.regions.canvas}
-            tabIndex={-1}
-            className="relative flex min-h-0 flex-1 flex-col rounded-panel"
-          >
-            {parts.canvas}
-          </section>
-          {/* Floats over the canvas but stays outside its area: canvas-only shortcuts do not fire from the bar. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto">
-            {parts.generateBar}
-          </div>
-        </div>
-        <div className="order-3 flex min-h-0 flex-col lg:order-none">{inspectorArea}</div>
+        {/* Stacked (under lg) the canvas is shown first: it goes first in the DOM too, so Tab and F6 follow
+            what is seen (2.4.3). The `order` classes keep that look before hydration. */}
+        {wide ? [sideColumn, canvasColumn, inspectorColumn] : [canvasColumn, sideColumn, inspectorColumn]}
       </div>
     );
   }

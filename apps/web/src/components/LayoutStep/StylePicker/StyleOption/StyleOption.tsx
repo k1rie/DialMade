@@ -1,12 +1,12 @@
 "use client";
 
-import type { DesignDoc } from "@dialmade/doc";
 import { AnimatePresence, motion } from "motion/react";
-import { memo, useCallback, useId, type ReactNode } from "react";
+import { memo, useCallback, useId } from "react";
 import { cn } from "@/lib/cn";
 import { popVariants } from "@/lib/motion";
 import { CheckIcon, SparkleIcon } from "../../icons";
 import type { StyleChoice } from "../../types";
+import type { DeferredPreviews } from "../useDeferredPreviews";
 import { useStyleVars } from "../useStyleVars";
 
 export type StyleOptionProps = {
@@ -19,14 +19,14 @@ export type StyleOptionProps = {
   description: string;
   /** Visible «Recomendado» badge text, or `null` when the option is not the recommended one. */
   recommendedBadge: string | null;
-  doc: DesignDoc;
+  /**
+   * The painted screens and the doc their variables come from; `null` until the deferred pass has run
+   * (the card shows an empty preview box, the radio already works).
+   */
+  previews: DeferredPreviews | null;
   selected: boolean;
   /** Roving tabindex: exactly one option of the group is in the tab order. */
   tabbable: boolean;
-  /** The painted screen, one element shared by every option (only the theme variables differ). */
-  preview: ReactNode;
-  /** The same screen with frosted surfaces, for recipes whose surface is "glass". */
-  glassPreview: ReactNode;
   onSelect: (choice: StyleChoice) => void;
   registerRef: (choice: StyleChoice, element: HTMLButtonElement | null) => void;
 };
@@ -41,16 +41,14 @@ export const StyleOption = memo(function StyleOption({
   label,
   description,
   recommendedBadge,
-  doc,
+  previews,
   selected,
   tabbable,
-  preview,
-  glassPreview,
   onSelect,
   registerRef,
 }: StyleOptionProps) {
   const descriptionId = useId();
-  const { style, surface } = useStyleVars(doc, choice);
+  const vars = useStyleVars(previews?.doc ?? null, choice);
   const ref = useCallback((element: HTMLButtonElement | null) => registerRef(choice, element), [registerRef, choice]);
 
   return (
@@ -71,9 +69,11 @@ export const StyleOption = memo(function StyleOption({
       )}
     >
       <span className="relative block aspect-[8/5] w-full overflow-hidden border-b border-app [content-visibility:auto]">
-        <span className="absolute inset-0 block" style={style}>
-          {surface === "glass" ? glassPreview : preview}
-        </span>
+        {previews && vars && (
+          <span className="absolute inset-0 block" style={vars.style}>
+            {vars.surface === "glass" ? previews.glassPreview : previews.preview}
+          </span>
+        )}
         {recommendedBadge && (
           <span
             aria-hidden

@@ -7,21 +7,32 @@ import {
   type AppShell,
   type BlockId,
   type Breakpoint,
+  type BreakpointLayout,
   type GridRect,
   type LayoutDoc,
   type LayoutWarning,
+  type ResponsiveLayout,
 } from "@dialmade/layout";
 // Relative imports only: vitest runs this module without the `@/` alias.
 import { DEVICE_COLUMNS, DEVICE_WIDTHS } from "../../../lib/devices";
 import { nudgeGrid, ROW_UNIT_PX, snapDraw, snapMove, snapResize, type GridMetrics, type GridSize } from "../../../lib/geometry/grid";
 import type { Handle, Point } from "../../../lib/geometry/rect";
-import { FRAME_GUTTER_PX, FRAME_MIN_ROWS, FRAME_PAD_ROWS, HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
-import { AUTO_SCROLL_EDGE_PX, AUTO_SCROLL_MAX_STEP, DRAG_THRESHOLD_PX, MIN_BLOCK_SIZE, Z_DEPTH_STEP } from "./constants";
+import { HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
+import {
+  AUTO_SCROLL_EDGE_PX,
+  AUTO_SCROLL_MAX_STEP,
+  DRAG_THRESHOLD_PX,
+  FRAME_GUTTER_PX,
+  FRAME_MIN_ROWS,
+  FRAME_PAD_ROWS,
+  MIN_BLOCK_SIZE,
+} from "./constants";
 
 /*
  * Pure helpers of the Layout canvas: frame geometry in screen px (no CSS `scale()`), pointer → grid
  * conversions for move / resize / draw / pan, library drop placement, containment hit testing, stacking,
- * the keyboard grab reducer and the summary of what a drop adjusted. No DOM, no React.
+ * the keyboard grab reducer, the scroll and focus targets of keyboard and history changes, and the
+ * summary of what a drop adjusted. No DOM, no React.
  */
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -246,32 +257,53 @@ export function withDescendants(layout: LayoutDoc, id: BlockId): Set<BlockId> {
   return out;
 }
 
-/** Nesting depth of every block (0 = root). Missing parents and cycles count as root. */
-export function blockDepths(layout: LayoutDoc): Map<BlockId, number> {
-  const depths = new Map<BlockId, number>();
-  const depthOf = (id: BlockId): number => {
-    const known = depths.get(id);
-    if (known !== undefined) return known;
-    const seen = new Set<BlockId>([id]);
-    const chain: BlockId[] = [id];
-    let current = layout.blocks[id]?.parentId;
-    while (current !== undefined && layout.blocks[current] && !seen.has(current) && !depths.has(current)) {
-      seen.add(current);
-      chain.push(current);
-      current = layout.blocks[current]?.parentId;
-    }
-    // A cycle (current already seen) or a missing parent: the top of the chain is a root.
-    let base = current !== undefined && depths.has(current) ? depths.get(current)! + 1 : 0;
-    for (let index = chain.length - 1; index >= 0; index--) depths.set(chain[index]!, base++);
-    return depths.get(id)!;
+/**
+ * CSS z-index of every block (1…N), in tree order like nested DOM: siblings by their `z` (then reading
+ * order, then id), each block right below its own subtree. So a child is always above its parent, and a
+ * later root block (a Modal, an overlapping Imagen) is above every descendant of an earlier one — never
+ * global depth bands that put unrelated nested blocks over it. Missing parents count as root; a parent
+ * cycle is cut where it is first met, so every block gets a number.
+ */
+export function stackingOrder(layout: LayoutDoc, readingOrder: readonly BlockId[] = []): Map<BlockId, number> {
+  const rank = new Map(readingOrder.map((id, index) => [id, index]));
+  const bySiblingOrder = (a: BlockId, b: BlockId) => {
+    const za = layout.blocks[a]?.z ?? 0;
+    const zb = layout.blocks[b]?.z ?? 0;
+    if (za !== zb) return za - zb;
+    const ra = rank.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const rb = rank.get(b) ?? Number.MAX_SAFE_INTEGER;
+    if (ra !== rb) return ra - rb;
+    return a < b ? -1 : a > b ? 1 : 0;
   };
-  for (const id of Object.keys(layout.blocks)) depthOf(id);
-  return depths;
+  const children = new Map<BlockId, BlockId[]>();
+  const roots: BlockId[] = [];
+  for (const [id, block] of Object.entries(layout.blocks)) {
+    const parent = block.parentId;
+    if (parent === undefined || parent === id || !layout.blocks[parent]) {
+      roots.push(id);
+      continue;
+    }
+    const list = children.get(parent) ?? [];
+    list.push(id);
+    children.set(parent, list);
+  }
+  const out = new Map<BlockId, number>();
+  const visit = (start: BlockId) => {
+    // Iterative pre-order walk: a block, then its children's subtrees in sibling order.
+    const stack: BlockId[] = [start];
+    while (stack.length > 0) {
+      const id = stack.pop()!;
+      if (out.has(id)) continue;
+      out.set(id, out.size + 1);
+      const kids = (children.get(id) ?? []).filter((kid) => !out.has(kid)).sort(bySiblingOrder);
+      for (let index = kids.length - 1; index >= 0; index--) stack.push(kids[index]!);
+    }
+  };
+  for (const id of roots.sort(bySiblingOrder)) visit(id);
+  // Blocks only reachable through a parent cycle: the first one met (sibling order) acts as a root.
+  for (const id of Object.keys(layout.blocks).sort(bySiblingOrder)) if (!out.has(id)) visit(id);
+  return out;
 }
-
-/** CSS z-index of a block: deeper blocks always above their parents, then the block's own `z`. */
-export const stackingZ = (depth: number, z: number): number =>
-  Math.max(0, Math.round(depth) || 0) * Z_DEPTH_STEP + clamp(Math.round(z) || 0, 0, Z_DEPTH_STEP - 1) + 1;
 
 /** Warnings grouped by the block they are about (`ids[0]`: the block first, then its container). */
 export function warningsByBlock(warnings: readonly LayoutWarning[]): Map<BlockId, LayoutWarning[]> {
@@ -336,6 +368,141 @@ export const sameRect = (a: GridRect, b: GridRect): boolean => a.col === b.col &
 
 /** A stable string for a rect (memo keys, motion layout dependencies). */
 export const rectKey = (rect: GridRect): string => `${rect.col},${rect.row},${rect.w},${rect.h}`;
+
+/** Motion layout dependency of a block: its FLIP runs when the device or its grid rect changes, not on window resizes. */
+export const layoutKeyOf = (device: Breakpoint, rect: GridRect): string => `${device}:${rectKey(rect)}`;
+
+/**
+ * Spring of a block's FLIP from one layout key to the next: smooth when the device changed (the move
+ * between desktop and a derived view), snappy for edits. Decided per block, so the canvas never has to
+ * re-render every block just to swap springs.
+ */
+export function layoutSpringFor(previous: string, next: string): "smooth" | "snappy" {
+  const deviceOf = (key: string) => key.slice(0, Math.max(0, key.indexOf(":")));
+  return deviceOf(previous) !== deviceOf(next) ? "smooth" : "snappy";
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Pointer press → move                                                                             */
+/* ------------------------------------------------------------------------------------------------ */
+
+/**
+ * A press on a block became a move: first `settle` what must land before it (a keyboard-held block is
+ * dropped and committed), THEN read the block's rect and descendants from the store. Reading them at
+ * pointerdown would start from a stale rect (the held block's pre-grab one) and overwrite the keyboard move.
+ */
+export function promoteToMove(
+  id: BlockId,
+  settle: () => void,
+  readLayout: () => LayoutDoc,
+): { start: GridRect; followers: Set<BlockId> } | null {
+  settle();
+  const layout = readLayout();
+  const block = layout.blocks[id];
+  return block ? { start: block.rect, followers: withDescendants(layout, id) } : null;
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Scroll and focus                                                                                 */
+/* ------------------------------------------------------------------------------------------------ */
+
+/** Room kept around a block revealed in the scroller (screen px). */
+export const REVEAL_MARGIN_PX = 24;
+
+/**
+ * Scroll position (scrollTop) that brings a box into the scroller's view, or `null` when it is already
+ * fully visible. `box.top` is in the scroller's content px (its scrollTop space).
+ * - "nearest": the least scroll that shows it with a margin; a box taller than the view is left alone
+ *   while part of it shows, else its nearest edge comes in (keyboard moves, focus moves).
+ * - "third": the box a third of the way down (a selection made in another panel, a device switch).
+ */
+export function revealScrollTop(
+  view: { scrollTop: number; height: number },
+  box: { top: number; height: number },
+  mode: "nearest" | "third" = "nearest",
+  margin = REVEAL_MARGIN_PX,
+): number | null {
+  if (!(view.height > 0) || !Number.isFinite(box.top) || !Number.isFinite(box.height)) return null;
+  const viewTop = view.scrollTop;
+  const viewBottom = view.scrollTop + view.height;
+  const bottom = box.top + box.height;
+  if (box.top >= viewTop && bottom <= viewBottom) return null;
+  let top: number;
+  if (mode === "third") {
+    top = box.top - Math.max(margin, (view.height - Math.min(box.height, view.height)) / 3);
+  } else if (box.height + 2 * margin <= view.height) {
+    top = box.top < viewTop ? box.top - margin : bottom + margin - view.height;
+  } else {
+    if (bottom > viewTop + margin && box.top < viewBottom - margin) return null;
+    top = box.top < viewTop ? bottom + margin - view.height : box.top - margin;
+  }
+  return Math.max(0, Math.round(top));
+}
+
+/**
+ * Where the scroller goes after a device switch: the selected block revealed when it shows in the new
+ * view (unchanged when it is already in view), else the top. Never past the content of the new view.
+ */
+export function scrollAfterDeviceSwitch(
+  view: { scrollTop: number; height: number },
+  selectedBox: { top: number; height: number } | null,
+): number {
+  if (!selectedBox) return 0;
+  return revealScrollTop(view, selectedBox, "third") ?? view.scrollTop;
+}
+
+/** The nearest block of `order` after `id` (else before it) that still exists. */
+export function nearestSurvivor(order: readonly BlockId[], id: BlockId, exists: (id: BlockId) => boolean): BlockId | null {
+  const index = order.indexOf(id);
+  if (index < 0) return order.find(exists) ?? null;
+  for (let i = index + 1; i < order.length; i++) if (exists(order[i]!)) return order[i]!;
+  for (let i = index - 1; i >= 0; i--) if (exists(order[i]!)) return order[i]!;
+  return null;
+}
+
+/**
+ * Where keyboard focus goes after a change that can remove the focused block (undo, redo, a toast's
+ * «Deshacer»): `null` keeps it (it was not on a block and nothing is preferred, or its block survived).
+ * Otherwise `prefer` (a block the change brought back), the selection, the nearest survivor in the
+ * previous reading order, or the scroller — never <body>, where every canvas key stops working.
+ * `focused: "lost"` is focus on <body> or on a toast that is about to close.
+ */
+export function focusAfterChange(input: {
+  focused: BlockId | "lost" | null;
+  previousOrder: readonly BlockId[];
+  exists: (id: BlockId) => boolean;
+  selected: BlockId | null;
+  prefer?: BlockId | null;
+}): BlockId | "scroller" | null {
+  const { focused, previousOrder, exists, selected, prefer } = input;
+  const preferred = prefer && exists(prefer) ? prefer : null;
+  if (focused === null) return preferred;
+  if (focused !== "lost" && exists(focused)) return null;
+  if (preferred) return preferred;
+  if (selected && exists(selected)) return selected;
+  return (focused !== "lost" && nearestSurvivor(previousOrder, focused, exists)) || "scroller";
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Derived views and «¿Qué es esto?»                                                                */
+/* ------------------------------------------------------------------------------------------------ */
+
+/**
+ * The derived layout a device shows, `null` on desktop (editable). It is only derived for tablet and
+ * mobile: desktop never pays for (nor keeps in the history's cache) a responsive layout it does not draw.
+ */
+export function derivedLayoutFor(
+  layout: LayoutDoc | null,
+  device: Breakpoint,
+  derive: (layout: LayoutDoc) => ResponsiveLayout,
+): BreakpointLayout | null {
+  if (device === "desktop" || !layout) return null;
+  return derive(layout)[device];
+}
+
+/** «¿Qué es esto?» stays open only on desktop and while its drawn block is still on the shown screen. */
+export const askingStillValid = (device: Breakpoint, layout: LayoutDoc | null, id: BlockId | null): boolean =>
+  id !== null && device === "desktop" && layout?.blocks[id] !== undefined;
 
 /* ------------------------------------------------------------------------------------------------ */
 /* Adjustments                                                                                      */

@@ -7,7 +7,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { BlockIcon, DuplicateIcon, EyeIcon, EyeOffIcon, TrashIcon } from "../../icons";
-import { useLayoutActions, useLayoutEnv, useLayoutStoreApi } from "../../useLayoutStore";
+import { useLayoutActions, useLayoutEnv } from "../../useLayoutStore";
 
 export type InspectorHeaderProps = {
   blockId: BlockId;
@@ -23,7 +23,6 @@ export type InspectorHeaderProps = {
 export function InspectorHeader({ blockId, block, def, screenId, headingId }: InspectorHeaderProps) {
   const t = useDictionary(layout);
   const actions = useLayoutActions();
-  const store = useLayoutStoreApi();
   const { focusRegion } = useLayoutEnv();
   const announce = useDndAnnounce();
   const hidden = block.hidden === true;
@@ -41,9 +40,15 @@ export function InspectorHeader({ blockId, block, def, screenId, headingId }: In
   const remove = () => {
     const removed = actions.removeBlocks([blockId], screenId);
     if (removed.length === 0) return;
+    // «Deshacer» undoes this removal only: after any other change it says so instead of undoing that change.
+    const token = actions.changeToken();
+    const undoRemoval = () => {
+      if (actions.undoIfLatest(token)) announce(t.announce.undone);
+      else toast(t.common.undoStale);
+    };
     const message = removed.length > 1 ? t.announce.removedMany(removed.length) : t.announce.removed(block.label);
     announce(message);
-    toast(message, { action: { label: t.common.undo, onClick: () => store.temporal.getState().undo() } });
+    toast(message, { action: { label: t.common.undo, onClick: undoRemoval } });
     // This button unmounts with the selection: keep focus in the inspector (now the screen panel).
     requestAnimationFrame(() => focusRegion("inspector"));
   };

@@ -1,6 +1,6 @@
 import { memo, type CSSProperties } from "react";
 // Relative imports only: the preview test renders this module in vitest without the `@/` alias.
-import { BlockGlyph, type FrameKind } from "../BlockGlyph";
+import { BlockGlyph, type FrameKind } from "./BlockGlyph";
 import { PREVIEW_WIDTH } from "../constants";
 import type { FrameNav, PreviewGeometry } from "../previewGeometry";
 

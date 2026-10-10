@@ -199,10 +199,10 @@ export function WhatIsThis({ blockId, rect, layout, kind, getAnchor, onChoose, o
               setActive(0);
             }}
             onKeyDown={onInputKeyDown}
-            className="min-w-0 flex-1 bg-transparent text-small text-fg outline-none placeholder:text-subtle"
+            className="min-w-0 flex-1 bg-transparent text-small text-fg outline-none placeholder:text-muted"
           />
         </label>
-        <p id={listLabelId} className="text-caption text-subtle">
+        <p id={listLabelId} className="text-caption text-muted">
           {options.mode === "suggestions" ? t.whatIsThis.suggestions : t.whatIsThis.results}
         </p>
         {options.types.length > 0 ? (
@@ -234,7 +234,7 @@ export function WhatIsThis({ blockId, rect, layout, kind, getAnchor, onChoose, o
                   <span className="flex min-w-0 flex-col">
                     <span className="flex items-center gap-1.5 text-small font-medium text-fg">
                       {text.name}
-                      {soon && <span className="rounded-chip border border-app px-1 text-caption text-subtle">{t.canvas.soon}</span>}
+                      {soon && <span className="rounded-chip border border-app px-1 text-caption text-muted">{t.canvas.soon}</span>}
                     </span>
                     <span className="truncate text-caption text-muted">{text.description}</span>
                   </span>

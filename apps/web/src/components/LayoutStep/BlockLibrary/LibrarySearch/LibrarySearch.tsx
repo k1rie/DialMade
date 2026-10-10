@@ -66,7 +66,7 @@ export function LibrarySearch({ value, onChange, onArrowDown, controls, classNam
         onKeyDown={onKeyDown}
         {...{ [REGION_AUTOFOCUS_ATTR]: "" }}
         className={cn(
-          "h-9 w-full min-w-0 rounded-control border border-app-strong bg-app/60 ps-9 pe-9 text-small text-fg placeholder:text-subtle",
+          "h-9 w-full min-w-0 rounded-control border border-app-strong bg-app/60 ps-9 pe-9 text-small text-fg placeholder:text-muted",
           "transition-[border-color,background-color] duration-150 hover:border-white/20 focus-visible:border-accent/70 focus-visible:bg-app/80",
           "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none",
         )}

@@ -7,8 +7,8 @@ import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { useLayoutActions, useLayoutStoreApi } from "../../useLayoutStore";
 import { checkRoute, type RouteProblem } from "../route";
-import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../styles";
-import { useFieldDraft } from "../useFieldDraft";
+import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../../fieldStyles";
+import { useFieldDraft } from "../../useFieldDraft";
 
 export type RouteFieldProps = {
   screenId: ScreenId;

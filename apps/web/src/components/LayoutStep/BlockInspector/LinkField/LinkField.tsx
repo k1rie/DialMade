@@ -6,7 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { useLayoutActions, useLayoutStore } from "../../useLayoutStore";
-import { FIELD_HINT, FIELD_SELECT } from "../styles";
+import { FIELD_HINT, FIELD_SELECT } from "../../fieldStyles";
 
 export type LinkFieldProps = {
   blockId: BlockId;

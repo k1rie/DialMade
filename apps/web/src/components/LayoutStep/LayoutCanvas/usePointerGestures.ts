@@ -12,11 +12,11 @@ import {
   moveGesture,
   panScroll,
   pastThreshold,
+  promoteToMove,
   relativePoint,
   resizeGesture,
   sameRect,
   toGridUnits,
-  withDescendants,
 } from "./gestures";
 
 /** What the canvas draws while a pointer gesture runs (the store is only written on release). */
@@ -33,6 +33,8 @@ export type PointerGestureContext = {
   /** Desktop: blocks move, resize and get drawn. Derived views only select. */
   editable: boolean;
   layout: LayoutDoc;
+  /** The active screen's layout as the store has it NOW (after a keyboard grab was dropped and committed). */
+  readLayout: () => LayoutDoc;
   metrics: GridMetrics;
   select: (id: BlockId | null) => void;
   focusBlock: (id: BlockId) => void;
@@ -54,7 +56,8 @@ type Session = {
   lastClient: Point;
   cleanup: () => void;
 } & (
-  | { kind: "pending"; id: BlockId; start: GridRect; followers: ReadonlySet<BlockId> }
+  // A press on a block: the start rect is only read when it becomes a move (`promoteToMove`).
+  | { kind: "pending"; id: BlockId }
   | { kind: "move"; id: BlockId; start: GridRect; followers: ReadonlySet<BlockId>; rect: GridRect }
   | { kind: "resize"; id: BlockId; start: GridRect; handle: Handle; rect: GridRect }
   | { kind: "draw"; dragged: boolean; rect: GridRect | null }
@@ -153,9 +156,15 @@ export function usePointerGestures(
     let started = false;
     if (session.kind === "pending") {
       if (!pastThreshold(session.originClient, client) || !layout.blocks[session.id]) return;
-      // Past the threshold: the press becomes a move (the preview starts at the start rect).
-      Object.assign(session, { kind: "move", rect: session.start });
-      ctxRef.current.beforeGesture();
+      // Past the threshold: the press becomes a move. A keyboard-held block is dropped first, and only then
+      // is the start rect read (from the store), so the move continues from where the block is shown.
+      const ctx = ctxRef.current;
+      const move = promoteToMove(session.id, ctx.beforeGesture, ctx.readLayout);
+      if (!move) {
+        endSession();
+        return;
+      }
+      Object.assign(session, { kind: "move", start: move.start, rect: move.start, followers: move.followers });
       started = true;
     }
     if (session.kind === "move") {
@@ -328,10 +337,12 @@ export function usePointerGestures(
     const handle = handleEl?.getAttribute("data-resize-handle") ?? null;
     if (layer && isHandle(handle)) {
       const id = layer.getAttribute(RESIZE_FOR_ATTR) ?? "";
-      const block = ctx.layout.blocks[id];
-      if (!block) return;
+      if (!ctx.layout.blocks[id]) return;
       event.preventDefault();
       ctx.beforeGesture();
+      // Read after `beforeGesture` (it may commit a held block): never resize from a stale rect.
+      const block = ctx.readLayout().blocks[id];
+      if (!block) return;
       ctx.focusBlock(id);
       startSession(event, { kind: "resize", pointerId: event.pointerId, originClient, origin, id, start: block.rect, handle, rect: block.rect });
       setGesture({ kind: "resize", id, start: block.rect, rect: block.rect });
@@ -346,15 +357,7 @@ export function usePointerGestures(
       ctx.focusBlock(id);
       const block = ctx.layout.blocks[id];
       if (!ctx.editable || ctx.tool !== "edit" || !block) return;
-      startSession(event, {
-        kind: "pending",
-        pointerId: event.pointerId,
-        originClient,
-        origin,
-        id,
-        start: block.rect,
-        followers: withDescendants(ctx.layout, id),
-      });
+      startSession(event, { kind: "pending", pointerId: event.pointerId, originClient, origin, id });
       return;
     }
 

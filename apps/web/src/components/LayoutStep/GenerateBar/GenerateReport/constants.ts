@@ -18,3 +18,10 @@ export const REPORT_TOASTER_STYLE = {
 
 /** How long the copy button shows its check after a copy (feedback, not a state change). */
 export const COPIED_MS = 1600;
+
+/**
+ * Delay before the report speaks its opening message (ms). The live region is inside the <dialog>, hidden
+ * until showModal(): screen readers ignore a change in the same task a region becomes visible, and the
+ * dialog's own name, description and focused tab are read first.
+ */
+export const OPEN_ANNOUNCE_DELAY_MS = 150;

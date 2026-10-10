@@ -93,7 +93,10 @@ export const ToolPicker = memo(function ToolPicker({ value, onChange, shortcutsE
                   aria-hidden
                   className="absolute inset-0 rounded-[8px] border border-app-strong bg-surface-hover shadow-surface"
                   transition={snappy}
-                />
+                >
+                  {/* Same mark as Segmented: the pill alone is ~1.1:1, the accent bar reaches ≥3:1 (1.4.11). */}
+                  <span className="absolute inset-x-1.5 bottom-px h-0.5 rounded-full bg-accent" />
+                </motion.span>
               )}
               <span className="relative inline-flex items-center gap-1.5">
                 {TOOL_ICONS[tool]}

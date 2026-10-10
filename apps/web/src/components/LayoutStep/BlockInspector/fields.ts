@@ -1,4 +1,4 @@
-import type { GridRect } from "@dialmade/layout";
+import { MAX_HEIGHT_ROWS, MAX_ROW, type GridRect } from "@dialmade/layout";
 // Relative imports only: vitest runs this module without the `@/` alias.
 import { nudgeGrid, ROW_UNIT_PX, type GridSize } from "../../../lib/geometry/grid";
 import { MIN_BLOCK_SIZE } from "./constants";
@@ -11,8 +11,8 @@ import { MIN_BLOCK_SIZE } from "./constants";
 /** «Columna», «Ancho», «Arriba», «Alto». */
 export type RectField = "col" | "w" | "top" | "height";
 
-/** Bounds of a field in the units the user reads. `max: null` = no upper limit (the frame grows). */
-export type FieldBounds = { min: number; max: number | null; step: number };
+/** Bounds of a field in the units the user reads. «Arriba» and «Alto» stop at the engine's `MAX_ROW` / `MAX_HEIGHT_ROWS`. */
+export type FieldBounds = { min: number; max: number; step: number };
 
 export type NudgeDirection = "left" | "right" | "up" | "down";
 /** «Posición» moves the block, «Tamaño» moves its right/bottom edge. */
@@ -24,7 +24,7 @@ const NUMBER_RE = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/;
 
 export const sameRect = (a: GridRect, b: GridRect): boolean => a.col === b.col && a.row === b.row && a.w === b.w && a.h === b.h;
 
-const clamp = (value: number, min: number, max: number | null) => Math.min(max ?? Number.POSITIVE_INFINITY, Math.max(min, value));
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** What the user typed → a number; `null` when it is not one. Accepts spaces around it and a decimal comma. */
 export function parseNumber(raw: string): number | null {
@@ -56,9 +56,9 @@ export function fieldBounds(rect: GridRect, field: RectField, columns = 12, min:
     case "w":
       return { min: min.w, max: Math.max(min.w, columns - rect.col), step: 1 };
     case "top":
-      return { min: 0, max: null, step: ROW_UNIT_PX };
+      return { min: 0, max: MAX_ROW * ROW_UNIT_PX, step: ROW_UNIT_PX };
     case "height":
-      return { min: min.h * ROW_UNIT_PX, max: null, step: ROW_UNIT_PX };
+      return { min: min.h * ROW_UNIT_PX, max: MAX_HEIGHT_ROWS * ROW_UNIT_PX, step: ROW_UNIT_PX };
   }
 }
 

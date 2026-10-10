@@ -15,6 +15,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   column-gap: var(--dl-space-5);
+  min-height: 240px;
 }
 
 .dl-layout [data-dl-id="invite-form"] {

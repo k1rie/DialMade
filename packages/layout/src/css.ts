@@ -11,7 +11,7 @@ import {
 } from "./constants";
 import { areaName, inferStructure } from "./infer";
 import { hiddenIds, prepare, type Item } from "./prepare";
-import { deriveResponsive, placementIn } from "./responsive";
+import { deriveResponsive, mobileHeight, placementIn } from "./responsive";
 import type {
   Breakpoint,
   BlockNode,
@@ -266,10 +266,11 @@ export function toCss(layout: LayoutDoc, options: CssOptions = {}): string {
     return el;
   }
 
-  const scopeEl = makeEl(null, false);
+  makeEl(null, false); // The scope element.
   const root = structure.root;
+  let rootEl: El | null = null;
   if (root) {
-    const rootEl = build(root);
+    rootEl = build(root);
     if (root.kind === "block") {
       const placement = placementIn(root, null);
       rootEl.lone = placement.start !== 0 || placement.span !== DESKTOP_COLUMNS;
@@ -312,7 +313,8 @@ export function toCss(layout: LayoutDoc, options: CssOptions = {}): string {
       assignTablet(child.el, w);
     });
   };
-  assignTablet(scopeEl, TABLET_COLUMNS);
+  // The root element is not a child of the scope element's group (the scope has none): start from it.
+  if (rootEl) assignTablet(rootEl, TABLET_COLUMNS);
   for (const el of elements) {
     if (el.overlay) assignTablet(el, responsive.tablet.blocks[el.id]?.rect?.w ?? TABLET_COLUMNS);
   }
@@ -420,8 +422,17 @@ export function toCss(layout: LayoutDoc, options: CssOptions = {}): string {
       const g = gcd(a, b);
       props.set("aspect-ratio", `${a / g} / ${b / g}`);
     }
-    if (kind === "app" && !node.content) {
-      const h = bp === "mobile" ? (responsive.mobile.blocks[el.id]?.rect?.h ?? node.rect.h) : node.rect.h;
+    if (kind === "app") {
+      // Literal height, also for blocks with children (a container or a modal keeps its drawn height). On
+      // mobile, a leaf takes its derived height; a block with content, its own height by behavior (the
+      // derived one also counts its children, which already take their room).
+      const derived = responsive.mobile.blocks[el.id];
+      const h =
+        bp !== "mobile"
+          ? node.rect.h
+          : node.content
+            ? mobileHeight(item, derived?.behavior ?? item.def.mobile)
+            : (derived?.rect?.h ?? node.rect.h);
       props.set("min-height", `${h * ROW_UNIT}px`);
     }
     if (bp === "mobile" && responsive.mobile.blocks[el.id]?.behavior === "tabbar") props.set("order", "1");

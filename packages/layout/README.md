@@ -25,10 +25,11 @@ console.log(toAsciiWireframe(layout, { label: (b) => b.label }));
 ## Modelo
 
 - `LayoutDoc = { version: 1, columns: 12, rowUnit: 8, blocks: Record<BlockId, LayoutBlock> }`.
-- `rect` va en unidades de rejilla y siempre es absoluto en la pantalla, también para los bloques anidados: `col` (0–11) y `w` en columnas, `row` y `h` en filas de 8 px.
+- `rect` va en unidades de rejilla y siempre es absoluto en la pantalla, también para los bloques anidados: `col` (0–11) y `w` en columnas, `row` y `h` en filas de 8 px. Topes: `row` ≤ `MAX_ROW` = 4000 (32.000 px) y `h` ≤ `MAX_HEIGHT_ROWS` = 2000 (16.000 px). `validateLayout` rechaza lo que pase de ahí; el motor lo calcula recortado (con warning `out-of-bounds`) y `normalizeDrop` lo recorta (`clamp`). Así un alto escrito a mano como «999999999999 px» no llega al CSS ni al wireframe.
 - `parentId` es el anidado explícito. `inferStructure` nunca lo deduce.
 - Ids: `b-` + 6 caracteres base36 (`newBlockId`). Se aceptan ids existentes que cumplan `ElementIdSchema` (`hero-1`), salvo los que empiezan por `r-`, reservados para regiones inferidas (`r-` + hash de sus bloques, que no se pueden direccionar).
 - Máximo `MAX_BLOCKS` = 200 bloques. La nota (`note`) tiene una línea y ≤200 caracteres (`sanitizeNote`); el nombre (`label`), una línea y ≤60 (`sanitizeLabel`).
+- Saneado (`sanitizeLine`): normaliza a NFC, los controles pasan a espacio y se quitan los caracteres invisibles: todos los de formato (`Cf`: marcas bidi, BOM, espacios y unificadores de ancho cero, *word joiner*, operadores invisibles, guion suave, etiquetas Unicode U+E0000–E007F…), el *combining grapheme joiner* y los rellenos de Hangul. Excepciones, porque cambian lo que se dibuja: el ZWJ dentro de una secuencia de emoji (👩‍💻), ZWJ/ZWNJ entre letras de escrituras que los usan (persa, hindi…) y las tres banderas con etiquetas (Inglaterra, Escocia, Gales). El recorte nunca deja media secuencia.
 
 ## API
 
@@ -43,7 +44,7 @@ console.log(toAsciiWireframe(layout, { label: (b) => b.label }));
 | `suggestBlocks(layout, kind)` | 5 tipos sugeridos según la pantalla y lo que ya hay (en landing vacía: navbar, hero, features, cta, footer; después de un navbar, hero…) |
 | `suggestTypesForShape(rect, layout, kind)` | 5 sugerencias para «¿Qué es esto?» según la forma del rectángulo dibujado |
 | `estimateContent(block, layout?)` | Lo que dirá el chip del bloque («Tabla · 8 filas»), o `null` |
-| `parseNote(note)` | Lee la nota sin IA: números («3», «tres», «×3») → `count`; palabras clave es/en («semanal», «buscador», «login»…) → `keywords` |
+| `parseNote(note)` | Lee la nota sin IA: números («3», «tres», «×3») → `count`; palabras clave es/en («semanal», «buscador», «login»…) → `keywords`. «un/una/uno» no cuentan (casi siempre son artículo: «para una startup»), y «once» solo vale 11 si no va seguido de una palabra que lo haga el adverbio inglés («once a day») |
 
 Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layout.ts`), no aquí.
 
@@ -60,17 +61,18 @@ Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layo
 4. **Salida.**
    - `stack`: hijos de arriba abajo, cada uno con `start`/`span` relativos al marco (los grupos ocupan el marco entero); `gaps` en filas entre hijos.
    - `row`: hijos de izquierda a derecha, cada uno en su banda de columnas; los grupos de una banda usan esa banda como marco.
-   - `grid`: pistas desde los bordes únicos; `areas` con los ids (o `null` si hay solapes).
+   - `grid`: pistas desde los bordes únicos; `areas` con los nombres de área (o `null` si hay solapes). El nombre es el id, salvo que no sea un identificador CSS o sea una palabra reservada (`auto`, `span`, `none`, `default`, `inherit`, `initial`, `unset`, `revert`, `revert-layer`, en cualquier caja): entonces `a-` + id (`areaName`).
 5. **Orden de lectura** (`order`): recorrido en profundidad; un bloque va antes que su contenido; filas de izquierda a derecha; celdas de grid por `(rowStart, colStart)`; overlays al final.
-6. **Warnings**: solapes entre hermanos (`overlap`, con `ratio` y arreglos `move-below`, `clip` si es <15 % o `nest` si uno contiene al otro y es contenedor), `implicit-containment` (un bloque ≥90 % dentro de un contenedor sin `parentId`: arreglo `nest`), `outside-parent`, `missing-parent`, `cycle`, `not-accepted`, `out-of-bounds`, `invalid-rect` y `too-many-blocks`.
+6. **Warnings**: solapes entre hermanos (`overlap`, con `ratio` y arreglos `move-below`, `clip` si es <15 % o `nest` si uno contiene al otro y es contenedor; `clip` recorta el de menor z, o el otro si el recorte dejaría fuera a un hijo, y no se ofrece si ninguno vale), `implicit-containment` (un bloque ≥90 % dentro de un contenedor sin `parentId`: arreglo `nest`), `outside-parent`, `missing-parent`, `cycle`, `not-accepted`, `out-of-bounds`, `invalid-rect` y `too-many-blocks`.
 
 ### Responsive
 
 `deriveResponsive(layout, structure?) → { tablet, mobile }`
 
-- **Tablet (8 columnas).** Cada `span` se escala por 8/12 y se redondea, con un mínimo de `minCols.tablet` (para un grupo: el máximo de su `stack` o la suma de su `row`). Una fila se mantiene (`keep`) si la suma cabe en el marco; si no, hace wrap en orden de lectura (`wrap`). Un `grid` se mantiene si todas sus celdas caben con su mínimo; si no, se apila.
+- **Tablet (8 columnas).** Cada `span` se escala por 8/12 y se redondea, con un mínimo de `minCols.tablet` (para un grupo: el máximo de su `stack` o la suma de su `row`). Una fila se mantiene (`keep`) si cabe la suma de los `minCols` de sus hijos (spec §5): si el redondeo se pasa del marco, se quitan columnas a los hijos que más sobran sobre su mínimo (en empate, al de más a la derecha). Si los mínimos no caben, hace wrap en orden de lectura (`wrap`). Un `grid` se mantiene si todas sus celdas caben con su mínimo; si no, se apila.
 - **Móvil (4 columnas).** Todo se apila a ancho completo en orden de lectura, con el comportamiento de cada tipo (`mobile` de la librería, o `responsive.mobile.behavior`): navbar → hamburguesa, sidebar → drawer, KPIs → 2×2, cards → una columna, tabla → lista de tarjetas, calendario → agenda, hero → texto arriba, modal → sheet. `hide` y `responsive.<bp>.hidden` lo ocultan.
-- Devuelve, por breakpoint, el plan de cada región (`nodes`, para `toCss`) y el rect derivado de cada bloque (`blocks`, para la preview del lienzo). Las alturas en móvil son una aproximación por comportamiento (p. ej., 2×2 duplica las filas de KPIs).
+- Una tab bar (`tabbar`) va al final del flujo en móvil; dentro de un overlay (o de otra tab bar) se coloca en su sitio, nunca se pierde.
+- Devuelve, por breakpoint, el plan de cada región (`nodes`, para `toCss`) y el rect derivado de cada bloque (`blocks`, para la preview del lienzo). Las alturas en móvil son una aproximación por comportamiento (p. ej., 2×2 duplica las filas de KPIs), con el ×N limitado a los topes del bloque, como el chip.
 
 ### CSS
 
@@ -79,7 +81,8 @@ Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layo
 - Opciones: `scope` (selector raíz, por defecto `.dl-layout`), `kind` (`landing` | `app`), `space` (escala en px para cuantizar huecos; por defecto la de `@dialmade/doc`: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128), `selector(id)` (por defecto `[data-dl-id="<id>"]`), `container` (nombre del container, `dl-layout`) y `structure`/`responsive` precalculados.
 - Solo usa variables del contrato del tema (`--dl-space-*`) o privadas (`--_*`).
 - Desktop: cada región es un grid con sus columnas (`grid-column: inicio / span w`). Los huecos verticales se cuantizan a `--dl-space-*` como `margin-block-start`; las columnas usan `column-gap: var(--dl-space-5)`.
-- `landing`: el alto es una pista (solo `aspect-ratio` en media y gráficas). `app`: el alto es literal (`min-height`).
+- `landing`: el alto es una pista (solo `aspect-ratio` en media y gráficas). `app`: el alto es literal (`min-height`), también en los bloques con hijos (un contenedor o un modal mide lo dibujado aunque sus hijos ocupen menos).
+- En tablet, cada contenedor anidado o región usa sus propias columnas derivadas (`repeat(4, …)` si ocupa 4 de 8), no las 8 del marco.
 - Tablet y móvil con container queries: `@container dl-layout (width < 64rem)` y `(width < 40rem)`.
 
 **Contrato del DOM** (lo que `toCss` espera; la Fase B lo genera desde `toElementTree`):
@@ -93,6 +96,8 @@ Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layo
 
 - Opciones: `width` (caracteres, por defecto 64), `label(block, id)` (por defecto `block.label`), `breakpoint` (`desktop` | `tablet` | `mobile`) y `numbered` (antepone el orden de lectura).
 - Solo ASCII (`+`, `-`, `|`). Cada borde de fila tiene su línea y cada caja al menos una línea interior, así que nunca se pierden etiquetas.
+- Las etiquetas se miden en columnas de monoespaciada: emoji y caracteres anchos de Asia oriental (CJK, kana, Hangul, formas de ancho completo) cuentan 2 y las marcas combinantes 0, así que los bordes no se descuadran. Es una aproximación propia (rangos tipo `wcwidth`, sin `Intl.Segmenter`, para que la salida sea igual en todos los entornos): algún símbolo ambiguo puede ocupar distinto según la fuente.
+- Tamaño acotado: como mucho 1000 caracteres de ancho y, si los huecos entre filas pasarían de ~2000 líneas, la escala vertical crece (cada borde conserva sus líneas).
 
 ### Edición (para el lienzo)
 
@@ -100,15 +105,15 @@ Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layo
 |---|---|
 | `emptyLayout()` | `LayoutDoc` vacío |
 | `newBlockId(taken?, random?)` | `b-` + 6 base36 con `crypto.getRandomValues`, sin repetir los de `taken` |
-| `findFreeSlot(layout, size, { parentId? })` | Primer hueco libre (fila a fila) donde cabe el tamaño, dentro del contenedor si se da. Si no cabe dentro, devuelve también el rect agrandado del contenedor |
-| `insertBlock(layout, { type, label, rect?, parentId?, count?, id? })` | Inserta (en el siguiente hueco libre si no hay `rect`) y normaliza → `{ layout, id, adjustments }` |
-| `normalizeDrop(layout, id)` | Tras mover, redimensionar o insertar: mete el rect en la rejilla (`clamp`), anida si cae ≥90 % dentro de un contenedor (`nest`), desanida si sale (`unnest`) y recorta solapes <15 % del bloque de menor z (`clip`). Devuelve `{ layout, adjustments }` |
+| `findFreeSlot(layout, size, { parentId?, overlay? })` | Primer hueco libre (fila a fila) donde cabe el tamaño, dentro del contenedor si se da. Si no cabe dentro, devuelve también el rect agrandado del contenedor. Un overlay se centra en la fila 8 del ámbito (más arriba si así cabe en el contenedor) y nunca agranda el contenedor |
+| `insertBlock(layout, { type, label, rect?, parentId?, count?, id? })` | Inserta (en el siguiente hueco libre si no hay `rect`) y normaliza → `{ layout, id, adjustments, grown? }`. Si el contenedor crece, empuja hacia abajo a los hermanos que empiezan en o debajo de su borde inferior (con sus descendientes), y los ancestros crecen igual si hace falta: nunca tapa lo que hay debajo |
+| `normalizeDrop(layout, id)` | Tras mover, redimensionar o insertar: mete el rect en la rejilla (`clamp`, también los topes de filas), anida si cae ≥90 % dentro de un contenedor (`nest`), desanida si sale (`unnest`) y recorta solapes <15 % del bloque de menor z (`clip`), o del otro si el recorte dejaría fuera a un hijo; si ninguno vale, el solape se queda como warning. Devuelve `{ layout, adjustments }` |
 | `moveBlock(layout, id, rect)` | Cambia el rect y arrastra a los descendientes con el mismo desplazamiento |
 | `removeBlocks(layout, ids)` | Borra los bloques y sus descendientes |
-| `duplicateBlock(layout, id, { newId })` | Copia el bloque (y sus descendientes) debajo del original |
-| `applyFix(layout, fix)` | Aplica un `LayoutFix` de un warning |
-| `validateLayout(layout)` | Errores duros (`LayoutIssue[]`): versión, columnas, ids, rects, tipos, padres, ciclos, `count`, nota y el tope de 200. Para el `superRefine` de la Fase B |
-| `sanitizeNote(raw)` / `sanitizeLabel(raw)` | Una línea, sin caracteres de control ni bidi, recortada a 200 / 60 |
+| `duplicateBlock(layout, id, { newId })` | Copia el bloque (y sus descendientes) debajo del original. Si el padre está lleno, crece como en `insertBlock` |
+| `applyFix(layout, fix)` | Aplica un `LayoutFix` de un warning. `nest` también mete el bloque dentro del padre (como al soltar), y un `clip` que ya dejaría fuera a un hijo no se aplica |
+| `validateLayout(layout)` | Errores duros (`LayoutIssue[]`): versión, columnas, ids, rects (dentro de las 12 columnas, `row` ≤ `MAX_ROW`, `h` ≤ `MAX_HEIGHT_ROWS`), tipos, padres, ciclos, `count`, nota y el tope de 200. Para el `superRefine` de la Fase B |
+| `sanitizeNote(raw)` / `sanitizeLabel(raw)` | Una línea en NFC, sin caracteres de control ni invisibles (ver «Modelo»), recortada a 200 / 60 |
 | `layoutBounds(layout)` | Fila final ocupada |
 | `toElementTree(structure)` | Árbol de elementos (bloques y regiones) que espera `toCss` |
 

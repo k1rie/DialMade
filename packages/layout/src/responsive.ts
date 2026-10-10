@@ -1,4 +1,4 @@
-import { COLUMNS, DERIVED_GAP_ROWS, DESKTOP_COLUMNS } from "./constants";
+import { COLUMNS, DERIVED_GAP_ROWS, DESKTOP_COLUMNS, LOOSE_COUNT_MAX } from "./constants";
 import { bottom, clamp, right } from "./geometry";
 import { inferStructure } from "./infer";
 import { parseNote } from "./note";
@@ -66,10 +66,15 @@ export function distribute(weights: readonly number[], total: number): number[] 
 
 type Sized = { block: LayoutBlock; def: LibraryBlockDef; rect: GridRect };
 
-/** ×N used for responsive heights and estimates: `count`, else the note's number, else the library default. */
+/**
+ * ×N used for responsive heights: `count`, else the note's number, else the library default. Clamped like
+ * the chip (`estimateContent`): to the repeatable block's min/max, or 1–99 on other blocks.
+ */
 export function effectiveCount(item: Pick<Sized, "block" | "def">): number {
   const raw = item.block.count ?? parseNote(item.block.note).count ?? item.def.repeatable?.default ?? 1;
-  return typeof raw === "number" && Number.isFinite(raw) ? Math.max(1, Math.round(raw)) : 1;
+  const value = typeof raw === "number" && Number.isFinite(raw) ? Math.round(raw) : 1;
+  const repeatable = item.def.repeatable;
+  return repeatable ? clamp(value, repeatable.min, repeatable.max) : clamp(value, 1, LOOSE_COUNT_MAX);
 }
 
 /** Rows per desktop line of a repeatable block: ~4 columns per item, at least one item per line. */
@@ -120,7 +125,10 @@ function deriveBreakpoint(
   for (const id of ids) blocks[id] = { rect: null, behavior: behaviorOf(items.get(id)!), hidden: hidden.has(id) };
   const nodes: Record<string, NodePlan> = {};
   const order: BlockId[] = [];
+  /** Mobile tab bars of the flow, placed after it. */
   const deferred: BlockNode[] = [];
+  /** Off once the flow is placed: bars inside overlays or inside a deferred bar are placed where they are. */
+  let deferTabbars = true;
 
   const visibleMemo = new Map<StructureNode, boolean>();
   const isVisible = (node: StructureNode): boolean => {
@@ -247,7 +255,22 @@ function deriveBreakpoint(
     const scale = w / node.frame.w;
     const visibleIdx = node.children.flatMap((c, i) => (isVisible(c.node) ? [i] : []));
     const spans = node.children.map((c) => (isVisible(c.node) ? scaledSpan(c.node, c.span, scale, w) : 0));
-    const total = spans.reduce((a, b) => a + b, 0);
+    const floors = node.children.map((c) => Math.max(1, Math.min(minColsOf(c.node), w)));
+    let total = spans.reduce((a, b) => a + b, 0);
+    // Spec §5: the row stays when the sum of the minCols fits. Rounding can push the scaled spans past the
+    // frame: take the extra columns from the spans furthest above their minimum (ties: the later child).
+    if (total > w && visibleIdx.reduce((sum, i) => sum + floors[i]!, 0) <= w) {
+      for (; total > w; total--) {
+        let pick = -1;
+        for (const i of visibleIdx) {
+          if (spans[i]! <= floors[i]!) continue;
+          const slack = spans[i]! - floors[i]!;
+          const best = pick < 0 ? -1 : spans[pick]! - floors[pick]!;
+          if (slack > best || (slack === best && spans[i]! >= spans[pick]!)) pick = i;
+        }
+        spans[pick]! -= 1;
+      }
+    }
     if (total <= w) {
       // Keep: the remaining columns go back to the gaps, proportional to the original ones.
       const gaps: number[] = [];
@@ -426,7 +449,7 @@ function deriveBreakpoint(
   };
 
   function place(node: StructureNode, col: number, w: number, top: number): number | null {
-    return node.kind === "block" ? placeBlock(node, col, w, top, true) : placeRegion(node, col, w, top, [node.id]);
+    return node.kind === "block" ? placeBlock(node, col, w, top, deferTabbars) : placeRegion(node, col, w, top, [node.id]);
   }
 
   // Flow.
@@ -446,7 +469,9 @@ function deriveBreakpoint(
           )
         : placeRegion(root, 0, columns, 0, [root.id]);
   }
-  // Mobile tab bars go after the flow.
+  // Mobile tab bars go after the flow. Anything placed from here on (a bar's own content, the overlays and
+  // their content) is not deferred again, or it would never be placed.
+  deferTabbars = false;
   for (const node of deferred) {
     const placed = placeBlock(node, 0, columns, cursor ?? 0, false);
     if (placed !== null) cursor = placed;

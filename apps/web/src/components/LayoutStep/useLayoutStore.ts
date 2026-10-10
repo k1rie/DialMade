@@ -11,11 +11,15 @@ import {
   insertBlock as insertLayoutBlock,
   instantiateTemplate,
   isLibraryBlockType,
+  LABEL_MAX,
+  MAX_HEIGHT_ROWS,
+  MAX_ROW,
   moveBlock,
   newBlockId,
   normalizeDrop,
   removeBlocks as removeLayoutBlocks,
   sanitizeLabel,
+  sanitizeLine,
   sanitizeNote,
   toAsciiWireframe,
   toCss,
@@ -71,6 +75,12 @@ export type LayoutLabelers = {
   screenNameFor: (templateId: ScreenTemplateId) => string;
   /** Name of a duplicated screen («Ajustes (copia)»). */
   copyName: (name: string) => string;
+  /**
+   * Whether `label` is still the default name of `type` in any UI language (a type change renames those
+   * blocks; a custom name stays). Default: it equals `labelFor(type)` or a name `labelFor` gave before a
+   * language change.
+   */
+  isDefaultLabel: (type: LibraryBlockType, label: string) => boolean;
 };
 
 export type LayoutStoreInit = Partial<LayoutLabelers> & {
@@ -135,11 +145,32 @@ export type LayoutActions = {
   /** «+ Añadir espacio»: extra empty rows at the bottom of the frame (view state, not undoable). */
   addSpace: (screenId: ScreenId, rows?: number) => void;
 
-  /* Batch: continuous edits (a keyboard grab) become one undo step. */
+  /*
+   * Batch: continuous edits (a keyboard grab) become one undo step. Not nested: a `beginBatch` while one is
+   * open keeps the first base, and a `commitBatch`/`cancelBatch` without an open batch does nothing. Undo
+   * and redo (from any caller, `temporal.undo()` included) commit an open batch first, so history never
+   * stays paused.
+   */
   beginBatch: () => void;
   commitBatch: () => void;
   /** Restores the screens as they were at `beginBatch`. */
   cancelBatch: () => void;
+
+  /* History. */
+  /** Commits an open batch, then undoes one step. Returns whether the screens changed. */
+  undo: () => boolean;
+  /** Commits an open batch, then redoes one step. Returns whether the screens changed. */
+  redo: () => boolean;
+  /**
+   * Identifies the current version of the screens: it changes on every tracked change (actions, undo,
+   * redo, a committed batch). Read it right after an action to offer «Deshacer» for that action.
+   */
+  changeToken: () => number;
+  /**
+   * Undoes one step only while the screens are still the version `token` identified (nothing changed
+   * since). Returns whether it undid; on `false` show `common.undoStale`.
+   */
+  undoIfLatest: (token: number) => boolean;
 
   /* View state (never undoable). */
   select: (id: BlockId | null) => void;
@@ -185,11 +216,13 @@ export type LayoutState = {
   lastAdjustments: Adjustment[];
   /** Grows on every new set of adjustments (retriggers the animation for an identical set). */
   adjustmentsTick: number;
+  /** The screens at `beginBatch` while a batch is open, `null` otherwise. Read-only: the batch actions own it. */
+  batchBase: HistorySlice | null;
 
   actions: LayoutActions;
 };
 
-type HistorySlice = Pick<LayoutState, "screens" | "screenOrder">;
+export type HistorySlice = { screens: Record<ScreenId, Screen>; screenOrder: ScreenId[] };
 export type LayoutStore = StoreApi<LayoutState> & { temporal: StoreApi<TemporalState<HistorySlice>> };
 
 /* ------------------------------------------------------------------------------------------------ */
@@ -200,6 +233,17 @@ const ROUTE_RE = /^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)
 const SLUG_MAX = 48;
 const LOOSE_COUNT_MAX = 99;
 const ID_ATTEMPTS = 64;
+/**
+ * A rect with its top row and height inside the engine's bounds (a typed «999999 px» never reaches it).
+ * Columns are the engine's job (`normalizeDrop` clamps and reports them).
+ */
+function boundRect(rect: GridRect): GridRect {
+  // Not finite: the engine's `roundRect` already turns it into a default.
+  const bound = (value: number, max: number) => (Number.isFinite(value) ? Math.min(value, max) : value);
+  const row = bound(rect.row, MAX_ROW);
+  const h = bound(rect.h, MAX_HEIGHT_ROWS);
+  return row === rect.row && h === rect.h ? rect : { ...rect, row, h };
+}
 
 /** `"Ajustes (copia)"` → `"ajustes-copia"`; `"screen"` when nothing is left. */
 export function slugify(name: string): string {
@@ -222,12 +266,40 @@ function uniqueRoute(base: string, taken: ReadonlySet<string>): string {
   }
 }
 
-function uniqueName(name: string, taken: ReadonlySet<string>): string {
-  if (!taken.has(name)) return name;
-  for (let n = 2; ; n++) {
-    const candidate = sanitizeLabel(`${name} ${n}`);
+/** The first `max` UTF-16 code units of `text`, without splitting a surrogate pair, trimmed at the end. */
+function cutLabel(text: string, max: number): string {
+  if (text.length <= max) return text;
+  let end = Math.max(0, max);
+  const last = text.charCodeAt(end - 1);
+  if (last >= 0xd800 && last <= 0xdbff) end -= 1;
+  return text.slice(0, end).trimEnd();
+}
+
+/**
+ * `compose(base)` as a label that is never cut at the end: `base` is shortened instead, so what `compose`
+ * adds («(copia)», « 2») always stays whole.
+ */
+function fitLabel(base: string, compose: (base: string) => string): string {
+  for (let cut = base; cut.length > 0; cut = cutLabel(cut, cut.length - 1)) {
+    const full = sanitizeLine(compose(cut), Number.MAX_SAFE_INTEGER);
+    if (full.length <= LABEL_MAX) return full;
+  }
+  return sanitizeLabel(compose(""));
+}
+
+/**
+ * A screen name not in `taken`: `compose(name)`, else `compose(name) 2`, `compose(name) 3`… `name` is
+ * shortened to make room, so the number always fits and every candidate is different: one of the first
+ * `taken.size + 1` numbers is free (no endless loop with long names).
+ */
+export function uniqueName(name: string, taken: ReadonlySet<string>, compose: (base: string) => string = (base) => base): string {
+  let candidate = fitLabel(name, compose) || name;
+  if (!taken.has(candidate)) return candidate;
+  for (let n = 2; n <= taken.size + 2; n++) {
+    candidate = fitLabel(name, (base) => `${compose(base)} ${n}`);
     if (!taken.has(candidate)) return candidate;
   }
+  return candidate;
 }
 
 /** `/ajustes` or `/ajustes-2` for «Ajustes»: a route the store made from the name (it follows renames). */
@@ -266,6 +338,51 @@ function cleanResponsive(responsive: LayoutBlock["responsive"]): LayoutBlock["re
   const mobile = cleanOverride(responsive?.mobile);
   if (!tablet && !mobile) return undefined;
   return { ...(tablet && { tablet }), ...(mobile && { mobile }) };
+}
+
+/**
+ * Removes `ids` but keeps what they contain: each child moves up to the nearest ancestor that stays (or to
+ * the top level). Used where a navbar/sidebar becomes the app's navigation frame (its content is not the
+ * frame, so it must not go with it).
+ */
+function removeKeepingChildren(layout: LayoutDoc, ids: readonly BlockId[]): LayoutDoc {
+  const removed = new Set(ids.filter((id) => layout.blocks[id]));
+  if (removed.size === 0) return layout;
+  const keptAncestor = (start: BlockId | undefined): BlockId | undefined => {
+    const seen = new Set<BlockId>();
+    let parent = start;
+    while (parent !== undefined && removed.has(parent) && !seen.has(parent)) {
+      seen.add(parent);
+      parent = layout.blocks[parent]?.parentId;
+    }
+    return parent !== undefined && !removed.has(parent) && layout.blocks[parent] ? parent : undefined;
+  };
+  const blocks: Record<BlockId, LayoutBlock> = {};
+  for (const [blockId, block] of Object.entries(layout.blocks)) {
+    if (block.parentId === undefined || !removed.has(block.parentId)) {
+      blocks[blockId] = block;
+      continue;
+    }
+    const lifted = { ...block };
+    const parentId = keptAncestor(block.parentId);
+    if (parentId !== undefined) lifted.parentId = parentId;
+    else delete lifted.parentId;
+    blocks[blockId] = lifted;
+  }
+  return removeLayoutBlocks({ ...layout, blocks }, [...removed]);
+}
+
+/** Drops a per-device `behavior` that `type` does not offer (`mobileOptions`); the default applies instead. */
+function offeredBehaviors(type: LayoutBlock["type"], responsive: LayoutBlock["responsive"]): LayoutBlock["responsive"] {
+  if (!responsive || !isLibraryBlockType(type)) return responsive;
+  const offered = getBlockDef(type).mobileOptions;
+  const keep = (override: BlockOverride | undefined): BlockOverride | undefined => {
+    if (override?.behavior === undefined || offered.includes(override.behavior)) return override;
+    const rest = { ...override };
+    delete rest.behavior;
+    return rest;
+  };
+  return { ...(responsive.tablet && { tablet: keep(responsive.tablet) }), ...(responsive.mobile && { mobile: keep(responsive.mobile) }) };
 }
 
 function sameBlockProps(a: LayoutBlock, b: LayoutBlock): boolean {
@@ -436,16 +553,33 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
     initialOrder.push(screen.id);
   }
 
-  return createStore<LayoutState>()(
+  const store: LayoutStore = createStore<LayoutState>()(
     temporal(
       (set, get, api) => {
-        let batchBase: HistorySlice | undefined;
         // Inside the initializer zundo types `api.temporal` as unknown.
         const history = () => (api as unknown as LayoutStore).temporal.getState();
+
+        /*
+         * Version of the screens (`changeToken`): every change of `screens`/`screenOrder` gets a fresh number,
+         * whatever caused it (an action, undo, redo, `setState`). A committed batch keeps the number of its
+         * live state and a cancelled one gets back the number of its base: the screens are those same objects.
+         */
+        let lastRevision = 0;
+        let revision = 0;
+        let batchRevision = 0;
+        api.subscribe((state, prev) => {
+          if (state.screens !== prev.screens || state.screenOrder !== prev.screenOrder) revision = ++lastRevision;
+        });
+        const batchChanged = (base: HistorySlice) => get().screens !== base.screens || get().screenOrder !== base.screenOrder;
+        // Every `labelFor` used so far: after a language change, a block keeps reading as default-named.
+        const pastLabelFor = new Set<(type: LibraryBlockType) => string>();
         const labelers: LayoutLabelers = {
           labelFor: init.labelFor ?? ((type) => type),
           screenNameFor: init.screenNameFor ?? ((templateId) => templateId),
           copyName: init.copyName ?? ((name) => `${name} (copy)`),
+          isDefaultLabel:
+            init.isDefaultLabel ??
+            ((type, label) => [labelers.labelFor, ...pastLabelFor].some((labelFor) => sanitizeLabel(labelFor(type)) === label)),
         };
 
         /** Every id in use: screens and the blocks of every screen (block ids stay unique project-wide). */
@@ -561,7 +695,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               blocks[idMap.get(blockId)!] = copy;
             }
             const copyId = nextId("s", taken);
-            const name = uniqueName(sanitizeLabel(labelers.copyName(source.name)) || source.name, namesOf(screens));
+            const name = uniqueName(source.name, namesOf(screens), labelers.copyName);
             const routes = new Set(Object.values(screens).map((s) => s.route));
             const copy: Screen = {
               id: copyId,
@@ -579,8 +713,11 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           renameScreen: (id, rawName) => {
             const screens = get().screens;
             const screen = screens[id];
-            const name = sanitizeLabel(rawName);
-            if (!screen || !name || name === screen.name) return false;
+            const sanitized = sanitizeLabel(rawName);
+            if (!screen || !sanitized) return false;
+            // Names stay unique (decision 43): «Dashboard» next to another «Dashboard» becomes «Dashboard 2».
+            const name = uniqueName(sanitized, namesOf(screens, id));
+            if (name === screen.name) return false;
             const route =
               screen.route !== "/" && isAutoRoute(screen.route, screen.name)
                 ? uniqueRoute(`/${slugify(name)}`, new Set(Object.values(screens).filter((s) => s.id !== id).map((s) => s.route)))
@@ -664,7 +801,8 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             );
             const frames = new Set(frameBlocks.map(([, block]) => getBlockDef(block.type).frame));
             const fromBlocks: AppNav | null = frames.has("sidebar") ? "sidebar" : frames.has("topnav") ? "topnav" : null;
-            const layout = frameBlocks.length > 0 ? removeLayoutBlocks(screen.layout, frameBlocks.map(([blockId]) => blockId)) : screen.layout;
+            // Their content stays on the screen (a navbar can hold children: a container whose type changed).
+            const layout = removeKeepingChildren(screen.layout, frameBlocks.map(([blockId]) => blockId));
             const nav = fromBlocks ?? sharedNav(screens, screenOrder, id) ?? DEFAULT_APP_SHELL.nav;
             const converted = { ...screens, [id]: { ...screen, kind, layout, shell: { ...DEFAULT_APP_SHELL, nav } } };
             set({ screens: withShell(converted, screenOrder, id, { nav }) });
@@ -691,7 +829,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               type,
               label: labelers.labelFor(type),
               id,
-              ...(options.rect && { rect: options.rect }),
+              ...(options.rect && { rect: boundRect(options.rect) }),
               ...(parentId !== undefined && { parentId }),
               ...(options.count !== undefined && { count: options.count }),
               ...(options.note !== undefined && { note: options.note }),
@@ -711,7 +849,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               const frame = getBlockDef(nextType).frame;
               if (frame) {
                 const { screens, screenOrder } = get();
-                const withoutBlock = { ...screens, [screen.id]: { ...screen, layout: removeLayoutBlocks(screen.layout, [id]) } };
+                const withoutBlock = { ...screens, [screen.id]: { ...screen, layout: removeKeepingChildren(screen.layout, [id]) } };
                 set({ screens: withShell(withoutBlock, screenOrder, screen.id, { nav: frame }) });
                 return { changed: true, nav: frame };
               }
@@ -719,8 +857,9 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
 
             const next: LayoutBlock = { ...block };
             if (nextType !== block.type) {
-              // A label that was the default name of the old type follows the new type; a custom one stays.
-              if (block.label === sanitizeLabel(labelers.labelFor(block.type))) next.label = sanitizeLabel(labelers.labelFor(nextType));
+              // A label that was the default name of the old type (in any UI language) follows the new type;
+              // a custom one stays.
+              if (labelers.isDefaultLabel(block.type, block.label)) next.label = sanitizeLabel(labelers.labelFor(nextType));
               next.type = nextType;
               if (next.count !== undefined) {
                 if (getBlockDef(nextType).repeatable) next.count = clampCount(nextType, next.count);
@@ -744,8 +883,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               if (patch.linkTo && get().screens[patch.linkTo]) next.linkTo = patch.linkTo;
               else delete next.linkTo;
             }
-            if ("responsive" in patch) {
-              const responsive = cleanResponsive(patch.responsive);
+            if ("responsive" in patch || nextType !== block.type) {
+              // Only behaviors the type offers: one kept from the old type would be used by the preview and
+              // «Generar» while the inspector shows the default.
+              const responsive = cleanResponsive(offeredBehaviors(next.type, "responsive" in patch ? patch.responsive : next.responsive));
               if (responsive) next.responsive = responsive;
               else delete next.responsive;
             }
@@ -758,9 +899,10 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
             set({ screens: withLayout(screen, layout) });
             return { changed: true, nav: null };
           },
-          setRect: (id, rect, screenId) => {
+          setRect: (id, raw, screenId) => {
             const screen = screenOf(screenId);
             const block = screen?.layout.blocks[id];
+            const rect = boundRect(raw);
             if (!screen || !block || sameRect(block.rect, rect)) return [];
             const { layout, adjustments } = normalizeDrop(moveBlock(screen.layout, id, rect), id);
             set({ screens: withLayout(screen, layout), ...adjusted(adjustments) });
@@ -779,11 +921,22 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           duplicateBlock: (id, screenId) => {
             const screen = screenOf(screenId);
             if (!screen?.layout.blocks[id]) return null;
+            const taken = takenIds();
             const result = duplicateLayoutBlock(screen.layout, id, {
-              newId: nextId("b", takenIds()),
+              newId: nextId("b", taken),
               ...(init.random && { random: init.random }),
             });
-            set({ screens: withLayout(screen, result.layout), selectedId: result.id });
+            // The package checks the copied descendants' ids against this screen only: give them ids that are
+            // free in the whole project (block ids stay unique project-wide).
+            for (const blockId of Object.keys(result.layout.blocks)) taken.add(blockId);
+            const rename = new Map<BlockId, BlockId>();
+            for (const [sourceId, copyId] of Object.entries(result.idMap)) if (sourceId !== id) rename.set(copyId, nextId("b", taken));
+            const blocks: Record<BlockId, LayoutBlock> = {};
+            for (const [blockId, block] of Object.entries(result.layout.blocks)) {
+              const parentId = block.parentId !== undefined ? rename.get(block.parentId) : undefined;
+              blocks[rename.get(blockId) ?? blockId] = parentId !== undefined ? { ...block, parentId } : block;
+            }
+            set({ screens: withLayout(screen, { ...result.layout, blocks }), selectedId: result.id });
             return result.id;
           },
           applyFix: (fix, screenId) => {
@@ -804,31 +957,51 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           /* Batch (same trick as hooks/useDesignDoc.ts)                                              */
           /* ---------------------------------------------------------------------------------------- */
           beginBatch: () => {
-            if (batchBase !== undefined) return;
+            if (get().batchBase) return;
             const { screens, screenOrder } = get();
-            batchBase = { screens, screenOrder };
+            batchRevision = revision;
             history().pause();
+            set({ batchBase: { screens, screenOrder } });
           },
           commitBatch: () => {
-            if (batchBase === undefined) return;
-            const base = batchBase;
+            const base = get().batchBase;
+            if (!base) return;
             const { screens, screenOrder } = get();
-            const live = { screens, screenOrder };
-            batchBase = undefined;
-            const changed = live.screens !== base.screens || live.screenOrder !== base.screenOrder;
+            const live: HistorySlice = { screens, screenOrder };
+            const liveRevision = revision;
+            const changed = batchChanged(base);
             // Rewind to the base while paused, then replay the live state tracked: one undo step.
-            if (changed) set(base);
+            set({ ...(changed && base), batchBase: null });
             history().resume();
-            if (changed) set(live);
+            if (!changed) return;
+            set(live);
+            revision = liveRevision;
           },
           cancelBatch: () => {
-            if (batchBase === undefined) return;
-            const base = batchBase;
-            batchBase = undefined;
-            const { screens, screenOrder } = get();
-            if (screens !== base.screens || screenOrder !== base.screenOrder) set(base);
+            const base = get().batchBase;
+            if (!base) return;
+            const changed = batchChanged(base);
+            set({ ...(changed && base), batchBase: null });
             history().resume();
+            if (changed) revision = batchRevision;
           },
+
+          /* ---------------------------------------------------------------------------------------- */
+          /* History                                                                                  */
+          /* ---------------------------------------------------------------------------------------- */
+          // `temporal.undo`/`redo` are wrapped below to commit an open batch first.
+          undo: () => {
+            const before = revision;
+            history().undo();
+            return revision !== before;
+          },
+          redo: () => {
+            const before = revision;
+            history().redo();
+            return revision !== before;
+          },
+          changeToken: () => revision,
+          undoIfLatest: (token) => token === revision && actions.undo(),
 
           /* ---------------------------------------------------------------------------------------- */
           /* View state                                                                               */
@@ -895,9 +1068,13 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           changedCount: () => selectChangedCount(get()),
 
           setLabelers: (next) => {
-            if (next.labelFor) labelers.labelFor = next.labelFor;
+            if (next.labelFor && next.labelFor !== labelers.labelFor) {
+              pastLabelFor.add(labelers.labelFor);
+              labelers.labelFor = next.labelFor;
+            }
             if (next.screenNameFor) labelers.screenNameFor = next.screenNameFor;
             if (next.copyName) labelers.copyName = next.copyName;
+            if (next.isDefaultLabel) labelers.isDefaultLabel = next.isDefaultLabel;
           },
         };
 
@@ -917,6 +1094,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           generatedPrints: null,
           lastAdjustments: [],
           adjustmentsTick: 0,
+          batchBase: null,
           actions,
         };
       },
@@ -927,6 +1105,21 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
       },
     ),
   );
+
+  // zundo's undo/redo ignore `isTracking`: undoing inside an open batch would leave history paused. Every
+  // caller (toasts, layers, shortcuts) goes through these, so an open batch is committed first.
+  const { undo, redo } = store.temporal.getState();
+  store.temporal.setState({
+    undo: (steps) => {
+      store.getState().actions.commitBatch();
+      undo(steps);
+    },
+    redo: (steps) => {
+      store.getState().actions.commitBatch();
+      redo(steps);
+    },
+  });
+  return store;
 }
 
 /* ------------------------------------------------------------------------------------------------ */
@@ -981,16 +1174,25 @@ export function useLayoutEnv(): LayoutEnv {
   return env;
 }
 
-export type LayoutHistory = { canUndo: boolean; canRedo: boolean; undo: () => void; redo: () => void };
+export type LayoutHistory = { canUndo: boolean; canRedo: boolean; undo: () => boolean; redo: () => boolean };
+
+/** Whether an open batch has changed the screens (undo would commit it as a step, redo has nothing left). */
+export function selectBatchChanged(state: ScreensView & Pick<LayoutState, "batchBase">): boolean {
+  const base = state.batchBase;
+  return base !== null && (base.screens !== state.screens || base.screenOrder !== state.screenOrder);
+}
 
 /** Undo/redo of the screens (zundo). Selection, tool, device and view state are not part of it. */
 export function useLayoutHistory(): LayoutHistory {
   const store = useLayoutStoreApi();
-  const canUndo = useStore(store.temporal, (state) => state.pastStates.length > 0);
-  const canRedo = useStore(store.temporal, (state) => state.futureStates.length > 0);
+  const batchChanged = useStore(store, selectBatchChanged);
+  const past = useStore(store.temporal, (state) => state.pastStates.length > 0);
+  const future = useStore(store.temporal, (state) => state.futureStates.length > 0);
+  const canUndo = past || batchChanged;
+  const canRedo = future && !batchChanged;
   return useMemo(() => {
-    const temporalState = () => store.temporal.getState();
-    return { canUndo, canRedo, undo: () => temporalState().undo(), redo: () => temporalState().redo() };
+    const { actions } = store.getState();
+    return { canUndo, canRedo, undo: actions.undo, redo: actions.redo };
   }, [store, canUndo, canRedo]);
 }
 

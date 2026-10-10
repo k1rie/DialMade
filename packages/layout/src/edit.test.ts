@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_HEIGHT_ROWS, MAX_ROW } from "./constants";
 import {
   applyFix,
   descendantsOf,
@@ -340,5 +341,112 @@ describe("applyFix", () => {
     for (const fix of inferStructure(messy).warnings[0]!.fixes) {
       expect(inferStructure(applyFix(messy, fix)).warnings).toEqual([]);
     }
+  });
+});
+
+describe("edits never strand children or cover siblings", () => {
+  test("normalizeDrop never clips a container away from its children: it clips the other block", () => {
+    // Dragging kid out of the bottom of box: unnest, then a 1-row overlap with box (<15 %).
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 12, 40] },
+      { id: "kid", type: "text", rect: [0, 2, 4, 10], parent: "box" },
+      { id: "kid2", type: "text", rect: [4, 30, 4, 10], parent: "box" },
+    ]);
+    const dropped = normalizeDrop(moveBlock(layout, "kid", rect(0, 39, 4, 10)), "kid");
+    expect(dropped.adjustments).toEqual([
+      { kind: "unnest", id: "kid", parentId: "box" },
+      { kind: "clip", id: "kid", from: rect(0, 39, 4, 10), to: rect(0, 40, 4, 9) },
+    ]);
+    expect(dropped.layout.blocks.box!.rect).toEqual(rect(0, 0, 12, 40));
+    expect(inferStructure(dropped.layout).warnings).toEqual([]);
+
+    // Dropping x next to box (lower z) would cut box to 7 columns and leave c outside it.
+    const side = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 8, 40] },
+      { id: "c", type: "text", rect: [4, 2, 4, 10], parent: "box" },
+    ]);
+    const inserted = insertBlock(side, { type: "text", label: "x", rect: rect(7, 30, 5, 20), id: "x" });
+    expect(inserted.adjustments).toEqual([{ kind: "clip", id: "x", from: rect(7, 30, 5, 20), to: rect(8, 30, 4, 20) }]);
+    expect(inferStructure(inserted.layout).warnings).toEqual([]);
+  });
+
+  test("a stale clip fix that would strand a child does not apply", () => {
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 8, 40] },
+      { id: "c", type: "text", rect: [4, 2, 4, 10], parent: "box" },
+    ]);
+    expect(applyFix(layout, { kind: "clip", id: "box", rect: rect(0, 0, 7, 40) })).toBe(layout);
+    expect(applyFix(layout, { kind: "clip", id: "box", rect: rect(0, 0, 8, 30) }).blocks.box!.rect).toEqual(rect(0, 0, 8, 30));
+  });
+
+  test("a full container grows by pushing down what is below it (insert and duplicate)", () => {
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 10, 12, 20] },
+      { id: "full", type: "text", rect: [0, 10, 12, 20], parent: "box" },
+      { id: "footer", type: "footer", rect: [0, 30, 12, 20] },
+    ]);
+    const inserted = insertBlock(layout, { type: "text", label: "t", parentId: "box", id: "t" });
+    expect(inserted.grown).toEqual({ id: "box", from: rect(0, 10, 12, 20), to: rect(0, 10, 12, 40) });
+    expect(inserted.layout.blocks.footer!.rect).toEqual(rect(0, 50, 12, 20));
+    expect(inferStructure(inserted.layout).warnings).toEqual([]);
+
+    const duplicated = duplicateBlock(layout, "full", { newId: "copy" });
+    expect(duplicated.layout.blocks.copy).toMatchObject({ rect: rect(0, 30, 12, 20), parentId: "box" });
+    expect(duplicated.layout.blocks.footer!.rect).toEqual(rect(0, 50, 12, 20));
+    expect(inferStructure(duplicated.layout).warnings).toEqual([]);
+  });
+
+  test("growth goes up the ancestors; blocks beside the grown one stay", () => {
+    const layout = makeLayout([
+      { id: "outer", type: "container", rect: [0, 0, 12, 40] },
+      { id: "inner", type: "container", rect: [0, 0, 6, 30], parent: "outer" },
+      { id: "full", type: "cards", rect: [0, 0, 6, 30], parent: "inner" },
+      { id: "side", type: "text", rect: [6, 0, 6, 10], parent: "outer" },
+      { id: "below", type: "text", rect: [0, 32, 12, 8], parent: "outer" },
+      { id: "footer", type: "footer", rect: [0, 40, 12, 20] },
+    ]);
+    const { layout: next } = insertBlock(layout, { type: "text", label: "t", parentId: "inner", id: "t" });
+    expect(next.blocks.inner!.rect).toEqual(rect(0, 0, 6, 50));
+    expect(next.blocks.side!.rect).toEqual(rect(6, 0, 6, 10));
+    expect(next.blocks.below!.rect).toEqual(rect(0, 52, 12, 8));
+    expect(next.blocks.outer!.rect).toEqual(rect(0, 0, 12, 60));
+    expect(next.blocks.footer!.rect).toEqual(rect(0, 60, 12, 20));
+    expect(inferStructure(next).warnings).toEqual([]);
+  });
+
+  test("an overlay inserted into a container never grows it", () => {
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 12, 40] },
+      { id: "cta", type: "cta", rect: [0, 42, 12, 25] },
+    ]);
+    const result = insertBlock(layout, { type: "modal", label: "m", parentId: "box", id: "m" });
+    expect(result.grown).toBeUndefined();
+    expect(result.layout.blocks.box!.rect).toEqual(rect(0, 0, 12, 40));
+    expect(result.layout.blocks.m).toMatchObject({ rect: rect(3, 8, 6, 30), parentId: "box" });
+    // In a shorter container it moves up from row 8 to fit (34 - 30 = row 4).
+    const short = makeLayout([{ id: "box", type: "container", rect: [0, 0, 12, 34] }]);
+    expect(findFreeSlot(short, { w: 6, h: 30 }, { parentId: "box", overlay: true })).toEqual({ rect: rect(3, 4, 6, 30) });
+  });
+
+  test("the nest fix also puts the block inside its new parent", () => {
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 10, 40] },
+      { id: "t", type: "text", rect: [1, 2, 10, 20] },
+    ]);
+    const [warning] = inferStructure(layout).warnings;
+    expect(warning).toMatchObject({ code: "implicit-containment", fixes: [{ kind: "nest", id: "t", parentId: "box" }] });
+    const fixed = applyFix(layout, warning!.fixes[0]!);
+    expect(fixed.blocks.t).toMatchObject({ rect: rect(0, 2, 10, 20), parentId: "box" });
+    expect(inferStructure(fixed).warnings).toEqual([]);
+  });
+
+  test("rows and heights past the limits are clamped on drop", () => {
+    const layout = makeLayout([{ id: "a", type: "text", rect: [0, 0, 6, 10] }]);
+    const huge = moveBlock(layout, "a", rect(0, 999_999_999, 6, 125_000_000_000));
+    const { layout: next, adjustments } = normalizeDrop(huge, "a");
+    expect(next.blocks.a!.rect).toEqual(rect(0, MAX_ROW, 6, MAX_HEIGHT_ROWS));
+    expect(adjustments).toEqual([
+      { kind: "clamp", id: "a", from: rect(0, 999_999_999, 6, 125_000_000_000), to: rect(0, MAX_ROW, 6, MAX_HEIGHT_ROWS) },
+    ]);
   });
 });

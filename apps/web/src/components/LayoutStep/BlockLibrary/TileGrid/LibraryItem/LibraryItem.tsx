@@ -1,15 +1,18 @@
 "use client";
 
 import type { LibraryBlockType } from "@dialmade/layout";
-import { memo, useMemo, type KeyboardEvent } from "react";
+import { useDragDropManager } from "@dnd-kit/react";
+import { memo, useLayoutEffect, useMemo, useRef, type KeyboardEvent } from "react";
 import { DraggableItem } from "@/components/dnd/DraggableItem";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
-import { BlockIcon } from "../../icons";
-import { LIBRARY_DRAG_TYPE } from "../../constants";
-import type { LibraryDragData } from "../../types";
-import { isSoon, type TileMode } from "../libraryModel";
+import { LIBRARY_DRAG_TYPE } from "../../../constants";
+import { BlockIcon } from "../../../icons";
+import type { LibraryDragData } from "../../../types";
+import { CLEAR_STICKY_SEARCH } from "../../constants";
+import { isSoon, type TileMode } from "../../libraryModel";
+import { tileDescription, tileKeyAction, type LibraryHints } from "./tileKeyboard";
 import { TileTooltip } from "./TileTooltip";
 
 export type LibraryItemProps = {
@@ -18,28 +21,40 @@ export type LibraryItemProps = {
   mode: TileMode;
   /** Unique among the draggables of the DndProvider (`libraryDragId`). */
   dragId: string;
-  /** Click/Enter: insert (the parent announces and keeps focus here). */
+  /** Click: insert (the parent announces and keeps focus here). */
   onInsert: (type: LibraryBlockType) => void;
-  /** Ids of the shared hidden hints: how to insert or drag, «Pronto», navigation frame, app only. */
-  hints: { insert: string; soon: string; frame: string; appOnly: string };
+  /** Ids of the shared hidden hints: keyboard use, «Pronto», navigation frame, app only. */
+  hints: LibraryHints;
 };
 
 /** The cell carries `data-library-tile` (`TILE_ATTR`): TileGrid finds tiles by it for the arrow keys. */
 const CELL = "group relative h-full min-w-0";
-const TILE_FOCUS = "scroll-mt-20 scroll-mb-2 rounded-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const TILE_FOCUS = cn(CLEAR_STICKY_SEARCH, "rounded-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent");
 
 /**
  * A library tile (ref. 11F Klaviyo): icon on top, name below and a «Pronto» badge for soon blocks.
- * Drag it onto the canvas, click it or press Enter to insert it in the next free slot, or pick it up
- * with Space and place it with the arrow keys. On a landing the sidebar is a disabled tile (still
- * focusable, so its tooltip «Solo en pantallas de app» can be read).
+ * Drag it onto the canvas or click it to insert it in the next free slot. From the keyboard, Space or
+ * Enter picks it up and drops it (next free slot, or where the arrows took it). On a landing the sidebar is
+ * a disabled tile (still focusable, so its tooltip «Solo en pantallas de app» can be read).
  */
 export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onInsert, hints }: LibraryItemProps) {
   const t = useDictionary(layout);
+  const manager = useDragDropManager();
+  const faceRef = useRef<HTMLDivElement>(null);
   const text = t.blocks[type];
   const soon = isSoon(type);
   const data = useMemo<LibraryDragData>(() => ({ blockType: type }), [type]);
   const label = t.library.item(text.name, text.description, soon);
+  const describedBy = tileDescription(hints, mode, soon);
+  const draggable = mode !== "appOnly";
+
+  // DraggableItem always points at the generic drag instructions («Espacio o Enter para coger»), which do
+  // not say where a tile lands. The tile's own hint already says everything, so it replaces them.
+  // Fase B: DraggableItem takes the instructions by prop and this goes away (modo-layout-fase-b.md).
+  useLayoutEffect(() => {
+    if (!draggable) return;
+    faceRef.current?.closest<HTMLElement>('[role="button"]')?.setAttribute("aria-describedby", describedBy);
+  }, [draggable, describedBy]);
 
   const tooltip = (
     <>
@@ -51,6 +66,7 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
 
   const face = (
     <div
+      ref={faceRef}
       className={cn(
         "relative flex h-full min-h-[5.25rem] flex-col items-center gap-1.5 rounded-[inherit] border px-1.5 pt-5 pb-2 text-center",
         "border-app bg-surface shadow-surface transition-[background-color,border-color,color] duration-150",
@@ -67,8 +83,8 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
     </div>
   );
 
-  if (mode === "appOnly") {
-    // Not draggable and not insertable, but reachable: Enter or a click explain why (announced).
+  if (!draggable) {
+    // Not draggable and not insertable, but reachable: Enter, Space or a click explain why (announced).
     const explain = () => onInsert(type);
     return (
       <TileTooltip content={tooltip} className={CELL} data-library-tile="">
@@ -77,10 +93,10 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
           tabIndex={0}
           aria-disabled
           aria-label={label}
-          aria-describedby={hints.appOnly}
+          aria-describedby={describedBy}
           onClick={explain}
           onKeyDown={(event) => {
-            if (event.key !== "Enter" || event.repeat) return;
+            if ((event.key !== "Enter" && event.key !== " ") || event.repeat) return;
             event.preventDefault();
             explain();
           }}
@@ -92,17 +108,13 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
     );
   }
 
-  // Enter inserts (spec §3.2) before dnd-kit sees it; Space stays the keyboard grab of the drag sensor.
-  // During a keyboard drag the sensor handles Enter first (drop) and marks the event as handled.
+  // Root capture phase: runs before the drag sensor's listeners, so a held or modified Space/Enter never
+  // starts a drag. Plain Space/Enter pass through: the sensor grabs and drops.
   const onKeyDownCapture = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter" || event.defaultPrevented) return;
+    if (tileKeyAction(event, manager?.dragOperation.status.idle ?? true) === "pass") return;
     event.preventDefault();
     event.stopPropagation();
-    if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    onInsert(type);
   };
-
-  const describedBy = cn(hints.insert, mode === "frame" && hints.frame, soon && hints.soon);
 
   return (
     <TileTooltip content={tooltip} className={CELL} onKeyDownCapture={onKeyDownCapture} data-library-tile="">

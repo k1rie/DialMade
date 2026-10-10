@@ -20,7 +20,7 @@ import { MoveToMenu } from "./MoveToMenu";
 import { NameField } from "./NameField";
 import { NoteField } from "./NoteField";
 import { PositionFields } from "./PositionFields";
-import { FIELD_HINT } from "./styles";
+import { FIELD_HINT } from "../fieldStyles";
 import { TypeField } from "./TypeField";
 
 export type BlockInspectorProps = { className?: string };

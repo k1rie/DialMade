@@ -7,10 +7,10 @@ import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { popVariants } from "@/lib/motion";
-import { PlusIcon } from "../../icons";
-import { LayoutThumbnail, templatePreview } from "../../LayoutThumbnail";
+import { PlusIcon } from "../icons";
 import { KindBadge } from "../KindBadge";
 import { KindQuestion } from "../KindQuestion";
+import { LayoutThumbnail, templatePreview } from "../LayoutThumbnail";
 
 /** Marks the options for ↑/↓ (the KindQuestion answers are not part of that cycle). */
 const OPTION_SELECTOR = "[data-template-option]";

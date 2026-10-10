@@ -69,12 +69,10 @@ export function LayoutTopBar({ className }: LayoutTopBarProps) {
   };
 
   const undo = () => {
-    history.undo();
-    announce(t.announce.undone);
+    if (history.undo()) announce(t.announce.undone);
   };
   const redo = () => {
-    history.redo();
-    announce(t.announce.redone);
+    if (history.redo()) announce(t.announce.redone);
   };
 
   const goToStyle = () => {

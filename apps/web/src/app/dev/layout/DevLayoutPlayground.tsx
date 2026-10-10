@@ -59,7 +59,7 @@ export function DevLayoutPlayground() {
               {JSON.stringify(summarize(last), null, 2)}
             </pre>
           ) : (
-            <p className="text-small text-subtle">{t.dev.empty}</p>
+            <p className="text-small text-muted">{t.dev.empty}</p>
           )}
         </Panel>
       </main>

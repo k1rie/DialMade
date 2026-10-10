@@ -2,33 +2,41 @@ import type { Adjustment, GridRect, LayoutBlock, LayoutDoc, LayoutWarning } from
 import { describe, expect, it } from "vitest";
 import type { GridMetrics } from "../../../lib/geometry/grid";
 import { HANDLES } from "../../../lib/geometry/rect";
-import { FRAME_GUTTER_PX, FRAME_MIN_ROWS, FRAME_PAD_ROWS, HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
-import { MIN_BLOCK_SIZE, Z_DEPTH_STEP } from "./constants";
+import { HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
+import { FRAME_GUTTER_PX, FRAME_MIN_ROWS, FRAME_PAD_ROWS, MIN_BLOCK_SIZE, Z_ACTIVE, Z_BADGE, Z_OVERLAY } from "./constants";
 import {
   adjustedIds,
+  askingStillValid,
   blockBox,
-  blockDepths,
   bottomRow,
   containerFor,
   defaultSizeOf,
+  derivedLayoutFor,
   drawGesture,
   dropRect,
   edgeScrollStep,
+  focusAfterChange,
   frameGeometry,
   frameHeightPx,
   frameRows,
   fromGridUnits,
   keyboardGrabStep,
+  layoutKeyOf,
+  layoutSpringFor,
   MIN_FRAME_WIDTH,
   moveGesture,
   navForDevice,
+  nearestSurvivor,
   panScroll,
   pastThreshold,
+  promoteToMove,
   rectKey,
   relativePoint,
   resizeGesture,
+  revealScrollTop,
   sameRect,
-  stackingZ,
+  scrollAfterDeviceSwitch,
+  stackingOrder,
   toGridUnits,
   warningsByBlock,
   withDescendants,
@@ -310,7 +318,7 @@ describe("containerFor", () => {
   });
 });
 
-describe("withDescendants / blockDepths / stackingZ", () => {
+describe("withDescendants / stackingOrder", () => {
   const layout = layoutOf({
     root: { type: "container", rect: rect(0, 0, 12, 50) },
     child: { type: "container", rect: rect(0, 0, 6, 20), parentId: "root" },
@@ -330,33 +338,68 @@ describe("withDescendants / blockDepths / stackingZ", () => {
     expect(withDescendants(layout, "a")).toEqual(new Set(["a", "b"]));
   });
 
-  it("measures nesting depth, treating missing parents as root", () => {
-    const depths = blockDepths(layout);
-    expect(depths.get("root")).toBe(0);
-    expect(depths.get("child")).toBe(1);
-    expect(depths.get("grandchild")).toBe(2);
-    expect(depths.get("loose")).toBe(0);
-    expect(depths.get("orphan")).toBe(0);
+  it("numbers every block 1…N, cycles and missing parents included", () => {
+    const order = stackingOrder(layout);
+    expect(order.size).toBe(Object.keys(layout.blocks).length);
+    expect([...order.values()].sort((x, y) => x - y)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
-  it("gives every block of a cycle a finite depth", () => {
-    const depths = blockDepths(layout);
-    expect(depths.size).toBe(Object.keys(layout.blocks).length);
-    expect(new Set([depths.get("a"), depths.get("b")])).toEqual(new Set([0, 1]));
+  it("stacks children above their parents whatever their z", () => {
+    const deep = layoutOf({
+      parent: { type: "container", rect: rect(0, 0, 12, 50), z: 900 },
+      kid: { type: "text", rect: rect(0, 0, 3, 5), parentId: "parent", z: 0 },
+      grandkid: { type: "text", rect: rect(0, 0, 1, 2), parentId: "kid", z: -4 },
+    });
+    const order = stackingOrder(deep);
+    expect(order.get("kid")!).toBeGreaterThan(order.get("parent")!);
+    expect(order.get("grandkid")!).toBeGreaterThan(order.get("kid")!);
   });
 
-  it("does not depend on the order of the blocks", () => {
+  it("puts a later root block above every descendant of an earlier container (finding 44)", () => {
+    // A Contenedor with Tarjetas inside, and a Modal that stays at the root over part of them.
+    const overlapped = layoutOf({
+      box: { type: "container", rect: rect(0, 0, 12, 60), z: 1 },
+      cards: { type: "cards", rect: rect(0, 0, 12, 20), parentId: "box", z: 2 },
+      modal: { type: "modal", rect: rect(2, 10, 6, 30), z: 3 },
+    });
+    const order = stackingOrder(overlapped);
+    expect(order.get("modal")!).toBeGreaterThan(order.get("cards")!);
+    expect(order.get("cards")!).toBeGreaterThan(order.get("box")!);
+  });
+
+  it("keeps each subtree a contiguous band, ordered among siblings by z", () => {
+    const bands = layoutOf({
+      high: { type: "container", rect: rect(0, 0, 6, 20), z: 5 },
+      highKid: { type: "text", rect: rect(0, 0, 3, 5), parentId: "high", z: 1 },
+      low: { type: "container", rect: rect(6, 0, 6, 20), z: 2 },
+      lowKid: { type: "text", rect: rect(6, 0, 3, 5), parentId: "low", z: 9 },
+      lowKid2: { type: "text", rect: rect(9, 0, 3, 5), parentId: "low", z: 3 },
+    });
+    const order = stackingOrder(bands);
+    expect(order.get("low")).toBe(1);
+    expect(order.get("lowKid2")).toBe(2);
+    expect(order.get("lowKid")).toBe(3);
+    expect(order.get("high")).toBe(4);
+    expect(order.get("highKid")).toBe(5);
+  });
+
+  it("breaks ties in z by reading order, then by id", () => {
+    const tie = layoutOf({
+      x: { type: "text", rect: rect(0, 0, 3, 5), z: 1 },
+      y: { type: "text", rect: rect(3, 0, 3, 5), z: 1 },
+    });
+    expect(stackingOrder(tie, ["y", "x"]).get("y")).toBe(1);
+    expect(stackingOrder(tie).get("x")).toBe(1);
+  });
+
+  it("does not depend on the order of the blocks in the record", () => {
     const reversed: LayoutDoc = { ...layout, blocks: Object.fromEntries(Object.entries(layout.blocks).reverse()) };
-    const depths = blockDepths(reversed);
-    expect(depths.get("grandchild")).toBe(2);
-    expect(depths.get("child")).toBe(1);
+    expect(stackingOrder(reversed)).toEqual(stackingOrder(layout));
   });
 
-  it("stacks children above parents whatever their z", () => {
-    expect(stackingZ(1, 0)).toBeGreaterThan(stackingZ(0, Z_DEPTH_STEP - 1));
-    expect(stackingZ(0, 5)).toBeGreaterThan(stackingZ(0, 4));
-    expect(stackingZ(0, -3)).toBeGreaterThan(0);
-    expect(stackingZ(0, 99_999)).toBeLessThan(stackingZ(1, 0));
+  it("stays far below the lifted and overlay layers", () => {
+    const many = layoutOf(Object.fromEntries(Array.from({ length: 300 }, (_, index) => [`b${index}`, { type: "text" as const, rect: rect(0, index, 1, 1) }])));
+    expect(Math.max(...stackingOrder(many).values())).toBeLessThan(Z_ACTIVE);
   });
 });
 
@@ -536,5 +579,160 @@ describe("properties", () => {
       const moved = moveGesture(start, { x: 0, y: 0 }, { x: (random() - 0.5) * 3000, y: (random() - 0.5) * 3000 }, M);
       expect([moved.w, moved.h]).toEqual([start.w, start.h]);
     }
+  });
+});
+
+describe("layout springs (finding 55)", () => {
+  it("uses the smooth spring only when the device changed", () => {
+    expect(layoutSpringFor(layoutKeyOf("desktop", rect(0, 0, 4, 4)), layoutKeyOf("tablet", rect(0, 0, 4, 4)))).toBe("smooth");
+    expect(layoutSpringFor(layoutKeyOf("tablet", rect(0, 0, 4, 4)), layoutKeyOf("desktop", rect(1, 0, 4, 4)))).toBe("smooth");
+    expect(layoutSpringFor(layoutKeyOf("desktop", rect(0, 0, 4, 4)), layoutKeyOf("desktop", rect(3, 9, 4, 4)))).toBe("snappy");
+    expect(layoutKeyOf("mobile", rect(1, 2, 3, 4))).toBe(`mobile:${rectKey(rect(1, 2, 3, 4))}`);
+  });
+});
+
+describe("promoteToMove (finding 17)", () => {
+  it("reads the start rect after settling a keyboard-held block, not the pre-grab one", () => {
+    // Held with Space and moved 4 columns right (local preview); the store still has col 1.
+    let layout = layoutOf({ a: { type: "text", rect: rect(1, 0, 2, 4) }, kid: { type: "text", rect: rect(1, 0, 1, 2), parentId: "a" } });
+    const settle = () => {
+      // Dropping the grab commits its rect.
+      layout = { ...layout, blocks: { ...layout.blocks, a: { ...layout.blocks.a!, rect: rect(5, 0, 2, 4) } } };
+    };
+    const move = promoteToMove("a", settle, () => layout);
+    expect(move?.start).toEqual(rect(5, 0, 2, 4));
+    expect(move?.followers).toEqual(new Set(["a", "kid"]));
+    // Dragging one column right from where the block is shown lands on col 6, not col 2.
+    expect(moveGesture(move!.start, { x: 550, y: 0 }, { x: 650, y: 0 }, M)).toEqual(rect(6, 0, 2, 4));
+  });
+
+  it("gives up when the block is gone by then", () => {
+    expect(promoteToMove("a", () => {}, () => layoutOf({}))).toBeNull();
+  });
+});
+
+describe("revealScrollTop / scrollAfterDeviceSwitch (finding 20, device switch)", () => {
+  const view = { scrollTop: 400, height: 300 };
+
+  it("leaves a fully visible box alone", () => {
+    expect(revealScrollTop(view, { top: 450, height: 100 })).toBeNull();
+    expect(revealScrollTop(view, { top: 400, height: 300 })).toBeNull();
+  });
+
+  it("scrolls the least needed, with a margin, to show a box below or above", () => {
+    expect(revealScrollTop(view, { top: 680, height: 40 })).toBe(680 + 40 + 24 - 300);
+    expect(revealScrollTop(view, { top: 380, height: 40 })).toBe(380 - 24);
+    expect(revealScrollTop(view, { top: 10, height: 40 })).toBe(0);
+  });
+
+  it("leaves a box taller than the view alone while part of it shows, else brings its nearest edge in", () => {
+    expect(revealScrollTop(view, { top: 300, height: 900 })).toBeNull();
+    expect(revealScrollTop(view, { top: 800, height: 900 })).toBe(800 - 24);
+    expect(revealScrollTop(view, { top: -600, height: 900 })).toBe(300 + 24 - 300);
+    expect(revealScrollTop({ scrollTop: 2000, height: 300 }, { top: 100, height: 900 })).toBe(100 + 900 + 24 - 300);
+  });
+
+  it("puts a box a third of the way down in «third» mode", () => {
+    expect(revealScrollTop(view, { top: 1000, height: 60 }, "third")).toBe(1000 - 80);
+  });
+
+  it("follows a held block moved by keyboard one row at a time", () => {
+    let scrollTop = 0;
+    const height = 300;
+    for (let row = 0; row < 400; row++) {
+      const box = { top: row * 4, height: 40 };
+      scrollTop = revealScrollTop({ scrollTop, height }, box) ?? scrollTop;
+      expect(box.top).toBeGreaterThanOrEqual(scrollTop);
+      expect(box.top + box.height).toBeLessThanOrEqual(scrollTop + height);
+    }
+  });
+
+  it("ignores views and boxes that cannot be measured", () => {
+    expect(revealScrollTop({ scrollTop: 0, height: 0 }, { top: 500, height: 10 })).toBeNull();
+    expect(revealScrollTop(view, { top: Number.NaN, height: 10 })).toBeNull();
+  });
+
+  it("after a device switch: back to the top with nothing selected, the selection revealed otherwise", () => {
+    expect(scrollAfterDeviceSwitch({ scrollTop: 5000, height: 600 }, null)).toBe(0);
+    expect(scrollAfterDeviceSwitch({ scrollTop: 5000, height: 600 }, { top: 300, height: 80 })).toBe(Math.round(300 - (600 - 80) / 3));
+    expect(scrollAfterDeviceSwitch({ scrollTop: 200, height: 600 }, { top: 300, height: 80 })).toBe(200);
+  });
+});
+
+describe("focus after a change (findings 19 / 23)", () => {
+  const order = ["a", "b", "c", "d"];
+  const alive = (...ids: string[]) => (id: string) => ids.includes(id);
+
+  it("finds the nearest survivor after the block, else before it", () => {
+    expect(nearestSurvivor(order, "b", alive("a", "c", "d"))).toBe("c");
+    expect(nearestSurvivor(order, "d", alive("a", "b"))).toBe("b");
+    expect(nearestSurvivor(order, "z", alive("c"))).toBe("c");
+    expect(nearestSurvivor(order, "a", alive())).toBeNull();
+  });
+
+  it("keeps focus where it is when it was not on a block or its block survived", () => {
+    expect(focusAfterChange({ focused: null, previousOrder: order, exists: alive("a"), selected: "a" })).toBeNull();
+    expect(focusAfterChange({ focused: "b", previousOrder: order, exists: alive("b"), selected: null, prefer: "a" })).toBeNull();
+  });
+
+  it("never drops focus to <body> when the focused block vanished", () => {
+    // ⌘D focuses the copy, ⌘Z removes it.
+    expect(focusAfterChange({ focused: "copy", previousOrder: [...order, "copy"], exists: alive(...order), selected: null })).toBe("d");
+    expect(focusAfterChange({ focused: "b", previousOrder: order, exists: alive("a", "c"), selected: "c" })).toBe("c");
+    expect(focusAfterChange({ focused: "b", previousOrder: order, exists: alive(), selected: null })).toBe("scroller");
+  });
+
+  it("brings focus back from a closing toast or <body>: preferred block, selection, else the scroller", () => {
+    expect(focusAfterChange({ focused: "lost", previousOrder: order, exists: alive("a", "x"), selected: "a", prefer: "x" })).toBe("x");
+    expect(focusAfterChange({ focused: "lost", previousOrder: order, exists: alive("a"), selected: "a" })).toBe("a");
+    expect(focusAfterChange({ focused: "lost", previousOrder: order, exists: alive("a", "b"), selected: null })).toBe("scroller");
+  });
+
+  it("prefers the block the change brought back", () => {
+    expect(focusAfterChange({ focused: "b", previousOrder: order, exists: alive("a", "x"), selected: "a", prefer: "x" })).toBe("x");
+    expect(focusAfterChange({ focused: null, previousOrder: order, exists: alive("x"), selected: null, prefer: "x" })).toBe("x");
+    expect(focusAfterChange({ focused: null, previousOrder: order, exists: alive(), selected: null, prefer: "x" })).toBeNull();
+  });
+});
+
+describe("derivedLayoutFor (finding 57)", () => {
+  const layout = layoutOf({ a: { type: "text", rect: rect(0, 0, 4, 4) } });
+
+  it("never derives on desktop", () => {
+    let calls = 0;
+    const derive = () => {
+      calls++;
+      throw new Error("desktop must not derive");
+    };
+    expect(derivedLayoutFor(layout, "desktop", derive)).toBeNull();
+    expect(derivedLayoutFor(null, "tablet", derive)).toBeNull();
+    expect(calls).toBe(0);
+  });
+
+  it("returns the device's derived layout on tablet and mobile", () => {
+    const tablet = { breakpoint: "tablet", columns: 8, blocks: {}, nodes: {}, order: [] } as const;
+    const mobile = { breakpoint: "mobile", columns: 4, blocks: {}, nodes: {}, order: [] } as const;
+    const derive = () => ({ tablet: { ...tablet, order: [] }, mobile: { ...mobile, order: [] } });
+    expect(derivedLayoutFor(layout, "tablet", derive)?.breakpoint).toBe("tablet");
+    expect(derivedLayoutFor(layout, "mobile", derive)?.columns).toBe(4);
+  });
+});
+
+describe("askingStillValid (finding 41)", () => {
+  const layout = layoutOf({ drawn: { type: "free", rect: rect(0, 0, 4, 4) } });
+
+  it("keeps «¿Qué es esto?» only on desktop with its block on the shown screen", () => {
+    expect(askingStillValid("desktop", layout, "drawn")).toBe(true);
+    expect(askingStillValid("tablet", layout, "drawn")).toBe(false);
+    expect(askingStillValid("desktop", layoutOf({}), "drawn")).toBe(false);
+    expect(askingStillValid("desktop", null, "drawn")).toBe(false);
+    expect(askingStillValid("desktop", layout, null)).toBe(false);
+  });
+});
+
+describe("canvas layers (findings 4, 18, 25)", () => {
+  it("keeps badges above the resize handles, and both above any lifted block", () => {
+    expect(Z_BADGE).toBeGreaterThan(Z_OVERLAY);
+    expect(Z_OVERLAY).toBeGreaterThan(Z_ACTIVE + 100_000);
   });
 });

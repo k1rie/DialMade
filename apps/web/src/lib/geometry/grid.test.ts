@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { HANDLES, type Handle } from "./rect";
 import { gridToPx, nudgeGrid, pxToCell, rowsToPx, snapDraw, snapMove, snapResize, type GridMetrics, type GridSize } from "./grid";
-import type { GridRect } from "@dialmade/layout";
+import { MAX_HEIGHT_ROWS, MAX_ROW, type GridRect } from "@dialmade/layout";
 
 /** 12 columns of 100 px, rows of 8 px (k = 1). */
 const M: GridMetrics = { colPx: 100, rowPx: 8, columns: 12 };
@@ -69,8 +69,9 @@ describe("snapMove", () => {
     expect(snapMove(start, 2000, 0, M)).toEqual(rect(8, 10, 4, 6));
   });
 
-  it("has no bottom limit", () => {
+  it("grows down to the engine's last row, never past it", () => {
     expect(snapMove(start, 0, 8000, M)).toEqual(rect(2, 1010, 4, 6));
+    expect(snapMove(start, 0, 8e9, M)).toEqual(rect(2, MAX_ROW, 4, 6));
   });
 
   it("fits a rect wider than the frame", () => {
@@ -128,7 +129,7 @@ describe("snapResize", () => {
     expect(snapResize(start, "se", -9000, -9000, M, MIN)).toEqual(rect(4, 10, 2, 4));
   });
 
-  it("has no bottom limit", () => {
+  it("grows down freely up to the engine's tallest height", () => {
     expect(snapResize(start, "s", 0, 8000, M, MIN)).toEqual(rect(4, 10, 4, 1010));
   });
 
@@ -228,6 +229,12 @@ describe("nudgeGrid", () => {
 
   it("never grows past the last column", () => {
     expect(nudgeGrid(rect(8, 0, 4, 6), "ArrowRight", true, 12)).toEqual(rect(8, 0, 4, 6));
+  });
+
+  it("stops at the engine's last row and tallest height (same bounds as the store and validateLayout)", () => {
+    expect(nudgeGrid(rect(0, MAX_ROW, 4, 6), "ArrowDown", false, 12)).toEqual(rect(0, MAX_ROW, 4, 6));
+    expect(nudgeGrid(rect(0, 0, 4, MAX_HEIGHT_ROWS), "ArrowDown", true, 12)).toEqual(rect(0, 0, 4, MAX_HEIGHT_ROWS));
+    expect(snapResize(rect(0, 0, 4, 6), "s", 0, 8e9, M, MIN)).toEqual(rect(0, 0, 4, MAX_HEIGHT_ROWS));
   });
 
   it("follows the column count of the frame", () => {

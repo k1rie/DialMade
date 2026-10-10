@@ -171,7 +171,10 @@ const UNITS_EN: Readonly<Record<CountUnit, readonly [string, string]>> = {
   links: ["link", "links"],
 };
 
-/** Names of the variants a block can generate (`ContentEstimate` «variant»). Unknown ids fall back to the id. */
+/**
+ * Names of the variants a block can generate (`ContentEstimate` «variant»): the keys are the ids
+ * `estimateContent` returns (layout.test.ts checks every one has an entry). Unknown ids fall back to the id.
+ */
 const variants = (names: Record<string, string>): Record<string, string> => names;
 
 const VARIANTS_ES = variants({
@@ -179,7 +182,7 @@ const VARIANTS_ES = variants({
   week: "Semana",
   day: "Día",
   agenda: "Agenda",
-  "mini-month": "Mes compacto",
+  mini: "Mes compacto",
   split: "Texto y visual",
   centered: "Centrado",
   stacked: "Apilado",
@@ -214,7 +217,7 @@ const VARIANTS_EN = variants({
   week: "Week",
   day: "Day",
   agenda: "Agenda",
-  "mini-month": "Mini month",
+  mini: "Mini month",
   split: "Split",
   centered: "Centered",
   stacked: "Stacked",
@@ -407,8 +410,9 @@ export const layout = defineDictionary({
       block: (b: BlockAriaInput) => blockAriaEs(b),
       /** «columnas 1 a 8, de 24 a 504 px». */
       position: (rect: GridRect) => positionEs(rect),
-      instructions:
-        "Espacio o Enter coge el bloque. Con el bloque cogido, las flechas lo mueven y Shift + flechas cambian su tamaño. Espacio o Enter lo suelta y Esc cancela. Supr lo borra y F2 lo renombra.",
+      /** Description of every editable block; Supr and F2 only while the single-key shortcuts are on. */
+      instructions: (singleKeys: boolean) =>
+        `Espacio o Enter coge el bloque. Con el bloque cogido, las flechas lo mueven y Shift + flechas cambian su tamaño. Espacio o Enter lo suelta y Esc cancela.${singleKeys ? " Supr lo borra y F2 lo renombra." : ""}`,
       grabbed: (name: string) => `Has cogido ${name}. Flechas para mover, Shift + flechas para cambiar el tamaño, Espacio o Enter para soltar, Esc para cancelar.`,
       moved: (name: string, rect: GridRect) => `${name}: ${positionEs(rect)}.`,
       resized: (name: string, rect: GridRect) => `${name}, nuevo tamaño: ${positionEs(rect)}.`,
@@ -478,13 +482,14 @@ export const layout = defineDictionary({
       soonHint: "Ya lo puedes colocar: sale como marcador con su nombre hasta que esté listo.",
       vote: "Votar en GitHub",
       voteLabel: (name: string) => `Votar por ${name} en GitHub (se abre en otra pestaña)`,
-      insertHint: "Clic o Enter para añadir. Arrastra para colocarlo donde quieras.",
+      /** With `grabHint`, a tile's whole keyboard help (it replaces the generic drag instructions). */
+      insertHint: "Clic: lo añade en el siguiente hueco libre.",
       insert: (name: string) => `Añadir ${name}`,
       item: (name: string, description: string, soon: boolean) => `${name}${soon ? ", pronto" : ""}. ${description}`,
       appOnly: "Solo en pantallas de app",
       frameInApp: "En pantallas de app cambia la navegación",
       appOnlyHint: (name: string) => `${name} solo existe como navegación de las pantallas de app.`,
-      grabHint: "Con Espacio lo coges para colocarlo en el lienzo con las flechas. Espacio lo suelta y Esc cancela.",
+      grabHint: "Con teclado: Espacio o Enter lo coge y Espacio o Enter lo suelta en el siguiente hueco libre. Para elegir el sitio, antes de soltarlo muévete hasta el lienzo con las flechas. Esc cancela.",
       useFreeLabel: (label: string) => `Usar bloque libre llamado «${label}»`,
       category: (name: string, n: number) => `${name}, ${plural(n, "bloque", "bloques")}`,
       showMore: (n: number) => `Ver ${n} más`,
@@ -834,6 +839,7 @@ export const layout = defineDictionary({
       more: "Más",
       yes: "Sí",
       no: "No",
+      undoStale: "Ya hiciste otros cambios. Usa ⌘Z o Ctrl+Z para deshacer paso a paso.",
     },
   },
   en: {
@@ -977,8 +983,8 @@ export const layout = defineDictionary({
       roleDescription: "block",
       block: (b: BlockAriaInput) => blockAriaEn(b),
       position: (rect: GridRect) => positionEn(rect),
-      instructions:
-        "Space or Enter picks up the block. While holding it, the arrow keys move it and Shift + arrows resize it. Space or Enter drops it and Esc cancels. Delete removes it and F2 renames it.",
+      instructions: (singleKeys: boolean) =>
+        `Space or Enter picks up the block. While holding it, the arrow keys move it and Shift + arrows resize it. Space or Enter drops it and Esc cancels.${singleKeys ? " Delete removes it and F2 renames it." : ""}`,
       grabbed: (name: string) => `Picked up ${name}. Arrows to move, Shift + arrows to resize, Space or Enter to drop, Esc to cancel.`,
       moved: (name: string, rect: GridRect) => `${name}: ${positionEn(rect)}.`,
       resized: (name: string, rect: GridRect) => `${name}, new size: ${positionEn(rect)}.`,
@@ -1045,13 +1051,13 @@ export const layout = defineDictionary({
       soonHint: "You can place it now: it renders as a named placeholder until it's ready.",
       vote: "Vote on GitHub",
       voteLabel: (name: string) => `Vote for ${name} on GitHub (opens in a new tab)`,
-      insertHint: "Click or press Enter to add. Drag to place it wherever you want.",
+      insertHint: "Click adds it in the next free slot.",
       insert: (name: string) => `Add ${name}`,
       item: (name: string, description: string, soon: boolean) => `${name}${soon ? ", coming soon" : ""}. ${description}`,
       appOnly: "App screens only",
       frameInApp: "On app screens it changes the navigation",
       appOnlyHint: (name: string) => `${name} only exists as the navigation of app screens.`,
-      grabHint: "Press Space to pick it up and place it on the canvas with the arrow keys. Space drops it and Esc cancels.",
+      grabHint: "With the keyboard: Space or Enter picks it up and Space or Enter drops it in the next free slot. To choose the spot, move to the canvas with the arrow keys before dropping it. Esc cancels.",
       useFreeLabel: (label: string) => `Use a free block named “${label}”`,
       category: (name: string, n: number) => `${name}, ${plural(n, "block", "blocks")}`,
       showMore: (n: number) => `Show ${n} more`,
@@ -1397,6 +1403,7 @@ export const layout = defineDictionary({
       more: "More",
       yes: "Yes",
       no: "No",
+      undoStale: "You've made other changes since. Use ⌘Z or Ctrl+Z to undo step by step.",
     },
   },
 });

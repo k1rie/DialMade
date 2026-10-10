@@ -8,8 +8,8 @@ import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { popVariants } from "@/lib/motion";
 import { PlusIcon } from "../../icons";
+import { KindQuestion } from "../../KindQuestion";
 import { CARD_PREVIEW, CARD_SURFACE } from "../constants";
-import { KindQuestion } from "../KindQuestion";
 
 export type BlankCardProps = {
   onChoose: (kind: ScreenKind) => void;

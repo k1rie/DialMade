@@ -1,12 +1,12 @@
-import type { GridRect } from "@dialmade/layout";
+import { MAX_HEIGHT_ROWS, MAX_ROW, type GridRect } from "@dialmade/layout";
 import { clamp, type Handle, type Point } from "./rect";
 
 /**
  * Grid geometry of the Layout canvas. The grid is drawn in screen px (no CSS `scale()`): one column is
  * `colPx` wide and one row `rowPx` tall, so pointer deltas convert straight to grid units. Rects are
  * `GridRect`s (integers; `col`/`w` in columns, `row`/`h` in rows) and every helper returns a valid one:
- * inside `0..columns` horizontally, `row ≥ 0`, at least the minimum size. Rows have no bottom limit (the
- * frame grows). Pure functions, no DOM.
+ * inside `0..columns` horizontally, `row` in `0..MAX_ROW`, at least the minimum size and at most
+ * `MAX_HEIGHT_ROWS` tall: the frame grows down to the engine's bounds, never past them. Pure functions, no DOM.
  */
 
 /** Size of one grid cell on screen and the number of columns of the frame (12 desktop, 8 tablet, 4 mobile). */
@@ -35,10 +35,10 @@ function minSize(min: GridSize, columns: number): GridSize {
   return { w: clamp(Math.floor(min.w) || 1, 1, Math.max(1, columns)), h: Math.max(1, Math.floor(min.h) || 1) };
 }
 
-/** Clamps a rect into the columns (width first, then position) and keeps `row ≥ 0`. */
+/** Clamps a rect into the columns (width first, then position) and its row and height into the engine's bounds. */
 function fit(rect: GridRect, columns: number): GridRect {
   const w = clamp(rect.w, 1, Math.max(1, columns));
-  return { col: clamp(rect.col, 0, Math.max(0, columns - w)), row: Math.max(0, rect.row), w, h: Math.max(1, rect.h) };
+  return { col: clamp(rect.col, 0, Math.max(0, columns - w)), row: clamp(rect.row, 0, MAX_ROW), w, h: clamp(rect.h, 1, MAX_HEIGHT_ROWS) };
 }
 
 /** Grid rect → screen px (relative to the grid origin). */

@@ -7,7 +7,7 @@ import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { PhoneIcon, TabletIcon } from "../../icons";
 import { useLayoutActions } from "../../useLayoutStore";
-import { FIELD_HINT, FIELD_LABEL, FIELD_SELECT } from "../styles";
+import { FIELD_HINT, FIELD_LABEL, FIELD_SELECT } from "../../fieldStyles";
 
 export type DeviceFieldsProps = {
   blockId: BlockId;

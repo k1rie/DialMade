@@ -6,7 +6,6 @@ import {
   isLibraryBlockType,
   type Adjustment,
   type BlockId,
-  type Breakpoint,
   type GridRect,
   type LayoutDoc,
   type LayoutFix,
@@ -20,9 +19,9 @@ import { Button } from "@/components/ui/Button";
 import { useDictionary } from "@/i18n";
 import { layout as layoutText } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
-import { smooth, snappy } from "@/lib/motion";
 import { describeAdjustments } from "../adjustments";
-import { FRAME_GUTTER_PX, INSPECTOR_NAME_ID, REGION_AUTOFOCUS_ATTR } from "../constants";
+import { INSPECTOR_NAME_ID, REGION_AUTOFOCUS_ATTR } from "../constants";
+import { getResponsive } from "../structureCache";
 import type { Tool } from "../types";
 import {
   selectActiveScreen,
@@ -34,13 +33,12 @@ import {
   useLayoutHistory,
   useLayoutStore,
   useLayoutStoreApi,
-  useScreenResponsive,
   useScreenStructure,
   useSelectedId,
 } from "../useLayoutStore";
 import { AppFrame } from "./AppFrame";
-import { BlockFrame, type BlockWarningView } from "./BlockFrame";
-import { ADJUSTED_TOAST_ID, CHIP_MIN_PX, Z_ACTIVE } from "./constants";
+import { BlockFrame, buildWarningViews, type BlockWarningView } from "./BlockFrame";
+import { ADJUSTED_TOAST_ID, CHIP_MIN_PX, FRAME_GUTTER_PX, Z_ACTIVE } from "./constants";
 import { DerivedBanner } from "./DerivedBanner";
 import { DrawTool } from "./DrawTool";
 import { DropOverlay } from "./DropOverlay";
@@ -48,16 +46,21 @@ import { EmptyHint } from "./EmptyHint";
 import { FrameBar } from "./FrameBar";
 import {
   adjustedIds,
+  askingStillValid,
   blockBox,
-  blockDepths,
   bottomRow,
   containerFor,
+  derivedLayoutFor,
+  focusAfterChange,
   frameGeometry,
   frameHeightPx,
   frameRows,
-  rectKey,
+  layoutKeyOf,
+  nearestSurvivor,
+  revealScrollTop,
   sameRect,
-  stackingZ,
+  scrollAfterDeviceSwitch,
+  stackingOrder,
   warningsByBlock,
   withDescendants,
   type KeyboardGrab,
@@ -82,15 +85,24 @@ const shift = (rect: GridRect, dc: number, dr: number): GridRect => ({ ...rect, 
 /** White flash of blocks that were adjusted or just landed (≤200 ms). */
 type Flash = { key: number; ids: ReadonlySet<BlockId> };
 
+/** A box in screen px, relative to the grid. */
+type Box = { left: number; top: number; width: number; height: number };
+
+/** The open draw batch: what the engine adjusted, offered as «Ajustado · Deshacer» once the batch closes. */
+type DrawBatch = { adjusted: string | null };
+
 /**
  * The Layout canvas: the device frame drawn in screen px (no CSS `scale()`; ResizeObserver on the
  * scroller), the dot grid, the column stripes, the app chrome, and the blocks of the active screen in
  * reading order with their stacking. Editar moves and resizes with the pointer (one store write on
  * release) or with the keyboard (Space/Enter grab inside an undo batch); Dibujar draws free blocks (drag
  * or two clicks) and asks «¿Qué es esto?»; Mano pans. Library blocks drop where the pointer is. Drops
- * that the engine adjusts snap with a spring, flash white and offer «Ajustado · Deshacer». Tablet and
- * mobile show the derived layout read-only, with a FLIP from desktop. Everything else (store, env) comes
- * from LayoutStep's context.
+ * that the engine adjusts snap with a spring, flash white and offer «Ajustado · Deshacer» (it only undoes
+ * while nothing changed since). Tablet and mobile show the derived layout read-only, with a FLIP from
+ * desktop. The scroller isolates the canvas stacking: blocks, handles and overlays never paint over the
+ * page's floating bar or popovers. Keyboard focus never falls to <body> (undo, redo, deletions), and a
+ * block moved or focused by keyboard is scrolled into view. Everything else (store, env) comes from
+ * LayoutStep's context.
  */
 export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const t = useDictionary(layoutText);
@@ -115,11 +127,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     return id ? (state.extraRows[id] ?? 0) : 0;
   });
   const structure = useScreenStructure();
-  const responsive = useScreenResponsive();
 
   const layout = screen?.layout ?? EMPTY_LAYOUT;
   const editable = device === "desktop";
-  const derived = editable ? null : (responsive?.[device] ?? null);
+  // Only tablet and mobile derive (cached per layout version): desktop never pays for it.
+  const derived = derivedLayoutFor(screen?.layout ?? null, device, getResponsive);
   const shell = screen?.kind === "app" ? screen.shell : null;
   const deviceName = t.devices[device];
 
@@ -151,12 +163,6 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     setGrabState(next);
   }, []);
 
-  // Springs: snappy for edits and adjustments, smooth for the FLIP between devices.
-  const [spring, setSpring] = useState<{ device: Breakpoint; kind: "snappy" | "smooth" }>({ device, kind: "snappy" });
-  if (spring.device !== device) setSpring({ device, kind: "smooth" });
-  const markSnappy = useCallback(() => setSpring((current) => (current.kind === "snappy" ? current : { ...current, kind: "snappy" })), []);
-  const layoutTransition = spring.kind === "smooth" ? smooth : snappy;
-
   const [flash, setFlash] = useState<Flash>(() => ({ key: 0, ids: new Set() }));
   const flashBlocks = useCallback((ids: Iterable<BlockId>) => {
     const set = new Set(ids);
@@ -173,6 +179,31 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   /* ---- Store helpers (read at event time) ---- */
   const blockNow = useCallback((id: BlockId) => selectActiveScreen(store.getState())?.layout.blocks[id], [store]);
   const nameOf = useCallback((id: BlockId) => blockNow(id)?.label ?? id, [blockNow]);
+  const readLayout = useCallback(() => selectActiveScreen(store.getState())?.layout ?? EMPTY_LAYOUT, [store]);
+
+  /* ---- Scroll: boxes are read from the grid geometry, never from the DOM (FLIP transforms move it) ---- */
+  // The boxes and the reading order of the last render (synced in the layout effect below).
+  const boxesRef = useRef<ReadonlyMap<BlockId, Box>>(new Map());
+  const orderRef = useRef<readonly BlockId[]>([]);
+  /** Grid top in the scroller's content px (its scrollTop space). */
+  const gridTopInScroller = useCallback(() => {
+    const scroller = scrollerRef.current;
+    const grid = gridRef.current;
+    if (!scroller || !grid) return null;
+    return grid.getBoundingClientRect().top - scroller.getBoundingClientRect().top - scroller.clientTop + scroller.scrollTop;
+  }, []);
+  const revealBox = useCallback(
+    (box: { top: number; height: number }, mode: "nearest" | "third", smoothly: boolean) => {
+      const scroller = scrollerRef.current;
+      const gridTop = gridTopInScroller();
+      if (!scroller || gridTop === null) return;
+      const top = revealScrollTop({ scrollTop: scroller.scrollTop, height: scroller.clientHeight }, { top: gridTop + box.top, height: box.height }, mode);
+      if (top === null) return;
+      if (smoothly) scroller.scrollTo({ top, behavior: "smooth" });
+      else scroller.scrollTop = top;
+    },
+    [gridTopInScroller],
+  );
 
   // Selections made on the canvas are already in view; others (layers, inspector) get revealed.
   const selectedHere = useRef(false);
@@ -189,16 +220,9 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       selectedHere.current = false;
       return;
     }
-    const scroller = scrollerRef.current;
-    if (!selectedId || !scroller) return;
-    const element = scroller.querySelector(`[data-block-id="${CSS.escape(selectedId)}"]`);
-    if (!element) return;
-    const view = scroller.getBoundingClientRect();
-    const box = element.getBoundingClientRect();
-    if (box.top >= view.top && box.bottom <= view.bottom) return;
-    const top = scroller.scrollTop + (box.top - view.top) - Math.max(24, (view.height - Math.min(box.height, view.height)) / 3);
-    scroller.scrollTo({ top: Math.max(0, top), behavior: reduceMotion ? "auto" : "smooth" });
-  }, [selectedId, reduceMotion]);
+    const box = selectedId ? boxesRef.current.get(selectedId) : undefined;
+    if (box) revealBox(box, "third", !reduceMotion);
+  }, [selectedId, reduceMotion, revealBox]);
 
   /* ---- Focus ---- */
   const focusBlock = useCallback((id: BlockId): boolean => {
@@ -207,34 +231,84 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     return Boolean(element);
   }, []);
   const focusScroller = useCallback(() => scrollerRef.current?.focus({ preventScroll: true }), []);
-  // Focus that must wait for the next render (a block that is about to appear or disappear).
+  // Focus (and scroll) that must wait for the next render: a block that is about to appear or disappear,
+  // a held block that moved. Requesting one always renders, so it never lingers to a later render.
   const pendingFocus = useRef<BlockId | "scroller" | null>(null);
-  useLayoutEffect(() => {
-    const target = pendingFocus.current;
-    if (!target) return;
-    pendingFocus.current = null;
-    if (target === "scroller" || !focusBlock(target)) focusScroller();
-  });
+  const pendingReveal = useRef<{ id: BlockId; edge: "box" | "bottom" } | null>(null);
+  const [, setFocusTick] = useState(0);
+  const requestFocus = useCallback((target: BlockId | "scroller") => {
+    pendingFocus.current = target;
+    setFocusTick((tick) => tick + 1);
+  }, []);
+  const requestReveal = useCallback((id: BlockId, edge: "box" | "bottom") => {
+    pendingReveal.current = { id, edge };
+    setFocusTick((tick) => tick + 1);
+  }, []);
+
+  /** The canvas block that has focus, if any. */
+  const focusedBlockId = (): BlockId | null => {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement) || !rootRef.current?.contains(active)) return null;
+    return active.getAttribute("data-block-id");
+  };
+
+  /**
+   * Runs a history change (undo, redo) and keeps keyboard users on the canvas: when the focused block is
+   * gone, focus goes to `prefer`, the selection, the nearest block in reading order or the scroller.
+   */
+  const changeKeepingFocus = (change: () => boolean, focused: BlockId | "lost" | null, prefer?: BlockId | null): boolean => {
+    const previousOrder = orderRef.current;
+    if (!change()) return false;
+    const state = store.getState();
+    const blocks = selectActiveScreen(state)?.layout.blocks ?? {};
+    const target = focusAfterChange({ focused, previousOrder, exists: (id) => blocks[id] !== undefined, selected: selectSelectedId(state), prefer });
+    if (target) requestFocus(target);
+    return true;
+  };
+
+  /**
+   * «Deshacer» of a toast: undoes only while nothing changed since the action (`token`); else it says so.
+   * Focus on the canvas stays on the canvas; focus on the toast (about to close) or on <body> lands on
+   * `prefer` (the block brought back), the selection or the scroller. Focus elsewhere is left alone.
+   */
+  const undoFromToast = (token: number, prefer?: BlockId) => {
+    const active = document.activeElement;
+    const lost = !active || active === document.body || active.closest("[data-sonner-toaster]") !== null;
+    const onCanvas = !lost && (rootRef.current?.contains(active) ?? false);
+    const focused = lost ? "lost" : onCanvas ? focusedBlockId() : null;
+    const undone = changeKeepingFocus(() => actions.undoIfLatest(token), focused, lost || onCanvas ? prefer : null);
+    if (undone) {
+      announce(t.announce.undone);
+      return;
+    }
+    toast(t.common.undoStale);
+    if (lost) requestFocus(selectSelectedId(store.getState()) ?? "scroller");
+  };
 
   /* ---- Feedback: announcements, «Ajustado · Deshacer» ---- */
-  const undoNow = useCallback(() => {
-    store.temporal.getState().undo();
-    announce(t.announce.undone);
-  }, [store, announce, t]);
+  /** «Ajustado · Deshacer» for the change that was just made (the token is read now). */
+  const offerAdjustedUndo = (description: string) => {
+    const token = actions.changeToken();
+    toast(t.adjusted.toast, { id: ADJUSTED_TOAST_ID, description, action: { label: t.adjusted.undo, onClick: () => undoFromToast(token) } });
+  };
+  const offerAdjustedUndoRef = useRef(offerAdjustedUndo);
+  useLayoutEffect(() => {
+    offerAdjustedUndoRef.current = offerAdjustedUndo;
+  });
 
-  /** Announces what happened and, when the engine adjusted something, shows «Ajustado · Deshacer». */
-  const report = useCallback(
-    (message: string, adjustments: readonly Adjustment[]) => {
-      const adjusted = describeAdjustments(adjustments, nameOf, t.adjusted);
-      announce(adjusted ? `${message} ${adjusted}` : message);
-      if (adjusted) toast(t.adjusted.toast, { id: ADJUSTED_TOAST_ID, description: adjusted, action: { label: t.adjusted.undo, onClick: undoNow } });
-    },
-    [nameOf, announce, t, undoNow],
-  );
+  /**
+   * Announces what happened and, when the engine adjusted something, shows «Ajustado · Deshacer» (call it
+   * right after the change). Returns the description of the adjustments.
+   */
+  const report = (message: string, adjustments: readonly Adjustment[], offerUndo = true): string | null => {
+    const adjusted = describeAdjustments(adjustments, nameOf, t.adjusted);
+    announce(adjusted ? `${message} ${adjusted}` : message);
+    if (adjusted && offerUndo) offerAdjustedUndo(adjusted);
+    return adjusted;
+  };
 
   /* ---- Edits ---- */
   const commitRect = (id: BlockId, rect: GridRect, kind: "move" | "resize") => {
-    markSnappy();
     const adjustments = actions.setRect(id, rect);
     const after = blockNow(id);
     const name = after?.label ?? id;
@@ -265,29 +339,62 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   }, [actions]);
   useEffect(() => abandonGrab, [abandonGrab]);
 
-  // A drawn box and its «¿Qué es esto?» answer are one undo step: the batch closes with the dialog.
+  // A drawn box and its «¿Qué es esto?» answer are one undo step: the batch closes with the dialog. Its
+  // «Ajustado · Deshacer» waits for the batch to close, so it undoes the whole step.
   const [asking, setAsking] = useState<BlockId | null>(null);
-  const drawBatch = useRef(false);
-  const closeDrawBatch = useCallback(() => {
-    if (!drawBatch.current) return;
-    drawBatch.current = false;
-    actions.commitBatch();
-  }, [actions]);
-  useEffect(() => closeDrawBatch, [closeDrawBatch]);
+  const askingRef = useRef<BlockId | null>(null);
+  useLayoutEffect(() => {
+    askingRef.current = asking;
+  });
+  const drawBatch = useRef<DrawBatch | null>(null);
+  const closeDrawBatch = useCallback(
+    (offerUndo: boolean) => {
+      const batch = drawBatch.current;
+      if (!batch) return;
+      drawBatch.current = null;
+      actions.commitBatch();
+      if (offerUndo && batch.adjusted) offerAdjustedUndoRef.current(batch.adjusted);
+    },
+    [actions],
+  );
+  useEffect(() => () => closeDrawBatch(false), [closeDrawBatch]);
+  const endAsking = () => {
+    askingRef.current = null;
+    setAsking(null);
+  };
+  // The dialog only lives on desktop and while its block is on the shown screen. A screen or device change
+  // that comes without a press outside (assistive tech, the keyboard elsewhere) closes it and its batch.
+  useEffect(
+    () =>
+      store.subscribe(() => {
+        if (askingRef.current === null) return;
+        // After the change that triggered this has finished (never a batch commit inside a store update).
+        queueMicrotask(() => {
+          const state = store.getState();
+          const id = askingRef.current;
+          if (id === null || askingStillValid(state.device, selectActiveScreen(state)?.layout ?? null, id)) return;
+          askingRef.current = null;
+          closeDrawBatch(false);
+          setAsking(null);
+        });
+      }),
+    [store, closeDrawBatch],
+  );
 
   const createDrawn = (rect: GridRect) => {
     if (!screen) return;
-    markSnappy();
     actions.beginBatch();
-    drawBatch.current = true;
+    const batch: DrawBatch = { adjusted: null };
+    drawBatch.current = batch;
     const outcome = actions.insertBlock("free", { rect });
     if (!outcome.id) {
-      closeDrawBatch();
+      closeDrawBatch(false);
       return;
     }
     flashBlocks([outcome.id, ...adjustedIds(outcome.adjustments)]);
-    report(t.canvas.drawn(blockNow(outcome.id)?.rect ?? rect), outcome.adjustments);
+    batch.adjusted = report(t.canvas.drawn(blockNow(outcome.id)?.rect ?? rect), outcome.adjustments, false);
     actions.setTool("edit");
+    askingRef.current = outcome.id;
     setAsking(outcome.id);
   };
 
@@ -295,30 +402,31 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     const id = asking;
     if (!id) return;
     const outcome = actions.updateBlock(id, { type });
-    closeDrawBatch();
-    setAsking(null);
+    // A navigation choice turns the box into the app's navigation: its adjustments no longer apply.
+    closeDrawBatch(!outcome.nav);
+    endAsking();
     if (outcome.nav) {
       announce(t.whatIsThis.frameChosen(t.nav[outcome.nav]));
-      pendingFocus.current = "scroller";
+      requestFocus("scroller");
     } else {
       announce(t.whatIsThis.chosen(t.blocks[type].name));
-      pendingFocus.current = id;
+      requestFocus(id);
     }
   };
   const keepFree = () => {
-    closeDrawBatch();
-    pendingFocus.current = asking;
-    setAsking(null);
+    const id = asking;
+    closeDrawBatch(true);
+    endAsking();
+    if (id) requestFocus(id);
     announce(t.whatIsThis.keptFree);
   };
   const dismissAsking = () => {
-    closeDrawBatch();
-    setAsking(null);
+    closeDrawBatch(true);
+    endAsking();
   };
 
   const onLibraryDrop = (type: LibraryBlockType, rect: GridRect | null) => {
     if (!screen || !editable) return;
-    markSnappy();
     const outcome = actions.insertBlock(type, rect ? { rect } : {});
     if (outcome.nav) {
       announce(t.announce.navChanged(t.nav[outcome.nav]));
@@ -335,13 +443,13 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     if (!block) return;
     const removed = actions.removeBlocks([id]);
     if (removed.length === 0) return;
+    const token = actions.changeToken();
     const gone = new Set(removed);
-    const index = order.indexOf(id);
-    const next = order.slice(index + 1).find((other) => !gone.has(other)) ?? order.slice(0, Math.max(0, index)).reverse().find((other) => !gone.has(other));
+    const next = nearestSurvivor(order, id, (other) => !gone.has(other));
     const message = removed.length > 1 ? t.announce.removedMany(removed.length) : t.announce.removed(block.label);
     announce(message);
-    toast(message, { action: { label: t.adjusted.undo, onClick: undoNow } });
-    pendingFocus.current = next ?? "scroller";
+    toast(message, { action: { label: t.adjusted.undo, onClick: () => undoFromToast(token, id) } });
+    requestFocus(next ?? "scroller");
   };
 
   const applyFixRef = useRef<(fix: LayoutFix, label: string, id: BlockId) => void>(() => {});
@@ -349,7 +457,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     applyFixRef.current = (fix, label, id) => {
       if (!actions.applyFix(fix)) return;
       announce(t.announce.fixApplied(label, nameOf(id)));
-      pendingFocus.current = id;
+      requestFocus(id);
     };
   });
   const onApplyFix = useCallback((fix: LayoutFix, label: string, id: BlockId) => applyFixRef.current(fix, label, id), []);
@@ -360,6 +468,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     tool,
     editable,
     layout,
+    readLayout,
     metrics,
     select,
     focusBlock,
@@ -368,7 +477,6 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     createDrawn,
     beforeGesture: () => {
       if (grabRef.current) dropGrab(grabRef.current);
-      markSnappy();
     },
     announceAnchor: (state) => announce(state === "set" ? t.canvas.drawStart : t.canvas.drawCanceled),
   });
@@ -380,10 +488,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     metrics,
     onDrop: onLibraryDrop,
   });
+  // The scroller is the droppable: it is clipped to what the user sees (the grid extends under the bars).
   const dropRef = drop.ref;
-  const setGrid = useCallback(
+  const setScroller = useCallback(
     (element: HTMLDivElement | null) => {
-      gridRef.current = element;
+      scrollerRef.current = element;
       dropRef(element);
     },
     [dropRef],
@@ -398,7 +507,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     return rest.length > 0 ? [...ids, ...rest] : ids;
   }, [derived, structure, layout]);
 
-  const depths = useMemo(() => blockDepths(layout), [layout]);
+  const stacking = useMemo(() => stackingOrder(layout, order), [layout, order]);
   const grabId = grab?.id ?? null;
   const grabFollowers = useMemo(() => (grabId ? withDescendants(layout, grabId) : null), [grabId, layout]);
 
@@ -413,20 +522,12 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     return out;
   }, [layout, t]);
 
+  // New arrays on every edit; BlockFrame compares them by content, so only blocks whose warnings changed re-render.
   const warningViews = useMemo(() => {
     const out = new Map<BlockId, BlockWarningView[]>();
     if (!structure || !editable) return out;
     const label = (id: BlockId) => layout.blocks[id]?.label ?? id;
-    for (const [id, warnings] of warningsByBlock(structure.warnings)) {
-      out.set(
-        id,
-        warnings.map((warning, index) => ({
-          key: `${warning.code}:${warning.ids.join(",")}:${index}`,
-          message: t.warnings[warning.code](warning.ids.map(label)),
-          fixes: warning.fixes.map((fix, fixIndex) => ({ key: `${fix.kind}:${fixIndex}`, label: t.fixes[fix.kind], fix })),
-        })),
-      );
-    }
+    for (const [id, warnings] of warningsByBlock(structure.warnings)) out.set(id, buildWarningViews(warnings, label, t));
     return out;
   }, [structure, editable, layout, t]);
 
@@ -454,7 +555,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     const rect = rectFor(id);
     if (!block || !rect) return [];
     const box = blockBox(rect, metrics);
-    const z = stackingZ(depths.get(id) ?? 0, block.z);
+    const z = stacking.get(id) ?? 1;
     return [{ id, block, rect, box, zIndex: lifted(id) ? Z_ACTIVE + z : z }];
   });
   const selectedItem = editable && tool === "edit" && !grab ? items.find((item) => item.id === selectedId) : undefined;
@@ -493,6 +594,44 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const gestureActive = (gesture !== null && gesture.kind !== "pan") || grab !== null || drop.state !== "idle";
   const askingBlock = asking && editable ? layout.blocks[asking] : undefined;
 
+  /* ---- After every render: boxes for the scroll helpers, then pending focus and reveals ---- */
+  const lastDevice = useRef(device);
+  useLayoutEffect(() => {
+    boxesRef.current = new Map(items.map((item) => [item.id, item.box]));
+    orderRef.current = order;
+
+    // A device switch: keep the selected block in view, or start at the top (never past the new content).
+    if (lastDevice.current !== device) {
+      lastDevice.current = device;
+      const scroller = scrollerRef.current;
+      const gridTop = gridTopInScroller();
+      if (scroller && gridTop !== null) {
+        const selected = selectSelectedId(store.getState());
+        const box = selected ? boxesRef.current.get(selected) : undefined;
+        const view = { scrollTop: scroller.scrollTop, height: scroller.clientHeight };
+        scroller.scrollTop = scrollAfterDeviceSwitch(view, box ? { top: gridTop + box.top, height: box.height } : null);
+      }
+    }
+
+    const target = pendingFocus.current;
+    if (target) {
+      pendingFocus.current = null;
+      if (target === "scroller" || !focusBlock(target)) focusScroller();
+      else {
+        // Focus moved by the canvas (deletion, undo, a fix…): bring the block into view.
+        const box = boxesRef.current.get(target);
+        if (box) revealBox(box, "nearest", false);
+      }
+    }
+    const reveal = pendingReveal.current;
+    if (reveal) {
+      pendingReveal.current = null;
+      const box = boxesRef.current.get(reveal.id);
+      // A keyboard resize follows the bottom edge; a keyboard move, the whole block.
+      if (box) revealBox(reveal.edge === "bottom" ? { top: box.top + box.height - metrics.rowPx, height: metrics.rowPx } : box, "nearest", false);
+    }
+  });
+
   /* ---- Keyboard ---- */
   const keyboard = useCanvasKeyboard({
     rootRef,
@@ -509,7 +648,6 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       },
       grab: (step) => {
         if (grabRef.current) return;
-        markSnappy();
         select(step.grab.id);
         actions.beginBatch();
         setGrab(step.grab);
@@ -517,6 +655,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       },
       nudge: (step) => {
         setGrab(step.grab);
+        requestReveal(step.grab.id, step.type === "resize" ? "bottom" : "box");
         const name = nameOf(step.grab.id);
         announce(step.type === "resize" ? t.canvas.resized(name, step.grab.rect) : t.canvas.moved(name, step.grab.rect));
       },
@@ -528,7 +667,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
         if (!copy) return;
         flashBlocks([copy]);
         announce(t.announce.duplicated(nameOf(id)));
-        pendingFocus.current = copy;
+        requestFocus(copy);
       },
       rename: () => {
         // Like F2 in the layers: the name is selected, ready to be typed over.
@@ -543,13 +682,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       },
       undo: () => {
         if (!history.canUndo) return;
-        history.undo();
-        announce(t.announce.undone);
+        if (changeKeepingFocus(history.undo, focusedBlockId())) announce(t.announce.undone);
       },
       redo: () => {
         if (!history.canRedo) return;
-        history.redo();
-        announce(t.announce.redone);
+        if (changeKeepingFocus(history.redo, focusedBlockId())) announce(t.announce.redone);
       },
       setTool: (next: Tool) => {
         actions.setTool(next);
@@ -599,14 +736,15 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
         />
       )}
       <motion.div
-        ref={scrollerRef}
+        ref={setScroller}
         layoutScroll
         tabIndex={-1}
         {...(items.length === 0 && { [REGION_AUTOFOCUS_ATTR]: "" })}
         onPointerDown={onPointerDown}
         className={cn(
+          // `isolate`: the canvas z-indices (blocks, handles, overlays) stay inside it, under the page's bars and popovers.
           // Stable gutter: the scrollbar appearing must not change the measured width (and the frame's).
-          "relative min-h-[24rem] flex-1 overflow-auto overscroll-contain rounded-panel border border-app bg-app/70 [scrollbar-gutter:stable]",
+          "relative isolate min-h-[24rem] flex-1 overflow-auto overscroll-contain rounded-panel border border-app bg-app/70 [scrollbar-gutter:stable]",
           DOT_GRID,
           tool === "hand" && "touch-none",
           tool === "hand" && (gesture?.kind === "pan" ? "cursor-grabbing" : "cursor-grab"),
@@ -620,8 +758,10 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
               focusRegion("inspector");
             }} />}
             <div
-              ref={setGrid}
-              className={cn("absolute select-none", tool === "draw" && editable && "cursor-crosshair touch-none")}
+              ref={gridRef}
+              // `data-tool` drives the blocks' cursors (group `canvas`): a tool change never re-renders them.
+              data-tool={tool}
+              className={cn("group/canvas absolute select-none", tool === "draw" && editable && "cursor-crosshair touch-none")}
               style={{ left: geometry.content.left, top: geometry.content.top, width: geometry.content.width, height: gridHeight }}
             >
               <GridOverlay columns={metrics.columns} colPx={metrics.colPx} rowPx={metrics.rowPx} active={gestureActive} />
@@ -644,13 +784,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
                     grabbed={item.id === grabId}
                     dropTarget={item.id === dropTarget}
                     editable={editable}
-                    tool={tool}
                     autoFocus={item.id === autoFocusId}
                     chip={roomy ? chip : null}
                     warnings={warningViews.get(item.id)}
                     flashKey={flash.ids.has(item.id) ? flash.key : 0}
-                    layoutKey={`${device}:${rectKey(item.rect)}`}
-                    layoutTransition={layoutTransition}
+                    layoutKey={layoutKeyOf(device, item.rect)}
                     describedBy={editable ? instructionsId : derivedId}
                     onApplyFix={onApplyFix}
                   />
@@ -663,6 +801,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
                   top={selectedItem.box.top}
                   width={selectedItem.box.width}
                   height={selectedItem.box.height}
+                  badge={(warningViews.get(selectedItem.id)?.length ?? 0) > 0}
                 />
               )}
               <AnimatePresence>
@@ -692,7 +831,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
         </div>
       </motion.div>
       <p id={instructionsId} className="sr-only">
-        {t.canvas.instructions}
+        {t.canvas.instructions(shortcutsEnabled)}
       </p>
       {askingBlock && asking && (
         <WhatIsThis

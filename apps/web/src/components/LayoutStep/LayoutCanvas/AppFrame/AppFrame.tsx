@@ -52,7 +52,7 @@ export const AppFrame = memo(function AppFrame({ geometry, navName, onActivate }
             </span>
           ) : (
             <>
-              <span className="truncate text-caption text-subtle">{navLabel}</span>
+              <span className="truncate text-caption text-muted">{navLabel}</span>
               <span aria-hidden className={cn("flex min-w-0", nav.side === "left" ? "flex-col gap-2.5" : "ms-auto items-center gap-3")}>
                 {ITEMS.map((width, index) => (
                   <span key={index} className={BAR} style={nav.side === "left" ? { width: `${width}%` } : { width: 40 + (index % 3) * 8 }} />
@@ -72,8 +72,8 @@ export const AppFrame = memo(function AppFrame({ geometry, navName, onActivate }
           className="absolute right-0 flex flex-col justify-center gap-1 overflow-hidden border-b border-app bg-white/[0.015] px-4 text-start transition-colors hover:bg-white/[0.03]"
           style={{ left: header.left, top: header.top, height: header.height }}
         >
-          <span className="truncate text-caption text-subtle">{t.canvas.headerStrip}</span>
-          {header.height >= 48 && <span className="truncate text-caption text-subtle">{t.canvas.headerStripHint}</span>}
+          <span className="truncate text-caption text-muted">{t.canvas.headerStrip}</span>
+          {header.height >= 48 && <span className="truncate text-caption text-muted">{t.canvas.headerStripHint}</span>}
         </button>
       )}
     </>

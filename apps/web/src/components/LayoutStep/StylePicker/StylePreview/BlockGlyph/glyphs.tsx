@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 // Relative imports only: the glyph test renders this module in vitest without the `@/` alias.
-import { itemCount } from "../previewGeometry";
+import { itemCount } from "../../previewGeometry";
 import { Bar, Button, CARD, CARD_RADIUS, Dot, FILL, GLASS_CARD, INPUT_RADIUS, Input, LINE, SMALL_RADIUS, SectionTitle, TONES, chartTone, clampInt, col, pad, range, row, tint, u, ul } from "./kit";
 import type { GlyphKind } from "./types";
 

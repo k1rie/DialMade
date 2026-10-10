@@ -8,8 +8,8 @@ import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { snappy, tween } from "@/lib/motion";
 import { ChevronDownIcon } from "../../icons";
-import type { LibraryItemProps } from "../LibraryItem";
-import { TileGrid } from "../TileGrid";
+import { CLEAR_STICKY_SEARCH } from "../constants";
+import { TileGrid, type TileGridProps } from "../TileGrid";
 
 export type LibraryCategoryProps = {
   category: BlockCategory;
@@ -19,7 +19,7 @@ export type LibraryCategoryProps = {
   instance: string;
   kind: ScreenKind;
   onInsert: (type: LibraryBlockType) => void;
-  hints: LibraryItemProps["hints"];
+  hints: TileGridProps["hints"];
 };
 
 /**
@@ -54,12 +54,13 @@ export const LibraryCategory = memo(function LibraryCategory({
           aria-label={t.library.category(name, types.length)}
           onClick={() => onToggle(category)}
           className={cn(
+            CLEAR_STICKY_SEARCH,
             "flex h-8 w-full items-center justify-between gap-2 rounded-control px-1.5 text-start transition-colors duration-150",
             "hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent",
           )}
         >
           <span className="truncate">{name}</span>
-          <span className="flex shrink-0 items-center gap-1.5 font-normal text-subtle">
+          <span className="flex shrink-0 items-center gap-1.5 font-normal text-muted">
             <span className="tabular-nums">{types.length}</span>
             <motion.span className="inline-flex" initial={false} animate={{ rotate: open ? 180 : 0 }} transition={snappy}>
               <ChevronDownIcon className="size-3.5" />

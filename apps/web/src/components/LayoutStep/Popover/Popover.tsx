@@ -17,6 +17,7 @@ import {
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
+import { tabExit } from "./tabExit";
 
 export type PopoverTriggerProps = {
   "aria-expanded": boolean;
@@ -46,7 +47,8 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
 
 /**
  * Non-modal popover (role="dialog") rendered in a portal with fixed positioning, so it escapes the
- * clipped canvas. Focus moves in on open and back to the trigger on Esc; outside clicks close it.
+ * clipped canvas. Focus moves in on open and back to the trigger on Esc; outside clicks, focus elsewhere
+ * and Tab out of either end close it (Tab continues from the trigger, Shift+Tab lands on it).
  */
 export function Popover({ open, onOpenChange, trigger, label, align = "start", side = "bottom", className, children }: PopoverProps) {
   const id = useId();
@@ -101,17 +103,41 @@ export function Popover({ open, onOpenChange, trigger, label, align = "start", s
       if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
       onOpenChange(false);
     };
+    const triggerControl = () => triggerRef.current?.querySelector<HTMLElement>(FOCUSABLE) ?? null;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.stopPropagation();
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onOpenChange(false);
+        triggerControl()?.focus({ preventScroll: true });
+        return;
+      }
+      // The panel lives at the end of <body>: Tab out of either end would leave the page's order (or jump
+      // to its top) with the popover still open. It reads as if it sat right after its trigger instead.
+      const panel = panelRef.current;
+      if (event.key !== "Tab" || !panel) return;
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((element) => element.getClientRects().length > 0);
+      const exit = tabExit(focusable, active, panel, event.shiftKey);
+      const control = triggerControl();
+      if (!exit || !control) return;
       onOpenChange(false);
-      triggerRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+      // Shift+Tab lands on the trigger. Tab focuses the trigger and lets the browser move on from it.
+      if (exit === "before") event.preventDefault();
+      control.focus({ preventScroll: true });
+    };
+    // Focus that goes anywhere else (a screen reader, a toast hotkey) closes it too.
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      onOpenChange(false);
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("focusin", onFocusIn, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("focusin", onFocusIn, true);
     };
   }, [open, onOpenChange]);
 

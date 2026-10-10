@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 
-/*
- * Twin of `BlockInspector/useFieldDraft.ts` (folders cannot share private modules). Fase B can move one copy
- * to `LayoutStep/useFieldDraft.ts`.
- */
+/* Shared by BlockInspector and ScreenPanel (their text and number fields). */
 
 /** Applies the text; `false` keeps the draft (the value was refused). */
 export type DraftCommit = (text: string) => boolean | void;

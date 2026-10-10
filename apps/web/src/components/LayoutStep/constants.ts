@@ -15,13 +15,6 @@ export const DEFAULT_APP_SHELL: Readonly<AppShell> = { nav: "sidebar", header: t
 /** Rows «+ Añadir espacio» adds at the bottom of the frame (40 × 8 px). */
 export const ADD_SPACE_ROWS = 40;
 
-/** Frame height in rows: max(layout bottom + FRAME_PAD_ROWS, FRAME_MIN_ROWS) + extra rows. */
-export const FRAME_MIN_ROWS = 100;
-export const FRAME_PAD_ROWS = 24;
-
-/** Gutter around the device frame inside the canvas scroller, in screen px. */
-export const FRAME_GUTTER_PX = 32;
-
 /** App navigation frame sizes in design px (multiply by k = frame width / device width). */
 export const NAV_FRAME_PX = { sidebar: 256, rail: 72, topnav: 64 } as const;
 /** Page header strip above the content of an app screen (`shell.header`), in design px. */
@@ -61,3 +54,9 @@ export const MIN_BLOCK_SIZE: Readonly<GridSize> = { w: 1, h: 2 };
  * replaces the toast instead of stacking a second one.
  */
 export const ADJUSTED_TOAST_ID = "layout-adjusted";
+
+/**
+ * Tailwind's `lg` (64rem): from here the three columns sit side by side; under it they stack with the
+ * canvas first, and LayoutStep puts the canvas first in the DOM too (Tab and F6 follow what is seen).
+ */
+export const WIDE_QUERY = "(min-width: 64rem)";

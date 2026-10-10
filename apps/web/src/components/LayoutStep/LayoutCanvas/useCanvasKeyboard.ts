@@ -36,6 +36,7 @@ export type CanvasKeyboardOptions = {
 };
 
 const TOOL_KEYS: Readonly<Record<string, Tool>> = { r: "draw", v: "edit", h: "hand" };
+const ARROW_KEYS = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
 
 function isEditable(element: HTMLElement): boolean {
   return element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']") !== null;
@@ -48,6 +49,8 @@ function isEditable(element: HTMLElement): boolean {
  *   F2 goes to the inspector's name field.
  * - Anywhere in the canvas: ⌘/Ctrl+Z undo, ⇧⌘Z or Ctrl+Y redo, R/V/H tools, Esc deselects.
  * Single keys only act when the shortcuts switch is on. Focus leaving a held block drops it.
+ * Key auto-repeat only moves or resizes a held block and repeats undo/redo: holding Supr, ⌘D, Space…
+ * acts once (focus moves to the next block or the copy, and the repeats would chain on it).
  */
 export function useCanvasKeyboard({ rootRef, rectOf, editable, columns, selectedId, grab, shortcutsEnabled, actions }: CanvasKeyboardOptions) {
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -59,6 +62,11 @@ export function useCanvasKeyboard({ rootRef, rectOf, editable, columns, selected
 
     // Keys of a held block first: nothing else runs while a block is held (its batch is open).
     if (grab) {
+      if (event.repeat && !ARROW_KEYS.has(key)) {
+        // A held Space/Enter would drop and pick the block up again on every repeat.
+        if (key === " " || key === "Enter" || (mod && (key.toLowerCase() === "z" || key.toLowerCase() === "y"))) event.preventDefault();
+        return;
+      }
       if (blockId && !mod && !event.altKey) {
         const rect = rectOf(blockId);
         const step = rect ? keyboardGrabStep(grab, { key, shiftKey: event.shiftKey, id: blockId, rect, columns }) : null;
@@ -72,6 +80,13 @@ export function useCanvasKeyboard({ rootRef, rectOf, editable, columns, selected
       }
       // Undo/redo would land inside the open batch: swallow them until the block is dropped.
       if (mod && (key.toLowerCase() === "z" || key.toLowerCase() === "y")) event.preventDefault();
+      return;
+    }
+
+    // Only undo / redo repeat from here on: every other action acts once per press.
+    const repeatable = mod && !event.altKey && (key.toLowerCase() === "z" || key.toLowerCase() === "y");
+    if (event.repeat && !repeatable) {
+      if (blockId && (key === " " || key === "Enter")) event.preventDefault();
       return;
     }
 

@@ -16,10 +16,12 @@ const styles = new WeakMap<StyleVars, CSSProperties>();
 /**
  * Theme variables of one style option («guide» = the doc's own inputs), compiled with the recipe like
  * the real theme. Cached by value (`getStyleVars`), so unrelated doc or store changes return the same
- * objects and the memoized preview does not re-render.
+ * objects and the memoized preview does not re-render. `doc: null` (previews not rendered yet) compiles
+ * nothing and returns `null`.
  */
-export function useStyleVars(doc: DesignDoc, choice: StyleChoice, mode?: ColorMode): StyleVarsResult {
+export function useStyleVars(doc: DesignDoc | null, choice: StyleChoice, mode?: ColorMode): StyleVarsResult | null {
   return useMemo(() => {
+    if (!doc) return null;
     const result = getStyleVars(doc, choice, mode);
     let style = styles.get(result);
     if (!style) {

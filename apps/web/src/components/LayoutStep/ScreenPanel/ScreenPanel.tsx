@@ -13,10 +13,10 @@ import { REGION_AUTOFOCUS_ATTR } from "../constants";
 import { PanelSection } from "../PanelSection";
 import { Segmented, type SegmentedOption } from "../Segmented";
 import { StylePicker } from "../StylePicker";
-import { useActiveScreen, useLayoutActions, useLayoutStoreApi } from "../useLayoutStore";
+import { useActiveScreen, useLayoutActions } from "../useLayoutStore";
 import { RouteField } from "./RouteField";
-import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "./styles";
-import { useFieldDraft } from "./useFieldDraft";
+import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../fieldStyles";
+import { useFieldDraft } from "../useFieldDraft";
 
 export type ScreenPanelProps = { className?: string };
 
@@ -35,7 +35,6 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
   const id = useId();
   const screen = useActiveScreen();
   const actions = useLayoutActions();
-  const store = useLayoutStoreApi();
   const announce = useDndAnnounce();
 
   const name = useFieldDraft(`${screen?.id ?? ""}:name`, screen?.name ?? "", (text) => {
@@ -58,9 +57,15 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
 
   const convert = () => {
     if (!actions.convertScreen(screen.id, other)) return;
+    // «Deshacer» undoes this conversion only: after any other change it says so instead of undoing that one.
+    const token = actions.changeToken();
+    const undoConvert = () => {
+      if (actions.undoIfLatest(token)) announce(t.announce.undone);
+      else toast(t.common.undoStale);
+    };
     const message = t.announce.kindChanged(t.kinds[other]);
     announce(message);
-    toast(message, { action: { label: t.common.undo, onClick: () => store.temporal.getState().undo() } });
+    toast(message, { action: { label: t.common.undo, onClick: undoConvert } });
   };
 
   return (

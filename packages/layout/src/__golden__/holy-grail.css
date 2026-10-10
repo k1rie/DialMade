@@ -38,22 +38,18 @@
 @container dl-layout (width < 64rem) {
   .dl-layout [data-dl-id="r-mqnirv"] {
     grid-template-columns: repeat(8, minmax(0, 1fr));
-    row-gap: var(--dl-space-5);
   }
 
   .dl-layout [data-dl-id="nav"] {
-    grid-column: span 1;
-    grid-row: auto;
+    grid-column: 1 / span 1;
   }
 
   .dl-layout [data-dl-id="main"] {
-    grid-column: span 7;
-    grid-row: auto;
+    grid-column: 2 / span 4;
   }
 
   .dl-layout [data-dl-id="aside"] {
-    grid-column: span 8;
-    grid-row: auto;
+    grid-column: 6 / span 3;
   }
 }
 
@@ -61,18 +57,22 @@
   .dl-layout [data-dl-id="r-mqnirv"] {
     display: flex;
     flex-direction: column;
+    row-gap: var(--dl-space-5);
     align-items: normal;
   }
 
   .dl-layout [data-dl-id="nav"] {
     grid-column: auto;
+    grid-row: auto;
   }
 
   .dl-layout [data-dl-id="main"] {
     grid-column: auto;
+    grid-row: auto;
   }
 
   .dl-layout [data-dl-id="aside"] {
     grid-column: auto;
+    grid-row: auto;
   }
 }

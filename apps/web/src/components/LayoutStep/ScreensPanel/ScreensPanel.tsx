@@ -10,7 +10,7 @@ import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { Popover } from "../Popover";
-import { ScreenTemplateList } from "../TemplatePicker";
+import { ScreenTemplateList } from "../ScreenTemplateList";
 import { selectActiveScreenId, useActiveScreenId, useLayoutActions, useLayoutStore, useLayoutStoreApi, useScreens, type LayoutState } from "../useLayoutStore";
 import { stepIndex } from "./reorder";
 import { ScreenRow, type ScreenRowHandlers, type ScreenRowKeys } from "./ScreenRow";
@@ -155,36 +155,25 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
           announce(t.screens.lastOne);
           return;
         }
+        // «Deshacer» undoes this removal only: after any other change it says so instead of undoing that change.
+        const token = actions.changeToken();
         const after = store.getState();
         const neighbor = after.screenOrder[Math.min(index, after.screenOrder.length - 1)];
         if (neighbor) focusLater(neighbor);
 
-        // «Deshacer» only while nothing else changed; any later edit makes the toast stale and dismisses it.
-        const removed = { screens: after.screens, screenOrder: after.screenOrder };
-        const isCurrent = () => {
-          const state = store.getState();
-          return state.screens === removed.screens && state.screenOrder === removed.screenOrder;
-        };
-        let unsubscribe = () => {};
-        const toastId = toast(t.announce.screenRemoved(name), {
+        toast(t.announce.screenRemoved(name), {
           action: {
             label: t.common.undo,
             onClick: () => {
-              if (!isCurrent()) return;
-              unsubscribe();
-              store.temporal.getState().undo();
+              if (!actions.undoIfLatest(token)) {
+                toast(t.common.undoStale);
+                return;
+              }
               if (wasActive) actions.setActiveScreen(id);
               announce(t.announce.undone);
               focusLater(id);
             },
           },
-          onDismiss: () => unsubscribe(),
-          onAutoClose: () => unsubscribe(),
-        });
-        unsubscribe = store.subscribe(() => {
-          if (isCurrent()) return;
-          unsubscribe();
-          toast.dismiss(toastId);
         });
       },
       focusRow: (id, target) => {

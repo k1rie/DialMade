@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { MAX_BLOCKS } from "./constants";
+import { MAX_BLOCKS, MAX_HEIGHT_ROWS, MAX_ROW } from "./constants";
 import { emptyLayout } from "./edit";
 import { FIXTURES, makeLayout } from "./testing/fixtures";
 import type { LayoutDoc } from "./types";
@@ -49,6 +49,22 @@ describe("validateLayout", () => {
       ["invalid-rect", "blocks/d/rect"],
       ["invalid-rect", "blocks/e/rect"],
     ]);
+  });
+
+  test("rows and heights have an upper bound", () => {
+    const layout = makeLayout([
+      { id: "top", type: "text", rect: [0, MAX_ROW, 6, MAX_HEIGHT_ROWS] },
+      { id: "low", type: "text", rect: [0, MAX_ROW + 1, 6, 10] },
+      { id: "tall", type: "text", rect: [6, 0, 6, MAX_HEIGHT_ROWS + 1] },
+      { id: "huge", type: "text", rect: [0, 0, 12, 125_000_000_000] },
+    ]);
+    expect(validateLayout(layout)).toEqual(
+      ["huge", "low", "tall"].map((id) => ({
+        code: "invalid-rect",
+        path: ["blocks", id, "rect"],
+        message: `Rect row must be at most ${MAX_ROW} and h at most ${MAX_HEIGHT_ROWS}`,
+      })),
+    );
   });
 
   test("parents and cycles", () => {

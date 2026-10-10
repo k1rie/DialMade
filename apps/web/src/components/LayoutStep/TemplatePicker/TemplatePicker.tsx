@@ -6,10 +6,10 @@ import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
+import { ScreenTemplateList } from "../ScreenTemplateList";
 import { useLayoutActions, useLayoutEnv, useLayoutStoreApi } from "../useLayoutStore";
 import { BlankCard } from "./BlankCard";
 import { recommendedSet } from "./recommend";
-import { ScreenTemplateList } from "./ScreenTemplateList";
 import { SetCard } from "./SetCard";
 
 /** «En blanco» has its own card here; the single-screen list shows the rest. */

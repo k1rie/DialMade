@@ -56,7 +56,11 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 35. **`normalizeDrop`:**
     - El padre actual cuenta como candidato aunque no sea contenedor, así que un media dentro de un hero se queda ahí.
     - Al desanidar, el bloque pasa al ancestro más cercano que aún contiene ≥50 % de él; si no hay ninguno, va a la raíz.
-36. **Contenedor sin sitio:** al insertar dentro, crece, y `insertBlock` lo devuelve en `grown`. No hay un `Adjustment` nuevo.
+    - Un recorte (`clip`) nunca deja fuera a los hijos de un contenedor: si recortar a uno los dejaría fuera, se recorta el otro; si tampoco se puede, el solape queda como aviso.
+    - El arreglo «Anidar» también mete el bloque dentro de su nuevo padre, igual que al soltar.
+36. **Contenedor sin sitio:** al insertar o duplicar dentro, crece, y `insertBlock` lo devuelve en `grown`. No hay un `Adjustment` nuevo.
+    - Al crecer empuja hacia abajo todo lo que en su ámbito empezaba en su fondo anterior o más abajo (con sus hijos), y los ancestros crecen igual hasta la raíz.
+    - Un modal insertado en un contenedor nunca lo hace crecer: sube para caber si puede; si no, sobresale con el aviso `outside-parent`.
 37. **`count`** se limita a los topes del bloque repetible, o a 1–99 en los que no lo son. `validateLayout` usa la misma regla.
 38. **Tipos desconocidos** se tratan como «Bloque libre» al inferir. Solo `validateLayout` los reporta.
 
@@ -71,3 +75,33 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 43. **Nombres y rutas.** Los nombres de pantalla se hacen únicos («Dashboard 2»). La ruta es «/» para la primera landing; si no, «/» + slug único. Una ruta automática sigue al nombre al renombrar; una ruta escrita a mano se queda.
 44. **Deshacer** también revierte «aplicar plantilla de conjunto», así que se puede volver al selector de plantillas. Borrar una pantalla quita los enlaces a ella en el mismo paso. La última pantalla no se puede borrar.
 45. **Nombres en español:** «Características» (features) y «Tarjetas» (cards). La categoría `overlays` se llama «Estados y ventanas». Los sinónimos mezclan es y en en los dos idiomas.
+
+## Detalles del lienzo y de los paneles
+
+46. **La selección sigue al foco** en el lienzo: al llegar con Tab a un bloque se selecciona, y el inspector lo sigue.
+47. **La preview de un gesto es local.** Mover, redimensionar y coger con teclado solo cambian el estado local; el store se escribe una vez al soltar. Si se escribiera en cada paso, `normalizeDrop` recortaría a los vecinos de forma permanente a mitad del gesto.
+48. **Dibujar una caja y responder «¿Qué es esto?» es un solo paso de deshacer.** Después de dibujar, la herramienta vuelve a Editar.
+49. **Se puede dibujar encima de bloques,** para dibujar dentro de un contenedor. Con Dibujar, un clic en un bloque no lo selecciona.
+50. **Soltar desde la librería** centra el tamaño por defecto del bloque en el puntero. Mientras pasa por encima se ve la caja encajada y, si cae ≥90 % dentro de un contenedor, «Suelta para meterlo en…».
+51. **El marco de navegación en las vistas derivadas:** en tablet, el lateral pasa a rail; en móvil, cualquier navegación es una barra superior de 64 px.
+52. **El marco de app** (navegación y cabecera) no está en el orden de Tab. Un clic deselecciona y lleva el foco al panel de la pantalla; con teclado: Esc y después F6.
+53. **Los avisos** salen como insignia en el primer bloque del aviso y solo en Escritorio. Las líneas de «Ver estructura» también son solo de Escritorio; los números de orden de lectura salen en todas las vistas.
+54. **Las pestañas Bloques/Capas** se quedan montadas (la oculta, escondida) para no perder la búsqueda, las categorías abiertas ni el scroll. En pantallas de menos de 640 px se abre Capas; al ensanchar se vuelve a Bloques, salvo que el usuario haya elegido otra.
+55. **`PanelSection` es un grupo (`role="group"`), no un landmark,** para que los paneles no creen regiones dentro de las de `LayoutStep`.
+
+## Ajustes tras la revisión de la Fase A
+
+56. **Enter no inserta desde la librería.** La spec (§3.2) decía «un clic o Enter coloca el bloque», pero CLAUDE.md reserva Space y Enter para coger y soltar, y CLAUDE.md manda. Por eso:
+    - Un clic inserta en el siguiente hueco libre (la alternativa de un solo puntero, WCAG 2.5.7).
+    - Con teclado, Space o Enter coge la carta y Space o Enter la suelta. Si se suelta sin llegar al lienzo, el bloque va al siguiente hueco libre; si se lleva con las flechas al lienzo, también.
+    - Un Space o Enter mantenido o con modificadores no empieza un arrastre.
+57. **Límites del lienzo:** `MAX_ROW` = 4000 filas (32.000 px) y `MAX_HEIGHT_ROWS` = 2000 filas (16.000 px). `validateLayout` rechaza valores mayores; el motor, el store, la rejilla y el inspector los limitan.
+58. **Notas y nombres:** se normalizan a NFC y se quitan todos los caracteres de formato invisibles (incluidas las etiquetas Unicode). Se conservan el ZWJ dentro de emojis y entre letras de escrituras que lo usan.
+59. **El wireframe ASCII mide en columnas de monoespaciado** (emoji y CJK ocupan 2). Es una aproximación propia; no uso `Intl.Segmenter` porque sus datos cambian entre navegadores y rompería el «misma entrada, misma salida».
+60. **Tablet mantiene una fila si la suma de los `minCols` cabe** (spec §5). Si sobran columnas por redondeo, se quitan al hijo que más pasa de su mínimo.
+61. **«Deshacer» de un toast solo deshace su propia acción.** Si después hubo otros cambios, el toast avisa «Ya hiciste otros cambios. Usa ⌘Z o Ctrl+Z para deshacer paso a paso.» (`changeToken`/`undoIfLatest`).
+62. **Deshacer con un lote abierto** (por ejemplo, durante «¿Qué es esto?») primero cierra el lote, para que el historial nunca quede en pausa.
+63. **Mantener pulsado ⌘Z o ⇧⌘Z** repite deshacer o rehacer; mantener Supr o ⌘D no encadena borrados ni duplicados.
+64. **Insignia de avisos:** si un bloque tiene la insignia en la esquina superior derecha, esa esquina no tiene handle de redimensionado (los otros 7 sí).
+65. **Contraste:** todo texto informativo usa `text-muted` (≥4,5:1). `text-subtle` queda para texto decorativo o ≥14 px seminegrita, como dice el Design Brief. Un test recorre `LayoutStep/` para que no vuelva.
+66. **La pila del lienzo está aislada** (`isolation: isolate`): ningún bloque ni handle pinta por encima de la barra inferior ni de los popovers.

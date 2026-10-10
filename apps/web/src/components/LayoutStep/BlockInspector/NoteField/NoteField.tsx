@@ -6,8 +6,8 @@ import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { useLayoutActions } from "../../useLayoutStore";
-import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../styles";
-import { useFieldDraft } from "../useFieldDraft";
+import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL, FIELD_META } from "../../fieldStyles";
+import { useFieldDraft } from "../../useFieldDraft";
 
 export type NoteFieldProps = {
   blockId: BlockId;
@@ -34,7 +34,7 @@ export function NoteField({ blockId, note, screenId }: NoteFieldProps) {
         <label htmlFor={id} className={FIELD_LABEL}>
           {t.inspector.note}
         </label>
-        <span id={`${id}-count`} className={cn("text-caption tabular-nums", length >= NOTE_MAX ? "text-warning" : "text-subtle")}>
+        <span id={`${id}-count`} className={cn("tabular-nums", length >= NOTE_MAX ? "text-caption text-warning" : FIELD_META)}>
           <span aria-hidden>{t.inspector.noteCounter(length, NOTE_MAX)}</span>
           <span className="sr-only">{t.inspector.noteCounterLabel(length, NOTE_MAX)}</span>
         </span>

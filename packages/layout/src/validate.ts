@@ -1,4 +1,13 @@
-import { DESKTOP_COLUMNS, LABEL_MAX, MAX_BLOCKS, NOTE_MAX, ROW_UNIT } from "./constants";
+import {
+  DESKTOP_COLUMNS,
+  LABEL_MAX,
+  LOOSE_COUNT_MAX,
+  MAX_BLOCKS,
+  MAX_HEIGHT_ROWS,
+  MAX_ROW,
+  NOTE_MAX,
+  ROW_UNIT,
+} from "./constants";
 import { isIntegerRect } from "./geometry";
 import { compareStrings, ELEMENT_ID_RE, REGION_PREFIX } from "./ids";
 import { getBlockDef, isLibraryBlockType } from "./library";
@@ -24,12 +33,11 @@ export type LayoutIssueCode =
 /** A hard error of a `LayoutDoc` (for Phase B's `superRefine`: `path` is relative to the layout). */
 export type LayoutIssue = { code: LayoutIssueCode; path: (string | number)[]; message: string };
 
-/** Max ×N accepted on blocks that are not repeatable (it is ignored there). */
-const LOOSE_COUNT_MAX = 99;
 
 /**
  * Hard errors only (soft problems such as overlaps are `inferStructure` warnings): version, grid, ids,
- * rects, types, parents, cycles, `count`, note and label length, `z` and the 200-block cap.
+ * rects (inside the 12 columns, row ≤ `MAX_ROW`, h ≤ `MAX_HEIGHT_ROWS`), types, parents, cycles, `count`,
+ * note and label length, `z` and the 200-block cap.
  * Blocks are checked in id order, so the result does not depend on key order.
  */
 export function validateLayout(layout: LayoutDoc): LayoutIssue[] {
@@ -67,6 +75,8 @@ export function validateLayout(layout: LayoutDoc): LayoutIssue[] {
       add("invalid-rect", at("rect"), "Rect must be integers with w ≥ 1 and h ≥ 1");
     } else if (rect.col < 0 || rect.row < 0 || rect.col + rect.w > DESKTOP_COLUMNS) {
       add("invalid-rect", at("rect"), `Rect must fit the ${DESKTOP_COLUMNS}-column grid`);
+    } else if (rect.row > MAX_ROW || rect.h > MAX_HEIGHT_ROWS) {
+      add("invalid-rect", at("rect"), `Rect row must be at most ${MAX_ROW} and h at most ${MAX_HEIGHT_ROWS}`);
     }
 
     if (block.parentId !== undefined) {

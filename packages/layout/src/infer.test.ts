@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { MAX_BLOCKS } from "./constants";
+import { MAX_BLOCKS, MAX_HEIGHT_ROWS, MAX_ROW } from "./constants";
 import { areaName, inferStructure } from "./infer";
 import { makeLayout } from "./testing/fixtures";
 import type { LayoutDoc, StructureNode } from "./types";
@@ -342,5 +342,55 @@ describe("robustness", () => {
     const structure = inferStructure({ blocks: { a: { type: "nope", rect: null } } } as unknown as LayoutDoc);
     expect(structure.order).toEqual(["a"]);
     expect(structure.warnings.map((w) => w.code)).toEqual(["invalid-rect"]);
+  });
+});
+
+describe("review regressions", () => {
+  test("area names never use CSS keywords: CSS-wide keywords, default, auto, span, none (any case)", () => {
+    for (const id of ["auto", "span", "none", "default", "inherit", "initial", "unset", "revert", "revert-layer", "AUTO", "Span"]) {
+      expect(areaName(id)).toBe(`a-${id}`);
+    }
+    expect(areaName("autoplay")).toBe("autoplay");
+    expect(areaName("spanner")).toBe("spanner");
+    const pinwheel = makeLayout([
+      { id: "auto", type: "text", rect: [0, 0, 9, 20] },
+      { id: "east", type: "media", rect: [9, 0, 3, 40] },
+      { id: "span", type: "media", rect: [0, 20, 3, 40] },
+      { id: "center", type: "cards", rect: [3, 20, 6, 20] },
+      { id: "inherit", type: "text", rect: [3, 40, 9, 20] },
+    ]);
+    const root = inferStructure(pinwheel).root;
+    expect(root?.kind === "grid" && root.areas).toEqual([
+      "a-auto a-auto east",
+      "a-span center east",
+      "a-span a-inherit a-inherit",
+    ]);
+  });
+
+  test("the clip fix never cuts a container away from its children: it clips the other block", () => {
+    const layout = makeLayout([
+      { id: "box", type: "container", rect: [0, 0, 8, 40] },
+      { id: "c", type: "text", rect: [4, 2, 4, 10], parent: "box" },
+      { id: "x", type: "text", rect: [7, 30, 5, 20] },
+    ]);
+    expect(inferStructure(layout).warnings).toEqual([
+      {
+        code: "overlap",
+        ids: ["box", "x"],
+        fixes: [
+          { kind: "move-below", id: "x", below: "box" },
+          { kind: "clip", id: "x", rect: { col: 8, row: 30, w: 4, h: 20 } },
+        ],
+        ratio: 0.1,
+      },
+    ]);
+  });
+
+  test("rows and heights past MAX_ROW / MAX_HEIGHT_ROWS are computed clamped and reported", () => {
+    const layout = makeLayout([{ id: "a", type: "text", rect: [0, 999_999, 12, 1_000_000_000] }]);
+    const { warnings, root } = inferStructure(layout);
+    const rect = { col: 0, row: MAX_ROW, w: 12, h: MAX_HEIGHT_ROWS };
+    expect(warnings).toEqual([{ code: "out-of-bounds", ids: ["a"], fixes: [{ kind: "fit-inside", id: "a", rect }] }]);
+    expect(root).toMatchObject({ kind: "block", rect });
   });
 });

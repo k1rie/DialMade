@@ -1,6 +1,6 @@
-import { getScreenTemplate, type GridRect, type LibraryBlockType, type ScreenTemplateId } from "@dialmade/layout";
+import { deriveResponsive, getBlockDef, getScreenTemplate, LABEL_MAX, MAX_HEIGHT_ROWS, MAX_ROW, type GridRect, type LibraryBlockType, type ScreenTemplateId } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { createLayoutStore, selectActiveScreen, selectActiveScreenId, selectSelectedId, slugify, type LayoutStoreInit } from "./useLayoutStore";
+import { createLayoutStore, selectActiveScreen, selectActiveScreenId, selectSelectedId, slugify, uniqueName, type LayoutStoreInit } from "./useLayoutStore";
 
 const SCREEN_NAMES: Record<ScreenTemplateId, string> = {
   home: "Inicio",
@@ -530,5 +530,265 @@ describe("view state", () => {
   it("slugify strips accents and symbols", () => {
     expect(slugify("Configuración (copia)")).toBe("configuracion-copia");
     expect(slugify("***")).toBe("screen");
+  });
+});
+
+describe("history: change tokens and batches", () => {
+  it("undoIfLatest undoes only while nothing changed since the token", () => {
+    const { actions, history, active, blank } = setup();
+    blank();
+    const a = actions.insertBlock("text").id!;
+    const token = actions.changeToken();
+    expect(actions.undoIfLatest(token)).toBe(true);
+    expect(active().layout.blocks[a]).toBeUndefined();
+    // Undo changed the screens: the same token is stale now, even after redo brings the block back.
+    expect(actions.undoIfLatest(token)).toBe(false);
+    history().redo();
+    expect(actions.undoIfLatest(token)).toBe(false);
+    expect(active().layout.blocks[a]).toBeDefined();
+
+    const fresh = actions.changeToken();
+    actions.insertBlock("text");
+    expect(actions.undoIfLatest(fresh)).toBe(false);
+    expect(Object.keys(active().layout.blocks)).toHaveLength(2);
+  });
+
+  it("view state changes and a cancelled batch keep the token valid", () => {
+    const { actions, active, blank } = setup();
+    blank();
+    const a = actions.insertBlock("text", { rect: rect(0, 0, 4, 10) }).id!;
+    const token = actions.changeToken();
+    actions.select(null);
+    actions.setTool("draw");
+    actions.beginBatch();
+    actions.setRect(a, rect(3, 3, 4, 10));
+    actions.cancelBatch();
+    expect(actions.changeToken()).toBe(token);
+    expect(actions.undoIfLatest(token)).toBe(true);
+    expect(active().layout.blocks[a]).toBeUndefined();
+  });
+
+  it("a token read inside a batch still undoes the whole batch after it is committed", () => {
+    const { actions, history, active, blank } = setup();
+    blank();
+    actions.beginBatch();
+    const drawn = actions.insertBlock("free", { rect: rect(0, 0, 4, 10) }).id!;
+    const token = actions.changeToken();
+    actions.commitBatch();
+    expect(history().pastStates).toHaveLength(1);
+    expect(actions.undoIfLatest(token)).toBe(true);
+    expect(active().layout.blocks[drawn]).toBeUndefined();
+  });
+
+  it("undo inside an open batch commits it first and never leaves history paused", () => {
+    const { state, actions, history, active, blank } = setup();
+    blank();
+    const kept = actions.insertBlock("text", { rect: rect(0, 0, 4, 10) }).id!;
+    actions.beginBatch();
+    const drawn = actions.insertBlock("free", { rect: rect(0, 20, 4, 10) }).id!;
+    // The direct zundo call (toasts, layers) behaves like the action.
+    history().undo();
+    expect(active().layout.blocks[drawn]).toBeUndefined();
+    expect(active().layout.blocks[kept]).toBeDefined();
+    expect(history().isTracking).toBe(true);
+    expect(state().batchBase).toBeNull();
+    expect(history().futureStates).toHaveLength(1);
+    // Later edits are undoable again, one step each.
+    actions.insertBlock("text");
+    actions.insertBlock("text");
+    expect(history().pastStates).toHaveLength(3);
+    expect(history().futureStates).toHaveLength(0);
+    // The batch's own close is now a no-op.
+    actions.commitBatch();
+    actions.cancelBatch();
+    expect(history().pastStates).toHaveLength(3);
+  });
+
+  it("undo and redo actions report whether the screens changed; redo inside a batch commits it", () => {
+    const { actions, history, blank } = setup();
+    blank();
+    expect(actions.undo()).toBe(false);
+    const a = actions.insertBlock("text", { rect: rect(0, 0, 4, 10) }).id!;
+    expect(actions.undo()).toBe(true);
+    expect(actions.redo()).toBe(true);
+    expect(actions.redo()).toBe(false);
+    actions.undo();
+    actions.beginBatch();
+    actions.insertBlock("text");
+    // The batch is a new edit: it is committed and the redo stack goes.
+    expect(actions.redo()).toBe(false);
+    expect(history().isTracking).toBe(true);
+    expect(history().futureStates).toHaveLength(0);
+    expect(a).toBeTruthy();
+  });
+
+  it("an unbalanced begin keeps the first base; extra commits and cancels do nothing", () => {
+    const { actions, history, block, blank } = setup();
+    blank();
+    const id = actions.insertBlock("text", { rect: rect(0, 0, 4, 10) }).id!;
+    actions.commitBatch();
+    actions.cancelBatch();
+    expect(history().isTracking).toBe(true);
+    actions.beginBatch();
+    actions.setRect(id, rect(1, 0, 4, 10));
+    actions.beginBatch();
+    actions.setRect(id, rect(2, 0, 4, 10));
+    actions.cancelBatch();
+    expect(block(id).rect).toEqual(rect(0, 0, 4, 10));
+    expect(history().isTracking).toBe(true);
+    expect(history().pastStates).toHaveLength(1);
+  });
+});
+
+describe("screen names", () => {
+  const long = (n: number) => "a".repeat(n);
+
+  it("uniqueName always finds a free name, cutting the base so the number fits", () => {
+    const name = long(LABEL_MAX);
+    const taken = new Set([name]);
+    for (let i = 0; i < 30; i++) {
+      const next = uniqueName(name, taken);
+      expect(taken.has(next)).toBe(false);
+      expect(next.length).toBeLessThanOrEqual(LABEL_MAX);
+      taken.add(next);
+    }
+    expect(uniqueName(name, new Set([name]))).toBe(`${long(LABEL_MAX - 2)} 2`);
+    expect(uniqueName("Dashboard", new Set(["Dashboard"]))).toBe("Dashboard 2");
+  });
+
+  it("duplicating long names never hangs and keeps every name unique and whole", () => {
+    for (const length of [40, 51, 52, 59, LABEL_MAX]) {
+      const { state, actions } = setup();
+      const [home] = actions.applySet("landing");
+      actions.renameScreen(home!, long(length));
+      for (let i = 0; i < 6; i++) expect(actions.duplicateScreen(home!)).not.toBeNull();
+      const names = Object.values(state().screens).map((s) => s.name);
+      expect(new Set(names).size, `length ${length}`).toBe(names.length);
+      for (const name of names) expect(name.length).toBeLessThanOrEqual(LABEL_MAX);
+      // The copy wording is never cut off: the source name is shortened instead.
+      expect(names.filter((name) => name.includes("(copia)"))).toHaveLength(6);
+    }
+  });
+
+  it("duplicating the newest copy 20 times never hangs", () => {
+    const { state, actions } = setup();
+    actions.applySet("landing");
+    for (let i = 0; i < 20; i++) expect(actions.duplicateScreen(selectActiveScreenId(state())!)).not.toBeNull();
+    const names = Object.values(state().screens).map((s) => s.name);
+    expect(new Set(names).size).toBe(names.length);
+    expect(Object.keys(state().screens)).toHaveLength(22);
+  });
+
+  it("renameScreen keeps names unique", () => {
+    const { state, actions } = setup();
+    const [dashboard, settings] = actions.applySet("saas-app");
+    expect(actions.renameScreen(settings!, "Dashboard")).toBe(true);
+    expect(state().screens[settings!]).toMatchObject({ name: "Dashboard 2", route: "/dashboard-2" });
+    expect(state().screens[dashboard!]!.name).toBe("Dashboard");
+    // Renaming to its own name, or to the name it would get anyway, changes nothing.
+    expect(actions.renameScreen(settings!, "Dashboard")).toBe(false);
+    expect(actions.renameScreen(dashboard!, "Dashboard")).toBe(false);
+  });
+});
+
+describe("block edits keep the document consistent", () => {
+  it("a type change drops a mobile behavior the new type does not offer", () => {
+    const { actions, active, block, blank } = setup();
+    blank();
+    const id = actions.insertBlock("cards").id!;
+    expect(getBlockDef("cards").mobileOptions).toContain("carousel");
+    actions.updateBlock(id, { responsive: { mobile: { behavior: "carousel", hidden: true } } });
+    expect(block(id).responsive).toEqual({ mobile: { behavior: "carousel", hidden: true } });
+    expect(getBlockDef("table").mobileOptions).not.toContain("carousel");
+    actions.updateBlock(id, { type: "table" });
+    // Only the behavior goes; the visibility setting stays.
+    expect(block(id).responsive).toEqual({ mobile: { hidden: true } });
+    expect(deriveResponsive(active().layout).mobile.blocks[id]!.behavior).toBe(getBlockDef("table").mobile);
+    actions.updateBlock(id, { responsive: { mobile: { hidden: false } } });
+    actions.updateBlock(id, { type: "cards" });
+    actions.updateBlock(id, { responsive: { mobile: { behavior: "carousel" } } });
+    actions.updateBlock(id, { type: "table" });
+    expect(block(id).responsive).toBeUndefined();
+  });
+
+  it("a default label follows a type change after the UI language changed", () => {
+    const es: Partial<Record<LibraryBlockType, string>> = { calendar: "Calendario", table: "Tabla" };
+    const en: Partial<Record<LibraryBlockType, string>> = { calendar: "Calendar", table: "Table" };
+    const { actions, block, blank } = setup({ labelFor: (type) => es[type] ?? type });
+    blank();
+    const id = actions.insertBlock("calendar").id!;
+    const custom = actions.insertBlock("calendar").id!;
+    actions.updateBlock(custom, { label: "Agenda del equipo" });
+    actions.setLabelers({ labelFor: (type) => en[type] ?? type });
+    actions.updateBlock(id, { type: "table" });
+    expect(block(id).label).toBe("Table");
+    actions.updateBlock(custom, { type: "table" });
+    expect(block(custom).label).toBe("Agenda del equipo");
+  });
+
+  it("an injected isDefaultLabel decides which labels are default names", () => {
+    const { actions, block, blank } = setup({ isDefaultLabel: (type, label) => label === `Default ${type}` || label === `Por defecto ${type}` });
+    blank();
+    const id = actions.insertBlock("calendar").id!;
+    actions.updateBlock(id, { label: "Por defecto calendar" });
+    actions.updateBlock(id, { type: "table" });
+    expect(block(id).label).toBe("Default table");
+  });
+
+  it("convertScreen to app keeps the content of a navbar that becomes the navigation frame", () => {
+    const { state, actions, active, blank } = setup();
+    const screen = blank("landing");
+    const container = actions.insertBlock("container", { rect: rect(0, 0, 12, 30) }).id!;
+    const text = actions.insertBlock("text", { parentId: container }).id!;
+    actions.updateBlock(container, { type: "navbar" });
+    expect(active().layout.blocks[text]!.parentId).toBe(container);
+    expect(actions.convertScreen(screen, "app")).toBe(true);
+    expect(state().screens[screen]!.shell?.nav).toBe("topnav");
+    const blocks = state().screens[screen]!.layout.blocks;
+    expect(blocks[container]).toBeUndefined();
+    expect(blocks[text]).toBeDefined();
+    expect(blocks[text]!.parentId).toBeUndefined();
+  });
+
+  it("a type change to a frame on an app screen keeps the block's children", () => {
+    const { actions, active, blank } = setup();
+    blank("app");
+    const outer = actions.insertBlock("container", { rect: rect(0, 0, 12, 60) }).id!;
+    const inner = actions.insertBlock("container", { parentId: outer, rect: rect(0, 0, 12, 30) }).id!;
+    const text = actions.insertBlock("text", { parentId: inner }).id!;
+    expect(actions.updateBlock(inner, { type: "sidebar" })).toEqual({ changed: true, nav: "sidebar" });
+    expect(active().layout.blocks[inner]).toBeUndefined();
+    expect(active().layout.blocks[text]!.parentId).toBe(outer);
+  });
+
+  it("duplicateBlock gives the copied descendants ids that are unique in the whole project", () => {
+    const constant = () => 0.5;
+    const { state, actions } = setup({ random: constant });
+    const [home, pricing] = actions.applySet("landing");
+    for (const screen of [home!, pricing!]) {
+      actions.setActiveScreen(screen);
+      const container = actions.insertBlock("container", { rect: rect(0, 900, 12, 40) }).id!;
+      actions.insertBlock("text", { parentId: container });
+      expect(actions.duplicateBlock(container)).not.toBeNull();
+    }
+    const ids = [...Object.values(state().screens).flatMap((s) => Object.keys(s.layout.blocks)), ...state().screenOrder];
+    expect(new Set(ids).size).toBe(ids.length);
+    // Parents point at the renamed copies.
+    for (const screen of Object.values(state().screens)) {
+      for (const block of Object.values(screen.layout.blocks)) {
+        if (block.parentId !== undefined) expect(screen.layout.blocks[block.parentId]).toBeDefined();
+      }
+    }
+  });
+
+  it("setRect and insertBlock keep the top row and the height inside the engine's bounds", () => {
+    const { actions, block, blank } = setup();
+    blank();
+    const id = actions.insertBlock("text", { rect: rect(0, 1e12, 4, 1e12) }).id!;
+    expect(block(id).rect.row).toBeLessThanOrEqual(MAX_ROW);
+    expect(block(id).rect.h).toBeLessThanOrEqual(MAX_HEIGHT_ROWS);
+    actions.setRect(id, rect(0, 0, 4, 10));
+    actions.setRect(id, rect(0, 999_999_999, 4, 999_999_999));
+    expect(block(id).rect).toEqual(rect(0, MAX_ROW, 4, MAX_HEIGHT_ROWS));
   });
 });

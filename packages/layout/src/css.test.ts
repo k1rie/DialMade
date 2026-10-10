@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
+import { MAX_HEIGHT_ROWS } from "./constants";
 import { spaceVar, toCss } from "./css";
+import { inferStructure } from "./infer";
 import { fixture, makeLayout } from "./testing/fixtures";
 
 /** The body of the rule for a selector inside a CSS chunk. */
@@ -70,14 +72,23 @@ describe("toCss", () => {
     expect(toCss(fixture("dashboard").layout, { kind: "landing" })).toContain("align-items: stretch;");
   });
 
-  test("landing: aspect-ratio on media and charts only; app: min-height on leaves", () => {
+  test("landing: aspect-ratio on media and charts only; app: min-height on every block", () => {
     const landing = toCss(fixture("bento").layout, { kind: "landing" });
     expect(ruleOf(landing, '.dl-layout [data-dl-id="a"]')).toContain("aspect-ratio: 9 / 4;");
     expect(ruleOf(landing, '.dl-layout [data-dl-id="b"]')).not.toContain("aspect-ratio");
     expect(landing).not.toContain("min-height: ");
     const app = toCss(fixture("nested-cards").layout, { kind: "app" });
     expect(ruleOf(app, '.dl-layout [data-dl-id="card-a"]')).toContain("min-height: 288px;");
-    expect(ruleOf(app, '.dl-layout [data-dl-id="plans"]')).not.toContain("min-height");
+    // A container keeps its drawn height (40 rows), not just its children's (decision 13: literal in app).
+    expect(ruleOf(app, '.dl-layout [data-dl-id="plans"]')).toContain("min-height: 320px;");
+  });
+
+  test("app: a modal with a form inside keeps its drawn height on every breakpoint", () => {
+    const css = toCss(fixture("modal-overlay").layout, { kind: "app" });
+    expect(ruleOf(css, '.dl-layout [data-dl-id="dialog"]')).toContain("min-height: 240px;");
+    // Same drawn height on tablet and mobile (sheet keeps h): no rule needs to change it.
+    expect(ruleOf(chunk(css, "(width < 64rem)"), '  .dl-layout [data-dl-id="dialog"]') ?? "").not.toContain("min-height");
+    expect(ruleOf(chunk(css, "(width < 40rem)"), '  .dl-layout [data-dl-id="dialog"]') ?? "").not.toContain("min-height");
   });
 
   test("mobile heights follow the derived rects (app)", () => {
@@ -154,5 +165,58 @@ describe("toCss", () => {
       const css = toCss(fixture(name).layout, { kind: "app" });
       for (const match of css.matchAll(/var\((--[\w-]+)\)/g)) expect(match[1]).toMatch(/^--(dl-space-\d+|_)/);
     }
+  });
+});
+
+describe("review regressions", () => {
+  test("tablet: a nested container or region narrower than 8 columns gets its own column count", () => {
+    // box keeps 4 of 8 columns at tablet; its children span 2 + 2 of those 4.
+    const box = toCss(
+      makeLayout([
+        { id: "box", type: "container", rect: [0, 0, 6, 40] },
+        { id: "a", type: "free", rect: [0, 2, 3, 20], parent: "box" },
+        { id: "b", type: "free", rect: [3, 2, 3, 20], parent: "box" },
+        { id: "m", type: "media", rect: [6, 0, 6, 40] },
+      ]),
+    );
+    const tablet = chunk(box, "(width < 64rem)");
+    expect(ruleOf(tablet, '  .dl-layout [data-dl-id="box"]')).toContain("grid-template-columns: repeat(4, minmax(0, 1fr));");
+    expect(ruleOf(tablet, '  .dl-layout [data-dl-id="a"]')).toContain("grid-column: 1 / span 2;");
+    expect(ruleOf(tablet, '  .dl-layout [data-dl-id="b"]')).toContain("grid-column: 3 / span 2;");
+
+    // Same for an inferred region: the row of f1/f2 inside the right-hand stack.
+    const layout = makeLayout([
+      { id: "m", type: "media", rect: [0, 0, 6, 40] },
+      { id: "t", type: "text", rect: [6, 0, 6, 10] },
+      { id: "f1", type: "free", rect: [6, 12, 3, 20] },
+      { id: "f2", type: "free", rect: [9, 12, 3, 20] },
+    ]);
+    const root = inferStructure(layout).root;
+    const stack = root?.kind === "row" ? root.children[1]!.node : null;
+    const row = stack?.kind === "stack" ? stack.children[1]!.node : null;
+    expect(row?.kind).toBe("row");
+    const region = chunk(toCss(layout), "(width < 64rem)");
+    expect(ruleOf(region, `  .dl-layout [data-dl-id="${row!.id}"]`)).toContain("grid-template-columns: repeat(4, minmax(0, 1fr));");
+  });
+
+  test("ids that are CSS keywords get a prefixed area name in the template and in grid-area", () => {
+    const layout = makeLayout([
+      { id: "auto", type: "text", rect: [0, 0, 9, 20] },
+      { id: "east", type: "media", rect: [9, 0, 3, 40] },
+      { id: "span", type: "media", rect: [0, 20, 3, 40] },
+      { id: "center", type: "cards", rect: [3, 20, 6, 20] },
+      { id: "default", type: "text", rect: [3, 40, 9, 20] },
+    ]);
+    const css = toCss(layout);
+    expect(css).toContain('grid-template-areas:\n    "a-auto a-auto east"\n    "a-span center east"\n    "a-span a-default a-default";');
+    expect(ruleOf(css, '.dl-layout [data-dl-id="auto"]')).toContain("grid-area: a-auto;");
+    expect(ruleOf(css, '.dl-layout [data-dl-id="span"]')).toContain("grid-area: a-span;");
+    // Desktop places by area; `grid-area: auto` only comes back as the tablet reset.
+    expect(css.slice(0, css.indexOf("@container"))).not.toMatch(/grid-area: (auto|span|default);/);
+  });
+
+  test("huge rows and heights are clamped before they reach the CSS", () => {
+    const layout = makeLayout([{ id: "a", type: "text", rect: [0, 1_000_000, 12, 1_000_000_000] }]);
+    expect(ruleOf(toCss(layout, { kind: "app" }), '.dl-layout [data-dl-id="a"]')).toContain(`min-height: ${MAX_HEIGHT_ROWS * 8}px;`);
   });
 });

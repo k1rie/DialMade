@@ -1,4 +1,4 @@
-import type { GridRect } from "@dialmade/layout";
+import { MAX_HEIGHT_ROWS, MAX_ROW, type GridRect } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { applyField, fieldBounds, fieldValue, nudgeRect, parseCount, parseNumber, RECT_FIELDS } from "./fields";
 
@@ -34,9 +34,9 @@ describe("fieldBounds", () => {
     expect(fieldBounds(rect(0, 0, 12, 10), "col")).toEqual({ min: 1, max: 1, step: 1 });
   });
 
-  it("uses 8 px steps and the minimum height for px fields", () => {
-    expect(fieldBounds(rect(0, 0, 4, 10), "top")).toEqual({ min: 0, max: null, step: 8 });
-    expect(fieldBounds(rect(0, 0, 4, 10), "height")).toEqual({ min: 16, max: null, step: 8 });
+  it("uses 8 px steps, the minimum height and the engine's maximum row and height for px fields", () => {
+    expect(fieldBounds(rect(0, 0, 4, 10), "top")).toEqual({ min: 0, max: MAX_ROW * 8, step: 8 });
+    expect(fieldBounds(rect(0, 0, 4, 10), "height")).toEqual({ min: 16, max: MAX_HEIGHT_ROWS * 8, step: 8 });
   });
 
   it("follows the column count", () => {
@@ -67,6 +67,11 @@ describe("applyField", () => {
     expect(applyField(start, "w", "0")).toEqual(rect(2, 3, 1, 10));
     expect(applyField(start, "top", "-50")).toEqual(rect(2, 0, 4, 10));
     expect(applyField(start, "height", "3")).toEqual(rect(2, 3, 4, 2));
+  });
+
+  it("stops «Arriba» and «Alto» at the engine's bounds, so a typed 999999 px is never sent to the store", () => {
+    expect(applyField(start, "top", "999999")).toEqual(rect(2, MAX_ROW, 4, 10));
+    expect(applyField(start, "height", "99999999")).toEqual(rect(2, 3, 4, MAX_HEIGHT_ROWS));
   });
 
   it("snaps px to the 8 px rows and rounds columns", () => {

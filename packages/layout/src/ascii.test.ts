@@ -78,3 +78,38 @@ describe("toAsciiWireframe", () => {
     expect(toAsciiWireframe(fixture("empty").layout)).toBe("");
   });
 });
+
+describe("toAsciiWireframe robustness", () => {
+  test("huge rects never make a huge wireframe (and never throw)", () => {
+    const layout = makeLayout([
+      { id: "a", type: "text", rect: [0, 0, 12, 10] },
+      { id: "b", type: "text", rect: [0, 10, 12, 1e10] },
+      { id: "c", type: "text", rect: [0, 1e12, 12, 1e12] },
+    ]);
+    for (const breakpoint of ["desktop", "tablet", "mobile"] as const) {
+      const text = toAsciiWireframe(layout, { breakpoint, width: 2_000_000 });
+      const lines = text.split("\n");
+      expect(lines.length).toBeLessThan(2100);
+      expect(Math.max(...lines.map((line) => line.length))).toBeLessThanOrEqual(1000);
+    }
+  });
+
+  test("wide characters count two columns, accents none: the right border stays aligned", () => {
+    const layout = makeLayout([
+      { id: "a", type: "text", rect: [0, 0, 6, 10], label: "日本語のラベル日本語のラベル" },
+      { id: "b", type: "text", rect: [6, 0, 6, 10], label: "🛒 Carrito de compras" },
+      { id: "c", type: "text", rect: [0, 10, 12, 10], label: "👩‍💻 Dev ❤️ Café 🇪🇸" },
+    ]);
+    expect(toAsciiWireframe(layout, { width: 30 })).toBe(
+      [
+        "+--------------+-------------+",
+        "| 日本語のラベ | 🛒 Carrito  |",
+        "|              |             |",
+        "+----------------------------+",
+        "| 👩‍💻 Dev ❤️ Café 🇪🇸          |",
+        "|                            |",
+        "+----------------------------+",
+      ].join("\n"),
+    );
+  });
+});

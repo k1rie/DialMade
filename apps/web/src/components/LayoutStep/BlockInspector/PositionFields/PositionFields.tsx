@@ -7,7 +7,7 @@ import { layout } from "@/i18n/layout";
 import { useLayoutStoreApi } from "../../useLayoutStore";
 import { applyField, fieldBounds, fieldValue, type RectField } from "../fields";
 import { NumberField } from "../NumberField";
-import { FIELD_HINT } from "../styles";
+import { FIELD_HINT } from "../../fieldStyles";
 import { useCommitRect } from "../useCommitRect";
 
 export type PositionFieldsProps = {
@@ -50,8 +50,8 @@ export function PositionFields({ blockId, rect, screenId }: PositionFieldsProps)
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-        {field("col", t.inspector.column, { hint: t.inspector.columnHint(fieldBounds(rect, "col").max ?? 12) })}
-        {field("w", t.inspector.width, { unit: t.inspector.widthUnit, hint: t.inspector.widthHint(fieldBounds(rect, "w").max ?? 12) })}
+        {field("col", t.inspector.column, { hint: t.inspector.columnHint(fieldBounds(rect, "col").max) })}
+        {field("w", t.inspector.width, { unit: t.inspector.widthUnit, hint: t.inspector.widthHint(fieldBounds(rect, "w").max) })}
         {field("top", t.inspector.top, { unit: t.inspector.pxUnit, describedBy: pxHintId })}
         {field("height", t.inspector.height, { unit: t.inspector.pxUnit, describedBy: pxHintId })}
       </div>

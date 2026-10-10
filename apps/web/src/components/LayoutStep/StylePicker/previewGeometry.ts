@@ -102,7 +102,29 @@ const byPaintOrder =
     );
   };
 
-/** Geometry of a layout on a screen of `kind` with `shell` (only app screens draw a frame). Not cached. */
+/*
+ * Every PreviewBlock is cached per block object, so a new layout version keeps the same PreviewBlock (and
+ * `box`) for the blocks it did not touch, and the memoised glyphs of the 13 previews skip them. The key
+ * holds everything else the result depends on: the id, the frame offsets, the grid and the nesting depth
+ * (a parent change moves a child without touching the child's object).
+ */
+const previewBlocks = new WeakMap<LayoutBlock, Map<string, PreviewBlock>>();
+
+function previewBlockOf(id: BlockId, block: LayoutBlock, key: string, build: () => PreviewBlock): PreviewBlock {
+  let perBlock = previewBlocks.get(block);
+  const cacheKey = `${id}|${key}`;
+  const hit = perBlock?.get(cacheKey);
+  if (hit) return hit;
+  const result = build();
+  if (!perBlock) previewBlocks.set(block, (perBlock = new Map()));
+  perBlock.set(cacheKey, result);
+  return result;
+}
+
+/**
+ * Geometry of a layout on a screen of `kind` with `shell` (only app screens draw a frame). The geometry
+ * object is new on every call; its PreviewBlocks are reused per block (see `previewBlockOf`).
+ */
 export function computePreviewGeometry(layout: LayoutDoc, kind: ScreenKind, shell: AppShell | null, sample = false): PreviewGeometry {
   const appShell = kind === "app" ? shell : null;
   const navKind: FrameNav | null = appShell && appShell.nav !== "none" ? appShell.nav : null;
@@ -125,6 +147,8 @@ export function computePreviewGeometry(layout: LayoutDoc, kind: ScreenKind, shel
   const depths = visibleDepths(layout);
   const ids = [...depths.keys()].sort(byPaintOrder(layout, depths));
 
+  const frameKey = `${navW}|${navH}|${headerH}|${layout.columns}|${layout.rowUnit}`;
+
   const blocks: PreviewBlock[] = [];
   for (const id of ids) {
     const block = layout.blocks[id] as LayoutBlock;
@@ -133,18 +157,22 @@ export function computePreviewGeometry(layout: LayoutDoc, kind: ScreenKind, shel
     const inset = (PREVIEW_GAP_PX / 2) * (1 + depth);
     const top = originY + block.rect.row * layout.rowUnit + inset;
     if (top >= PREVIEW_HEIGHT) continue; // below the fold
-    const left = originX + block.rect.col * colPx + inset;
-    const widthPx = Math.max(1, block.rect.w * colPx - 2 * inset);
-    const heightPx = Math.max(1, block.rect.h * layout.rowUnit - 2 * inset);
-    blocks.push({
-      id,
-      type: isLibraryBlockType(block.type) ? block.type : "free",
-      count: block.count,
-      widthPx: round(widthPx),
-      heightPx: round(heightPx),
-      depth,
-      box: toBox(left, top, widthPx, heightPx),
-    });
+    blocks.push(
+      previewBlockOf(id, block, `${frameKey}|${depth}`, () => {
+        const left = originX + block.rect.col * colPx + inset;
+        const widthPx = Math.max(1, block.rect.w * colPx - 2 * inset);
+        const heightPx = Math.max(1, block.rect.h * layout.rowUnit - 2 * inset);
+        return {
+          id,
+          type: isLibraryBlockType(block.type) ? block.type : "free",
+          count: block.count,
+          widthPx: round(widthPx),
+          heightPx: round(heightPx),
+          depth,
+          box: toBox(left, top, widthPx, heightPx),
+        };
+      }),
+    );
   }
   return { nav, header, blocks, sample };
 }
@@ -174,6 +202,11 @@ export function templateLayout(templateId: ScreenTemplateId): LayoutDoc {
   return layout;
 }
 
+/** No screen or a screen without blocks: its preview paints the matching template (`sample`). */
+export function isSampleLayout(layout: LayoutDoc | null): boolean {
+  return !layout || Object.keys(layout.blocks).length === 0;
+}
+
 /* ---- Cache ---- */
 
 const geometries = new WeakMap<LayoutDoc, Map<string, PreviewGeometry>>();
@@ -186,7 +219,7 @@ const shellKey = (kind: ScreenKind, shell: AppShell | null) =>
  * screen) paints the matching template: Inicio for landing, Dashboard with the screen's frame for apps.
  */
 export function getPreviewGeometry(layout: LayoutDoc | null, kind: ScreenKind, shell: AppShell | null): PreviewGeometry {
-  const sample = !layout || Object.keys(layout.blocks).length === 0;
+  const sample = isSampleLayout(layout);
   const templateId = SAMPLE_TEMPLATE[kind];
   const source = !layout || sample ? templateLayout(templateId) : layout;
   const frame = sample && kind === "app" ? (shell ?? getScreenTemplate(templateId).shell) : shell;

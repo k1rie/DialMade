@@ -1,9 +1,12 @@
 import type { NoteKeyword, ParsedNote } from "./types";
 
+/**
+ * Number words. Spanish «un/una/uno» are left out: they are mostly the indefinite article («planes para una
+ * startup»), so a count of 1 needs the digit. «once» (es 11) is read only when it is clearly Spanish: see
+ * `ENGLISH_AFTER_ONCE`.
+ */
 const NUMBER_WORDS: Readonly<Record<string, number>> = {
   // es
-  uno: 1,
-  una: 1,
   dos: 2,
   tres: 3,
   cuatro: 4,
@@ -13,7 +16,6 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   ocho: 8,
   nueve: 9,
   diez: 10,
-  once: 11,
   doce: 12,
   // en
   one: 1,
@@ -29,6 +31,41 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   eleven: 11,
   twelve: 12,
 };
+
+/**
+ * Words that make «once» the English adverb («updated once a day», «once per week», «load once and…»), not
+ * the Spanish 11. «once» at the end of a note is English too («refresh once»).
+ */
+const ENGLISH_AFTER_ONCE: ReadonlySet<string> = new Set([
+  "a",
+  "an",
+  "the",
+  "per",
+  "every",
+  "each",
+  "more",
+  "again",
+  "and",
+  "or",
+  "in",
+  "on",
+  "upon",
+  "for",
+  "only",
+  "you",
+  "we",
+  "they",
+  "it",
+  "is",
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+  "day",
+  "week",
+  "month",
+  "year",
+]);
 
 /** Keyword → phrases (already lowercase and without diacritics), in the declared output order. */
 const KEYWORDS: readonly (readonly [NoteKeyword, readonly string[]])[] = [
@@ -59,25 +96,26 @@ function tokenize(note: string): string[] {
     .filter(Boolean);
 }
 
-function countOf(token: string): number | undefined {
+function countOf(token: string, next: string | undefined): number | undefined {
   const digits = /^[x\u00d7]?(\d{1,3})[x\u00d7]?$/.exec(token);
   if (digits) {
     const value = Number(digits[1]);
     return value >= 1 && value <= 99 ? value : undefined;
   }
-  return NUMBER_WORDS[token];
+  if (token === "once") return next === undefined || ENGLISH_AFTER_ONCE.has(next) ? undefined : 11;
+  return Object.prototype.hasOwnProperty.call(NUMBER_WORDS, token) ? NUMBER_WORDS[token] : undefined;
 }
 
 /**
- * Reads a block note without AI: the first standalone number 1–99 («3», «×3», «3x», «tres», «three») is
- * `count`; es/en keywords («semanal», «buscador», «login»…) come back once each, in the declared order.
+ * Reads a block note without AI: the first standalone number 1–99 («3», «×3», «3x», «tres», «three», but
+ * not the article «una»: see `NUMBER_WORDS`) is `count`; es/en keywords («semanal», «buscador», «login»…) come back once each, in the declared order.
  */
 export function parseNote(note: string | null | undefined): ParsedNote {
   if (typeof note !== "string" || note.length === 0) return { keywords: [] };
   const tokens = tokenize(note);
   let count: number | undefined;
-  for (const token of tokens) {
-    count = countOf(token);
+  for (let i = 0; i < tokens.length; i++) {
+    count = countOf(tokens[i]!, tokens[i + 1]);
     if (count !== undefined) break;
   }
   const found = new Set<NoteKeyword>();

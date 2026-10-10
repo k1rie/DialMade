@@ -1,4 +1,4 @@
-import type { LayoutWarningCode, LibraryBlockType } from "@dialmade/layout";
+import { estimateContent, LIBRARY, type LayoutBlock, type LayoutDoc, type LayoutWarningCode, type LibraryBlockType } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { layout } from "./layout";
 
@@ -68,10 +68,40 @@ describe("layout dictionary", () => {
     expect(es.estimate({ kind: "count", unit: "plans", value: 1 })).toBe("1 plan");
     expect(en.estimate({ kind: "count", unit: "items", value: 1 })).toBe("1 item");
     expect(es.estimate({ kind: "variant", value: "month" })).toBe("Mes");
-    expect(en.estimate({ kind: "variant", value: "mini-month" })).toBe("Mini month");
+    expect(es.estimate({ kind: "variant", value: "mini" })).toBe("Mes compacto");
+    expect(en.estimate({ kind: "variant", value: "mini" })).toBe("Mini month");
     expect(es.estimate({ kind: "variant", value: "two-up" })).toBe("Two up");
     expect(es.estimate({ kind: "variant", value: "constructor" })).toBe("Constructor");
     expect(en.estimate({ kind: "ratio", value: "16:9" })).toBe("16:9");
+  });
+
+  it("names every variant estimateContent can return in both locales (never the raw-id fallback)", () => {
+    // One phrase per note keyword (packages/layout/src/note.ts), plus no note.
+    const notes = ["", "semanal", "mensual", "anual", "diario", "agenda", "buscador", "login", "registro", "contacto", "dividido", "carrusel"];
+    const heights = [4, 8, 16, 24, 32, 40, 50, 60, 80, 100, 120, 160];
+    const seen = new Set<string>();
+    const collect = (block: LayoutBlock, doc?: LayoutDoc, id?: string) => {
+      const estimate = estimateContent(block, doc, id);
+      if (estimate?.kind === "variant") seen.add(estimate.value);
+    };
+    for (const def of LIBRARY) {
+      for (let w = 1; w <= 12; w++) {
+        for (const h of heights) {
+          for (const note of notes) collect({ type: def.type, label: def.type, rect: { col: 0, row: 0, w, h }, z: 0, ...(note && { note }) });
+        }
+      }
+    }
+    // A wide hero with a media child is «split» through its children.
+    const hero: LayoutBlock = { type: "hero", label: "Hero", rect: { col: 0, row: 0, w: 12, h: 60 }, z: 0 };
+    const media: LayoutBlock = { type: "media", label: "Media", rect: { col: 6, row: 2, w: 6, h: 40 }, z: 1, parentId: "h" };
+    collect(hero, { version: 1, columns: 12, rowUnit: 8, blocks: { h: hero, m: media } }, "h");
+
+    // The sweep reaches every documented variant (calendar, chart, hero), so a renamed id cannot hide.
+    for (const id of ["week", "month", "agenda", "mini", "area", "bar", "split", "centered"]) expect(seen, id).toContain(id);
+    for (const id of seen) {
+      expect(Object.hasOwn(es.variants, id), `es: ${id}`).toBe(true);
+      expect(Object.hasOwn(en.variants, id), `en: ${id}`).toBe(true);
+    }
   });
 
   it("writes a message for every warning code, with the block names", () => {
@@ -102,5 +132,32 @@ describe("layout dictionary", () => {
     expect(rows.some((row) => row.keys === "⌘D")).toBe(true);
     expect(rows.some((row) => row.keys.includes("⇧⌘Z"))).toBe(true);
     expect(en.shortcuts.list(apple)).toHaveLength(rows.length);
+  });
+
+  it("gives library tiles one coherent keyboard help: a click adds, Space or Enter picks up and drops (CLAUDE.md)", () => {
+    for (const [locale, space] of [
+      [es, "Espacio"],
+      [en, "Space"],
+    ] as const) {
+      // The click is the single-pointer alternative; the keys are only grab and drop.
+      expect(locale.library.insertHint).not.toContain("Enter");
+      expect(locale.library.insertHint).not.toContain(space);
+      expect(locale.library.grabHint).toContain(space);
+      expect(locale.library.grabHint).toContain("Enter");
+    }
+  });
+
+  it("describes canvas blocks with Supr / Delete and F2 only while single-key shortcuts are on", () => {
+    for (const [locale, del] of [
+      [es, "Supr"],
+      [en, "Delete"],
+    ] as const) {
+      expect(locale.canvas.instructions(true)).toContain(del);
+      expect(locale.canvas.instructions(true)).toContain("F2");
+      expect(locale.canvas.instructions(false)).not.toContain(del);
+      expect(locale.canvas.instructions(false)).not.toContain("F2");
+      // Grabbing never depends on the switch.
+      expect(locale.canvas.instructions(false)).toContain("Enter");
+    }
   });
 });

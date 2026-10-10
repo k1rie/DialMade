@@ -7,6 +7,7 @@ import {
   clipRect,
   compareByPosition,
   intersection,
+  leavesOut,
   right,
 } from "./geometry";
 import { compareStrings, regionId } from "./ids";
@@ -50,10 +51,28 @@ export const CLIP_RATIO = 0.15;
 export const CONTAINMENT_RATIO = 0.9;
 
 const AREA_NAME_RE = /^[A-Za-z_][\w-]*$/;
+/**
+ * Words that cannot be a grid area name in `grid-area` (any case): the CSS-wide keywords, `default` (never a
+ * `<custom-ident>`), the grid-line keywords `auto` and `span`, and `none`.
+ */
+const RESERVED_AREA_NAMES: ReadonlySet<string> = new Set([
+  "auto",
+  "span",
+  "none",
+  "default",
+  "inherit",
+  "initial",
+  "unset",
+  "revert",
+  "revert-layer",
+]);
 
-/** `grid-template-areas` name of a block: its id when it is a CSS ident, else `a-` + id. */
+/**
+ * `grid-template-areas` / `grid-area` name of a block: its id when it is a CSS ident that is not a reserved
+ * word, else `a-` + id (`auto` → `a-auto`, `9lives` → `a-9lives`).
+ */
 export function areaName(id: string): string {
-  return AREA_NAME_RE.test(id) ? id : `a-${id}`;
+  return AREA_NAME_RE.test(id) && !RESERVED_AREA_NAMES.has(id.toLowerCase()) ? id : `a-${id}`;
 }
 
 type Axis = "row" | "col";
@@ -262,6 +281,25 @@ function lowerOf(a: Item, b: Item): [lower: Item, upper: Item] {
   return aLower ? [a, b] : [b, a];
 }
 
+/** Every descendant rect of an item (effective children, recursively). */
+function descendantRects(item: Item): GridRect[] {
+  const out: GridRect[] = [];
+  const stack = [...item.children];
+  while (stack.length > 0) {
+    const child = stack.pop()!;
+    out.push(child.rect);
+    stack.push(...child.children);
+  }
+  return out;
+}
+
+/** «Recortar» `clipped` away from `other`, or null when no cut works or it would strand a descendant. */
+function clipFix(clipped: Item, other: Item): LayoutFix | null {
+  const rect = clipRect(clipped.rect, other.rect);
+  if (!rect || leavesOut(clipped.rect, rect, descendantRects(clipped))) return null;
+  return { kind: "clip", id: clipped.id, rect };
+}
+
 /** Overlap warnings between the siblings of one scope (overlays excluded). `items` are sorted. */
 function scopeOverlaps(items: readonly Item[], warnings: LayoutWarning[]): void {
   const flow = items.filter((i) => !i.overlay);
@@ -287,10 +325,11 @@ function scopeOverlaps(items: readonly Item[], warnings: LayoutWarning[]): void 
       const [lower, upper] = lowerOf(a, b);
       const fixes: LayoutFix[] = [{ kind: "move-below", id: lower.id, below: upper.id }];
       if (ratio < CLIP_RATIO) {
-        // Shrink the block with the lower z (ties: the later one in reading position).
-        const [clipped, other] = a.z < b.z ? [a, b] : [b, a];
-        const rect = clipRect(clipped.rect, other.rect);
-        if (rect) fixes.push({ kind: "clip", id: clipped.id, rect });
+        // Shrink the block with the lower z (ties: the later one in reading position), or the other one when
+        // that cut would leave one of its children outside it. No clip when neither cut works.
+        const [first, second] = a.z < b.z ? [a, b] : [b, a];
+        const clip = clipFix(first, second) ?? clipFix(second, first);
+        if (clip) fixes.push(clip);
       }
       warnings.push({ code: "overlap", ids: [a.id, b.id], fixes, ratio: round3(ratio) });
     }

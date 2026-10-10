@@ -63,7 +63,11 @@ export function ShortcutsMenu() {
               <dt className="flex shrink-0 flex-wrap items-center gap-1">
                 {row.keys.split(KEY_SEPARATOR).map((key, index) => (
                   <Fragment key={key}>
-                    {index > 0 && <span className="text-caption text-subtle">·</span>}
+                    {index > 0 && (
+                      <span aria-hidden className="text-caption text-subtle">
+                        ·
+                      </span>
+                    )}
                     <Kbd>{key}</Kbd>
                   </Fragment>
                 ))}
@@ -72,7 +76,7 @@ export function ShortcutsMenu() {
             </div>
           ))}
         </dl>
-        <p className="m-0 text-caption text-subtle">{t.shortcuts.regionsHint}</p>
+        <p className="m-0 text-caption text-muted">{t.shortcuts.regionsHint}</p>
       </div>
     </Popover>
   );

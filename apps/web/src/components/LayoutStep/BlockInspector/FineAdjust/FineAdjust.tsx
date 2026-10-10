@@ -9,7 +9,7 @@ import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, MoveIcon, Re
 import { Segmented } from "../../Segmented";
 import { useLayoutStoreApi } from "../../useLayoutStore";
 import { nudgeRect, type NudgeDirection, type NudgeMode } from "../fields";
-import { FIELD_LABEL } from "../styles";
+import { FIELD_LABEL } from "../../fieldStyles";
 import { useCommitRect } from "../useCommitRect";
 
 export type FineAdjustProps = {

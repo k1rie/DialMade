@@ -1,7 +1,8 @@
+import { readFileSync } from "node:fs";
 import type { LayoutDoc } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import type { GeneratedScreen, GenerateResult } from "../../types";
-import { hasBlocks, layoutJson, pickScreenId, REPORT_VIEWS } from "./report";
+import { hasBlocks, layoutJson, nextLiveMessage, pickScreenId, REPORT_VIEWS } from "./report";
 
 const empty: LayoutDoc = { version: 1, columns: 12, rowUnit: 8, blocks: {} };
 const withHero: LayoutDoc = {
@@ -40,5 +41,27 @@ describe("report helpers", () => {
 
   it("orders the sub-tabs like the spec", () => {
     expect(REPORT_VIEWS).toEqual(["wireframe", "css", "json", "warnings"]);
+  });
+});
+
+describe("report live region", () => {
+  it("marks a repeated message so screen readers say it again", () => {
+    expect(nextLiveMessage("", "Arreglo aplicado")).toBe("Arreglo aplicado");
+    const again = nextLiveMessage("Arreglo aplicado", "Arreglo aplicado");
+    expect(again).not.toBe("Arreglo aplicado");
+    expect(again.startsWith("Arreglo aplicado")).toBe(true);
+    expect(nextLiveMessage(again, "Arreglo aplicado")).toBe("Arreglo aplicado");
+    expect(nextLiveMessage("Arreglo aplicado", "Diseño generado")).toBe("Diseño generado");
+  });
+
+  it("speaks from a live region inside the modal, never through the page's one (inert behind it)", () => {
+    const source = readFileSync(new URL("./GenerateReport.tsx", import.meta.url), "utf8");
+    expect(source).not.toMatch(/useDndAnnounce/);
+    const dialog = source.slice(source.indexOf("<dialog"), source.indexOf("</dialog>"));
+    expect(dialog).toMatch(/role="status" aria-live="polite"/);
+    // «Diseño generado…» goes to the report (said after showModal), not to the page's region.
+    const bar = readFileSync(new URL("../GenerateBar.tsx", import.meta.url), "utf8");
+    expect(bar).not.toMatch(/announce\(t\.announce\.generated/);
+    expect(bar).toMatch(/openAnnouncement=\{/);
   });
 });

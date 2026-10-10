@@ -5,9 +5,7 @@ import { memo } from "react";
 import type { Handle } from "@/lib/geometry";
 import { cn } from "@/lib/cn";
 import { Z_OVERLAY } from "../constants";
-
-/** Edges first, corners last: on a small block the corner hit areas win where they overlap. */
-const ORDER: readonly Handle[] = ["n", "e", "s", "w", "nw", "ne", "se", "sw"];
+import { visibleHandles } from "./handles";
 
 const PLACE: Record<Handle, { left: string; top: string; cursor: string }> = {
   nw: { left: "0%", top: "0%", cursor: "cursor-nwse-resize" },
@@ -20,9 +18,6 @@ const PLACE: Record<Handle, { left: string; top: string; cursor: string }> = {
   w: { left: "0%", top: "50%", cursor: "cursor-ew-resize" },
 };
 
-/** Edge handles need room for themselves plus both corners (3 hit areas of 24 px). */
-const EDGE_MIN_PX = 72;
-
 /** Attribute of the handles layer: the id of the block it resizes (read by the canvas' pointer handler). */
 export const RESIZE_FOR_ATTR = "data-resize-for";
 
@@ -33,15 +28,17 @@ export type ResizeHandlesProps = {
   top: number;
   width: number;
   height: number;
+  /** The block shows a warnings badge on its top-right corner: the «ne» handle is left out. */
+  badge?: boolean;
 };
 
 /**
- * The 8 resize handles of the selected block, in a layer above every block so neighbours never cover
+ * The resize handles of the selected block, in a layer above every block so neighbours never cover
  * them: 8 px squares with a 24×24 px hit area each (WCAG 2.5.8) and the resize cursor of their direction.
  * Pointer only (`data-resize-handle`); the keyboard path is Shift + arrows on the held block or the
  * inspector's fields.
  */
-export const ResizeHandles = memo(function ResizeHandles({ blockId, left, top, width, height }: ResizeHandlesProps) {
+export const ResizeHandles = memo(function ResizeHandles({ blockId, left, top, width, height, badge = false }: ResizeHandlesProps) {
   return (
     <div
       aria-hidden
@@ -49,9 +46,7 @@ export const ResizeHandles = memo(function ResizeHandles({ blockId, left, top, w
       className="pointer-events-none absolute"
       style={{ left, top, width, height, zIndex: Z_OVERLAY }}
     >
-      {ORDER.map((handle) => {
-        if ((handle === "n" || handle === "s") && width < EDGE_MIN_PX) return null;
-        if ((handle === "e" || handle === "w") && height < EDGE_MIN_PX) return null;
+      {visibleHandles(width, height, badge).map((handle) => {
         const place = PLACE[handle];
         return (
           <span

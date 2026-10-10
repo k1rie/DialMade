@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
 import { toast, Toaster } from "sonner";
 import { IconButton } from "@/components/ui/IconButton";
-import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
@@ -18,8 +17,8 @@ import { WarningList } from "../WarningList";
 import { warningItems, type WarningGroup } from "../warnings";
 import { copyText } from "./clipboard";
 import { CodePanel } from "./CodePanel";
-import { REPORT_TOASTER_ID, REPORT_TOASTER_STYLE } from "./constants";
-import { hasBlocks, layoutJson, pickScreenId, REPORT_VIEWS, type ReportView } from "./report";
+import { OPEN_ANNOUNCE_DELAY_MS, REPORT_TOASTER_ID, REPORT_TOASTER_STYLE } from "./constants";
+import { hasBlocks, layoutJson, nextLiveMessage, pickScreenId, REPORT_VIEWS, type ReportView } from "./report";
 import { panelId, ReportTabs, tabId } from "./ReportTabs";
 
 export type GenerateReportProps = {
@@ -28,6 +27,8 @@ export type GenerateReportProps = {
   onOpenChange: (open: boolean) => void;
   /** Screen shown first (the active screen). */
   initialScreenId: ScreenId | null;
+  /** Said once the dialog is open («Diseño generado: …»); the page's live region is inert behind it. */
+  openAnnouncement?: string | null;
 };
 
 /** A click on the ::backdrop targets the dialog itself, outside its box (not on its scrollbar). */
@@ -43,14 +44,20 @@ function isBackdropClick(event: MouseEvent<HTMLDialogElement>): boolean {
  * (each with «Copiar») and Avisos with their fixes. A native modal <dialog>: the page behind is inert
  * (focus stays inside), Esc and the backdrop close it and focus returns to the opener. A fix applied
  * here runs Generar again, so every tab shows the corrected result.
+ *
+ * The modal makes everything outside it inert and hidden from assistive tech, the page's live region
+ * (DndAnnouncer) included. So the report has its own polite live region inside the dialog: the opening
+ * message and the fixes are said there.
  */
-export function GenerateReport({ open, onOpenChange, initialScreenId }: GenerateReportProps) {
+export function GenerateReport({ open, onOpenChange, initialScreenId, openAnnouncement = null }: GenerateReportProps) {
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const initialFocusRef = useRef<HTMLButtonElement | null>(null);
   const generated = useLayoutStore((state) => state.generated);
+  const [liveMessage, setLiveMessage] = useState("");
+  const say = useCallback((text: string) => setLiveMessage((previous) => nextLiveMessage(previous, text)), []);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -63,7 +70,16 @@ export function GenerateReport({ open, onOpenChange, initialScreenId }: Generate
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // After showModal (the effect above runs first): the region is visible, the message is a change.
+  useEffect(() => {
+    if (!open || !openAnnouncement) return;
+    const timer = setTimeout(() => say(openAnnouncement), OPEN_ANNOUNCE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [open, openAnnouncement, say]);
+
   const onClose = () => {
+    // Empty, so the next opening's message is a change even when it is the same text.
+    setLiveMessage("");
     onOpenChange(false);
     const opener = openerRef.current;
     openerRef.current = null;
@@ -86,9 +102,13 @@ export function GenerateReport({ open, onOpenChange, initialScreenId }: Generate
         "backdrop:bg-black/60 backdrop:backdrop-blur-sm",
       )}
     >
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {liveMessage}
+      </p>
       {open && generated && (
         <ReportBody
           result={generated}
+          announce={say}
           initialScreenId={initialScreenId}
           titleId={titleId}
           descriptionId={descriptionId}
@@ -112,6 +132,8 @@ export function GenerateReport({ open, onOpenChange, initialScreenId }: Generate
 
 type ReportBodyProps = {
   result: GenerateResult;
+  /** Speaks through the report's live region (inside the dialog). */
+  announce: (text: string) => void;
   initialScreenId: ScreenId | null;
   titleId: string;
   descriptionId: string;
@@ -121,11 +143,10 @@ type ReportBodyProps = {
 };
 
 /** Mounted only while the dialog is open, so every opening starts on the active screen. */
-function ReportBody({ result, initialScreenId, titleId, descriptionId, dialogRef, initialFocusRef, onClose }: ReportBodyProps) {
+function ReportBody({ result, announce, initialScreenId, titleId, descriptionId, dialogRef, initialFocusRef, onClose }: ReportBodyProps) {
   const t = useDictionary(layout);
   const r = t.generate.report;
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
   const screensId = useId();
   const viewsId = useId();
   const [picked, setPicked] = useState<ScreenId | null>(() => pickScreenId(result, initialScreenId));

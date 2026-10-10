@@ -16,7 +16,7 @@ import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { useDictionary } from "@/i18n";
 import { layout, type LayoutDictionary } from "@/i18n/layout";
 import { useLayoutActions, useLayoutEnv, useLayoutStoreApi } from "../../useLayoutStore";
-import { FIELD_HINT, FIELD_LABEL, FIELD_SELECT } from "../styles";
+import { FIELD_HINT, FIELD_LABEL, FIELD_SELECT } from "../../fieldStyles";
 
 export type TypeFieldProps = {
   blockId: BlockId;
@@ -59,9 +59,15 @@ export function TypeField({ blockId, block, screenId, kind }: TypeFieldProps) {
     if (!isLibraryBlockType(type) || type === block.type) return;
     const outcome = actions.updateBlock(blockId, { type }, screenId);
     if (outcome.nav) {
+      // «Deshacer» undoes this change only: after any other change it says so instead of undoing that one.
+      const token = actions.changeToken();
+      const undoFrame = () => {
+        if (actions.undoIfLatest(token)) announce(t.announce.undone);
+        else toast(t.common.undoStale);
+      };
       const message = t.whatIsThis.frameChosen(t.nav[outcome.nav]);
       announce(message);
-      toast(message, { action: { label: t.common.undo, onClick: () => store.temporal.getState().undo() } });
+      toast(message, { action: { label: t.common.undo, onClick: undoFrame } });
       // The block is gone (and this select with it): keep focus in the inspector.
       requestAnimationFrame(() => focusRegion("inspector"));
       return;

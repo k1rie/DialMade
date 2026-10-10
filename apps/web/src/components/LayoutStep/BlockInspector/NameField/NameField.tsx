@@ -7,8 +7,8 @@ import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { INSPECTOR_NAME_ID, REGION_AUTOFOCUS_ATTR } from "../../constants";
 import { useLayoutActions, useLayoutStoreApi } from "../../useLayoutStore";
-import { FIELD_CONTROL, FIELD_LABEL } from "../styles";
-import { useFieldDraft } from "../useFieldDraft";
+import { FIELD_CONTROL, FIELD_LABEL } from "../../fieldStyles";
+import { useFieldDraft } from "../../useFieldDraft";
 
 export type NameFieldProps = {
   blockId: BlockId;

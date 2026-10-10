@@ -1,6 +1,6 @@
 import { memo, type CSSProperties } from "react";
 // Relative imports only: the glyph test renders this module in vitest without the `@/` alias.
-import type { PreviewBox } from "../previewGeometry";
+import type { PreviewBox } from "../../previewGeometry";
 import { glyphContent, isCollection } from "./glyphs";
 import { BAND, CARD, FRAME_SIDE, FRAME_TOP, FROSTED, GLASS_CARD, GROUP, MEDIA, ROOT } from "./kit";
 import type { GlyphKind } from "./types";

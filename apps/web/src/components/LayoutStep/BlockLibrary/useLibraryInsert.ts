@@ -1,22 +1,26 @@
 "use client";
 
-import type { BlockId, LibraryBlockType } from "@dialmade/layout";
+import { isLibraryBlockType, type BlockId, type LibraryBlockType } from "@dialmade/layout";
+import { useDragDropMonitor } from "@dnd-kit/react";
 import { useCallback, useMemo } from "react";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
+import { LIBRARY_DRAG_TYPE } from "../constants";
 import { selectActiveScreen, selectSelectedId, useLayoutActions, useLayoutStoreApi } from "../useLayoutStore";
 import { insertParentFor, tileModeFor } from "./libraryModel";
 
 export type LibraryInsert = {
-  /** Click/Enter on a tile: inserts in the next free slot (inside the selected container) or sets the app nav. */
+  /** Click on a tile (or a keyboard drop on no target): inserts in the next free slot (inside the selected container) or sets the app nav. */
   insert: (type: LibraryBlockType) => void;
   /** «Usar bloque libre» from an empty search: a free block named after the query, as one undo step. */
   insertFree: (label: string) => void;
 };
 
 /**
- * The single-pointer and keyboard alternative to dragging a tile (WCAG 2.5.7). Reads the store at call
+ * The single-pointer alternative to dragging a tile (WCAG 2.5.7), and the keyboard path: Space or Enter
+ * picks a tile up and Space or Enter drops it; a keyboard drop that lands on no target (the canvas handles
+ * its own) inserts here, in the next free slot. Mount it once (BlockLibrary). Reads the store at call
  * time (no subscription) and announces the result politely: «Añadiste Calendario: columnas 1 a 8, de 24
  * a 504 px.», «… dentro de Grupo.» or «Navegación: Superior.». Focus is left where it is, so the same
  * tile can be used again right away.
@@ -55,6 +59,18 @@ export function useLibraryInsert(): LibraryInsert {
     },
     [actions, announce, announceBlock, store, t],
   );
+
+  // Keyboard «coger y soltar» without reaching the canvas: Space and Enter are the only keys a tile has
+  // (CLAUDE.md), so dropping it in place inserts it. Pointer drops on nothing stay a no-op.
+  useDragDropMonitor({
+    onDragEnd(event) {
+      const { source, target, activatorEvent } = event.operation;
+      if (event.canceled || target || !(activatorEvent instanceof KeyboardEvent)) return;
+      if (String(source?.type ?? "") !== LIBRARY_DRAG_TYPE) return;
+      const type = (source?.data as { blockType?: unknown } | null | undefined)?.blockType;
+      if (isLibraryBlockType(type)) insert(type);
+    },
+  });
 
   const insertFree = useCallback(
     (label: string) => {

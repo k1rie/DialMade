@@ -24,7 +24,6 @@ import {
   useActiveScreen,
   useLayoutActions,
   useLayoutStore,
-  useLayoutStoreApi,
   useScreenStructure,
   useSelectedId,
 } from "../useLayoutStore";
@@ -87,7 +86,6 @@ function focusInspectorName(frames = 4) {
 export function LayersList({ className }: LayersListProps) {
   const t = useDictionary(layout);
   const platformKeys = usePlatformKeys();
-  const store = useLayoutStoreApi();
   const actions = useLayoutActions();
   const announce = useDndAnnounce();
   const screen = useActiveScreen();
@@ -282,18 +280,13 @@ export function LayersList({ className }: LayersListProps) {
     if (fromKeyboard) announce(t.announce.selected(blockOf(key)?.label ?? key));
   };
 
+  // The store's undo/redo commit an open batch first and say whether the screens changed.
   const undo = () => {
-    const history = store.temporal.getState();
-    if (history.pastStates.length === 0) return;
-    history.undo();
-    announce(t.announce.undone);
+    if (actions.undo()) announce(t.announce.undone);
   };
 
   const redo = () => {
-    const history = store.temporal.getState();
-    if (history.futureStates.length === 0) return;
-    history.redo();
-    announce(t.announce.redone);
+    if (actions.redo()) announce(t.announce.redone);
   };
 
   const remove = (key: string) => {
@@ -302,9 +295,15 @@ export function LayersList({ className }: LayersListProps) {
     const next = focusAfterRemoval(tree, visible, key);
     const removed = actions.removeBlocks([key]);
     if (removed.length === 0) return;
+    // «Deshacer» undoes this removal only: after any other change it says so instead of undoing that change.
+    const token = actions.changeToken();
+    const undoRemoval = () => {
+      if (actions.undoIfLatest(token)) announce(t.announce.undone);
+      else toast(t.common.undoStale);
+    };
     const message = removed.length === 1 ? t.announce.removed(block.label) : t.announce.removedMany(removed.length);
     announce(message);
-    toast(message, { action: { label: t.common.undo, onClick: undo } });
+    toast(message, { action: { label: t.common.undo, onClick: undoRemoval } });
     focusRowOrArea(next);
   };
 

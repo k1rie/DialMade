@@ -132,7 +132,7 @@ type MenuGroupProps = { id: string; title: string; children: ReactNode };
 function MenuGroup({ id, title, children }: MenuGroupProps) {
   return (
     <div role="group" aria-labelledby={id} className="flex flex-col gap-0.5">
-      <p id={id} className="px-2 pt-1 text-caption font-medium text-subtle">
+      <p id={id} className="px-2 pt-1 text-caption font-medium text-muted">
         {title}
       </p>
       <ul className="flex flex-col">{children}</ul>

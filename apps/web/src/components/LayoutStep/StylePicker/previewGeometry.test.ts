@@ -114,6 +114,47 @@ describe("computePreviewGeometry", () => {
   });
 });
 
+describe("computePreviewGeometry: stable blocks", () => {
+  it("keeps the PreviewBlock (and its box) of every block a new layout version did not touch", () => {
+    const hero = block("hero", 0, 0, 12, 20);
+    const media = block("media", 0, 20, 6, 20);
+    const v1 = layoutOf({ hero, media });
+    // Only the media block changed (a new object, as the store does); the hero object is shared.
+    const v2 = layoutOf({ hero, media: { ...media, rect: { ...media.rect, w: 8 } } });
+    const first = computePreviewGeometry(v1, "landing", null);
+    const second = computePreviewGeometry(v2, "landing", null);
+    expect(second).not.toBe(first);
+    expect(second.blocks[0]).toBe(first.blocks[0]);
+    expect(second.blocks[0]?.box).toBe(first.blocks[0]?.box);
+    expect(second.blocks[1]).not.toBe(first.blocks[1]);
+    expect(second.blocks[1]?.widthPx).toBeGreaterThan(first.blocks[1]!.widthPx);
+  });
+
+  it("recomputes a block when its frame, its id or its nesting depth changes", () => {
+    const text = block("text", 0, 2, 6, 10);
+    const base = computePreviewGeometry(layoutOf({ t: text }), "app", { nav: "sidebar", header: false });
+    const otherFrame = computePreviewGeometry(layoutOf({ t: text }), "app", { nav: "topnav", header: false });
+    expect(otherFrame.blocks[0]).not.toBe(base.blocks[0]);
+    expect(otherFrame.blocks[0]!.box.top).toBeGreaterThan(base.blocks[0]!.box.top);
+
+    const otherId = computePreviewGeometry(layoutOf({ u: text }), "app", { nav: "sidebar", header: false });
+    expect(otherId.blocks[0]?.id).toBe("u");
+
+    // Same child object, now inside a container: deeper, so further in.
+    const nested = { ...text, parentId: "group" };
+    const shallow = computePreviewGeometry(layoutOf({ group: block("container", 0, 0, 12, 20), t: nested }), "landing", null);
+    const deeper = computePreviewGeometry(
+      layoutOf({ outer: block("container", 0, 0, 12, 30), group: block("container", 0, 0, 12, 20, { parentId: "outer" }), t: nested }),
+      "landing",
+      null,
+    );
+    const child = (geometry: typeof shallow) => geometry.blocks.find((item) => item.id === "t");
+    expect(child(shallow)?.depth).toBe(1);
+    expect(child(deeper)?.depth).toBe(2);
+    expect(child(deeper)!.box.left).toBeGreaterThan(child(shallow)!.box.left);
+  });
+});
+
 describe("getPreviewGeometry", () => {
   it("paints the Inicio template for an empty landing screen", () => {
     const geometry = getPreviewGeometry(emptyLayout(), "landing", null);

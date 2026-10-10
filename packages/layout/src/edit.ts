@@ -1,4 +1,4 @@
-import { DESKTOP_COLUMNS, ROW_UNIT } from "./constants";
+import { DESKTOP_COLUMNS, LOOSE_COUNT_MAX, ROW_UNIT } from "./constants";
 import { CLIP_RATIO, CONTAINMENT_RATIO } from "./infer";
 import {
   area,
@@ -13,6 +13,7 @@ import {
   coverage,
   intersection,
   intersects,
+  leavesOut,
   right,
   roundRect,
   sameRect,
@@ -26,8 +27,6 @@ import type { Adjustment, BlockId, GridRect, LayoutBlock, LayoutDoc, LayoutFix, 
 export const UNNEST_RATIO = 0.5;
 /** Row where overlays (modal) are inserted, from the top of their scope. */
 export const OVERLAY_ROW = 8;
-/** Max ×N stored on blocks that are not repeatable. */
-const LOOSE_COUNT_MAX = 99;
 
 /** An empty `LayoutDoc`. */
 export function emptyLayout(): LayoutDoc {
@@ -44,6 +43,7 @@ export function layoutBounds(layout: LayoutDoc): number {
 }
 
 type Blocks = Record<BlockId, LayoutBlock>;
+type Positioned = { id: BlockId; rect: GridRect; z: number };
 
 const isOverlayType = (type: unknown) => blockDefOrFree(type).overlay;
 
@@ -109,7 +109,9 @@ export type FreeSlot = { rect: GridRect; parentRect?: GridRect };
 /**
  * First free spot (row by row, then column) where a block of `size` fits, among the scope's top/left and
  * its blocks' bottoms/rights. Inside a container with no room, the block goes to its bottom and the
- * container's grown rect comes back as `parentRect`. Overlays are never obstacles.
+ * container's grown rect comes back as `parentRect` (`insertBlock` and `duplicateBlock` apply it pushing
+ * down what is below). Overlays are never obstacles and never grow the container: they are centered at
+ * `OVERLAY_ROW` of the scope, higher up when that makes them fit inside the container.
  */
 export function findFreeSlot(layout: LayoutDoc, size: { w: number; h: number }, options: FreeSlotOptions = {}): FreeSlot {
   const blocks = layout.blocks;
@@ -125,7 +127,9 @@ export function findFreeSlot(layout: LayoutDoc, size: { w: number; h: number }, 
       : { rect };
 
   if (options.overlay) {
-    return grow({ col: scope.col + Math.floor((scope.w - w) / 2), row: scope.row + OVERLAY_ROW, w, h });
+    // Out of the flow: an overlay never grows its parent. Inside a container it moves up to fit when it can.
+    const row = scope.row + clamp(OVERLAY_ROW, 0, Math.max(0, scope.h - h));
+    return { rect: { col: scope.col + Math.floor((scope.w - w) / 2), row, w, h } };
   }
   const siblings = scopeSiblings(blocks, parentId, new Set());
   const rows = [...new Set([scope.row, ...siblings.map((s) => bottom(s.rect))])]
@@ -162,7 +166,10 @@ export type InsertResult = {
   layout: LayoutDoc;
   id: BlockId;
   adjustments: Adjustment[];
-  /** The parent container grew to make room (inserting into a full container). */
+  /**
+   * The parent container grew to make room (inserting into a full container). What was below it moved down
+   * by the same rows, and ancestors that no longer held it grew too (see `layout`).
+   */
   grown?: { id: BlockId; from: GridRect; to: GridRect };
 };
 
@@ -176,6 +183,45 @@ function maxZ(blocks: Blocks): number {
   let max = 0;
   for (const block of Object.values(blocks)) if (Number.isFinite(block?.z)) max = Math.max(max, block.z);
   return max;
+}
+
+/** Moves `id` and all its descendants by `dy` rows. */
+function shiftSubtree(layout: LayoutDoc, blocks: Blocks, id: BlockId, dy: number): void {
+  for (const target of [id, ...descendantsOf({ ...layout, blocks }, id)]) {
+    const block = blocks[target]!;
+    const r = roundRect(block.rect);
+    blocks[target] = { ...block, rect: { ...r, row: r.row + dy } };
+  }
+}
+
+/**
+ * Grows a block downwards to `rect` (a full container making room) without covering anything: every flow
+ * sibling of its scope that starts at or below its old bottom moves down by the growth, with its
+ * descendants (like inserting rows). When the parent no longer holds its children, it grows the same way,
+ * up to the root. Overlays are out of the flow: they never push and are never pushed.
+ */
+function growBlock(layout: LayoutDoc, blocks: Blocks, id: BlockId, rect: GridRect): void {
+  let currentId: BlockId | undefined = id;
+  let next = rect;
+  const seen = new Set<BlockId>();
+  while (currentId !== undefined && !seen.has(currentId)) {
+    seen.add(currentId);
+    const block: LayoutBlock = blocks[currentId]!;
+    const from = clampToGrid(roundRect(block.rect));
+    blocks[currentId] = { ...block, rect: copyRect(next) };
+    const dy = bottom(next) - bottom(from);
+    if (dy <= 0 || isOverlayType(block.type)) return;
+    const parentId = parentOf(blocks, currentId);
+    for (const sibling of scopeSiblings(blocks, parentId, new Set([currentId]))) {
+      if (sibling.rect.row >= bottom(from)) shiftSubtree(layout, blocks, sibling.id, dy);
+    }
+    if (parentId === undefined) return;
+    const parentRect = clampToGrid(roundRect(blocks[parentId]!.rect));
+    const contentBottom = Math.max(...scopeSiblings(blocks, parentId, new Set()).map((s) => bottom(s.rect)));
+    if (contentBottom <= bottom(parentRect)) return;
+    next = { ...parentRect, h: contentBottom - parentRect.row };
+    currentId = parentId;
+  }
 }
 
 /** Inserts a block (at the next free slot unless `rect` is given) and normalizes it like a drop. */
@@ -202,9 +248,8 @@ export function insertBlock(layout: LayoutDoc, options: InsertBlockOptions): Ins
     const slot = findFreeSlot(layout, def.defaultSize, { parentId: options.parentId, overlay: def.overlay });
     rect = slot.rect;
     if (slot.parentRect && options.parentId !== undefined) {
-      const parent = blocks[options.parentId]!;
-      grown = { id: options.parentId, from: copyRect(parent.rect), to: slot.parentRect };
-      blocks[options.parentId] = { ...parent, rect: slot.parentRect };
+      grown = { id: options.parentId, from: copyRect(blocks[options.parentId]!.rect), to: slot.parentRect };
+      growBlock(layout, blocks, options.parentId, slot.parentRect);
     }
   }
   const block: LayoutBlock = { type: options.type, label: sanitizeLabel(options.label), rect, z: maxZ(blocks) + 1 };
@@ -327,17 +372,29 @@ export function normalizeDrop(layout: LayoutDoc, id: BlockId): { layout: LayoutD
       }
     }
 
-    // 4. Small overlaps with siblings: shrink the lower-z block.
+    // 4. Small overlaps with siblings: shrink the lower-z block, or the other one when that cut would leave
+    // one of its children outside it (a container the user never touched). Neither works: the overlap stays.
     const parentId = parentOf(blocks, id);
+    const clipOf = (target: Positioned, by: Positioned): GridRect | null => {
+      const to = clipRect(target.rect, by.rect);
+      if (!to) return null;
+      const inner = [...descendantsOf({ ...layout, blocks }, target.id)].map((d) => clampToGrid(roundRect(blocks[d]!.rect)));
+      return leavesOut(target.rect, to, inner) ? null : to;
+    };
     for (const sibling of scopeSiblings(blocks, parentId, new Set([id]))) {
       const me = { id, rect: current().rect, z: current().z };
       const other = { id: sibling.id, rect: clampToGrid(roundRect(blocks[sibling.id]!.rect)), z: blocks[sibling.id]!.z };
       const shared = intersection(me.rect, other.rect);
       if (!shared) continue;
       if (area(shared) / Math.min(area(me.rect), area(other.rect)) >= CLIP_RATIO) continue;
-      const [target, by] =
+      const [first, second] =
         me.z !== other.z ? (me.z < other.z ? [me, other] : [other, me]) : compareByPosition(me, other) > 0 ? [me, other] : [other, me];
-      const to = clipRect(target.rect, by.rect);
+      let target = first;
+      let to = clipOf(first, second);
+      if (!to) {
+        target = second;
+        to = clipOf(second, first);
+      }
       if (!to) continue;
       adjustments.push({ kind: "clip", id: target.id, from: copyRect(target.rect), to });
       blocks[target.id] = { ...blocks[target.id]!, rect: to };
@@ -391,8 +448,9 @@ export function duplicateBlock(layout: LayoutDoc, id: BlockId, options: Duplicat
   if (blocked) {
     const slot = findFreeSlot(layout, from, { parentId, overlay: isOverlayType(source.type) });
     target = slot.rect;
-    if (slot.parentRect && parentId !== undefined) blocks[parentId] = { ...blocks[parentId]!, rect: slot.parentRect };
+    if (slot.parentRect && parentId !== undefined) growBlock(layout, blocks, parentId, slot.parentRect);
   }
+  target = clampToGrid(target);
   const dx = target.col - from.col;
   const dy = target.row - from.row;
 
@@ -431,9 +489,14 @@ export function applyFix(layout: LayoutDoc, fix: LayoutFix): LayoutDoc {
   if (!block) return layout;
   switch (fix.kind) {
     case "nest": {
-      if (!layout.blocks[fix.parentId] || fix.parentId === fix.id) return layout;
+      const parent = layout.blocks[fix.parentId];
+      if (!parent || fix.parentId === fix.id) return layout;
       if (descendantsOf(layout, fix.id).has(fix.parentId)) return layout;
-      return { ...layout, blocks: { ...layout.blocks, [fix.id]: { ...block, parentId: fix.parentId } } };
+      // Like a drop (`normalizeDrop`): the block also goes inside its new parent, so no `outside-parent` follows.
+      const nested: LayoutDoc = { ...layout, blocks: { ...layout.blocks, [fix.id]: { ...block, parentId: fix.parentId } } };
+      const rect = clampToGrid(roundRect(block.rect));
+      const parentRect = clampToGrid(roundRect(parent.rect));
+      return contains(parentRect, rect) ? nested : moveBlock(nested, fix.id, clampInto(rect, parentRect));
     }
     case "unparent": {
       if (block.parentId === undefined) return layout;
@@ -446,8 +509,12 @@ export function applyFix(layout: LayoutDoc, fix: LayoutFix): LayoutDoc {
       const rect = roundRect(block.rect);
       return moveBlock(layout, fix.id, { ...rect, row: bottom(roundRect(below.rect)) });
     }
-    case "clip":
+    case "clip": {
+      // A stale clip that would now leave a child outside the block does not apply.
+      const inner = [...descendantsOf(layout, fix.id)].map((d) => clampToGrid(roundRect(layout.blocks[d]!.rect)));
+      if (leavesOut(clampToGrid(roundRect(block.rect)), fix.rect, inner)) return layout;
       return { ...layout, blocks: { ...layout.blocks, [fix.id]: { ...block, rect: copyRect(fix.rect) } } };
+    }
     case "fit-inside":
       return moveBlock(layout, fix.id, fix.rect);
   }

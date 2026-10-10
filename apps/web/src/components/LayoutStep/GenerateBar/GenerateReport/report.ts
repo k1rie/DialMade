@@ -22,3 +22,12 @@ export const layoutJson = (layout: LayoutDoc): string => JSON.stringify(layout, 
 
 /** Whether a layout has any block (the wireframe and CSS tabs say so instead of showing an empty frame). */
 export const hasBlocks = (layout: LayoutDoc): boolean => Object.keys(layout.blocks).length > 0;
+
+/** Zero-width space: makes a repeated message differ, so screen readers say it again. */
+const REPEAT_MARK = "\u200b";
+
+/**
+ * Next content of the report's live region: `text`, marked when it equals what the region already says
+ * (an aria-live region only speaks changes).
+ */
+export const nextLiveMessage = (previous: string, text: string): string => (previous === text ? `${text}${REPEAT_MARK}` : text);

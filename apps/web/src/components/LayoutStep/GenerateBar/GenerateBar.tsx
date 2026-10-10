@@ -56,6 +56,8 @@ export function GenerateBar({ className }: GenerateBarProps) {
   const generated = useLayoutStore((state) => state.generated !== null);
   const changed = useChangedCount();
   const [reportOpen, setReportOpen] = useState(false);
+  // Said by the report once it is open: the modal makes this page's live region inert.
+  const [generatedMessage, setGeneratedMessage] = useState<string | null>(null);
 
   const stats = useMemo(() => countStats(screens.map((screen) => ({ layout: screen.layout, warnings: getStructure(screen.layout).warnings }))), [screens]);
   const groups = useMemo(() => warningGroups(screens, getStructure, activeScreenId), [screens, activeScreenId]);
@@ -86,7 +88,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
     }
     const result = actions.generate();
     const totals = countStats(result.screens);
-    announce(t.announce.generated(totals.screens, totals.blocks));
+    setGeneratedMessage(t.announce.generated(totals.screens, totals.blocks));
     setReportOpen(true);
   };
 
@@ -141,7 +143,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
         </Tooltip>
       </div>
 
-      <GenerateReport open={reportOpen} onOpenChange={setReportOpen} initialScreenId={activeScreenId} />
+      <GenerateReport open={reportOpen} onOpenChange={setReportOpen} initialScreenId={activeScreenId} openAnnouncement={generatedMessage} />
     </div>
   );
 }

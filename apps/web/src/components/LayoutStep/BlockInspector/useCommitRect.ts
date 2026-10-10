@@ -28,7 +28,10 @@ export function useCommitRect(): (id: BlockId, rect: GridRect, screenId: ScreenI
     (id, rect, screenId, change) => {
       const before = store.getState().screens[screenId]?.layout.blocks[id];
       if (!before || sameRect(before.rect, rect)) return;
-      const adjustments = store.getState().actions.setRect(id, rect, screenId);
+      const { actions } = store.getState();
+      const adjustments = actions.setRect(id, rect, screenId);
+      // «Deshacer» undoes this edit only: after any other change it says so instead of undoing that one.
+      const token = actions.changeToken();
       const screen = store.getState().screens[screenId];
       const block = screen?.layout.blocks[id];
       if (!screen || !block) return;
@@ -39,7 +42,13 @@ export function useCommitRect(): (id: BlockId, rect: GridRect, screenId: ScreenI
         toast(t.adjusted.toast, {
           id: ADJUSTED_TOAST_ID,
           description: adjusted,
-          action: { label: t.adjusted.undo, onClick: () => store.temporal.getState().undo() },
+          action: {
+            label: t.adjusted.undo,
+            onClick: () => {
+              if (actions.undoIfLatest(token)) announce(t.announce.undone);
+              else toast(t.common.undoStale);
+            },
+          },
         });
       }
     },

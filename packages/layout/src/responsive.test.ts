@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { inferStructure } from "./infer";
-import { deriveResponsive, distribute, mobileHeight } from "./responsive";
+import { deriveResponsive, distribute, effectiveCount, mobileHeight } from "./responsive";
 import { fixture, makeLayout } from "./testing/fixtures";
 import type { LayoutBlock } from "./types";
 import { getBlockDef } from "./library";
@@ -38,15 +38,30 @@ describe("tablet", () => {
     expect(tablet.nodes[inferStructure(layout).root!.id]).toEqual({ mode: "keep", spans: [2, 6], starts: [0, 2] });
   });
 
-  test("a row that does not fit wraps in reading order, each line filling the frame", () => {
+  test("a row whose minCols fit is kept: rounded-up spans shrink where they have the most room (spec §5)", () => {
+    // nav (sidebar, min 1) 2 → 1, main (text, min 3) 8 → 5, aside (list, min 3) 2 → 3: 9 > 8, but Σ min = 7.
     const { tablet } = deriveResponsive(fixture("holy-grail").layout);
     const structure = inferStructure(fixture("holy-grail").layout);
     const row = structure.root?.kind === "stack" ? structure.root.children[1]!.node : null;
-    expect(tablet.nodes[row!.id]).toEqual({ mode: "wrap", spans: [1, 7, 8] });
+    expect(tablet.nodes[row!.id]).toEqual({ mode: "keep", spans: [1, 4, 3], starts: [0, 1, 5] });
     expect(tablet.blocks.nav!.rect).toEqual({ col: 0, row: 10, w: 1, h: 60 });
-    expect(tablet.blocks.main!.rect).toEqual({ col: 1, row: 10, w: 7, h: 60 });
-    expect(tablet.blocks.aside!.rect).toEqual({ col: 0, row: 72, w: 8, h: 60 });
-    expect(tablet.blocks.footer!.rect).toEqual({ col: 0, row: 134, w: 8, h: 20 });
+    expect(tablet.blocks.main!.rect).toEqual({ col: 1, row: 10, w: 4, h: 60 });
+    expect(tablet.blocks.aside!.rect).toEqual({ col: 5, row: 10, w: 3, h: 60 });
+    expect(tablet.blocks.footer!.rect).toEqual({ col: 0, row: 72, w: 8, h: 20 });
+  });
+
+  test("a row whose minCols don't fit wraps in reading order, each line filling the frame", () => {
+    // Three texts of 4 columns: 3 + 3 + 3 = 9 > 8 and every span is already at its minimum (3).
+    const layout = makeLayout([
+      { id: "a", type: "text", rect: [0, 0, 4, 20] },
+      { id: "b", type: "text", rect: [4, 0, 4, 20] },
+      { id: "c", type: "text", rect: [8, 0, 4, 20] },
+    ]);
+    const { tablet } = deriveResponsive(layout);
+    expect(tablet.nodes[inferStructure(layout).root!.id]).toEqual({ mode: "wrap", spans: [4, 4, 8] });
+    expect(tablet.blocks.a!.rect).toEqual({ col: 0, row: 0, w: 4, h: 20 });
+    expect(tablet.blocks.b!.rect).toEqual({ col: 4, row: 0, w: 4, h: 20 });
+    expect(tablet.blocks.c!.rect).toEqual({ col: 0, row: 22, w: 8, h: 20 });
   });
 
   test("a stack of narrow blocks keeps scaled starts; full-width stacks stay stacks", () => {
@@ -165,5 +180,43 @@ describe("mobile", () => {
     const { tablet, mobile } = deriveResponsive(fixture("empty").layout);
     expect(tablet).toEqual({ breakpoint: "tablet", columns: 8, blocks: {}, nodes: {}, order: [] });
     expect(mobile.columns).toBe(4);
+  });
+});
+
+describe("review regressions", () => {
+  test("a tab bar inside an overlay is placed (inline, in the sheet), never lost", () => {
+    const layout = makeLayout([
+      { id: "table", type: "table", rect: [0, 0, 12, 60] },
+      { id: "dialog", type: "modal", rect: [3, 10, 6, 30] },
+      { id: "nav", type: "sidebar", rect: [3, 10, 2, 30], parent: "dialog" },
+    ]);
+    layout.blocks.nav!.responsive = { mobile: { behavior: "tabbar" } };
+    const { mobile } = deriveResponsive(layout);
+    expect(mobile.order).toEqual(["table", "dialog", "nav"]);
+    expect(mobile.blocks.nav).toEqual({ rect: { col: 0, row: 10, w: 4, h: 8 }, behavior: "tabbar", hidden: false });
+  });
+
+  test("a tab bar inside a deferred tab bar is placed too", () => {
+    const layout = makeLayout([
+      { id: "main", type: "table", rect: [3, 0, 9, 80] },
+      { id: "side", type: "container", rect: [0, 0, 3, 80] },
+      { id: "inner", type: "sidebar", rect: [0, 0, 3, 40], parent: "side" },
+    ]);
+    layout.blocks.side!.responsive = { mobile: { behavior: "tabbar" } };
+    layout.blocks.inner!.responsive = { mobile: { behavior: "tabbar" } };
+    const { mobile } = deriveResponsive(layout);
+    for (const id of ["main", "side", "inner"]) expect(mobile.blocks[id]!.rect).not.toBeNull();
+    expect(mobile.order).toEqual(["main", "side", "inner"]);
+  });
+
+  test("the note's count is clamped like the chip; «once» (en) and «una» are not counts", () => {
+    const kpis = (note: string) => makeLayout([{ id: "k", type: "kpis", rect: [0, 0, 12, 14], note }]);
+    // KPIs: repeatable 1–6, default 4, grid-2x2 on mobile → 14 rows per line of two.
+    expect(deriveResponsive(kpis("12 métricas")).mobile.blocks.k!.rect!.h).toBe(14 * 3);
+    expect(deriveResponsive(kpis("updated once a day")).mobile.blocks.k!.rect!.h).toBe(14 * 2);
+    expect(deriveResponsive(kpis("una por región")).mobile.blocks.k!.rect!.h).toBe(14 * 2);
+    const block: LayoutBlock = { type: "kpis", label: "", rect: { col: 0, row: 0, w: 12, h: 14 }, z: 0, count: 40 };
+    expect(effectiveCount({ block, def: getBlockDef("kpis") })).toBe(6);
+    expect(effectiveCount({ block: { ...block, type: "text", count: 500 }, def: getBlockDef("text") })).toBe(99);
   });
 });

@@ -2,8 +2,8 @@
 
 import { useId, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL, NUMBER_CONTROL } from "../styles";
-import { useFieldDraft, type DraftCommit } from "../useFieldDraft";
+import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL, FIELD_META, NUMBER_CONTROL } from "../../fieldStyles";
+import { useFieldDraft, type DraftCommit } from "../../useFieldDraft";
 
 export type NumberFieldProps = {
   /** What is edited (block id + field): a pending edit is committed to it even if the selection changes. */
@@ -76,7 +76,7 @@ export function NumberField({
             className={cn(FIELD_CONTROL, NUMBER_CONTROL, "h-8 tabular-nums", unit && "pe-9")}
           />
           {unit && (
-            <span aria-hidden className="pointer-events-none absolute inset-y-0 end-2.5 flex items-center text-caption text-subtle">
+            <span aria-hidden className={cn("pointer-events-none absolute inset-y-0 end-2.5 flex items-center", FIELD_META)}>
               {unit}
             </span>
           )}

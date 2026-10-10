@@ -18,7 +18,7 @@ export function FrameBar({ size, grid }: FrameBarProps) {
       <span className="size-2 rounded-full bg-white/15" />
       <span className="size-2 rounded-full bg-white/15" />
       <span className="size-2 rounded-full bg-white/15" />
-      <span className="ms-auto truncate font-mono text-[11px] text-subtle tabular-nums">
+      <span className="ms-auto truncate font-mono text-[11px] text-muted tabular-nums">
         {size} · {grid}
       </span>
     </div>

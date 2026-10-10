@@ -11,3 +11,9 @@ export const libraryDragId = (instance: string, section: LibrarySection, type: L
 
 /** Marks the cell of a tile; its first element child is the focusable tile (arrow-key navigation). */
 export const TILE_ATTR = "data-library-tile";
+
+/**
+ * Scroll margins for whatever takes focus under the sticky search (tiles and category toggles): focus
+ * scrolls it clear of the search (about 52 px tall) instead of leaving it hidden underneath (WCAG 2.4.11).
+ */
+export const CLEAR_STICKY_SEARCH = "scroll-mt-20 scroll-mb-2";

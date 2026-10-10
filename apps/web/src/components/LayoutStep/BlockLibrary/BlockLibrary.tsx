@@ -11,12 +11,11 @@ import { tween } from "@/lib/motion";
 import { BlockIcon } from "../icons";
 import { searchBlocks } from "../searchBlocks";
 import { selectActiveScreen, useLayoutStore } from "../useLayoutStore";
-import { TILE_ATTR } from "./constants";
+import { CLEAR_STICKY_SEARCH, TILE_ATTR } from "./constants";
 import { LibraryCategory } from "./LibraryCategory";
-import type { LibraryItemProps } from "./LibraryItem";
 import { DEFAULT_OPEN_CATEGORIES, LIBRARY_CATEGORIES } from "./libraryModel";
 import { LibrarySearch } from "./LibrarySearch";
-import { TileGrid } from "./TileGrid";
+import { TileGrid, type TileGridProps } from "./TileGrid";
 import { useLibraryInsert } from "./useLibraryInsert";
 
 /** Both locales: «agenda» finds the calendar and «header» the navbar whatever the UI language. */
@@ -29,8 +28,9 @@ export type BlockLibraryProps = { className?: string };
 /**
  * «Bloques» (refs 11F Klaviyo + 11B Replit): search over names and synonyms in both languages, five
  * «Sugeridos» for the active screen, then the categories as collapsible grids of tiles. A tile is
- * dragged onto the canvas, or clicked / Enter to insert it in the next free slot (inside the selected
- * container), with a polite announcement. An empty search offers a free block named after the query.
+ * dragged onto the canvas (Space picks it up from the keyboard), or clicked / Enter to insert it in the
+ * next free slot (inside the selected container), with a polite announcement. An empty search offers a
+ * free block named after the query.
  * Lives inside the library area of LayoutStep, which owns the landmark; F6 lands on the search field.
  */
 export function BlockLibrary({ className }: BlockLibraryProps) {
@@ -62,8 +62,8 @@ export function BlockLibrary({ className }: BlockLibraryProps) {
     () => ({ status: `${id}-status`, results: `${id}-results`, suggested: `${id}-suggested` }),
     [id],
   );
-  const hints = useMemo<LibraryItemProps["hints"]>(
-    () => ({ insert: `${id}-hint-insert`, soon: `${id}-hint-soon`, frame: `${id}-hint-frame`, appOnly: `${id}-hint-app` }),
+  const hints = useMemo<TileGridProps["hints"]>(
+    () => ({ keys: `${id}-hint-keys`, soon: `${id}-hint-soon`, frame: `${id}-hint-frame`, appOnly: `${id}-hint-app` }),
     [id],
   );
 
@@ -75,18 +75,18 @@ export function BlockLibrary({ className }: BlockLibraryProps) {
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      {/* Shared descriptions of the tiles (aria-describedby). */}
+      {/* Shared descriptions of the tiles (aria-describedby). The first is a tile's whole keyboard help. */}
       <div hidden>
-        <p id={hints.insert}>{`${t.library.insertHint} ${t.library.grabHint}`}</p>
+        <p id={hints.keys}>{`${t.library.insertHint} ${t.library.grabHint}`}</p>
         <p id={hints.soon}>{t.library.soonHint}</p>
         <p id={hints.frame}>{t.library.frameInApp}</p>
         <p id={hints.appOnly}>{t.library.appOnly}</p>
       </div>
 
-      {/* The search stays reachable while the categories scroll under it. */}
+      {/* The search stays reachable while the categories scroll under it (what takes focus there uses CLEAR_STICKY_SEARCH). */}
       <div className="sticky top-0 z-10 -mx-3 -mt-3 flex flex-col gap-1.5 bg-app-elevated px-3 pt-3 pb-1">
         <LibrarySearch value={query} onChange={setQuery} onArrowDown={focusFirstTile} controls={searching ? ids.results : undefined} />
-        <p id={ids.status} role="status" className={cn("px-1.5 text-caption text-subtle", !searching && "sr-only")}>
+        <p id={ids.status} role="status" className={cn("px-1.5 text-caption text-muted", !searching && "sr-only")}>
           {searching ? t.library.results(results.length) : ""}
         </p>
       </div>
@@ -111,6 +111,7 @@ export function BlockLibrary({ className }: BlockLibraryProps) {
                 <Button
                   size="sm"
                   variant="secondary"
+                  className={CLEAR_STICKY_SEARCH}
                   leadingIcon={<BlockIcon type="free" />}
                   aria-label={t.library.useFreeLabel(trimmed)}
                   onClick={() => insertFree(trimmed)}

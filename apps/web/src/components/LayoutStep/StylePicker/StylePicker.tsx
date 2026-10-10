@@ -9,9 +9,9 @@ import { PanelSection } from "../PanelSection";
 import type { StyleChoice } from "../types";
 import { selectActiveScreen, useLayoutActions, useLayoutEnv, useLayoutStore, useLayoutStoreApi } from "../useLayoutStore";
 import { ANNOUNCE_DELAY_MS, GUIDE_STYLE, STYLE_PICKER_ATTR } from "./constants";
-import { getPreviewGeometry } from "./previewGeometry";
+import { isSampleLayout } from "./previewGeometry";
 import { StyleOption } from "./StyleOption";
-import { StylePreview } from "./StylePreview";
+import { useDeferredPreviews } from "./useDeferredPreviews";
 
 export type StylePickerProps = {
   className?: string;
@@ -28,8 +28,12 @@ const ARROWS: Readonly<Record<string, number>> = { ArrowRight: 1, ArrowDown: 1, 
  * context). Picking calls `setStyle`; LayoutStep reports it with `onStyleChange`.
  *
  * Reads everything from the layout store and env. The previews only repaint when the active layout or
- * frame changes (geometry memoised per layout object) or when the doc's theme changes (variables cached
- * by value); selection, tool, device and other screens do not touch them.
+ * frame changes (geometry memoised per layout object, glyphs per block) or when the doc's theme changes
+ * (variables cached by value); selection, tool, device and other screens do not touch them.
+ *
+ * The panel mounts every time the selection is cleared, so the previews render in a deferred pass
+ * (`useDeferredPreviews`): the radios, their names and the roving focus are there from the first commit,
+ * the painted screens follow in a background render that a new selection cancels.
  */
 export function StylePicker({ className }: StylePickerProps) {
   const t = useDictionary(layout);
@@ -43,10 +47,8 @@ export function StylePicker({ className }: StylePickerProps) {
   const kind = useLayoutStore((state) => selectActiveScreen(state)?.kind ?? "landing");
   const shell = useLayoutStore((state) => selectActiveScreen(state)?.shell ?? null);
 
-  /* ---- Previews: one painted element for all options, the variables change per option ---- */
-  const geometry = getPreviewGeometry(layoutDoc, kind, shell);
-  const preview = useMemo(() => <StylePreview geometry={geometry} />, [geometry]);
-  const glassPreview = useMemo(() => <StylePreview geometry={geometry} glass />, [geometry]);
+  /* ---- Previews: one painted element for all options, the variables change per option (deferred) ---- */
+  const previews = useDeferredPreviews(layoutDoc, kind, shell, doc);
 
   /* ---- Options ---- */
   const productType = doc.brief.productType;
@@ -110,7 +112,7 @@ export function StylePicker({ className }: StylePickerProps) {
 
   return (
     <PanelSection title={t.style.title} hint={t.style.hint} className={className}>
-      {geometry.sample && <p className="-mt-1 text-caption text-subtle">{t.style.emptyPreview}</p>}
+      {isSampleLayout(layoutDoc) && <p className="-mt-1 text-caption text-muted">{t.style.emptyPreview}</p>}
       <div
         role="radiogroup"
         aria-label={t.style.list}
@@ -126,11 +128,9 @@ export function StylePicker({ className }: StylePickerProps) {
             label={option.label}
             description={option.description}
             recommendedBadge={option.recommended ? t.style.recommended : null}
-            doc={doc}
+            previews={previews}
             selected={index === checked}
             tabbable={index === tabbable}
-            preview={preview}
-            glassPreview={glassPreview}
             onSelect={select}
             registerRef={registerRef}
           />

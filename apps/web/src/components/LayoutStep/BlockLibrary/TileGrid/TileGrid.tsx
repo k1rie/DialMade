@@ -4,8 +4,8 @@ import type { LibraryBlockType, ScreenKind } from "@dialmade/layout";
 import { memo, useLayoutEffect, useRef, type FocusEvent, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
 import { libraryDragId, TILE_ATTR, type LibrarySection } from "../constants";
-import { LibraryItem, type LibraryItemProps } from "../LibraryItem";
 import { columnsFromTops, gridNeighbor, isGridKey, tileModeFor } from "../libraryModel";
+import { LibraryItem, type LibraryItemProps } from "./LibraryItem";
 
 export type TileGridProps = {
   types: readonly LibraryBlockType[];

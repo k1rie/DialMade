@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 // Relative imports only: the glyph test renders this module in vitest without the `@/` alias.
-import { PREVIEW_SCALE } from "../constants";
+import { PREVIEW_SCALE } from "../../constants";
 
 /*
  * Drawing kit of the style previews: design-px units (`--u`), the recipe's surfaces (card, frosted glass,
