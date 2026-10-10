@@ -292,7 +292,12 @@ export function createDesignDocStore(
             const current = get().activeKey;
             return editPages(
               (e, doc) =>
-                e.withGeneratedScreens(doc, result.screens, { ...(options.allowLocked && { allowLocked: true }), ...(result.brief && { layoutBrief: result.brief }) }),
+                // «Diseño con IA»: the AI blocks follow in the same write (a copy remaps them, a removed block stashes its own).
+                e.withCarriedAiRender(
+                  doc,
+                  e.withGeneratedScreens(doc, result.screens, { ...(options.allowLocked && { allowLocked: true }), ...(result.brief && { layoutBrief: result.brief }) }),
+                  result.screens,
+                ),
               (doc) => {
                 const wanted = [options.activeKey, current].find((key): key is PageKey => !!key && docHasPage(doc, key));
                 return { activeKey: wanted ?? doc.screenOrder[0] ?? null };
@@ -305,8 +310,9 @@ export function createDesignDocStore(
           setPairing: (pairingId) => edit((e, doc) => e.withPairing(doc, pairingId)),
           setPaletteStyle: (styleId) => edit((e, doc) => e.withPaletteStyle(doc, styleId)),
           setDials: (dials, scope = "global") => edit((e, doc) => e.withDials(doc, dials, scope)),
-          setProductType: (productTypeId, options) => edit((e, doc) => e.withProductType(doc, productTypeId, options)),
-          setContentLocale: (locale, options) => edit((e, doc) => e.withContentLocale(doc, locale, options)),
+          // A rebuild of the pages keeps the AI blocks (they turn «Desactualizado»: spec §8.4).
+          setProductType: (productTypeId, options) => edit((e, doc) => e.withCarriedAiRender(doc, e.withProductType(doc, productTypeId, options))),
+          setContentLocale: (locale, options) => edit((e, doc) => e.withCarriedAiRender(doc, e.withContentLocale(doc, locale, options))),
           setBrandText: (text) => edit((e, doc) => e.withBrandText(doc, text)),
           setPreviewMode: (previewMode) => {
             if (get().previewMode !== previewMode) set({ previewMode });

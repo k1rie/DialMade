@@ -46,6 +46,7 @@ import {
   type ContentContext,
   type NavScreen,
 } from "@dialmade/sections";
+import { withCarriedAiRender } from "./ai/render/edit";
 import { brandNameFromFile } from "./brand-name";
 import { deriveDesign } from "./design-derived";
 
@@ -717,6 +718,8 @@ export const designEngine = {
   withoutLock,
   pageKinds,
   deriveDesign,
+  /** «Diseño con IA»: a build of the screens carries the AI blocks along (./ai/render/edit). */
+  withCarriedAiRender,
 };
 
 export type DesignEngine = typeof designEngine;
