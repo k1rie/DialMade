@@ -43,30 +43,30 @@ export const CONVERSION: LibraryBlock[] = [
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
 <div class="mx-auto max-w-2xl text-center">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Pricing that grows with you</h2>
-<p class="mt-3 text-body text-muted-foreground">Start free. Upgrade when it is paying for itself.</p>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Pricing that grows with the garden</h2>
+<p class="mt-3 text-body text-muted-foreground">Start small. Add plots when you are ready.</p>
 </div>
 <div class="mt-12 grid gap-6 @3xl:grid-cols-3 @3xl:items-stretch">
 <div class="flex flex-col rounded-card border border-border bg-card p-7">
 <h3 class="font-heading text-h3 font-semibold text-foreground">Solo</h3>
-<p class="mt-1 text-small text-muted-foreground">For one person getting started.</p>
+<p class="mt-1 text-small text-muted-foreground">For one grower getting started.</p>
 <p class="mt-6 flex items-baseline gap-1"><span class="font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$0</span><span class="text-small text-muted-foreground">/month</span></p>
-<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}1 calendar</li><li class="flex gap-3">${CHECK}50 bookings a month</li><li class="flex gap-3">${CHECK}Email reminders</li></ul>
+<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}1 plot</li><li class="flex gap-3">${CHECK}Sowing calendar</li><li class="flex gap-3">${CHECK}Weekly reminders</li></ul>
 <a href="#" class="mt-8 block rounded-button border border-border bg-background px-5 py-3 text-center text-body font-medium text-foreground hover:bg-muted ${FOCUS}">Start free</a>
 </div>
 <div class="relative flex flex-col rounded-card border border-primary bg-card p-7 shadow-lg ring-2 ring-primary">
 <span class="absolute right-6 top-0 -translate-y-3 rounded-badge bg-primary px-3 py-1 text-caption font-medium text-primary-foreground">Most popular</span>
 <h3 class="font-heading text-h3 font-semibold text-foreground">Team</h3>
-<p class="mt-1 text-small text-muted-foreground">For studios with several people.</p>
-<p class="mt-6 flex items-baseline gap-1"><span class="font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$24</span><span class="text-small text-muted-foreground">/month per seat</span></p>
-<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}Everything in Solo</li><li class="flex gap-3">${CHECK}Unlimited bookings</li><li class="flex gap-3">${CHECK}SMS and WhatsApp reminders</li><li class="flex gap-3">${CHECK}Deposits and online payments</li></ul>
-<a href="#" class="mt-8 block rounded-button bg-primary px-5 py-3 text-center text-body font-medium text-primary-foreground hover:bg-primary-hover ${FOCUS}">Start 14-day trial</a>
+<p class="mt-1 text-small text-muted-foreground">For a shared allotment.</p>
+<p class="mt-6 flex items-baseline gap-1"><span class="font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$24</span><span class="text-small text-muted-foreground">/month per plot</span></p>
+<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}Everything in Solo</li><li class="flex gap-3">${CHECK}Up to 12 members</li><li class="flex gap-3">${CHECK}Shared harvest log</li><li class="flex gap-3">${CHECK}Seed and tool inventory</li></ul>
+<a href="#" class="mt-8 block rounded-button bg-primary px-5 py-3 text-center text-body font-medium text-primary-foreground hover:bg-primary-hover ${FOCUS}">Try it for a season</a>
 </div>
 <div class="flex flex-col rounded-card border border-border bg-card p-7">
 <h3 class="font-heading text-h3 font-semibold text-foreground">Business</h3>
-<p class="mt-1 text-small text-muted-foreground">For several locations.</p>
-<p class="mt-6 flex items-baseline gap-1"><span class="font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$79</span><span class="text-small text-muted-foreground">/month per location</span></p>
-<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}Everything in Team</li><li class="flex gap-3">${CHECK}Roles and permissions</li><li class="flex gap-3">${CHECK}Reports across locations</li></ul>
+<p class="mt-1 text-small text-muted-foreground">For several sites.</p>
+<p class="mt-6 flex items-baseline gap-1"><span class="font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$79</span><span class="text-small text-muted-foreground">/month per site</span></p>
+<ul class="mt-6 grow space-y-3 text-small text-foreground"><li class="flex gap-3">${CHECK}Everything in Team</li><li class="flex gap-3">${CHECK}Roles and permissions</li><li class="flex gap-3">${CHECK}Reports across sites</li></ul>
 <a href="#" class="mt-8 block rounded-button border border-border bg-background px-5 py-3 text-center text-body font-medium text-foreground hover:bg-muted ${FOCUS}">Talk to us</a>
 </div>
 </div>
@@ -82,24 +82,24 @@ export const CONVERSION: LibraryBlock[] = [
     fits: { composition: ["split", "asymmetric", "editorial"], typeVoice: ["bold-display", "quiet", "technical-mono"], colorStrategy: ["high-contrast-cta", "neutral-with-pops", "tonal-monochrome"], decoration: ["outlined", "none", "rules-and-grids"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-5xl px-6">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Two plans. No surprises.</h2>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Two ways in. No surprises.</h2>
 <div class="mt-10 grid gap-5 @3xl:grid-cols-2">
 <div class="rounded-card border border-border bg-card p-8">
-<p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">Starter</p>
+<p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">Day pass</p>
 <p class="mt-4 font-heading text-display font-bold tabular-nums tracking-tight text-foreground">$12</p>
 <p class="text-small text-muted-foreground">per month, billed yearly</p>
-<ul class="mt-6 space-y-3 text-body text-foreground"><li class="flex gap-3">${CHECK}Up to 3 projects</li><li class="flex gap-3">${CHECK}Basic reports</li><li class="flex gap-3">${CHECK}Email support</li></ul>
-<a href="#" class="mt-8 inline-block rounded-button border border-foreground px-6 py-3 text-body font-medium text-foreground hover:bg-muted ${FOCUS}">Choose Starter</a>
+<ul class="mt-6 space-y-3 text-body text-foreground"><li class="flex gap-3">${CHECK}Access to the open studio</li><li class="flex gap-3">${CHECK}Shared tools</li><li class="flex gap-3">${CHECK}Beginner workshop</li></ul>
+<a href="#" class="mt-8 inline-block rounded-button border border-foreground px-6 py-3 text-body font-medium text-foreground hover:bg-muted ${FOCUS}">Pick a day</a>
 </div>
 <div class="rounded-card bg-foreground p-8 text-background">
-<p class="font-mono text-caption uppercase tracking-widest text-background">Pro</p>
+<p class="font-mono text-caption uppercase tracking-widest text-background">Member</p>
 <p class="mt-4 font-heading text-display font-bold tabular-nums tracking-tight text-background">$39</p>
 <p class="text-small text-background">per month, billed yearly</p>
-<ul class="mt-6 space-y-3 text-body text-background"><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Unlimited projects</li><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Advanced reports and exports</li><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Priority support</li></ul>
-<a href="#" class="mt-8 inline-block rounded-button bg-background px-6 py-3 text-body font-medium text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Choose Pro</a>
+<ul class="mt-6 space-y-3 text-body text-background"><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Open studio, any day</li><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Your own storage shelf</li><li class="flex gap-3"><i data-icon="check" aria-hidden="true" class="mt-0.5 size-4 shrink-0 text-background"></i>Two guest passes a month</li></ul>
+<a href="#" class="mt-8 inline-block rounded-button bg-background px-6 py-3 text-body font-medium text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Become a member</a>
 </div>
 </div>
-<p class="mt-6 text-small text-muted-foreground">Cancel anytime · 30-day money-back guarantee · Prices in USD</p>
+<p class="mt-6 text-small text-muted-foreground">Cancel anytime · First month refundable · Prices in USD</p>
 </div>
 </section>`,
   },
@@ -112,23 +112,23 @@ export const CONVERSION: LibraryBlock[] = [
     fits: { composition: ["data-dense", "editorial", "split"], typeVoice: ["technical-mono", "quiet", "humanist"], decoration: ["rules-and-grids", "outlined", "none"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Compare the plans</h2>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Compare the memberships</h2>
 <div class="mt-8 overflow-x-auto">
 <table class="w-full min-w-96 text-left text-small">
 <caption class="sr-only">Plan comparison</caption>
 <thead>
 <tr class="border-b border-foreground align-bottom">
 <th scope="col" class="py-4 pr-4 font-normal text-muted-foreground">Features</th>
-<th scope="col" class="px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Basic</span><span class="block font-mono text-body tabular-nums text-muted-foreground">$0</span></th>
-<th scope="col" class="bg-primary/10 px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Plus</span><span class="block font-mono text-body tabular-nums text-foreground">$18</span></th>
-<th scope="col" class="px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Max</span><span class="block font-mono text-body tabular-nums text-muted-foreground">$48</span></th>
+<th scope="col" class="px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Visitor</span><span class="block font-mono text-body tabular-nums text-muted-foreground">$0</span></th>
+<th scope="col" class="bg-primary/10 px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Regular</span><span class="block font-mono text-body tabular-nums text-foreground">$18</span></th>
+<th scope="col" class="px-4 py-4"><span class="block font-heading text-h3 font-semibold text-foreground">Resident</span><span class="block font-mono text-body tabular-nums text-muted-foreground">$48</span></th>
 </tr>
 </thead>
 <tbody class="divide-y divide-border">
-<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Projects</th><td class="px-4 py-4 text-muted-foreground">3</td><td class="bg-primary/10 px-4 py-4 text-foreground">Unlimited</td><td class="px-4 py-4 text-muted-foreground">Unlimited</td></tr>
-<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Team members</th><td class="px-4 py-4 text-muted-foreground">1</td><td class="bg-primary/10 px-4 py-4 text-foreground">10</td><td class="px-4 py-4 text-muted-foreground">Unlimited</td></tr>
-<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Automations</th><td class="px-4 py-4 text-muted-foreground">—</td><td class="bg-primary/10 px-4 py-4 text-foreground"><i data-icon="check" aria-hidden="true" class="size-4 text-primary-text"></i><span class="sr-only">Included</span></td><td class="px-4 py-4 text-muted-foreground"><i data-icon="check" aria-hidden="true" class="size-4"></i><span class="sr-only">Included</span></td></tr>
-<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Audit log</th><td class="px-4 py-4 text-muted-foreground">—</td><td class="bg-primary/10 px-4 py-4 text-foreground">—</td><td class="px-4 py-4 text-muted-foreground"><i data-icon="check" aria-hidden="true" class="size-4"></i><span class="sr-only">Included</span></td></tr>
+<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Visits a month</th><td class="px-4 py-4 text-muted-foreground">4</td><td class="bg-primary/10 px-4 py-4 text-foreground">Unlimited</td><td class="px-4 py-4 text-muted-foreground">Unlimited</td></tr>
+<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Guest passes</th><td class="px-4 py-4 text-muted-foreground">0</td><td class="bg-primary/10 px-4 py-4 text-foreground">2</td><td class="px-4 py-4 text-muted-foreground">6</td></tr>
+<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Kiln access</th><td class="px-4 py-4 text-muted-foreground">—</td><td class="bg-primary/10 px-4 py-4 text-foreground"><i data-icon="check" aria-hidden="true" class="size-4 text-primary-text"></i><span class="sr-only">Included</span></td><td class="px-4 py-4 text-muted-foreground"><i data-icon="check" aria-hidden="true" class="size-4"></i><span class="sr-only">Included</span></td></tr>
+<tr><th scope="row" class="py-4 pr-4 font-normal text-foreground">Private bench</th><td class="px-4 py-4 text-muted-foreground">—</td><td class="bg-primary/10 px-4 py-4 text-foreground">—</td><td class="px-4 py-4 text-muted-foreground"><i data-icon="check" aria-hidden="true" class="size-4"></i><span class="sr-only">Included</span></td></tr>
 </tbody>
 </table>
 </div>
@@ -145,12 +145,12 @@ export const CONVERSION: LibraryBlock[] = [
     html: `<section data-block-id="b-cta" class="@container bg-primary py-14 text-primary-foreground @3xl:py-16">
 <div class="mx-auto flex max-w-container flex-col gap-8 px-6 @3xl:flex-row @3xl:items-center @3xl:justify-between">
 <div class="max-w-xl">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-primary-foreground">Ready when you are</h2>
-<p class="mt-2 text-body text-primary-foreground">Set up in minutes. No card needed, and you keep your data if you leave.</p>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-primary-foreground">The first session is on us</h2>
+<p class="mt-2 text-body text-primary-foreground">Come and try it. No card needed, and nothing to cancel.</p>
 </div>
 <div class="flex flex-wrap items-center gap-4">
-<a href="#" class="rounded-button bg-primary-foreground px-6 py-3 text-body font-medium text-primary hover:bg-primary-foreground-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">Create your account</a>
-<a href="#" class="inline-flex items-center gap-2 text-body font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">Book a demo<i data-icon="arrow-right" aria-hidden="true" class="size-4"></i></a>
+<a href="#" class="rounded-button bg-primary-foreground px-6 py-3 text-body font-medium text-primary hover:bg-primary-foreground-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">Reserve a seat</a>
+<a href="#" class="inline-flex items-center gap-2 text-body font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">See the schedule<i data-icon="arrow-right" aria-hidden="true" class="size-4"></i></a>
 </div>
 </div>
 </section>`,
@@ -165,14 +165,14 @@ export const CONVERSION: LibraryBlock[] = [
     html: `<section data-block-id="b-cta" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-3xl px-6">
 <div class="rounded-card border border-border bg-primary/10 p-8 text-center @3xl:p-12">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Get the first issue free</h2>
-<p class="mx-auto mt-3 max-w-md text-body text-foreground">One short email a week with what worked for other studios. Unsubscribe in one click.</p>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Get the first dispatch free</h2>
+<p class="mx-auto mt-3 max-w-md text-body text-foreground">One short email a week with what the neighbors are growing. Unsubscribe in one click.</p>
 <div class="mx-auto mt-8 flex max-w-md flex-col gap-3 @sm:flex-row">
 <label for="cta-email" class="sr-only">Email</label>
 <input id="cta-email" type="email" placeholder="Your email" class="grow rounded-input border border-border bg-background px-4 py-3 text-body text-foreground ${FOCUS}">
 <button type="button" class="rounded-button bg-primary px-6 py-3 text-body font-medium text-primary-foreground hover:bg-primary-hover ${FOCUS}">Subscribe</button>
 </div>
-<p class="mt-4 text-caption text-foreground">No spam. 4,200 readers.</p>
+<p class="mt-4 text-caption text-foreground">No spam. 4,200 gardeners read it.</p>
 </div>
 </div>
 </section>`,
@@ -187,13 +187,13 @@ export const CONVERSION: LibraryBlock[] = [
     html: `<section data-block-id="b-faq" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto grid max-w-container gap-10 px-6 @3xl:grid-cols-12">
 <div class="@3xl:col-span-4">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Questions, answered</h2>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground">Good questions</h2>
 <p class="mt-3 text-body text-muted-foreground">Cannot find yours? <a href="#" class="font-medium text-primary-text underline underline-offset-4 ${FOCUS}">Write to us</a>.</p>
 </div>
 <dl class="divide-y divide-border border-y border-border @3xl:col-span-8">
-<div class="py-6"><dt class="text-body font-medium text-foreground">Can I try it before paying?</dt><dd class="mt-2 text-body text-muted-foreground">Yes. The free plan has no time limit and no card is asked for.</dd></div>
-<div class="py-6"><dt class="text-body font-medium text-foreground">What happens to my data if I leave?</dt><dd class="mt-2 text-body text-muted-foreground">You can export everything as a file at any time, and we delete the rest within 30 days.</dd></div>
-<div class="py-6"><dt class="text-body font-medium text-foreground">Does it work with my current tools?</dt><dd class="mt-2 text-body text-muted-foreground">It connects to calendars, accounting and messaging. If something is missing, tell us.</dd></div>
+<div class="py-6"><dt class="text-body font-medium text-foreground">Can I come once before joining?</dt><dd class="mt-2 text-body text-muted-foreground">Yes. The first visit is free and nobody will ask for a card.</dd></div>
+<div class="py-6"><dt class="text-body font-medium text-foreground">What happens to my things if I leave?</dt><dd class="mt-2 text-body text-muted-foreground">You can pick them up any day, and we keep them safe for 30 days after you go.</dd></div>
+<div class="py-6"><dt class="text-body font-medium text-foreground">Do I need to bring my own tools?</dt><dd class="mt-2 text-body text-muted-foreground">No. Everything is here. If something is missing, tell us and we will get it.</dd></div>
 </dl>
 </div>
 </section>`,
@@ -207,14 +207,14 @@ export const CONVERSION: LibraryBlock[] = [
     html: `<footer data-block-id="b-footer" class="@container border-t border-border bg-background py-12">
 <div class="mx-auto max-w-container px-6">
 <div class="grid gap-10 @3xl:grid-cols-12">
-<div class="@3xl:col-span-5"><p class="font-heading text-h3 font-semibold tracking-tight text-foreground">Brand</p><p class="mt-2 max-w-xs text-small text-muted-foreground">Calm tools for small teams that would rather be doing the work.</p></div>
+<div class="@3xl:col-span-5"><p class="font-heading text-h3 font-semibold tracking-tight text-foreground">Brand</p><p class="mt-2 max-w-xs text-small text-muted-foreground">A shared workshop for people who like making things.</p></div>
 <div class="grid grid-cols-3 gap-8 @3xl:col-span-7">
-<nav aria-label="Product"><p class="text-caption font-medium uppercase tracking-widest text-foreground">Product</p><ul class="mt-4 space-y-3 text-small text-muted-foreground"><li><a href="#" class="hover:text-foreground ${FOCUS}">Features</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Pricing</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Changelog</a></li></ul></nav>
+<nav aria-label="Product"><p class="text-caption font-medium uppercase tracking-widest text-foreground">Product</p><ul class="mt-4 space-y-3 text-small text-muted-foreground"><li><a href="#" class="hover:text-foreground ${FOCUS}">Features</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Pricing</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Schedule</a></li></ul></nav>
 <nav aria-label="Company"><p class="text-caption font-medium uppercase tracking-widest text-foreground">Company</p><ul class="mt-4 space-y-3 text-small text-muted-foreground"><li><a href="#" class="hover:text-foreground ${FOCUS}">About</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Careers</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Contact</a></li></ul></nav>
 <nav aria-label="Legal"><p class="text-caption font-medium uppercase tracking-widest text-foreground">Legal</p><ul class="mt-4 space-y-3 text-small text-muted-foreground"><li><a href="#" class="hover:text-foreground ${FOCUS}">Privacy</a></li><li><a href="#" class="hover:text-foreground ${FOCUS}">Terms</a></li></ul></nav>
 </div>
 </div>
-<div class="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-caption text-muted-foreground @3xl:flex-row @3xl:items-center @3xl:justify-between"><p>© 2026 Brand. All rights reserved.</p><p>Made with care in a small studio.</p></div>
+<div class="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-caption text-muted-foreground @3xl:flex-row @3xl:items-center @3xl:justify-between"><p>© 2026 Brand. All rights reserved.</p><p>Open every day except Mondays.</p></div>
 </div>
 </footer>`,
   },

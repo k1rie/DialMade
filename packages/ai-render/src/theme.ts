@@ -38,6 +38,8 @@ function themeLines(): string[] {
     "--font-heading: var(--dl-font-heading);",
     "--font-body: var(--dl-font-body);",
     "--font-mono: var(--dl-font-mono);",
+    // Models say `font-sans` a lot: it is the body face.
+    "--font-sans: var(--dl-font-body);",
     "--font-weight-light: 300;",
     "--font-weight-normal: 400;",
     "--font-weight-medium: 500;",

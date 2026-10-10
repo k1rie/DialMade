@@ -53,8 +53,8 @@ import {
   type RenderUsage,
 } from "./api";
 
-/** Input tokens assumed when checking that a whole session fits the budget (before any count_tokens). */
-const TYPICAL_SESSION_INPUT_TOKENS = 9_000;
+/** Input tokens assumed when checking that a whole session fits the budget (before any count_tokens): the contract, the art direction and the screen with its ≈ 12k tokens of reference blocks. */
+const TYPICAL_SESSION_INPUT_TOKENS = 24_000;
 
 export type RenderContext = AiBudgetDeps & { caller: AiCaller | null };
 export type RenderFailure = { ok: false; status: number; body: RenderApiError; headers?: Record<string, string> };
