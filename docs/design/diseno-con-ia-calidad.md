@@ -4,6 +4,9 @@
 `diseno-con-ia-critique.md`. Las reglas no cambian: el layout es del usuario, solo tokens, sanitizador e isla en el origen
 de preview, la app funciona sin IA y la única IA de pago es Anthropic.
 
+**Traspaso y pendientes:** `diseno-con-ia-calidad-handoff.md`. **Imágenes:** `assets/quality/` (antes/después en
+`comparisons/`, galería en claro de Brisa en `library/`).
+
 ## Resumen
 
 | Pregunta | Respuesta |
