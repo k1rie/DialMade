@@ -12,6 +12,8 @@ export type ManualJob<T> = {
   prompt: string;
   /** Files the user attaches in Claude, in this order (the screenshots); empty for copy. */
   attachments: readonly string[];
+  /** What Claude answers: JSON (copy, vision, layout; the default) or HTML roots («Diseño con IA»). Words the steps. */
+  format?: "json" | "html";
   /** Validates the pasted answer. Never throws. */
   parse: (text: string) => ManualParseResult<T>;
 };
