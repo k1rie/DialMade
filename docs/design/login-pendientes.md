@@ -5,8 +5,10 @@ Rama `feat/auth` (2026-10-10). Better Auth 1.7.7 en el Postgres de Supabase, sch
 ## Bloqueante para usarlo con la base real
 
 - [x] **Migración aplicada** (2026-10-10, con aprobación del usuario): `supabase migration repair --status applied 20261010120000` y después `supabase db push` con el pooler en modo sesión (5432). RLS está activo en las 12 tablas de `dialmade` y `dialmade_auth`, y `anon`/`authenticated` no tienen permisos.
-- [ ] **`DATABASE_SSL_CA`:** descargar el CA de Supabase (Database settings → SSL Configuration). En desarrollo se conecta cifrado pero sin verificar el certificado. En producción no arranca sin el CA o sin `DATABASE_SSL=no-verify`.
-- [ ] **`BETTER_AUTH_SECRET`** en `.env.local` y en Vercel (`openssl rand -base64 32`). Sin él, en desarrollo las sesiones caducan en cada reinicio.
+- [x] **`DATABASE_SSL_CA`** (2026-10-10). Es la «Supabase Root 2021 CA» (SHA-256 `80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`), sacada de la cadena del pooler y probada con verificación completa. Está en `.env.local` y en `apps/web/.env.vercel-production`. Conviene compararla una vez con la que se descarga del dashboard.
+- [x] **`BETTER_AUTH_SECRET`** (2026-10-10). Hay uno en `.env.local` para desarrollo y otro distinto en `.env.vercel-production`.
+- [x] **Producción preparada** (2026-10-10). La app vivirá en `https://dialmade.com` (decisión del usuario). `apps/web/.env.vercel-production` está ignorado por git y Next no lo carga solo; trae todas las variables listas para importar en Vercel (Settings → Environment Variables → Import). Faltan OAuth y Resend.
+- [ ] **Comprar `dialmade.com`.** Hoy no está registrado. Sin él no se pueden verificar el dominio de Resend ni el branding de Google.
 - [ ] **Apps OAuth** (con aprobación del usuario):
   - GitHub, callback `<BETTER_AUTH_URL>/api/auth/callback/github`;
   - Google, redirect `<BETTER_AUTH_URL>/api/auth/callback/google`.
