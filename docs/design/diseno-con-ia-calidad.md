@@ -68,6 +68,19 @@ modelo y sin cambios en CSP ni en el sandbox.
 - **Caché:** la 2.ª pantalla lee ≈ 4,2–5,4 k tokens de caché en los tres modelos.
 - **Gasto de esta línea de trabajo:** ≈ $1,80 (diagnóstico $0,70, después $1,10).
 
+## 3 bis. Segunda ronda: lo que el dueño del gusto descartó
+
+El 2026-10-10 el dueño del gusto aprobó **héroes, testimonios y pricing** y descartó el resto («muy planos, parecidos a
+otros diseños de IA genéricos»). Lo aprobado tenía **un gesto fuerte**: escala enorme, una superficie invertida o un
+número dominante. Lo descartado eran cajitas con borde de peso parejo y texto pequeño.
+
+- Se reescribieron features, CTA, FAQ, navbar, footer, logos, stats, KPIs, gráficos, tablas y actividad con la regla
+  «**un gesto por bloque**» (21 entradas nuevas; las 11 aprobadas no se tocaron y pesan más al elegir: `approved`).
+- Motor: `data-highlight` (resalta una barra/segmento o marca un punto de una línea) y `text-giant` (2× display, para
+  un wordmark o una sola cifra).
+- Medido con Haiku, mismas 2 marcas: $0,0041 por pantalla, 16 s, avisos 0–4 por pantalla. El modelo adopta los
+  patrones nuevos (navbar invertida mono, lista expandida con panel, puntuación + citas).
+
 ## 4. Límites honestos
 
 - **Una ejecución por celda**, 2 marcas, 2 pantallas: sin ruido entre ejecuciones ni panel ciego de calidad.
