@@ -153,7 +153,7 @@ export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogP
             icon={<VariablesGlyph />}
             name={d.figma.name}
             description={d.figma.description}
-            extra={
+            footer={
               <FigmaInstall
                 id={installId}
                 open={installOpen}
