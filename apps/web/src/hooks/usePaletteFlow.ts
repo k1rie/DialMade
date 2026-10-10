@@ -1,28 +1,65 @@
 "use client";
 
 import type { OutputKind } from "@dialmade/catalog";
+import type { FileRole, ImportedBrand, ImportSelection, Ownership } from "@dialmade/import";
 import {
   generateTheme,
   parseColor,
   type ExtractResult,
   type PaletteStyleId,
   type Theme,
+  type ThemePins,
 } from "@dialmade/palette";
 import { createContext, createElement, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from "react";
 import { normalizeCrop, type CropRect, type FlowLogo } from "@/lib/image";
 
 export type { CropRect, FlowLogo } from "@/lib/image";
 
-export type FlowStep = "drop" | "crop" | "extracting" | "palette" | "create" | "compose";
+export type FlowStep = "drop" | "crop" | "extracting" | "palette" | "import" | "review" | "create" | "compose";
 export type PreviewMode = "light" | "dark";
 /** Steps of the visible stepper (1 Marca · 2 Crear · 3 Ajustar); «4 Exportar» is the export dialog. */
 export type FlowPhase = "brand" | "create" | "compose";
 
-/** drop/crop/extracting/palette are «Marca»; create is «Crear»; compose is «Ajustar». */
+/** drop/crop/extracting/palette and the import (import, review) are «Marca»; create is «Crear»; compose is «Ajustar». */
 export const flowPhaseOf = (step: FlowStep): FlowPhase => (step === "create" || step === "compose" ? step : "brand");
 
 /** Primary used by «No tengo logo» when no color is given. */
 export const DEFAULT_PRIMARY = "#7c5cff";
+
+/** A file of «Trae tu marca» with the type the user gave it. */
+export type ImportDraftFile = { file: File; role: FileRole; pasted: boolean };
+
+/** What the import panel holds, so «Volver» from «Esto detectamos» finds it as it was. */
+export type ImportDraft = { files: ImportDraftFile[]; rights: boolean; pasteText: string; analyzeStyle?: boolean };
+
+/** The user's logo when it came in the batch («Mi logo»): read and extracted like a dropped one. */
+export type ImportLogo = { logo: FlowLogo; extract: ExtractResult };
+
+/** A detected batch waiting in «Esto detectamos». Nothing of it is applied yet. */
+export type ImportSession = {
+  brand: ImportedBrand;
+  ownership: Ownership;
+  rightsConfirmedAt?: string;
+  logo?: ImportLogo;
+  draft: ImportDraft;
+  /** The files of the parsed sources by `sourceId` (screenshots for the vision AI). Never stored in the doc. */
+  sourceFiles?: Record<string, File>;
+  /** «Analizar estilo con IA» was switched on in the panel (the consent): «Esto detectamos» runs it. */
+  analyzeStyle?: boolean;
+};
+
+/** References accepted before there is a brand (from the Home): applied when the DesignDoc is created. */
+export type PendingImport = {
+  brand: ImportedBrand;
+  selection: ImportSelection;
+  ownership: Ownership;
+  rightsConfirmedAt?: string;
+};
+
+/** How «Esto detectamos» leaves: the seeds and pins of the applied guide, and the next step. */
+export type ImportOutcome =
+  | { next: "create" | "palette"; seeds: { primary: string; secondary?: string }; pinned?: ThemePins; logo?: ImportLogo }
+  | { next: "drop"; pending?: PendingImport };
 
 export type PaletteFlowState = {
   step: FlowStep;
@@ -40,11 +77,19 @@ export type PaletteFlowState = {
   previewKind: OutputKind;
   /** Last extraction error (cleared on the next attempt). */
   error?: string;
+  /** Where «Trae tu marca» goes back to. */
+  importReturn?: "drop" | "palette";
+  /** Files dropped on the Home that opened the panel (the panel takes them once). */
+  importFiles?: readonly File[];
+  importSession?: ImportSession;
+  /** Locked colors of an imported guide: the theme keeps them and palette styles only move the rest. */
+  pinned?: ThemePins;
+  pendingImport?: PendingImport;
 };
 
 /** State as exposed by `usePaletteFlow()`: reducer state + the derived theme. */
 export type PaletteFlowView = PaletteFlowState & {
-  /** `generateTheme({ primary, secondary, style })`, memoized on seeds/style. */
+  /** `generateTheme({ primary, secondary, style, pinned })`, memoized on seeds/style/pins. */
   theme?: Theme;
 };
 
@@ -63,6 +108,13 @@ export type PaletteFlowAction =
   | { type: "chooseColorWithoutLogo"; primary?: string }
   | { type: "goTo"; step: "create" | "compose" }
   | { type: "setPreviewKind"; kind: OutputKind }
+  | { type: "openImport"; files?: readonly File[] }
+  | { type: "closeImport" }
+  | { type: "reviewImport"; session: ImportSession }
+  | { type: "backToImport" }
+  | { type: "finishImport"; outcome: ImportOutcome }
+  | { type: "setPinned"; pinned?: ThemePins }
+  | { type: "clearPendingImport" }
   | { type: "reset" };
 
 export const initialPaletteFlowState: PaletteFlowState = {
@@ -82,6 +134,7 @@ export function paletteFlowReducer(state: PaletteFlowState, action: PaletteFlowA
         styleId: state.styleId,
         previewMode: state.previewMode,
         previewKind: state.previewKind,
+        pendingImport: state.pendingImport,
         step: "crop",
         logo: action.logo,
       };
@@ -120,6 +173,7 @@ export function paletteFlowReducer(state: PaletteFlowState, action: PaletteFlowA
         styleId: state.styleId,
         previewMode: state.previewMode,
         previewKind: state.previewKind,
+        pendingImport: state.pendingImport,
         step: "palette",
         primary: toHex(action.primary) ?? DEFAULT_PRIMARY,
       };
@@ -127,6 +181,56 @@ export function paletteFlowReducer(state: PaletteFlowState, action: PaletteFlowA
       return state.primary ? { ...state, step: action.step } : state;
     case "setPreviewKind":
       return { ...state, previewKind: action.kind };
+    case "openImport":
+      return {
+        ...state,
+        step: "import",
+        importReturn: state.step === "palette" || (state.primary && state.step !== "drop") ? "palette" : "drop",
+        importFiles: action.files && action.files.length > 0 ? action.files : undefined,
+        importSession: undefined,
+      };
+    case "closeImport":
+      return {
+        ...state,
+        step: state.importReturn === "palette" && state.primary ? "palette" : "drop",
+        importReturn: undefined,
+        importFiles: undefined,
+        importSession: undefined,
+      };
+    case "reviewImport":
+      return { ...state, step: "review", importSession: action.session, importFiles: undefined };
+    case "backToImport":
+      return state.step === "review" ? { ...state, step: "import" } : state;
+    case "finishImport": {
+      const { outcome } = action;
+      if (outcome.next === "drop") {
+        return {
+          ...initialPaletteFlowState,
+          styleId: state.styleId,
+          previewMode: state.previewMode,
+          previewKind: state.previewKind,
+          pendingImport: outcome.pending ?? state.pendingImport,
+        };
+      }
+      const primary = toHex(outcome.seeds.primary) ?? state.primary ?? DEFAULT_PRIMARY;
+      const logo = outcome.logo;
+      return {
+        ...state,
+        step: outcome.next,
+        primary,
+        secondary: outcome.seeds.secondary ? (toHex(outcome.seeds.secondary) ?? undefined) : undefined,
+        pinned: outcome.pinned,
+        ...(logo && { logo: logo.logo, extract: logo.extract, crop: undefined }),
+        error: undefined,
+        importReturn: undefined,
+        importFiles: undefined,
+        importSession: undefined,
+      };
+    }
+    case "setPinned":
+      return JSON.stringify(state.pinned ?? null) === JSON.stringify(action.pinned ?? null) ? state : { ...state, pinned: action.pinned };
+    case "clearPendingImport":
+      return state.pendingImport ? { ...state, pendingImport: undefined } : state;
     case "reset":
       return initialPaletteFlowState;
   }
@@ -160,6 +264,18 @@ export type PaletteFlowActions = {
   goToCompose: () => void;
   /** LivePreview tab of the Palette Lab; preselects that card in «Crear». */
   setPreviewKind: (kind: OutputKind) => void;
+  /** «Trae tu marca» (step "import"), optionally with files dropped on the Home. «Volver» returns to where it opened. */
+  openImport: (files?: readonly File[]) => void;
+  closeImport: () => void;
+  /** The batch was read → «Esto detectamos» (step "review"). */
+  reviewImport: (session: ImportSession) => void;
+  /** From «Esto detectamos» back to the panel, with its files. */
+  backToImport: () => void;
+  /** The guide was applied to the DesignDoc (or its references kept for later): seeds, pins and next step. */
+  finishImport: (outcome: ImportOutcome) => void;
+  /** Locked colors of the DesignDoc (`pinnedFor`); `undefined` after «Desbloquear»: palette styles move every color again. */
+  setPinned: (pinned?: ThemePins) => void;
+  clearPendingImport: () => void;
   reset: () => void;
 };
 
@@ -171,19 +287,23 @@ export type PaletteFlowContextValue = {
 
 const PaletteFlowContext = createContext<PaletteFlowContextValue | null>(null);
 
-function safeTheme(primary: string | undefined, secondary: string | undefined, style: PaletteStyleId): Theme | undefined {
+function safeTheme(primary: string | undefined, secondary: string | undefined, style: PaletteStyleId, pinned?: ThemePins): Theme | undefined {
   if (!primary) return undefined;
   try {
-    return generateTheme({ primary, secondary, style });
+    return generateTheme({ primary, secondary, style, ...(pinned && { pinned }) });
   } catch {
-    return undefined;
+    if (!pinned) return undefined;
+    return safeTheme(primary, secondary, style);
   }
 }
 
 export function PaletteFlowProvider({ children, initialState }: { children: ReactNode; initialState?: Partial<PaletteFlowState> }) {
   const [state, dispatch] = useReducer(paletteFlowReducer, { ...initialPaletteFlowState, ...initialState });
 
-  const theme = useMemo(() => safeTheme(state.primary, state.secondary, state.styleId), [state.primary, state.secondary, state.styleId]);
+  const theme = useMemo(
+    () => safeTheme(state.primary, state.secondary, state.styleId, state.pinned),
+    [state.primary, state.secondary, state.styleId, state.pinned],
+  );
 
   const actions = useMemo<PaletteFlowActions>(
     () => ({
@@ -202,6 +322,13 @@ export function PaletteFlowProvider({ children, initialState }: { children: Reac
       goToCreate: () => dispatch({ type: "goTo", step: "create" }),
       goToCompose: () => dispatch({ type: "goTo", step: "compose" }),
       setPreviewKind: (kind) => dispatch({ type: "setPreviewKind", kind }),
+      openImport: (files) => dispatch({ type: "openImport", files }),
+      closeImport: () => dispatch({ type: "closeImport" }),
+      reviewImport: (session) => dispatch({ type: "reviewImport", session }),
+      backToImport: () => dispatch({ type: "backToImport" }),
+      finishImport: (outcome) => dispatch({ type: "finishImport", outcome }),
+      setPinned: (pinned) => dispatch({ type: "setPinned", pinned }),
+      clearPendingImport: () => dispatch({ type: "clearPendingImport" }),
       reset: () => dispatch({ type: "reset" }),
     }),
     [],
@@ -221,6 +348,15 @@ export function PaletteFlowProvider({ children, initialState }: { children: Reac
     },
     [],
   );
+
+  // A logo read in «Trae tu marca» belongs to its session until the flow adopts it (finishImport).
+  const sessionLogoUrl = state.importSession?.logo?.logo.objectUrl;
+  const lastSessionUrl = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const previous = lastSessionUrl.current;
+    lastSessionUrl.current = sessionLogoUrl;
+    if (previous && previous !== sessionLogoUrl && previous !== logoUrl) URL.revokeObjectURL(previous);
+  }, [sessionLogoUrl, logoUrl]);
 
   const value = useMemo<PaletteFlowContextValue>(() => ({ state: { ...state, theme }, actions, dispatch }), [state, theme, actions]);
 

@@ -2,11 +2,14 @@
 
 import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
-import { useId, useState } from "react";
-import { AiKeyDialog } from "@/components/AiKeyDialog";
+import { useId, useMemo, useState } from "react";
+import { AiKeyDialog, type AiKeyDialogView } from "@/components/AiKeyDialog";
+import { AiUsageMeter } from "@/components/AiUsageMeter";
 import { Button } from "@/components/ui/Button";
-import type { UseAiCopy } from "@/hooks/useAiCopy";
+import type { AiCopyResult, UseAiCopy } from "@/hooks/useAiCopy";
+import { useAiStatus } from "@/hooks/useAiStatus";
 import { useDictionary, useI18n } from "@/i18n";
+import { ai as aiText } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { estimateCopyCost, formatUsd } from "../../aiEstimate";
@@ -22,28 +25,42 @@ export type AiCopyMenuProps = {
   ai: UseAiCopy;
   /** Runs the request and applies the patch (Composer owns undo and toasts). */
   onGenerate: (instructions: string) => void;
+  /** A «Copiar prompt para mi Claude» answer, already validated: apply it like a generated one. */
+  onManualResult: (result: AiCopyResult) => void;
 };
 
 const ENV_LINES = ["ANTHROPIC_API_KEY=…", "DIALMADE_AI_MONTHLY_BUDGET_USD=5"];
 
 /**
- * «Generar copy con IA» for the whole page: estimated cost and remaining budget before running it.
- * Without AI it explains that the default copy is already there, and offers BYOK (AiKeyDialog) or
- * the server variables for self-hosting.
+ * «Generar copy con IA» for the whole page, under the AI access policy: the free uses left («3 de 5
+ * usos gratis este mes»), the estimated cost and the remaining budget before running it. When the free
+ * tier cannot answer (no uses, budget or daily limit) it offers the two ways out, «Usar mi propia key»
+ * and «Copiar prompt para mi Claude»; only when the server has no AI at all does it show the variables
+ * for self-hosting. The default copy is always there without AI.
  */
-export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGenerate }: AiCopyMenuProps) {
+export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGenerate, onManualResult }: AiCopyMenuProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
+  const reasons = useDictionary(aiText).key.reasons;
+  const { status } = useAiStatus();
   const instructionsId = useId();
   const [instructions, setInstructions] = useState("");
-  const [keyOpen, setKeyOpen] = useState(false);
+  const [dialog, setDialog] = useState<AiKeyDialogView | null>(null);
   const loading = ai.status === "loading";
   const estimate = open ? estimateCopyCost(doc, kind, undefined, ai.model) : 0;
+  const reason = ai.fallbackReason;
+  const notConfigured = reason === "not-configured";
+  const trimmed = instructions.trim();
+  const manual = useMemo(
+    () => (dialog ? ai.manualJob({ kind, ...(trimmed && { instructions: trimmed }) }) : null),
+    [dialog, ai, kind, trimmed],
+  );
 
-  const openKeyDialog = () => {
+  const openDialog = (view: AiKeyDialogView) => {
     onOpenChange(false);
-    setKeyOpen(true);
+    setDialog(view);
   };
+  const openKeyDialog = () => openDialog("key");
 
   const keyButton = (
     <button
@@ -71,9 +88,12 @@ export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGen
       >
         <div className="flex flex-col gap-3">
           <div>
-            <p className="text-small font-semibold text-fg">{ai.available ? t.ai.title : t.ai.unavailableTitle}</p>
-            <p className="mt-1 text-caption text-muted">{ai.available ? t.ai.description(pageLabel) : t.ai.unavailableBody}</p>
+            <p className="text-small font-semibold text-fg">{ai.available ? t.ai.title : notConfigured ? t.ai.unavailableTitle : t.ai.outOfFreeTitle}</p>
+            <p className="mt-1 text-caption text-muted">
+              {ai.available ? t.ai.description(pageLabel) : reason && !notConfigured ? reasons[reason](status?.freeUsesTotal ?? 0) : t.ai.unavailableBody}
+            </p>
           </div>
+          <AiUsageMeter />
           {ai.available ? (
             <>
               <div className="flex flex-col gap-1.5">
@@ -125,16 +145,33 @@ export function AiCopyMenu({ open, onOpenChange, doc, kind, pageLabel, ai, onGen
                 </Button>
                 <p>{t.ai.ownKeyHint}</p>
               </div>
-              <p>{t.ai.howTo}</p>
-              <pre className="overflow-x-auto rounded-control border border-app bg-black/30 px-3 py-2 font-mono text-[12px] leading-5 text-fg">
-                {ENV_LINES.join("\n")}
-              </pre>
-              <p>{t.ai.restart}</p>
+              <div className="flex flex-col items-start gap-1 rounded-control border border-app bg-white/[0.02] px-3 py-2">
+                <Button size="sm" variant="secondary" onClick={() => openDialog("manual")}>
+                  {t.ai.useClaude}
+                </Button>
+                <p>{t.ai.claudeHint}</p>
+              </div>
+              {notConfigured && (
+                <>
+                  <p>{t.ai.howTo}</p>
+                  <pre className="overflow-x-auto rounded-control border border-app bg-black/30 px-3 py-2 font-mono text-[12px] leading-5 text-fg">
+                    {ENV_LINES.join("\n")}
+                  </pre>
+                  <p>{t.ai.restart}</p>
+                </>
+              )}
             </div>
           )}
         </div>
       </Popover>
-      <AiKeyDialog open={keyOpen} onOpenChange={setKeyOpen} />
+      <AiKeyDialog<AiCopyResult>
+        open={dialog !== null}
+        onOpenChange={(next) => !next && setDialog(null)}
+        reason={ai.available ? null : reason}
+        manual={manual}
+        initialView={dialog ?? "key"}
+        onManualResult={(result) => onManualResult(result)}
+      />
     </>
   );
 }

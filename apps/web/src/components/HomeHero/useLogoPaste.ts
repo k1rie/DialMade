@@ -26,7 +26,7 @@ function clipboardFile(data: DataTransfer): File | undefined {
 const isEditable = (target: EventTarget | null) =>
   target instanceof Element && !!target.closest("input, textarea, [contenteditable]:not([contenteditable='false'])");
 
-/** Cmd/Ctrl+V on the page: an image file or SVG markup becomes a logo; a URL is handed to `onUrl`. */
+/** Cmd/Ctrl+V outside text fields: an image file or SVG markup becomes a logo; a URL is handed to `onUrl`. */
 export function useLogoPaste({ onFile, onUrl }: Handlers, enabled = true) {
   const handlers = useRef({ onFile, onUrl });
   useEffect(() => {
@@ -37,14 +37,13 @@ export function useLogoPaste({ onFile, onUrl }: Handlers, enabled = true) {
     if (!enabled) return;
     const onPaste = (event: ClipboardEvent) => {
       const data = event.clipboardData;
-      if (!data) return;
+      if (!data || isEditable(event.target)) return;
       const file = clipboardFile(data);
       if (file) {
         event.preventDefault();
         handlers.current.onFile(file);
         return;
       }
-      if (isEditable(event.target)) return;
       const text = data.getData("text/plain").trim();
       if (SVG_MARKUP.test(text)) {
         event.preventDefault();

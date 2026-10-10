@@ -1,6 +1,7 @@
 export const ENGINE_VERSION = "0.1.0";
 
 export {
+  compositeOver,
   contrastRatio,
   deltaEOK,
   formatOklch,
@@ -8,6 +9,8 @@ export {
   maxChroma,
   oklchToHex,
   parseColor,
+  parseColorWithAlpha,
+  splitAlpha,
   type Oklab,
   type Oklch,
 } from "./color";
@@ -41,9 +44,11 @@ export {
   UI_CONTRAST,
   generateTheme,
   type ContrastCheck,
+  type ContrastSource,
   type GenerateThemeInput,
   type RoleKey,
   type Theme,
+  type ThemePins,
   type ThemeRoles,
   type ThemeScales,
 } from "./theme";

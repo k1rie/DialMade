@@ -1,0 +1,12 @@
+/* Ladera (fictional brand): a site's compiled CSS without custom properties. */
+html{box-sizing:border-box}*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:#fbfaf7;color:#1f2430;font-family:"Lora",Georgia,"Times New Roman",serif;font-size:17px;line-height:1.6}
+h1,h2,h3{font-family:"Work Sans",Arial,sans-serif;font-weight:700;letter-spacing:-.01em}
+a{color:#d9480f;text-decoration:underline}
+.btn-primary{background-color:#d9480f;color:#fff;border:1px solid #b93d0c;border-radius:6px;box-shadow:0 1px 2px rgba(31,36,48,.12)}
+.btn-primary:hover{background-color:#b93d0c}
+.card{background:#fff;border:1px solid #e6e2da;border-radius:10px}
+.badge{background:#fde7dc;color:#b93d0c}
+.alert{border-left:4px solid #d9480f;background:url("data:image/png;base64,AAAA") no-repeat}
+@media (min-width:768px){body{font-size:18px}}
+code,pre{font-family:"IBM Plex Mono",Menlo,monospace}

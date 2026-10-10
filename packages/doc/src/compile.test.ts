@@ -8,13 +8,13 @@ import {
 } from "@dialmade/catalog";
 import { formatOklch, generateTheme, toCssVarRecord } from "@dialmade/palette";
 import { describe, expect, it } from "vitest";
-import { compileThemeVars, fontSizeCss, shadowCss } from "./compile";
+import { colorCssVars, compileThemeVars, fontSizeCss, shadowCss } from "./compile";
 import { createDesignDoc } from "./doc";
-import { applyPatch } from "./patch";
+import { applyPatch, lock, unlock } from "./patch";
 import type { DesignDoc } from "./schema";
 import { COMPONENT_VARS, CONTRACT_VARS, NON_COLOR_VARS } from "./testing/contract";
-import { acmeDoc, monoDoc } from "./testing/fixtures";
-import { dialLerp, nearestWeight, parseCubicBezier, resolveThemeInputs, resolveTokens, type ThemeInputs } from "./tokens";
+import { acmeDoc, importedDoc, monoDoc } from "./testing/fixtures";
+import { dialLerp, nearestWeight, parseCubicBezier, pinnedFor, resolveThemeInputs, resolveTokens, themeInputFor, type ThemeInputs } from "./tokens";
 
 const PX = /^(0|\d+(\.\d+)?px)$/;
 const REM_OR_CLAMP = /^(\d+(\.\d+)?rem|clamp\(\d+(\.\d+)?rem, -?\d+(\.\d+)?rem \+ \d+(\.\d+)?vw, \d+(\.\d+)?rem\))$/;
@@ -321,5 +321,106 @@ describe("helpers", () => {
     expect(inputs.theme).toEqual(generateTheme({ primary: "#171717", achromatic: true, style: "brand" }));
     const custom: StyleRecipe = { ...inputs.recipe, id: "custom" };
     expect(resolveThemeInputs(doc, { recipe: custom }).recipe).toBe(custom);
+  });
+});
+
+describe("compileThemeVars: imported tokens", () => {
+  const unwrap = (result: ReturnType<typeof applyPatch>): DesignDoc => {
+    if (!result.ok) throw new Error(result.error.message);
+    return result.doc;
+  };
+
+  it("emits the whole contract with imported values", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const vars = compile(importedDoc(), mode);
+      for (const name of CONTRACT_VARS) expect(vars[name], name).toBeTruthy();
+    }
+  });
+
+  it("prefers imported colors over the generated ones, alpha included", () => {
+    const doc = importedDoc();
+    const light = compile(doc, "light");
+    const dark = compile(doc, "dark");
+    expect(light["--primary"]).toBe(formatOklch("#2f4fd0"));
+    expect(light["--primary-foreground"]).toBe("oklch(1 0 0)");
+    expect(dark["--border"]).toBe("oklch(1 0 0 / 0.1)");
+    expect(dark["--input"]).toBe("oklch(1 0 0 / 0.15)");
+    const hex = compileThemeVars(doc, { ...resolveThemeInputs(doc), mode: "dark", colorFormat: "hex" });
+    expect(hex["--border"]).toBe("#ffffff1a");
+    expect(hex["--input"]).toBe("#ffffff26");
+  });
+
+  it("pins only the locked colors when generating the theme", () => {
+    const doc = importedDoc();
+    expect(pinnedFor(doc)).toEqual({ light: { primary: "#2f4fd0" }, dark: { border: "#ffffff1a" } });
+    expect(themeInputFor(doc)).toMatchObject({ primary: doc.brand.seeds.primary, style: doc.brief.paletteStyleId, pinned: pinnedFor(doc) });
+    expect(pinnedFor(acmeDoc())).toBeUndefined();
+    expect(themeInputFor(acmeDoc())).not.toHaveProperty("pinned");
+    const unlocked = unwrap(unlock(doc, "/tokens/color/light/primary"));
+    expect(pinnedFor(unlocked)).toEqual({ dark: { border: "#ffffff1a" } });
+  });
+
+  it("anchors the brand scale to a locked primary, also under another palette style", () => {
+    for (const style of ["brand", "pastel", "vibrant"] as const) {
+      const doc = unwrap(applyPatch(importedDoc(), [{ op: "replace", path: "/brief/paletteStyleId", value: style }]));
+      const { theme } = resolveThemeInputs(doc);
+      expect(theme.light.primary, style).toBe("#2f4fd0");
+      expect(theme.dark.border, style).toBe("#ffffff1a");
+      const anchor = theme.scales.brand.find((step) => step.step === theme.anchors.brand);
+      expect(anchor?.hex, style).toBe("#2f4fd0");
+      expect(compile(doc, "light")[`--color-brand-${theme.anchors.brand}`], style).toBe(formatOklch("#2f4fd0"));
+    }
+  });
+
+  it("pins a locked 50–950 scale and exports it as is", () => {
+    const scale = { "50": "#eef2ff", "500": "#2f4fd0", "950": "#0b1240" };
+    const doc = unwrap(lock(acmeDoc(), "/tokens/color/scales/brand", { value: scale }));
+    expect(pinnedFor(doc)?.scales?.brand?.map((step) => step.hex)).toEqual(["#eef2ff", "#2f4fd0", "#0b1240"]);
+    const vars = compile(doc, "light");
+    expect(vars["--color-brand-50"]).toBe(formatOklch("#eef2ff"));
+    expect(vars["--color-brand-950"]).toBe(formatOklch("#0b1240"));
+  });
+
+  it("prefers imported type, shape, space, elevation and border over recipe and pairing", () => {
+    const doc = importedDoc();
+    const vars = compile(doc, "light");
+    expect(vars["--dl-font-heading"]).toBe('"Brand Grotesk", "Arimo", system-ui, sans-serif');
+    expect(vars["--dl-font-body"]?.startsWith('"Inter", ')).toBe(true);
+    expect(vars["--dl-lh-tight"]).toBe("1.1");
+    expect(vars["--dl-lh-body"]).toBe("1.5");
+    expect(vars["--dl-heading-weight"]).toBe("700");
+    expect(vars["--dl-heading-tracking"]).toBe("-0.02em");
+    expect(vars["--dl-radius-md"]).toBe("10px");
+    expect(vars["--dl-space-4"]).toBe("18px");
+    expect(vars["--dl-border-width"]).toBe("1px");
+    expect(vars["--dl-shadow-sm"]).toBe("0 1px 2px 0 rgb(0 0 0 / 0.05)");
+    expect(vars["--dl-shadow-lg"]).toBe("none");
+  });
+
+  it("keeps imported values when the recipe, pairing or dials change", () => {
+    const doc = importedDoc();
+    const base = compile(doc, "light");
+    const swiss = compile(doc, "light", { recipe: getStyleRecipe("minimal-swiss")!, pairing: getTypographyPairing("editorial-serif")! });
+    const dense = compile(doc, "light", {}, { variance: 10, motion: 5, density: 10 });
+    for (const vars of [swiss, dense]) {
+      expect(vars["--dl-radius-md"]).toBe("10px");
+      expect(vars["--dl-space-4"]).toBe("18px");
+      expect(vars["--dl-font-heading"]).toBe(base["--dl-font-heading"]);
+      expect(vars["--dl-font-body"]?.startsWith('"Inter", ')).toBe(true);
+      expect(vars["--dl-lh-tight"]).toBe("1.1");
+      expect(vars["--dl-shadow-sm"]).toBe(base["--dl-shadow-sm"]);
+    }
+    expect(dense["--dl-radius-sm"]).not.toBe(base["--dl-radius-sm"]);
+    expect(dense["--dl-space-3"]).not.toBe(base["--dl-space-3"]);
+  });
+
+  it("resolves the theme itself when no inputs are passed", () => {
+    const doc = importedDoc();
+    for (const mode of ["light", "dark"] as const) {
+      expect(compileThemeVars(doc, { mode })).toEqual(compileThemeVars(doc, { ...resolveThemeInputs(doc), mode }));
+      expect(colorCssVars(doc, { mode })).toEqual(colorCssVars(doc, { theme: resolveThemeInputs(doc).theme, mode }));
+    }
+    const recipe = getStyleRecipe("minimal-swiss")!;
+    expect(compileThemeVars(doc, { mode: "light", recipe })).toEqual(compileThemeVars(doc, { ...resolveThemeInputs(doc, { recipe }), mode: "light" }));
   });
 });

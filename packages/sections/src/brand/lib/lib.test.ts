@@ -11,6 +11,9 @@ describe("brand/lib", () => {
   it("contraste WCAG", () => {
     expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
     expect(contrastRatio("#777777", "#777777")).toBeCloseTo(1, 5);
+    // Alpha: white at 10% over black is a dark gray, not white.
+    expect(contrastRatio("#ffffff1a", "#000000")).toBeLessThan(1.5);
+    expect(contrastRatio("#ffffff1a", "#000000")).toBeCloseTo(contrastRatio("#1a1a1a", "#000000"), 1);
     expect(roleCssName("primaryForeground")).toBe("primary-foreground");
     expect(roleCssName("chart3")).toBe("chart-3");
   });
@@ -45,7 +48,7 @@ describe("brand/lib", () => {
   it("formatos", () => {
     expect(formatPx(16, "es")).toBe("16 px");
     expect(formatPx(56, "en", 34)).toBe("34–56 px");
-    expect(formatRatio(4.5, "es")).toBe("4,5:1");
+    expect(formatRatio(4.5, "es")).toBe("4.5:1");
     expect(formatRatio(4.5, "en")).toBe("4.5:1");
     expect(textOr("  ", "x")).toBe("x");
   });

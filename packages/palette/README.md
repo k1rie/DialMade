@@ -21,9 +21,11 @@ toFigmaTokens(theme, "light"); // figma-light.tokens.json
 | Función | Qué hace |
 |---|---|
 | `parseSvgColors(svg)` | Lee los colores declarados en el SVG: `fill`, `stroke`, `stop-color`, `flood-color`, `lighting-color` y `color`. Los busca en atributos, `style`, reglas `<style>` y custom properties. Solo cuenta colores opacos, devueltos como `#rrggbb` y sin repetir |
-| `extractFromPixels(data, w, h, opts?)` | Saca swatches, semillas, fondo y `method` (`histogram`, `kmeans` o `none`) |
+| `extractFromPixels(data, w, h, opts?)` | Saca swatches, semillas, fondo y `method` (`histogram`, `kmeans` o `none`). Opciones: `declaredColors`, `maxSwatches`, `minCoverage` y `keepChromaticBackground` |
 | `buildScale(hex, opts?)` | Escala 50–950. El hex aparece **exacto** en `anchorStep` |
-| `generateTheme(input)` | Devuelve el `Theme`: roles light/dark, escalas, `contrast[]`, `defaultMode` y `anchors` |
+| `generateTheme(input)` | Devuelve el `Theme`: roles light/dark, escalas, `contrast[]` (con `source`), `defaultMode` y `anchors`. Con `input.pinned` respeta los valores importados |
+| `parseColorWithAlpha(css)` | Como `parseColor`, pero conserva el alfa: `oklch(1 0 0 / 10%)` → `#ffffff1a` |
+| `splitAlpha(color)` / `compositeOver(fg, bg)` | Separa `#rrggbbaa` en hex y alfa / pinta un color translúcido sobre un fondo (mezcla sRGB, como el navegador) |
 | `toCssVars(theme, { format? })` | Variables shadcn más `--brand`, `--cta`, `--cta-foreground`, `--primary-text`, `--border-strong`, estados, alias de sidebar y `--color-brand-*` / `--color-cta-*` |
 | `toCssVarRecord(theme, mode, { format? })` | Las mismas variables de un modo como objeto `{ "--primary": … }` (para `style` o `setProperty`), con todas las escalas (`--color-neutral-*`, `--color-success-*`…) |
 | `toTailwindTheme(theme)` | Bloque `@theme inline` de Tailwind v4 |
@@ -43,7 +45,8 @@ toFigmaTokens(theme, "light"); // figma-light.tokens.json
   - **Plano:** histograma de 5 bits por canal y agrupado por líder con ΔEok < 0.04. Cada grupo se queda con su color exacto más frecuente.
   - **Degradado o foto:** k-means ponderado en OKLab (k = 8). La siembra es determinista, por el punto más lejano. Si el color exacto más frecuente del clúster está a menos de 0.03 del centroide, se usa ese color en vez del centroide.
   - Usé un k-means propio en vez de colorthief porque colorthief necesita una imagen o un canvas, y aquí solo llegan píxeles. Además, así el resultado es reproducible en los tests.
-- **Limpieza.** Se fusionan los colores a menos de ΔEok 0.04 y se descartan los que cubren menos del 1.5 %. Después, cada uno se ajusta al color declarado del SVG si está a ΔEok < 0.05.
+- **Limpieza.** Se fusionan los colores a menos de ΔEok 0.04 y se descartan los que cubren menos de `minCoverage` (1.5 % por defecto). Después, cada uno se ajusta al color declarado del SVG si está a ΔEok < 0.05.
+- **Capturas.** Con `minCoverage: 0.002` sobrevive un CTA pequeño (conviene subir también `maxSwatches`). `keepChromaticBackground: false` quita un fondo de color igual que uno acromático; `background` lo sigue informando.
 - **Semillas.**
   - Cuentan como cromáticos los colores con C ≥ 0.04. Su puntuación es `cobertura^0.7 · min(C, 0.2)/0.2`.
   - El secundario es el siguiente que difiera del primario en ΔH ≥ 30° o en ΔEok ≥ 0.12.
@@ -102,6 +105,19 @@ En `neon`, la investigación fijaba L en 0.8 para todos los tonos. **Mejora:** a
 
 Todos los pares de `CONTRAST_PAIRS` se comprueban en los dos modos y quedan en `theme.contrast`. Si alguno falla, se mueve la L del color de primer plano (mismo tono) hasta que cumple. `brand` es el hex exacto y decorativo: no tiene garantía de contraste.
 
+Cada comprobación lleva `source`. Todo par con al menos un rol generado cumple AA (`generated`); los 100 % importados se informan (`imported`) con su `pass` real. Sin `pinned`, todo es `generated`.
+
+### Valores fijados (`pinned`) y alfa
+
+`generateTheme({ …, pinned: { light?, dark?, scales?: { brand?, accent? } } })` recibe lo que trae la guía del usuario. Los roles aceptan cualquier color CSS y conservan el alfa.
+
+- **Nunca se tocan.** Salen idénticos en `theme.light` / `theme.dark`.
+- **Primario fijado** (el claro o, si no, el oscuro): la escala `brand` se ancla a él **sin** el estilo de paleta. El estilo solo cambia neutros, estados, charts y los roles no fijados. Un `cta` fijado hace lo mismo con la escala del acento.
+- **Escala importada:** se usa tal cual. Los pasos que falten se rellenan (interpolación OKLab entre vecinos o la curva de Tailwind en los extremos) y `anchors` apunta al paso dado con menor ΔEok respecto al primario (o al CTA / secundario).
+- **Contraste:** si un par falla, se mueve su lado generado (el primer plano o, bajo un texto fijado, el relleno generado). `primaryText` y `borderStrong` se rellenan siempre, así que el texto de marca y el borde fuerte cumplen aunque `primary` o `input` fijados no lleguen.
+- **Qué cuenta como `imported`:** los pares con los dos roles fijados; un color fijado sobre una superficie generada (`background`, `card`, `popover`, `muted`), porque mover la página para salvarlo cambiaría todo el tema; y los pares que los valores fijados dejan sin solución (un fondo blanco fijado junto a una tarjeta negra fijada).
+- **Alfa:** un rol fijado puede ser `#rrggbbaa` (el `--border: oklch(1 0 0 / 10%)` del shadcn oscuro entra como `#ffffff1a`). El contraste se mide pintándolo sobre el fondo del par; un fondo translúcido se pinta antes sobre `background` (y este sobre blanco en claro o negro en oscuro). Los roles generados son siempre opacos.
+
 ### Exportes
 
 - **DTCG: modos en un solo documento.** El `$value` de cada token semántico es el valor claro. Los dos modos completos van en `$extensions["design.dialmade"].modes = { light, dark }`. Los primitivos (`brand`, `cta`, `neutral`, `success`, `warning`, `error`, `info`) no cambian entre modos.
@@ -109,6 +125,7 @@ Todos los pares de `CONTRAST_PAIRS` se comprueban en los dos modos y quedan en `
 - **Figma: un archivo por modo.** Todo cuelga de `color`, así que al importar queda `color/primary`, `color/primary-foreground`, `color/brand-500`… Coincide con `--color-primary` y `--color-brand-500` de Tailwind (la opción (a) del spike de Figma).
 - **Nombre del acento.** `theme.scales.accent` se exporta como `cta`, porque en shadcn `accent` es la superficie de hover.
 - **CSS.** Por defecto usa `oklch()` con la precisión mínima que reconvierte al **mismo hex**; `{ format: "hex" }` lo cambia a hex. Todo está ajustado a sRGB. Más adelante se podría emitir P3.
+- **Alfa.** Un rol translúcido sale como `oklch(L C H / a)` (o `#rrggbbaa` con `format: "hex"`). En DTCG lleva `alpha` (solo cuando es menor que 1) y `hex` opaco; en Figma, el `alpha` real.
 
 ## Añadidos al contrato
 
@@ -117,17 +134,21 @@ Todo es aditivo: no cambié ninguna firma pedida.
 - **`ExtractResult.method`.**
 - **`ThemeRoles`:** `borderStrong`, `success`, `successForeground`, `warning`, `warningForeground`, `info`, `infoForeground` y `chart1..5`.
 - **`Theme`:** `achromatic`, `defaultMode` y `anchors`.
-- **Parámetros opcionales:** `buildScale(hex, { maxHueDrift })` y `toCssVars(theme, { format })`.
+- **Parámetros opcionales:** `buildScale(hex, { maxHueDrift })`, `toCssVars(theme, { format })`, `GenerateThemeInput.pinned` y `ExtractOptions.minCoverage` / `keepChromaticBackground`.
+- **`ContrastCheck.source`** (`imported` | `generated`). `ContrastCheck.bg` es el fondo opaco medido (el propio rol, salvo que sea translúcido).
+- **Roles con alfa:** `ThemeRoles` acepta `#rrggbbaa` en los valores fijados. `contrastRatio` y `formatOklch` los entienden; `parseColor` sigue quitando el alfa.
 - **Exports extra:**
-  - Funciones: `toGlobalsCss`, `buildNeutralScale`, `contrastRatio`, `parseColor`, `formatOklch`, `oklchToHex`, `maxChroma`, `deltaEOK`, `hexToOklch`, `cssVarName` y `scaleGroups`.
+  - Funciones: `toGlobalsCss`, `buildNeutralScale`, `contrastRatio`, `parseColor`, `parseColorWithAlpha`, `splitAlpha`, `compositeOver`, `formatOklch`, `oklchToHex`, `maxChroma`, `deltaEOK`, `hexToOklch`, `cssVarName` y `scaleGroups`.
+  - Tipos: `ThemePins` y `ContrastSource`.
   - Constantes: `CONTRAST_PAIRS`, `ROLE_KEYS`, `SCALE_STEPS`, `PALETTE_STYLE_IDS`, `TEXT_CONTRAST`, `UI_CONTRAST` y `DTCG_EXTENSION`.
 
 ## Tests
 
-`pnpm --filter @dialmade/palette test` corre 237 tests (casi 2 s):
+`pnpm --filter @dialmade/palette test` corre 268 tests (unos 2 s):
 
 - **Extracción:** logos generados por código (plano sobre blanco y sobre transparente, degradado, negro, acento pequeño, ruido tipo foto, tile de app y snap a colores SVG).
 - **`parseSvgColors`.**
 - **Escalas:** 164 semillas.
 - **`generateTheme`:** 200 semillas pseudoaleatorias × 8 estilos. Comprueba que todos los pares pasan en claro y oscuro, que |ΔH| ≤ 15° y que no aparece ningún NaN.
-- **Exportes:** forma de DTCG 2025.10 y de Figma (sRGB con componentes entre 0 y 1).
+- **Valores fijados:** primario fijado con cada estilo (sale idéntico y ancla la escala; todo par `generated` pasa), par importado que falla (`pass: false`, `source: "imported"`, sin tocar), pareja generada que se ajusta, escala importada incompleta y CTA fijado.
+- **Exportes:** forma de DTCG 2025.10 y de Figma (sRGB con componentes entre 0 y 1), y alfa de ida y vuelta (CSS, DTCG, Figma y reimportación del CSS exportado).

@@ -23,11 +23,11 @@ import {
   type DesignDoc,
   type DesignDocInput,
   type Dials,
-  type LockKey,
+  type Lock,
   type Page,
   type PageElement,
-  type Provenance,
-  type Reference,
+  type ProvenanceInput,
+  type ReferenceInput,
 } from "./schema";
 
 export class DesignDocError extends Error {
@@ -84,12 +84,13 @@ export interface CreateDesignDocInput {
     pairingId?: string;
     motionTier?: "subtle" | "standard" | "expressive";
     dials?: Partial<Dials>;
-    locks?: LockKey[];
+    /** JSON Pointers (hard locks) or legacy keys (soft). */
+    locks?: Lock[];
   };
   tokens?: DesignDocInput["tokens"];
   system?: DesignDocInput["system"];
-  references?: Reference[];
-  provenance?: Partial<Provenance>;
+  references?: ReferenceInput[];
+  provenance?: Partial<ProvenanceInput>;
   /** Pages to start with. Each `pages[k].kind` must be `k`. */
   pages?: Partial<Record<OutputKind, Page>>;
 }

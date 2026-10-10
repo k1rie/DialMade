@@ -1,13 +1,16 @@
-import { CopyRequestBodySchema, MAX_COPY_BODY_BYTES, type CopyApiError } from "@/lib/ai/api";
-import { clientIp, generateHostedCopy } from "@/lib/ai/server";
+import { aiJsonResponse, resolveAiCaller } from "@/lib/ai/access";
+import { CopyRequestBodySchema, MAX_COPY_BODY_BYTES, type AiApiError } from "@/lib/ai/api";
+import { rejectForeignRequest } from "@/lib/ai/requestGuard";
+import { generateHostedCopy } from "@/lib/ai/server";
+import { readAiServerConfig } from "@/lib/ai/serverConfig";
 
-// Node.js runtime (the default; `runtime` cannot be set with cacheComponents): the SDK and the
-// in-memory budget need it.
+// Node.js runtime (the default; `runtime` cannot be set with cacheComponents): the SDK, node:crypto and
+// the ledger need it.
 export const maxDuration = 60;
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-const error = (status: number, body: CopyApiError) => Response.json(body, { status, headers: NO_STORE });
+const error = (status: number, body: AiApiError) => Response.json(body, { status, headers: NO_STORE });
 const tooLarge = () => error(413, { code: "payload-too-large", message: "The document is too large" });
 
 /** The body as text, read as a stream so a chunked request (no content-length) cannot exceed `limit` in memory. */
@@ -29,8 +32,13 @@ async function readLimited(request: Request, limit: number): Promise<string | nu
   }
 }
 
-/** Copy for the sections of one page as an RFC 6902 patch, under the hosted monthly budget. */
+/**
+ * Copy for the sections of one page as an RFC 6902 patch, with one free use of this device (402
+ * `free-tier-exhausted` when there are none left: the UI offers BYOK or «mi Claude»).
+ */
 export async function POST(request: Request): Promise<Response> {
+  const rejected = rejectForeignRequest(request);
+  if (rejected) return rejected;
   const length = Number(request.headers.get("content-length") ?? 0);
   if (length > MAX_COPY_BODY_BYTES) return tooLarge();
 
@@ -46,6 +54,8 @@ export async function POST(request: Request): Promise<Response> {
   const body = CopyRequestBodySchema.safeParse(json);
   if (!body.success) return error(400, { code: "invalid-request", message: "Expected { doc, kind, sectionIds?, instructions?, locale }" });
 
-  const result = await generateHostedCopy(body.data, { ip: clientIp(request.headers), signal: request.signal });
-  return Response.json(result.body, { status: result.status, headers: { ...NO_STORE, ...result.headers } });
+  const config = readAiServerConfig();
+  const caller = resolveAiCaller(request, config);
+  const result = await generateHostedCopy(body.data, { caller, config, signal: request.signal });
+  return aiJsonResponse(result, caller);
 }

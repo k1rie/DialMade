@@ -21,7 +21,10 @@ export type ExtractResult = {
   swatches: Swatch[];
   seeds: { primary: Swatch; secondary?: Swatch };
   achromatic: boolean;
-  /** Detected background (border majority). Achromatic backgrounds are removed from the swatches. */
+  /**
+   * Detected background (border majority). Achromatic backgrounds are removed from the swatches;
+   * chromatic ones too with `keepChromaticBackground: false`.
+   */
   background?: string;
   method: ExtractMethod;
 };
@@ -31,6 +34,16 @@ export type ExtractOptions = {
   declaredColors?: string[];
   /** Max swatches returned. Default 8. */
   maxSwatches?: number;
+  /**
+   * Colors covering less than this share of the analyzed pixels are dropped. Default 0.015 (logos);
+   * screenshots want ≈0.002 so a small CTA survives.
+   */
+  minCoverage?: number;
+  /**
+   * Keep a chromatic background (an app-icon tile, a colored page) as a swatch, because it is
+   * usually the brand. Default true; false removes it like an achromatic background.
+   */
+  keepChromaticBackground?: boolean;
 };
 
 const ALPHA_MIN = 128;
@@ -300,6 +313,8 @@ export function extractFromPixels(
     throw new RangeError(`Invalid image size ${width}×${height}`);
   }
   if (data.length < width * height * 4) throw new RangeError("Pixel buffer is smaller than width × height × 4");
+  const minCoverage = opts.minCoverage ?? MIN_COVERAGE;
+  if (!(minCoverage >= 0 && minCoverage <= 1)) throw new RangeError(`Invalid minCoverage ${minCoverage}`);
 
   const stride = Math.max(1, Math.ceil(Math.sqrt((width * height) / MAX_SAMPLES)));
   const counts = new Map<number, number>();
@@ -315,7 +330,7 @@ export function extractFromPixels(
   const background = detectBackground(data, width, height);
   const all: Entry[] = [...counts].map(([key, count]) => ({ key, count, lab: keyToLab(key) }));
   let entries = all;
-  if (background && !background.chromatic) {
+  if (background && (!background.chromatic || opts.keepChromaticBackground === false)) {
     entries = all.filter((e) => deltaEOK(e.lab, background.lab) >= BACKGROUND_DELTA);
     if (entries.length === 0) entries = all;
   }
@@ -333,7 +348,7 @@ export function extractFromPixels(
   const bins = toBins(entries);
   const raw = flat ? leaderClusters(bins) : kmeansClusters(bins, Math.min(K, bins.length));
 
-  const merged = mergeClose(raw, MERGE_DELTA).filter((c) => c.weight / total >= MIN_COVERAGE);
+  const merged = mergeClose(raw, MERGE_DELTA).filter((c) => c.weight / total >= minCoverage);
   const snapped = mergeClose(snapToDeclared(merged, opts.declaredColors ?? []), 0);
   const swatches = snapped
     .sort((a, b) => b.weight - a.weight || a.key - b.key)

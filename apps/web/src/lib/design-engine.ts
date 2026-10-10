@@ -12,6 +12,7 @@ import {
   DesignDocError,
   applyPatch,
   createDesignDoc,
+  isLocked,
   type DesignDoc,
   type Dials,
   type LockKey,
@@ -76,7 +77,6 @@ function guard(run: () => DesignDoc): PatchResult {
   }
 }
 
-const isLocked = (doc: DesignDoc, key: LockKey) => doc.brief.locks.includes(key);
 const achromaticOf = (primary: string) => generateTheme({ primary }).achromatic;
 const clampDial = (value: number) => Math.min(DIAL_RANGE.max, Math.max(DIAL_RANGE.min, Math.round(value)));
 
@@ -103,16 +103,31 @@ export function createFromPalette(palette: PaletteSnapshot, options: CreateFromP
   );
 }
 
-/** Seeds, achromatic flag and palette style from the Palette Lab; pages and edits are kept. */
+/** Seeds the Palette Lab cannot change because an import locked them («tu guía manda»). */
+export function lockedSeeds(doc: DesignDoc): ("primary" | "secondary")[] {
+  return (["primary", "secondary"] as const).filter((seed) => isLocked(doc, `/brand/seeds/${seed}`));
+}
+
+/**
+ * Seeds, achromatic flag and palette style from the Palette Lab; pages and edits are kept. Each one
+ * goes on its own: a seed locked by an import is left as is (the Lab shows its lock), and the style
+ * still applies.
+ */
 export function syncPalette(doc: DesignDoc, palette: PaletteSnapshot): PatchResult {
   const ops: PatchOperation[] = [];
-  const seeds = { primary: palette.primary, ...(palette.secondary && { secondary: palette.secondary }) };
-  if (doc.brand.seeds.primary !== seeds.primary || doc.brand.seeds.secondary !== seeds.secondary) {
-    ops.push({ op: "replace", path: "/brand/seeds", value: seeds });
+  const locked = new Set(lockedSeeds(doc));
+  if (!locked.has("primary") && doc.brand.seeds.primary !== palette.primary) {
+    ops.push({ op: "replace", path: "/brand/seeds/primary", value: palette.primary });
     const achromatic = palette.achromatic ?? achromaticOf(palette.primary);
-    if (achromatic !== doc.brand.achromatic) ops.push({ op: "replace", path: "/brand/achromatic", value: achromatic });
+    if (achromatic !== doc.brand.achromatic && !isLocked(doc, "/brand/achromatic")) ops.push({ op: "replace", path: "/brand/achromatic", value: achromatic });
   }
-  if (doc.brief.paletteStyleId !== palette.styleId) ops.push({ op: "replace", path: "/brief/paletteStyleId", value: palette.styleId });
+  if (!locked.has("secondary") && doc.brand.seeds.secondary !== palette.secondary) {
+    if (palette.secondary) ops.push({ op: doc.brand.seeds.secondary ? "replace" : "add", path: "/brand/seeds/secondary", value: palette.secondary });
+    else ops.push({ op: "remove", path: "/brand/seeds/secondary" });
+  }
+  if (doc.brief.paletteStyleId !== palette.styleId && !isLocked(doc, "/brief/paletteStyleId")) {
+    ops.push({ op: "replace", path: "/brief/paletteStyleId", value: palette.styleId });
+  }
   return patch(doc, ops);
 }
 
@@ -139,17 +154,17 @@ export function withFocus(doc: DesignDoc, kind: OutputKind): PatchResult {
   return patch(paged.doc, paged.doc.brief.focus === kind ? [] : [{ op: "replace", path: "/brief/focus", value: kind }]);
 }
 
-/** `cascade` also takes the recipe's pairing and motion tier (unless locked). */
+/** `cascade` also takes the recipe's pairing and motion tier (unless locked: legacy pins and import locks alike). */
 export function withRecipe(doc: DesignDoc, recipeId: string, options: { cascade?: boolean } = {}): PatchResult {
   const recipe = getStyleRecipe(recipeId);
   if (!recipe) return failure(`Unknown style recipe "${recipeId}"`);
   const ops: PatchOperation[] = [];
   if (doc.brief.recipeId !== recipe.id) ops.push({ op: "replace", path: "/brief/recipeId", value: recipe.id });
   if (options.cascade) {
-    if (recipe.pairingId && recipe.pairingId !== doc.brief.pairingId && !isLocked(doc, "pairingId")) {
+    if (recipe.pairingId && recipe.pairingId !== doc.brief.pairingId && !isLocked(doc, "/brief/pairingId")) {
       ops.push({ op: "replace", path: "/brief/pairingId", value: recipe.pairingId });
     }
-    if (recipe.defaultMotion !== doc.brief.motionTier && !isLocked(doc, "motionTier")) {
+    if (recipe.defaultMotion !== doc.brief.motionTier && !isLocked(doc, "/brief/motionTier")) {
       ops.push({ op: "replace", path: "/brief/motionTier", value: recipe.defaultMotion });
     }
   }

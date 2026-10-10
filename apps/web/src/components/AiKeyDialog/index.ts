@@ -1,1 +1,1 @@
-export { AiKeyDialog, type AiKeyDialogProps } from "./AiKeyDialog";
+export { AiKeyDialog, type AiKeyDialogProps, type AiKeyDialogView } from "./AiKeyDialog";

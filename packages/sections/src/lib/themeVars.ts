@@ -1,5 +1,5 @@
 import { DEFAULT_PAIRING_ID, getTypographyPairing, type TypographyPairing } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import { fontsUrlFor, type DesignDoc } from "@dialmade/doc";
 
 const VAR_NAME = /^--[A-Za-z0-9_-]+$/;
 const UNSAFE_VALUE = /[;{}<>\\]|\/\*/;
@@ -22,4 +22,12 @@ export function themeVarsCss(vars: Readonly<Record<string, string>>, selector = 
 /** The typography pairing of the doc (Google Fonts URL, families). */
 export function pairingForDoc(doc: Pick<DesignDoc, "brief">): TypographyPairing {
   return getTypographyPairing(doc.brief.pairingId) ?? (getTypographyPairing(DEFAULT_PAIRING_ID) as TypographyPairing);
+}
+
+/**
+ * The Google Fonts stylesheet the doc needs: its own families (`tokens.typography`, Google source or
+ * free substitute) when it has them, the pairing's otherwise; `null` when nothing loads from Google.
+ */
+export function fontsUrlForDoc(doc: Pick<DesignDoc, "brief" | "tokens">): string | null {
+  return fontsUrlFor(doc, pairingForDoc(doc));
 }

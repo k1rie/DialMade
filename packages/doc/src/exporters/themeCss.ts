@@ -1,5 +1,6 @@
 import { colorCssVars, tokensToCssVars } from "../compile";
 import type { DesignDoc } from "../schema";
+import { fontsUrlFor } from "../tokens";
 import { resolveExport, type ExportOptions } from "./shared";
 
 export interface ThemeCssOptions extends ExportOptions {
@@ -7,7 +8,7 @@ export interface ThemeCssOptions extends ExportOptions {
   selector?: string;
   /** Dark block selector (default `.dark`, like shadcn). */
   darkSelector?: string;
-  /** Prepends `@import url(<Google Fonts css2>)`. Only valid when this CSS is the first file loaded. */
+  /** Prepends `@import url(<Google Fonts css2>)` (see `fontsUrlFor`). Only valid when this CSS is the first file loaded. */
   includeFontImport?: boolean;
 }
 
@@ -29,7 +30,8 @@ export function toThemeCss(doc: DesignDoc, options: ThemeCssOptions = {}): strin
     `/* ${doc.brand.name.replace(/\*\//g, "")} · Dialmade theme (DesignDoc v${doc.version}) */`,
     `/* Recipe: ${inputs.recipe.id} · Type: ${inputs.pairing.id} · Motion: ${inputs.motionTier.id} · Palette: ${inputs.theme.styleId} */`,
   ];
-  if (options.includeFontImport) header.push(`@import url("${inputs.pairing.googleFontsUrl}");`);
+  const fontsUrl = options.includeFontImport ? fontsUrlFor(doc, inputs.pairing) : null;
+  if (fontsUrl) header.push(`@import url("${fontsUrl}");`);
   return [
     header.join("\n"),
     block(options.selector ?? ":root", vars("light", light)),

@@ -26,7 +26,8 @@ export type LabBarProps = {
 /** Bottom bar: «Marca ✓ · Paleta ✓ · AA ✓ · Siguiente: elegir qué crear», logo change, compact export and the main CTA. */
 export function LabBar({ theme, hasLogo, kindLabel, fileBase, onCreate, onChangeLogo, uploading, className }: LabBarProps) {
   const t = useDictionary(palette).bar;
-  const aa = theme.contrast.every((check) => check.pass);
+  // A pair of the imported guide that fails is the guide's call (the contrast table offers «Ajustar a AA»), not the engine's.
+  const aa = theme.contrast.every((check) => check.pass || check.source === "imported");
 
   return (
     <div className={cn("flex flex-col gap-2 lg:flex-row lg:items-stretch", className)}>

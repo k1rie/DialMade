@@ -16,6 +16,7 @@ import { DesignDocProvider, useDesignDoc, useDesignDocActions } from "@/hooks/us
 import { PaletteFlowProvider, flowPhaseOf, usePaletteFlow, type FlowStep } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
 import { flow } from "@/i18n/flow";
+import { importText } from "@/i18n/import";
 import { LogoFileError, MAX_LOGO_MB, readLogoFile } from "@/lib/image";
 import { fadeVariants, stageVariants } from "@/lib/motion";
 import { FlowStepper, type FlowStepperStep } from "./FlowStepper";
@@ -31,10 +32,19 @@ const loadEngine = () => loadDesignHalf().then((m) => m.designEngine);
 const CreateStep = dynamic(() => loadDesignHalf().then((m) => m.loadCreateStep()), { ssr: false });
 const Composer = dynamic(() => loadDesignHalf().then((m) => m.loadComposer()), { ssr: false });
 const ExportDialog = dynamic(() => loadDesignHalf().then((m) => m.loadExportDialog()), { ssr: false });
+// «Trae tu marca»: the panel is light and loads on its own; «Esto detectamos» paints with the doc engine.
+const ImportPanel = dynamic(() => import("@/components/ImportPanel").then((m) => m.ImportPanel), { ssr: false });
+const DetectedReview = dynamic(() => loadDesignHalf().then((m) => m.loadDetectedReview()), { ssr: false });
 
 function preloadDesignStages() {
   loadDesignHalf()
     .then((m) => Promise.all([m.loadCreateStep(), m.loadComposer(), m.loadExportDialog()]))
+    .catch(() => {});
+}
+
+function preloadDetectedReview() {
+  loadDesignHalf()
+    .then((m) => m.loadDetectedReview())
     .catch(() => {});
 }
 
@@ -104,6 +114,7 @@ function FlowStage() {
   const doc = useDesignDoc((s) => s.doc);
   const { t } = useI18n();
   const f = useDictionary(flow);
+  const imp = useDictionary(importText);
   const [reading, setReading] = useState(false);
   // Focus moves into a step only after the first step change, never on page load.
   const [shownStep, setShownStep] = useState(state.step);
@@ -143,10 +154,14 @@ function FlowStage() {
   const logoUrl = useCroppedLogoUrl(state.logo, state.crop, state.step === "palette" || phase !== "brand");
   useEffect(() => designActions.setLogoUrl(logoUrl), [designActions, logoUrl]);
 
-  useFileDropGuard(state.step !== "drop", () => toast(f.fileDrop.blocked));
+  // The Home and «Trae tu marca» take dropped files themselves.
+  useFileDropGuard(state.step !== "drop" && state.step !== "import", () =>
+    toast(state.step === "review" ? imp.stage.blockedReview : f.fileDrop.blocked),
+  );
 
   useEffect(() => {
     if (state.step === "palette") preloadDesignStages();
+    if (state.step === "import") preloadDetectedReview();
   }, [state.step]);
 
   const handleFile = useCallback(
@@ -161,6 +176,15 @@ function FlowStage() {
       }
     },
     [actions, messageFor],
+  );
+
+  /** The import batch was just a logo: the usual logo flow (crop) takes it, as a new brand. */
+  const handleImportLogo = useCallback(
+    (file: File) => {
+      designActions.reset();
+      void handleFile(file);
+    },
+    [designActions, handleFile],
   );
 
   const handleCreate = useCallback(
@@ -217,7 +241,31 @@ function FlowStage() {
             <AnimatePresence initial={false}>
               {state.step === "drop" && (
                 <Stage key="drop" step="drop" label={f.stage.drop} focusOnEnter={stepChanged}>
-                  <HomeHero onFile={handleFile} onSkip={actions.chooseColorWithoutLogo} busy={reading} />
+                  <HomeHero onFile={handleFile} onSkip={actions.chooseColorWithoutLogo} onImport={actions.openImport} busy={reading} />
+                </Stage>
+              )}
+              {state.step === "import" && (
+                <Stage key="import" step="import" label={imp.stage.import} focusOnEnter={stepChanged}>
+                  <ImportPanel
+                    initialFiles={state.importFiles}
+                    draft={state.importSession?.draft}
+                    logoSeeds={
+                      state.logo && state.extract
+                        ? {
+                            primary: state.extract.seeds.primary.hex,
+                            ...(state.extract.seeds.secondary && { secondary: state.extract.seeds.secondary.hex }),
+                          }
+                        : undefined
+                    }
+                    onBack={actions.closeImport}
+                    onDetected={actions.reviewImport}
+                    onLogo={handleImportLogo}
+                  />
+                </Stage>
+              )}
+              {state.step === "review" && state.importSession && (
+                <Stage key="review" step="review" label={imp.stage.review} focusOnEnter={stepChanged}>
+                  <DetectedReview session={state.importSession} onBack={actions.backToImport} />
                 </Stage>
               )}
               {state.step === "crop" && state.logo && (
@@ -262,6 +310,7 @@ function FlowStage() {
 
 /**
  * Orchestrates the whole flow: drop → crop → extracting → palette («1 Marca») → create («2 Crear») →
+ * (or drop/palette → import → review, «Trae tu marca», which lands in palette or create) →
  * compose («3 Ajustar») + ExportDialog («4 Exportar»). Owns the flow state (PaletteFlowProvider), the
  * DesignDoc store (DesignDocProvider), the DnD context, the tinted AppBackground and the
  * logo-extraction worker. Steps cross-fade inside one LayoutGroup so `layoutId`s animate between them.

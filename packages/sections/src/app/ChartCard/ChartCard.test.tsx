@@ -10,7 +10,7 @@ describe("app.chartCard", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Ventas por canal" })).toBeTruthy();
     expect(screen.getByRole("img", { name: "Ventas por canal" })).toBeTruthy();
     expect(container.querySelector(".dl-chart")?.getAttribute("data-type")).toBe("area");
-    expect(container.querySelector(".dl-app-chart__total-value")?.textContent).toMatch(/€/);
+    expect(container.querySelector(".dl-app-chart__total-value")?.textContent).toMatch(/\$/);
     expect(screen.getByRole("button", { name: /Últimos 6 meses/ })).toBeTruthy();
     expect(container.querySelector(".dl-chart-legend, .dl-chart__legend, [class*='legend']")).toBeTruthy();
   });
@@ -31,6 +31,6 @@ describe("app.chartCard", () => {
     expect(chartSummary([10, 20], "percent", "en")).toEqual({ value: "20%", delta: 100 });
     expect(chartSummary([], "currency", "es").delta).toBe(0);
     expect(axisFormatter("currency", "en")(12000)).toBe("$12K");
-    expect(axisFormatter("number", "es")(1500)).toMatch(/^1,5\smil$/);
+    expect(axisFormatter("number", "es")(1500)).toMatch(/^1\.5\sk$/);
   });
 });

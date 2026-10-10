@@ -10,6 +10,7 @@ for (let i = 0; i < 256; i++) {
 }
 
 const HEX_RE = /^#[0-9a-f]{6}$/;
+const HEX8_RE = /^#[0-9a-f]{8}$/;
 
 export const clamp = (v: number, min: number, max: number): number => Math.min(max, Math.max(min, v));
 export const mix = (from: number, to: number, t: number): number => from + (to - from) * t;
@@ -29,14 +30,62 @@ export function parseColor(input: string): string | null {
   return isHex(hex) ? hex : null;
 }
 
+/**
+ * Any CSS color string → lowercase `#rrggbb`, or `#rrggbbaa` when it is translucent
+ * (`oklch(1 0 0 / 10%)` → `#ffffff1a`). Null when unparseable.
+ */
+export function parseColorWithAlpha(input: string): string | null {
+  const trimmed = input.trim().toLowerCase();
+  if (HEX_RE.test(trimmed)) return trimmed;
+  if (HEX8_RE.test(trimmed)) return trimmed.endsWith("ff") ? trimmed.slice(0, 7) : trimmed;
+  const parsed = parse(trimmed);
+  if (!parsed) return null;
+  const hex = formatHex(parsed);
+  if (!isHex(hex)) return null;
+  const alpha = parsed.alpha ?? 1;
+  const byte = Number.isFinite(alpha) ? Math.round(clamp(alpha, 0, 1) * 255) : 255;
+  return byte >= 255 ? hex : `${hex}${byte.toString(16).padStart(2, "0")}`;
+}
+
+/** Fewest decimals (3 always suffice) that still round to the same alpha byte. */
+function alphaFromByte(byte: number): number {
+  const exact = byte / 255;
+  for (let digits = 1; digits < 3; digits++) {
+    const value = Number(exact.toFixed(digits));
+    if (Math.round(value * 255) === byte) return value;
+  }
+  return Number(exact.toFixed(3));
+}
+
+/** `#rrggbbaa` → `{ hex: "#rrggbb", alpha }` (alpha 0–1, shortest decimal that keeps the byte); `#rrggbb` → alpha 1. */
+export function splitAlpha(color: string): { hex: string; alpha: number } {
+  if (color.length !== 9) return { hex: color, alpha: 1 };
+  return { hex: color.slice(0, 7), alpha: alphaFromByte(Number.parseInt(color.slice(7), 16)) };
+}
+
+/**
+ * `fg` (`#rrggbb` or `#rrggbbaa`) painted over `bg` → opaque `#rrggbb`, blended in sRGB like a browser.
+ * A translucent `bg` is first painted over white.
+ */
+export function compositeOver(fg: string, bg: string): string {
+  if (fg.length !== 9) return fg;
+  const a = Number.parseInt(fg.slice(7), 16) / 255;
+  const base = bg.length === 9 ? compositeOver(bg, "#ffffff") : bg;
+  const f = hexToRgb(fg);
+  const b = hexToRgb(base);
+  const channel = (i: 0 | 1 | 2) => Math.round(f[i] * a + b[i] * (1 - a));
+  return rgbToHex(channel(0), channel(1), channel(2));
+}
+
 export function requireHex(input: string, label = "color"): string {
   const hex = parseColor(input);
   if (!hex) throw new TypeError(`Invalid ${label}: ${JSON.stringify(input)}`);
   return hex;
 }
 
+/** RGB bytes of `#rrggbb` (the alpha byte of `#rrggbbaa` is ignored). */
 export function hexToRgb(hex: string): [number, number, number] {
-  const n = Number.parseInt(hex.slice(1), 16);
+  const n = Number.parseInt(hex.slice(1, 7), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
@@ -86,7 +135,7 @@ export function hexToOklab(hex: string): Oklab {
   return rgbToOklab(r, g, b);
 }
 
-/** Exact OKLCH of a normalized `#rrggbb`. */
+/** Exact OKLCH of a normalized `#rrggbb` (alpha ignored). */
 export function oklchOf(hex: string): Oklch {
   return oklabToOklch(hexToOklab(hex));
 }
@@ -164,10 +213,14 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * SRGB_TO_LINEAR[r]! + 0.7152 * SRGB_TO_LINEAR[g]! + 0.0722 * SRGB_TO_LINEAR[b]!;
 }
 
-/** WCAG 2.x contrast ratio (1–21). */
-export function contrastRatio(a: string, b: string): number {
-  const la = relativeLuminance(a);
-  const lb = relativeLuminance(b);
+/**
+ * WCAG 2.x contrast ratio (1–21). A translucent `fg` (`#rrggbbaa`) is measured after painting it
+ * over `bg`; a translucent `bg` is first painted over white.
+ */
+export function contrastRatio(fg: string, bg: string): number {
+  const base = bg.length === 9 ? compositeOver(bg, "#ffffff") : bg;
+  const la = relativeLuminance(compositeOver(fg, base));
+  const lb = relativeLuminance(base);
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
@@ -194,9 +247,10 @@ const trim = (v: number, digits: number): number => {
 
 /**
  * OKLCH components of a hex, rounded to the fewest decimals that still convert back to the
- * exact same hex. Achromatic colors get c = 0 and h = 0.
+ * exact same hex. Achromatic colors get c = 0 and h = 0. The alpha of `#rrggbbaa` is ignored.
  */
-export function oklchComponents(hex: string): [number, number, number] {
+export function oklchComponents(color: string): [number, number, number] {
+  const hex = color.slice(0, 7);
   const o = oklchOf(hex);
   for (let digits = 3; digits <= 8; digits++) {
     const l = trim(o.l, digits);
@@ -207,10 +261,11 @@ export function oklchComponents(hex: string): [number, number, number] {
   return [o.l, o.c, o.h];
 }
 
-/** CSS `oklch(l c h)` string that round-trips to the exact same hex. */
+/** CSS `oklch(l c h)` string that round-trips to the exact same hex; `#rrggbbaa` gives `oklch(l c h / a)`. */
 export function formatOklch(hex: string): string {
   const [l, c, h] = oklchComponents(hex);
-  return `oklch(${l} ${c} ${h})`;
+  const { alpha } = splitAlpha(hex);
+  return alpha < 1 ? `oklch(${l} ${c} ${h} / ${alpha})` : `oklch(${l} ${c} ${h})`;
 }
 
 type ContrastTarget = { bg: string; ratio: number };
@@ -222,12 +277,13 @@ export function meetsAll(fg: string, targets: readonly ContrastTarget[]): boolea
 /**
  * Returns `fg` unchanged when it already meets every target. Otherwise moves its OKLCH lightness
  * (hue kept, chroma reduced only by gamut mapping) the minimum amount needed, away from the
- * backgrounds. Falls back to the other direction, then to pure black/white.
+ * backgrounds. Falls back to the other direction, then to pure black/white. A translucent `fg`
+ * that has to move comes back opaque.
  */
 export function ensureContrast(fg: string, targets: readonly ContrastTarget[]): string {
   if (targets.length === 0 || meetsAll(fg, targets)) return fg;
   const o = oklchOf(fg);
-  const bgLum = targets.reduce((sum, t) => sum + relativeLuminance(t.bg), 0) / targets.length;
+  const bgLum = targets.reduce((sum, t) => sum + relativeLuminance(compositeOver(t.bg, "#ffffff")), 0) / targets.length;
   const directions = bgLum > 0.18 ? [0, 1] : [1, 0];
   for (const extreme of directions) {
     const at = (l: number) => oklchToHex({ l, c: o.c, h: o.h });

@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@theme {
+  --color-brand-500: oklch(0.62 0.19 150);
+  --font-display: "Satoshi", sans-serif;
+  --text-h1: 3rem;
+  --text-h1--line-height: 1.1;
+}

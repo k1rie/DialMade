@@ -1,10 +1,14 @@
 import { connection } from "next/server";
-import { aiStatus } from "@/lib/ai/server";
+import { aiStatusResponse } from "@/lib/ai/access";
 
 // Node.js runtime (the default; `runtime` cannot be set with cacheComponents).
 
-/** `{ configured, model, remainingBudgetUsd }`. Read at request time: never prerendered or cached. */
-export async function GET(): Promise<Response> {
+/**
+ * `{ configured, model, freeModel, freeUsesTotal, freeUsesRemaining, remainingBudgetUsd, minRequestUsd }`
+ * for this device (it sets the anonymous device cookie on the first call). Read at request time: never
+ * prerendered or cached.
+ */
+export async function GET(request: Request): Promise<Response> {
   await connection();
-  return Response.json(aiStatus(), { headers: { "Cache-Control": "no-store" } });
+  return aiStatusResponse(request);
 }

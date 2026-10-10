@@ -45,7 +45,15 @@ describe("DesignDocSchema: valid documents", () => {
     expect(doc.brief.locks).toEqual([]);
     expect(doc.references).toEqual([]);
     expect(doc.pages).toEqual({});
-    expect(doc.tokens).toEqual({ color: { light: {}, dark: {} }, radius: {}, fontSize: {}, space: {}, motion: {} });
+    expect(doc.tokens).toEqual({
+      color: { light: {}, dark: {} },
+      radius: {},
+      fontSize: {},
+      space: {},
+      motion: {},
+      typography: { scale: {} },
+      elevation: {},
+    });
     expect(doc.system).toEqual({ button: {}, card: {}, input: {}, badge: {}, nav: {}, table: {}, sidebar: {} });
   });
 

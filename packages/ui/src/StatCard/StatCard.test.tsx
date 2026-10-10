@@ -7,13 +7,13 @@ describe("StatCard", () => {
   it("muestra etiqueta, valor y delta con su dirección", () => {
     const { container } = render(
       <UiProvider locale="es">
-        <StatCard label="Ingresos" value="48.250 €" delta={12.4} deltaLabel="vs. el mes pasado" trend={[1, 2, 3]} />
+        <StatCard label="Ingresos" value="$48,250" delta={12.4} deltaLabel="vs. el mes pasado" trend={[1, 2, 3]} />
       </UiProvider>,
     );
     expect(screen.getByText("Ingresos")).toBeTruthy();
-    expect(screen.getByText("48.250 €")).toBeTruthy();
+    expect(screen.getByText("$48,250")).toBeTruthy();
     const delta = container.querySelector(".dl-stat__delta") as HTMLElement;
-    expect(delta.textContent).toMatch(/^Sube \+12,4\s?%$/);
+    expect(delta.textContent).toMatch(/^Sube \+12\.4\s?%$/);
     expect(delta.dataset.sentiment).toBe("positive");
     expect(container.querySelector(".dl-sparkline")?.getAttribute("aria-hidden")).toBe("true");
   });

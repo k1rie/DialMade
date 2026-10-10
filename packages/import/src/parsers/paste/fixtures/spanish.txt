@@ -1,0 +1,7 @@
+Paleta de Ámbar (marca ficticia)
+Primario: #C2410C
+Secundario: #0E7490
+Fondo: #FFFBF5
+Texto: #1C1917
+Fondo oscuro: #1C1917
+Borde, #E7E5E4

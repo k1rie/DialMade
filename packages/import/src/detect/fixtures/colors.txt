@@ -1,0 +1,2 @@
+Primary: #3A5BD9
+Accent: rgb(240 160 36)

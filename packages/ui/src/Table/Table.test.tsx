@@ -13,7 +13,7 @@ const rows: Row[] = Array.from({ length: 7 }, (_, i) => ({ id: `F-${i + 1}`, nam
 const columns: TableColumn<Row>[] = [
   { key: "id", header: "Factura", rowHeader: true },
   { key: "name", header: "Cliente" },
-  { key: "amount", header: "Importe", align: "end", cell: (row) => `${row.amount} €` },
+  { key: "amount", header: "Importe", align: "end", cell: (row) => `$${row.amount}` },
 ];
 
 describe("Table", () => {
@@ -22,7 +22,7 @@ describe("Table", () => {
     const table = screen.getByRole("table", { name: "Facturas" });
     expect(within(table).getAllByRole("columnheader").map((th) => th.textContent)).toEqual(["Factura", "Cliente", "Importe"]);
     expect(within(table).getByRole("rowheader", { name: "F-1" })).toBeTruthy();
-    expect(within(table).getByText("20 €").dataset.align).toBe("end");
+    expect(within(table).getByText("$20").dataset.align).toBe("end");
     expect(screen.getByRole("region", { name: "Facturas" }).tabIndex).toBe(0);
   });
 

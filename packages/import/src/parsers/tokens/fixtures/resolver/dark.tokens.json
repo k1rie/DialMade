@@ -1,0 +1,10 @@
+{
+  "color": {
+    "$type": "color",
+    "background": { "$value": "{color.neutral.950}" },
+    "foreground": { "$value": "{color.neutral.0}" },
+    "primary": { "$value": "{color.brisa.50}" },
+    "primary-foreground": { "$value": "{color.brisa.900}" },
+    "border": { "$value": { "colorSpace": "srgb", "components": [1, 1, 1], "alpha": 0.1 } }
+  }
+}

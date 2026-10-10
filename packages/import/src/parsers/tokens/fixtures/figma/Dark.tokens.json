@@ -1,0 +1,16 @@
+{
+  "surface": {
+    "page": {
+      "$type": "color",
+      "$value": { "colorSpace": "srgb", "components": [0.04, 0.04, 0.05], "alpha": 1, "hex": "#0A0A0D" },
+      "$extensions": { "com.figma.variableId": "VariableID:20:1", "com.figma.codeSyntax": { "WEB": "var(--background)" } }
+    }
+  },
+  "action": {
+    "main": {
+      "$type": "color",
+      "$value": "{brisa.50}",
+      "$extensions": { "com.figma.variableId": "VariableID:20:2", "com.figma.codeSyntax": { "WEB": "var(--primary)" } }
+    }
+  }
+}

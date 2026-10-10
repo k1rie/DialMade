@@ -186,7 +186,7 @@ export const finance: ContentProfile = {
   activity: [
     {
       text: t("recibió un pago de {target}", "received a payment of {target}"),
-      targets: [t("1.250 €", "$1,250"), t("480 €", "$480")],
+      targets: [t("$1,250", "$1,250"), t("$480", "$480")],
       tone: "success",
       icon: "arrow-down-right",
     },

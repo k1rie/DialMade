@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { contrastRatio, hueDelta, oklchOf } from "./color";
+import { compositeOver, contrastRatio, deltaEOK, hexToOklab, hueDelta, oklchOf } from "./color";
 import { toCssVars, toDTCG, toFigmaTokens, toTailwindTheme } from "./exporters";
 import { PALETTE_STYLES, PALETTE_STYLE_IDS, type PaletteStyleId } from "./styles";
+import { buildScale, type ScaleStep } from "./scale";
 import { CONTRAST_PAIRS, generateTheme, type GenerateThemeInput, type Theme, type ThemeRoles } from "./theme";
 import { mulberry32, randomHex } from "./testing/fixtures";
 
 const HEX = /^#[0-9a-f]{6}$/;
+
+const checkOf = (theme: Theme, mode: "light" | "dark", pair: string) =>
+  theme.contrast.find((c) => c.mode === mode && c.pair === pair)!;
+const failingGenerated = (theme: Theme) =>
+  theme.contrast.filter((c) => c.source === "generated" && !c.pass).map((c) => `${c.mode} ${c.pair} ${c.ratio}`);
 
 function seedInputs(count: number): Omit<GenerateThemeInput, "style">[] {
   const rand = mulberry32(20261009);
@@ -199,6 +205,158 @@ describe("generateTheme", () => {
     expect(() => generateTheme({ primary: "nope" })).toThrow(TypeError);
     expect(() => generateTheme({ primary: "#fff", secondary: "nope" })).toThrow(TypeError);
     expect(() => generateTheme({ primary: "#fff", style: "nope" as PaletteStyleId })).toThrow(TypeError);
+  });
+});
+
+describe("generateTheme with pinned values", () => {
+  it("pinned primary + pastel: light.primary is identical and the brand scale is anchored to it", () => {
+    const primary = "#3a5bd9";
+    const theme = generateTheme({ primary, style: "pastel", pinned: { light: { primary } } });
+    const unpinned = generateTheme({ primary, style: "pastel" });
+    expect(theme.light.primary).toBe(primary);
+    expect(theme.light.brand).toBe(primary);
+    expect(theme.scales.brand.find((s) => s.step === theme.anchors.brand)?.hex).toBe(primary);
+    expect(theme.scales.brand).toEqual(buildScale(primary, { maxHueDrift: 13 }).steps);
+    expect(unpinned.light.brand).not.toBe(primary);
+
+    // The style still drives neutrals, states and charts.
+    expect(theme.scales.neutral).toEqual(unpinned.scales.neutral);
+    expect(theme.scales.success).toEqual(unpinned.scales.success);
+    expect(theme.light.background).toBe(unpinned.light.background);
+    expect(theme.light.chart2).toBe(unpinned.light.chart2);
+
+    // What derives from the brand scale follows the pinned primary.
+    const brandHexes = theme.scales.brand.map((s) => s.hex);
+    expect(brandHexes).toContain(theme.light.primaryText);
+    expect(brandHexes).toContain(theme.dark.primary);
+    expect(Math.abs(hueDelta(oklchOf(primary).h, oklchOf(theme.light.ring).h))).toBeLessThan(3);
+
+    expect(failingGenerated(theme)).toEqual([]);
+    expect(checkOf(theme, "light", "primary/background").source).toBe("imported");
+    expect(checkOf(theme, "light", "primaryForeground/primary")).toMatchObject({ source: "generated", pass: true });
+    expect(checkOf(theme, "dark", "primary/background").source).toBe("generated");
+  });
+
+  it.each(PALETTE_STYLE_IDS)("%s: a pinned primary stays exact and every generated pair passes", (style) => {
+    const failures: string[] = [];
+    for (const { primary } of SEEDS.slice(0, 60)) {
+      const theme = generateTheme({ primary: "#808080", style, pinned: { light: { primary } } });
+      expect(theme.light.primary).toBe(primary);
+      expect(theme.scales.brand.find((s) => s.step === theme.anchors.brand)?.hex).toBe(primary);
+      failures.push(...failingGenerated(theme).map((f) => `${primary} ${f}`));
+      const imported = theme.contrast.filter((c) => c.source === "imported").map((c) => `${c.mode} ${c.pair}`);
+      expect(imported).toEqual(["light primary/background", "light primary/card"]);
+      for (const mode of ["light", "dark"] as const) {
+        for (const value of Object.values(theme[mode])) expect(value).toMatch(HEX);
+      }
+    }
+    expect(failures).toEqual([]);
+  }, 60_000);
+
+  it("an imported pair that fails is reported as imported and left untouched", () => {
+    const theme = generateTheme({
+      primary: "#3a5bd9",
+      pinned: { light: { background: "#ffffff", foreground: "#aaaaaa" }, dark: { background: "#0a0a0a", input: "oklch(1 0 0 / 15%)" } },
+    });
+    expect(theme.light.foreground).toBe("#aaaaaa");
+    expect(checkOf(theme, "light", "foreground/background")).toMatchObject({
+      fg: "#aaaaaa",
+      bg: "#ffffff",
+      pass: false,
+      source: "imported",
+    });
+    // Its generated copies are rescued.
+    expect(checkOf(theme, "light", "cardForeground/card")).toMatchObject({ pass: true, source: "generated" });
+
+    expect(theme.dark.input).toBe("#ffffff26");
+    const input = checkOf(theme, "dark", "input/background");
+    expect(input).toMatchObject({ fg: "#ffffff26", bg: "#0a0a0a", pass: false, source: "imported" });
+    expect(input.ratio).toBeCloseTo(contrastRatio(compositeOver("#ffffff26", "#0a0a0a"), "#0a0a0a"), 2);
+    // A pinned color on a generated page surface is not rescued by moving the page.
+    expect(checkOf(theme, "dark", "input/card")).toMatchObject({ pass: false, source: "imported" });
+    // borderStrong is filled so a strong border still passes.
+    expect(theme.dark.borderStrong).toMatch(HEX);
+    expect(checkOf(theme, "dark", "borderStrong/background")).toMatchObject({ pass: true, source: "generated" });
+    expect(failingGenerated(theme)).toEqual([]);
+  });
+
+  it("pins that contradict each other are reported as imported", () => {
+    const theme = generateTheme({ primary: "#3a5bd9", pinned: { light: { background: "#ffffff", card: "#000000" } } });
+    expect(theme.light.card).toBe("#000000");
+    const failing = theme.contrast.filter((c) => !c.pass);
+    expect(failing.length).toBeGreaterThan(0);
+    for (const check of failing) {
+      expect(check.source).toBe("imported");
+      expect(check.pair.split("/")).toContain("card");
+    }
+    expect(theme.contrast.filter((c) => c.mode === "dark").every((c) => c.pass && c.source === "generated")).toBe(true);
+  });
+
+  it("moves the generated partner of a pinned text color", () => {
+    const theme = generateTheme({ primary: "#facc15", pinned: { light: { primaryForeground: "#ffffff" } } });
+    expect(theme.light.primaryForeground).toBe("#ffffff");
+    expect(checkOf(theme, "light", "primaryForeground/primary")).toMatchObject({ pass: true, source: "generated" });
+    expect(checkOf(theme, "light", "primary/background").pass).toBe(true);
+    expect(Math.abs(hueDelta(oklchOf("#facc15").h, oklchOf(theme.light.primary).h))).toBeLessThan(15);
+    expect(failingGenerated(theme)).toEqual([]);
+  });
+
+  it("keeps translucent pinned roles and measures them over the pair's background", () => {
+    const theme = generateTheme({
+      primary: "#3a5bd9",
+      pinned: { dark: { border: "oklch(1 0 0 / 10%)", muted: "#ffffff14", mutedForeground: "#a1a1a1" } },
+    });
+    expect(theme.dark.border).toBe("#ffffff1a");
+    expect(theme.dark.muted).toBe("#ffffff14");
+    const check = checkOf(theme, "dark", "mutedForeground/muted");
+    expect(check.bg).toBe(compositeOver("#ffffff14", theme.dark.background));
+    expect(check.ratio).toBeCloseTo(contrastRatio("#a1a1a1", check.bg), 2);
+    expect(checkOf(theme, "dark", "foreground/muted")).toMatchObject({ pass: true, source: "generated" });
+    expect(failingGenerated(theme)).toEqual([]);
+  });
+
+  it("uses an imported scale as it is, anchored at the step closest to the primary", () => {
+    const imported: ScaleStep[] = [
+      ["#f1f7f6", 50], ["#dcefeb", 100], ["#b9ded7", 200], ["#8cc7bc", 300], ["#5eab9e", 400],
+      ["#3f8f83", 500], ["#30736a", 600], ["#295d57", 700], ["#244c47", 800], ["#1f3f3b", 900],
+    ].map(([hex, step]) => ({ step: step as ScaleStep["step"], hex: hex as string, oklch: "" }));
+    const theme = generateTheme({ primary: "#3d8c80", style: "neon", pinned: { scales: { brand: imported } } });
+    for (const s of imported) expect(theme.scales.brand.find((t) => t.step === s.step)?.hex).toBe(s.hex);
+    const s950 = theme.scales.brand.find((t) => t.step === 950)!;
+    expect(oklchOf(s950.hex).l).toBeLessThan(oklchOf("#1f3f3b").l);
+    expect(theme.scales.brand.every((t) => t.oklch.startsWith("oklch("))).toBe(true);
+    const closest = [...imported].sort(
+      (a, b) => deltaEOK(hexToOklab(a.hex), hexToOklab("#3d8c80")) - deltaEOK(hexToOklab(b.hex), hexToOklab("#3d8c80")),
+    )[0]!;
+    expect(theme.anchors.brand).toBe(closest.step);
+    expect(theme.light.brand).toBe(closest.hex);
+    expect(failingGenerated(theme)).toEqual([]);
+
+    const withPrimary = generateTheme({ primary: "#3d8c80", pinned: { light: { primary: "#30736a" }, scales: { brand: imported } } });
+    expect(withPrimary.anchors.brand).toBe(600);
+    expect(withPrimary.light.primary).toBe("#30736a");
+  });
+
+  it("a pinned CTA anchors the accent scale instead of the style's accent", () => {
+    const theme = generateTheme({ primary: "#3a5bd9", style: "dark-luxury", pinned: { light: { cta: "#e2581a" } } });
+    expect(theme.light.cta).toBe("#e2581a");
+    expect(theme.scales.accent?.find((s) => s.step === theme.anchors.accent)?.hex).toBe("#e2581a");
+    expect(Math.abs(hueDelta(oklchOf("#e2581a").h, oklchOf(theme.dark.cta).h))).toBeLessThan(15);
+    expect(failingGenerated(theme)).toEqual([]);
+  });
+
+  it("is deterministic and rejects invalid pins", () => {
+    const input: GenerateThemeInput = { primary: "#3a5bd9", style: "earthy", pinned: { light: { primary: "#3a5bd9", border: "#0000001a" } } };
+    expect(generateTheme(input)).toEqual(generateTheme(input));
+    expect(() => generateTheme({ primary: "#3a5bd9", pinned: { light: { primary: "nope" } } })).toThrow(TypeError);
+    expect(() =>
+      generateTheme({ primary: "#3a5bd9", pinned: { dark: { nope: "#ffffff" } as unknown as Partial<ThemeRoles> } }),
+    ).toThrow(TypeError);
+    expect(generateTheme({ primary: "#3a5bd9", pinned: {} })).toEqual(generateTheme({ primary: "#3a5bd9" }));
+  });
+
+  it("without pins every check is generated", () => {
+    expect(generateTheme({ primary: "#3a5bd9" }).contrast.every((c) => c.source === "generated")).toBe(true);
   });
 });
 

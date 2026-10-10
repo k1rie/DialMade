@@ -179,7 +179,7 @@ export interface PricingPlan {
   id: string;
   name: string;
   price: number;
-  /** «29 €» / «$29»; «Gratis» / «Free» at 0. */
+  /** «$29» in es-MX and en-US; «Gratis» / «Free» at 0. */
   priceLabel: string;
   /** «/mes» / «/mo», or «desde» / «from» for one-off prices. */
   period: string;

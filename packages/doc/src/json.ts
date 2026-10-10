@@ -33,3 +33,15 @@ export function findNonJsonValue(value: unknown, path: (string | number)[] = [])
 export function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+
+/** Deep equality of JSON values (object key order does not matter; `undefined` members are ignored). */
+export function jsonEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((item, i) => jsonEqual(item, b[i]));
+  if (isPlainObject(a) && isPlainObject(b)) {
+    const keys = (value: Record<string, unknown>) => Object.keys(value).filter((key) => value[key] !== undefined);
+    const ka = keys(a);
+    return ka.length === keys(b).length && ka.every((key) => Object.hasOwn(b, key) && jsonEqual(a[key], b[key]));
+  }
+  return false;
+}

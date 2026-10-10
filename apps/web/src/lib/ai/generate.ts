@@ -2,8 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { Locale, OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
-import type { CopyApiErrorCode } from "./api";
 import { FALLBACK_BETA, MAX_OUTPUT_TOKENS, supportsDefaultFallbacks, supportsEffort, type AiEffort } from "./config";
+import { AiOutputError, type AiOutputErrorCode } from "./errors";
 import { collectCopyFields, type CopyField } from "./fields";
 import { editsToPatches, type CopyPatchResult } from "./patches";
 import { messageCostUsd, messageTokens } from "./pricing";
@@ -71,16 +71,12 @@ function parseEdits(message: Anthropic.Beta.Messages.BetaMessage): CopyEdits | n
   }
 }
 
-export type CopyFailureCode = Extract<CopyApiErrorCode, "refused" | "invalid-response">;
+export type CopyFailureCode = AiOutputErrorCode;
 
-/** The model answered but not with usable copy. `message` is set when the response (and its cost) is known. */
-export class CopyGenerationError extends Error {
-  constructor(
-    readonly code: CopyFailureCode,
-    message: string,
-    readonly response?: { model: string; costUsd: number },
-  ) {
-    super(message);
+/** The model answered but not with usable copy. `response` is set when the response (and its cost) is known. */
+export class CopyGenerationError extends AiOutputError {
+  constructor(code: CopyFailureCode, message: string, response?: { model: string; costUsd: number }) {
+    super(code, message, response);
     this.name = "CopyGenerationError";
   }
 }

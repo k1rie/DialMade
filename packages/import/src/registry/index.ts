@@ -1,0 +1,17 @@
+export {
+  createRegistry,
+  detectedBy,
+  notImplemented,
+  type AbortSignalLike,
+  type BatchFile,
+  type DecodeImageRequest,
+  type DecodedImage,
+  type FileRole,
+  type ImageDecoder,
+  type Parser,
+  type ParserContext,
+  type ParserInput,
+  type ParserMatch,
+  type ParserRegistry,
+  type SniffedFile,
+} from "./registry";

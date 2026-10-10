@@ -11,9 +11,11 @@ App open source (MIT) que ayuda a devs a componer una dirección de diseño: log
   - `packages/doc` (`@dialmade/doc`): DesignDoc v1 (Zod), parches RFC 6902, `compileThemeVars` (incluye los colores de estado `--primary-hover`…) y exportadores (CSS, DTCG, Figma, DESIGN.md, prompt packs).
   - `packages/ui` (`@dialmade/ui`): kit de componentes de las páginas del usuario, CSS plano con clases `dl-`. Es dueño del contrato de variables del tema (`@dialmade/ui/contract`).
   - `packages/sections` (`@dialmade/sections`): registro de secciones, `PageRenderer`, copy determinista, minis y export a HTML estático. `addDefaultPage` es la forma de crear páginas (`createPage` de doc es de bajo nivel).
-- La mitad de diseño de la app (Crear, Ajustar, Exportar) carga en diferido por `src/components/PaletteFlow/designHalf.ts`: una vista nueva que deba cargar así añade ahí su loader.
+  - `packages/import` (`@dialmade/import`): «Trae tu marca». Detecta, lee y fusiona colores pegados, CSS, tokens, DESIGN.md, capturas y fuentes por nombre, y `applyImport` lo convierte en un JSON Patch del DesignDoc. TS puro, sin DOM: corre en `src/workers/import.worker.ts`.
+- La mitad de diseño de la app (Crear, Ajustar, Exportar) carga en diferido por `src/components/PaletteFlow/designHalf.ts`: una vista nueva que deba cargar así añade ahí su loader. El flujo de importación tiene dos pasos: `import` (ImportPanel, por `next/dynamic`) y `review` («Esto detectamos», DetectedReview, por `loadDetectedReview` de designHalf).
+- Los workers no pueden usar `typeof window` para saber si corren como worker (Turbopack lo sustituye por una constante): se usa `WorkerGlobalScope`.
 - El chrome de la app dentro de `ThemeScope` (barras, insignias) lleva la clase `.app-chrome` para conservar los estilos base de la app.
-- IA opcional en `src/lib/ai` (rutas `/api/ai/copy` y `/api/ai/status`, presupuesto duro y BYOK). En plataformas serverless queda apagada hasta que el ledger del presupuesto sea persistente.
+- IA opcional en `src/lib/ai`: copy (`/api/ai/copy`), visión sobre capturas (`src/lib/ai/vision`, `/api/ai/fingerprint`) y `/api/ai/status`. Free tier por dispositivo dentro de un presupuesto duro mensual, después BYOK o «Copiar prompt para mi Claude». La infraestructura común es `withAiBudget`/`runWithAiBudget` en `src/lib/ai/access.ts`. El ledger vive en Supabase (`supabase/migrations/*_ai_ledger.sql`); sin Supabase, la IA hospedada solo funciona fuera de producción.
 - Comandos: `pnpm dev`, `pnpm build`, `pnpm test`, `pnpm lint`, `pnpm typecheck` (pasan por turbo y necesitan `pnpm` en el PATH: `corepack enable pnpm`). Sin eso, `corepack pnpm -r <script>` o `corepack pnpm --filter <paquete> <script>`.
 
 ## Estructura de componentes (obligatoria)

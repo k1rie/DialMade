@@ -13,13 +13,15 @@ export type ContrastTableProps = {
   theme: Theme;
   /** Mode listed by default (the preview's); the pills switch it. */
   mode: ColorMode;
+  /** «Ajustar a AA» for the failing pairs of the imported guide (`source: "imported"`). */
+  onFixImported?: () => void;
 };
 
 const MODES: ColorMode[] = ["light", "dark"];
 const roleName = (key: string) => cssVarName(key as RoleKey);
 
 /** Compact WCAG AA report: pass count per mode and, on demand, every checked pair with its ratio. */
-export function ContrastTable({ theme, mode }: ContrastTableProps) {
+export function ContrastTable({ theme, mode, onFixImported }: ContrastTableProps) {
   const t = useDictionary(palette).contrast;
   const { locale } = useI18n();
   const listId = useId();
@@ -31,6 +33,7 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
     () => Object.fromEntries(MODES.map((m) => [m, theme.contrast.filter((check) => check.mode === m)])) as Record<ColorMode, Theme["contrast"]>,
     [theme],
   );
+  const importedFails = theme.contrast.filter((check) => check.source === "imported" && !check.pass).length;
   const ratio = useMemo(() => new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), [locale]);
   const required = useMemo(() => new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }), [locale]);
 
@@ -41,6 +44,7 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
           const checks = byMode[m];
           const passed = checks.filter((check) => check.pass).length;
           const ok = passed === checks.length;
+          const guideOnly = !ok && checks.every((check) => check.pass || check.source === "imported");
           const selected = open && shown === m;
           return (
             <button
@@ -60,7 +64,7 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
               {m === "light" ? <SunIcon className="size-3.5" /> : <MoonIcon className="size-3.5" />}
               <span>{t.modes[m]}</span>
               <span className="font-mono text-caption tabular-nums text-fg">{t.summary(passed, checks.length)}</span>
-              {ok ? <CheckIcon className="size-3.5 text-success" /> : <AlertIcon className="size-3.5 text-danger" />}
+              {ok ? <CheckIcon className="size-3.5 text-success" /> : <AlertIcon className={cn("size-3.5", guideOnly ? "text-warning" : "text-danger")} />}
             </button>
           );
         })}
@@ -75,6 +79,21 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
           <ChevronDownIcon className={cn("size-3.5 transition-transform duration-200", open && "rotate-180")} />
         </button>
       </div>
+      {importedFails > 0 && (
+        <div role="note" className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-card border border-warning/30 bg-warning/[0.06] px-3 py-2">
+          <AlertIcon className="size-4 shrink-0 text-warning" />
+          <p className="m-0 min-w-0 flex-1 text-caption text-pretty text-fg/85">{t.importedFails(importedFails)}</p>
+          {onFixImported && (
+            <button
+              type="button"
+              onClick={onFixImported}
+              className="inline-flex h-7 shrink-0 items-center rounded-chip border border-app px-2 text-small text-fg transition-colors duration-150 hover:border-app-strong hover:bg-white/[0.06]"
+            >
+              {t.fixImported}
+            </button>
+          )}
+        </div>
+      )}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -90,6 +109,7 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
               {byMode[shown].map((check) => {
                 const [fg = "", bg = ""] = check.pair.split("/");
                 const isText = check.required >= TEXT_CONTRAST;
+                const fromGuide = !check.pass && check.source === "imported";
                 return (
                   <li key={check.pair} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2 py-1">
                     <span
@@ -104,7 +124,7 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
                         {roleName(fg)} <span className="text-subtle">/</span> {roleName(bg)}
                       </span>
                       <span className="sr-only">
-                        {t.pair(roleName(fg), roleName(bg))}. {isText ? t.text : t.ui}.
+                        {t.pair(roleName(fg), roleName(bg))}. {isText ? t.text : t.ui}.{fromGuide && ` ${t.fromGuide}.`}
                       </span>
                     </span>
                     <span className="font-mono text-caption tabular-nums text-fg">
@@ -114,8 +134,9 @@ export function ContrastTable({ theme, mode }: ContrastTableProps) {
                     <span
                       className={cn(
                         "inline-flex h-5 items-center gap-1 rounded-[6px] px-1.5 text-[11px] leading-none font-semibold",
-                        check.pass ? "bg-success/15 text-success" : "bg-danger/15 text-danger",
+                        check.pass ? "bg-success/15 text-success" : fromGuide ? "bg-warning/15 text-warning" : "bg-danger/15 text-danger",
                       )}
+                      title={fromGuide ? t.fromGuide : undefined}
                     >
                       {check.pass ? t.pass : t.fail}
                     </span>

@@ -1,0 +1,7 @@
+{
+  "primary": {
+    "$type": "color",
+    "$value": { "colorSpace": "srgb", "components": [0.2, 0.4, 0.8], "alpha": 1, "hex": "#3366CC" },
+    "$extensions": { "com.figma.variableId": "VariableID:1:2", "com.figma.scopes": ["ALL_SCOPES"] }
+  }
+}
