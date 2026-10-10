@@ -1,0 +1,304 @@
+@import "tailwindcss";
+
+/* Mismos tokens que apps/web (DESIGN-BRIEF §2-§3). Si cambian allí, se cambian aquí. */
+
+/* DESIGN-BRIEF §2 — valores exactos. */
+:root {
+  color-scheme: dark;
+
+  --app-bg: oklch(0.13 0.012 285);
+  --app-bg-elevated: oklch(0.165 0.014 285);
+  --app-surface: oklch(0.195 0.016 285);
+  --app-surface-hover: oklch(0.23 0.018 285);
+  --app-border: oklch(1 0 0 / 0.08);
+  --app-border-strong: oklch(1 0 0 / 0.14);
+  --app-text: oklch(0.97 0.004 285);
+  --app-text-muted: oklch(0.72 0.012 285);
+  --app-text-subtle: oklch(0.56 0.014 285);
+  --app-accent: oklch(0.68 0.2 296);
+  --app-accent-strong: oklch(0.6 0.22 296);
+  --app-glow-white: oklch(1 0 0 / 0.1);
+  --app-glow-purple: oklch(0.62 0.24 300 / 0.3);
+  --app-success: oklch(0.75 0.17 155);
+  --app-warning: oklch(0.82 0.16 80);
+  --app-danger: oklch(0.68 0.2 25);
+
+  /* Derivados: --app-accent-strong da 4.36:1 con blanco; el CTA usa L 0.575 (4.84:1, AA). */
+  --app-accent-cta: oklch(0.575 0.22 296);
+  --app-accent-cta-hover: oklch(0.59 0.22 296);
+  --app-accent-soft: oklch(0.68 0.2 296 / 0.14);
+  --app-overlay: oklch(0.13 0.012 285 / 0.72);
+
+  --app-shadow-surface: inset 0 1px 0 0 oklch(1 0 0 / 0.04), 0 12px 40px -12px oklch(0 0 0 / 0.6);
+  --app-shadow-lift: inset 0 1px 0 0 oklch(1 0 0 / 0.06), 0 24px 56px -16px oklch(0 0 0 / 0.75);
+  --app-ring-glow: 0 0 0 1px oklch(0.68 0.2 296 / 0.5), 0 0 32px -6px var(--app-glow-purple);
+}
+
+@theme {
+  --color-*: initial;
+  --color-white: oklch(1 0 0);
+  --color-black: oklch(0 0 0);
+
+  --radius-chip: 8px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 160ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --text-display: 3.5rem;
+  --text-display--line-height: 3.75rem;
+  --text-display--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 2.75rem;
+  --text-h1--letter-spacing: -0.03em;
+  --text-h1--font-weight: 600;
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 2.125rem;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h2--font-weight: 600;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.625rem;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5rem;
+  --text-body--letter-spacing: -0.005em;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.125rem;
+  --text-small--letter-spacing: 0em;
+  --text-small--font-weight: 450;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--letter-spacing: 0.01em;
+  --text-caption--font-weight: 500;
+  --text-mono: 0.8125rem;
+  --text-mono--line-height: 1.125rem;
+  --text-mono--letter-spacing: 0em;
+  --text-mono--font-weight: 450;
+}
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", var(--font-geist-mono), "JetBrains Mono", monospace;
+
+  --background-color-app: var(--app-bg);
+  --background-color-app-elevated: var(--app-bg-elevated);
+  --background-color-surface: var(--app-surface);
+  --background-color-surface-hover: var(--app-surface-hover);
+  --background-color-overlay: var(--app-overlay);
+
+  --border-color-app: var(--app-border);
+  --border-color-app-strong: var(--app-border-strong);
+
+  --text-color-fg: var(--app-text);
+  --text-color-muted: var(--app-text-muted);
+  --text-color-subtle: var(--app-text-subtle);
+
+  --color-accent: var(--app-accent);
+  --color-accent-strong: var(--app-accent-strong);
+  --color-accent-cta: var(--app-accent-cta);
+  --color-accent-soft: var(--app-accent-soft);
+  --color-success: var(--app-success);
+  --color-warning: var(--app-warning);
+  --color-danger: var(--app-danger);
+  --color-glow-white: var(--app-glow-white);
+  --color-glow-purple: var(--app-glow-purple);
+
+  --shadow-surface: var(--app-shadow-surface);
+  --shadow-lift: var(--app-shadow-lift);
+  --shadow-glow-white: 0 0 0 1px var(--app-border-strong), 0 0 40px -8px var(--app-glow-white);
+  --shadow-glow-purple: var(--app-ring-glow);
+}
+
+@utility glow-white {
+  box-shadow: 0 0 0 1px var(--app-border-strong), 0 0 40px -8px var(--app-glow-white);
+}
+
+@utility glow-purple {
+  box-shadow: 0 0 0 1px oklch(0.68 0.2 296 / 0.5), 0 0 32px -6px var(--app-glow-purple);
+}
+
+@utility glass {
+  background-color: oklch(0.165 0.014 285 / 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  html {
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scrollbar-color: oklch(1 0 0 / 0.14) transparent;
+    scrollbar-width: thin;
+  }
+
+  body {
+    min-height: 100dvh;
+    color: var(--app-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    letter-spacing: var(--text-body--letter-spacing);
+  }
+
+  /* Inter solo fuera de Apple (el script de layout marca data-platform antes del primer paint). */
+  :root[data-platform="other"] body {
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: oklch(0.68 0.2 296 / 0.35);
+    color: var(--app-text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: oklch(1 0 0 / 0.12);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(1 0 0 / 0.2);
+  }
+
+  /* Focus: a solid 2 px accent outline (6.47:1 on the app background). The purple glow is reserved
+     for selection and valid drop targets, so focus and selection never look alike. */
+  :focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+  }
+
+  /* Titles that receive focus programmatically when a step changes are not controls. */
+  :where(h1, h2)[tabindex="-1"]:focus-visible {
+    outline: none;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  img,
+  svg {
+    -webkit-user-drag: none;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Demo brands (src/lib/brands.ts). A brand switch must interpolate in OKLCH (DESIGN-BRIEF §4), but a
+   registered <color> interpolates in Oklab. So each color travels as three registered channels
+   (`brand.channels`) and `brand-transition` composes the color from them on the same element. */
+@property --brand-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --brand-ink-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-ink-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-ink-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --brand-soft-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-soft-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --brand-soft-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --page-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --page-ink-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-ink-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-ink-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --page-muted-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-muted-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-muted-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+@property --page-line-l { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-line-c { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --page-line-h { syntax: "<angle>"; inherits: true; initial-value: 0deg; }
+
+@utility brand-transition {
+  --brand: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --brand-ink: oklch(var(--brand-ink-l) var(--brand-ink-c) var(--brand-ink-h));
+  --brand-soft: oklch(var(--brand-soft-l) var(--brand-soft-c) var(--brand-soft-h));
+  --page: oklch(var(--page-l) var(--page-c) var(--page-h));
+  --page-ink: oklch(var(--page-ink-l) var(--page-ink-c) var(--page-ink-h));
+  --page-muted: oklch(var(--page-muted-l) var(--page-muted-c) var(--page-muted-h));
+  --page-line: oklch(var(--page-line-l) var(--page-line-c) var(--page-line-h));
+  transition-property:
+    --brand-l, --brand-c, --brand-h,
+    --brand-ink-l, --brand-ink-c, --brand-ink-h,
+    --brand-soft-l, --brand-soft-c, --brand-soft-h,
+    --page-l, --page-c, --page-h,
+    --page-ink-l, --page-ink-c, --page-ink-h,
+    --page-muted-l, --page-muted-c, --page-muted-h,
+    --page-line-l, --page-line-c, --page-line-h;
+  transition-duration: 400ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 150ms;
+  }
+}
+
+/* One-off entrance of the hero canvas nodes (≤900 ms with the stagger). `translate`, not `transform`,
+   so it doesn't fight each node's `rotate`. Reduced motion keeps a 150 ms fade. */
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+    filter: blur(6px);
+  }
+}
+
+@keyframes tile-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility tile-in {
+  animation: tile-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) var(--tile-delay, 0s) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: tile-fade 150ms linear both;
+  }
+}
+
+@utility dot-grid {
+  background-image: radial-gradient(circle at center, oklch(1 0 0 / 0.07) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-position: 8px 8px;
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
