@@ -39,8 +39,8 @@
 | `logo-empty` | Dropzone vacía | `dropzone` |
 | `logo-loaded` | Logo y paleta extraída | `dropzone`, `swatches` |
 | `palette` | `PaletteLab` | `palette-card` |
-| `style` | `CreateStep` | `style-picker` |
-| `preview` | `Composer` | `preview-page` |
+| `style` | `LayoutStep` con el set «Landing» (lienzo con bloques y selector de estilo) | `style-picker` |
+| `preview` | `Composer` con la landing generada desde el set «Landing» | `preview-page` |
 | `export` | `ExportDialog` | `export-dialog` |
 
 ## 3. Script `pnpm promo:capture` (en `apps/web`)
@@ -79,4 +79,4 @@
 
 - **Captura real:** se corre con `PROMO_OUT_DIR=/Users/diegoguerrero/Documents/dialmade-promo-demo/screens`, porque el proyecto de After Effects vive al lado.
 - **Default del repo:** sigue siendo `apps/web/.promo-captures/`.
-- **Recapturar `style`** cuando el Modo Layout reemplace a CreateStep no es problema: con nombres estables, solo hay que recargar el footage en After Effects.
+- **Recapturar `style`** ahora que el Modo Layout reemplazó a CreateStep no es problema: con nombres estables, solo hay que recargar el footage en After Effects.

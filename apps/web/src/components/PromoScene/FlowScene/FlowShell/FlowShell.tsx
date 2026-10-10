@@ -8,7 +8,7 @@ import { HomeHero } from "@/components/HomeHero";
 import { LogoCropper } from "@/components/LogoCropper";
 import { PaletteLab } from "@/components/PaletteLab";
 import { FlowStepper, type FlowStepperStep } from "@/components/PaletteFlow/FlowStepper";
-import { useDesignDoc } from "@/hooks/useDesignDoc";
+import { docHasDesign, useDesignDoc } from "@/hooks/useDesignDoc";
 import { usePaletteFlow } from "@/hooks/usePaletteFlow";
 import { useDictionary } from "@/i18n";
 import { flow } from "@/i18n/flow";
@@ -34,8 +34,9 @@ function tintFor(brand: string | undefined): string | undefined {
 
 /**
  * The chrome PaletteFlow puts around a step (tinted AppBackground, stepper, `<main>`, the step region
- * and the ExportDialog), around the real step component for the scene. Renders once the flow reached
- * the scene's step, so no other step ever mounts on the way.
+ * and the ExportDialog), around the real step component for the scene, with the props PaletteFlow gives
+ * it (callbacks are no-ops: nobody clicks). Renders once the flow reached the scene's step, so no other
+ * step ever mounts on the way.
  */
 export function FlowShell({ scene, transparent, data }: FlowShellProps) {
   const { state, actions } = usePaletteFlow();
@@ -45,9 +46,9 @@ export function FlowShell({ scene, transparent, data }: FlowShellProps) {
   useFlowDriver(target, data.brand, actions);
   if (state.step !== target) return null;
 
-  const { CreateStep, Composer, ExportDialog } = data.views;
-  const hasPages = !!doc && Object.values(doc.pages).some(Boolean);
-  const stepperStep: FlowStepperStep = scene === "export" ? "export" : target === "create" ? "create" : target === "compose" ? "compose" : "brand";
+  const { LayoutStep, Composer, ExportDialog } = data.views;
+  const hasDesign = !!doc && docHasDesign(doc);
+  const stepperStep: FlowStepperStep = scene === "export" ? "export" : target === "layout" || target === "compose" ? target : "brand";
 
   let content: ReactNode = null;
   let label = f.stage.drop;
@@ -63,13 +64,27 @@ export function FlowShell({ scene, transparent, data }: FlowShellProps) {
       label = f.stage.palette;
       content = <PaletteLab />;
       break;
-    case "create":
-      label = f.stage.create;
-      content = doc && CreateStep ? <CreateStep initialKind={state.previewKind} onCreate={noop} onBack={noop} /> : null;
+    case "layout":
+      label = f.stage.layout;
+      content =
+        doc && LayoutStep ? (
+          <LayoutStep
+            doc={doc}
+            initialScreens={data.screens}
+            preferredKind={state.previewKind}
+            hasImportedGuide={false}
+            style={doc.brief.recipeId}
+            onStyleChange={noop}
+            onGenerate={noop}
+            onRevealEnd={noop}
+            onMomentChange={noop}
+            landmark={false}
+          />
+        ) : null;
       break;
     case "compose":
       label = f.stage.compose;
-      content = doc && Composer ? <Composer onExport={noop} onBack={noop} onEditBrand={noop} /> : null;
+      content = doc && Composer ? <Composer onExport={noop} onBack={noop} onEditLayout={noop} onEditBrand={noop} /> : null;
       break;
   }
 
@@ -82,7 +97,7 @@ export function FlowShell({ scene, transparent, data }: FlowShellProps) {
             <div>
               <FlowStepper
                 current={stepperStep}
-                available={{ brand: !!state.primary, create: !!state.primary, compose: hasPages, export: hasPages }}
+                available={{ brand: !!state.primary, layout: !!state.primary, compose: hasDesign, export: hasDesign }}
                 onSelect={noop}
               />
             </div>

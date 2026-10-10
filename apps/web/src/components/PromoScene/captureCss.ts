@@ -8,7 +8,8 @@ export const partSelector = (id: string) => `[${PART_ATTRIBUTE}=${JSON.stringify
  * Styles of the /promo route, on top of the app's: everything lands in its final state at once (no
  * transitions, animations, caret, cursor or focus ring), no toasts or dev overlay. `transparent`
  * drops the page background; `only` hides every element but that part while keeping the layout,
- * so the part keeps the exact box it has in the full scene; `unclip` lets it overflow its ancestors.
+ * so the part keeps the exact box it has in the full scene; `unclip` lets it overflow its ancestors and
+ * paints the pieces of it that fall outside the viewport (`content-visibility: auto` would skip them).
  */
 export function captureCss({ only, transparent, unclip = false }: { only: string | null; transparent: boolean; unclip?: boolean }): string {
   const rules = [
@@ -35,7 +36,12 @@ export function captureCss({ only, transparent, unclip = false }: { only: string
       `${part} { visibility: visible !important; }`,
       `::backdrop { background: transparent !important; backdrop-filter: none !important; }`,
     );
-    if (unclip) rules.push(`*:has(${part}) { overflow: visible !important; }`);
+    if (unclip) {
+      rules.push(
+        `*:has(${part}) { overflow: visible !important; }`,
+        `${part}, ${part} * { content-visibility: visible !important; }`,
+      );
+    }
   }
   return rules.join("\n");
 }

@@ -1,5 +1,5 @@
-import { create } from "@/i18n/create";
 import { home } from "@/i18n/home";
+import { layout } from "@/i18n/layout";
 import { palette } from "@/i18n/palette";
 import type { PromoLang, PromoSceneId } from "../../../promo/scenes";
 
@@ -47,7 +47,17 @@ export function partLocators(scene: PromoSceneId, lang: PromoLang): Record<strin
     case "palette":
       return { "palette-card": { find: (root) => byLabel(root, palette[lang].lab.controls) } };
     case "style":
-      return { "style-picker": { find: (root) => byLabel(root, create[lang].options) } };
+      return {
+        "style-picker": {
+          // LayoutStep's StylePicker (screen panel, «Estilo»): its radio group and the titled section around it.
+          find: (root) => byLabel(root, layout[lang].style.list)?.closest('[role="group"]') ?? null,
+          // useDeferredPreviews paints every option's screen in a pass after the radios mount.
+          ready: (element) => {
+            const options = element.querySelectorAll("[role=radio]");
+            return options.length > 0 && [...options].every((option) => option.querySelector(":scope > span > span[style]") !== null);
+          },
+        },
+      };
     case "preview":
       // The canvas' browser frame: the bar (device width · scale) and the scaled page under it.
       return { "preview-page": { find: (root) => root.querySelector("main [data-canvas-background]") } };

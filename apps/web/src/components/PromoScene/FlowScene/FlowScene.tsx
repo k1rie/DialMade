@@ -16,12 +16,16 @@ export type FlowSceneProps = {
 
 type DocInitial = Partial<Omit<DesignDocState, "actions">>;
 
-/** What PaletteFlow leaves in the DesignDoc store at the scene's step: the doc and the (uncropped) logo. */
+/**
+ * What PaletteFlow leaves in the DesignDoc store at the scene's step: the doc, the (uncropped) logo and, once
+ * «Generar» wrote screens, the first one active (`applyGenerate`).
+ */
 function docInitial(scene: PromoSceneId, data: PromoData): DocInitial | undefined {
   const step = SCENE_STEP[scene];
   const logoUrl = step === "drop" || step === "crop" ? undefined : data.brand?.logo.objectUrl;
   if (!data.doc) return logoUrl ? { logoUrl } : undefined;
-  return { doc: data.doc, activePage: data.doc.brief.focus, ...(logoUrl && { logoUrl }) };
+  const activeKey = data.doc.screenOrder[0];
+  return { doc: data.doc, activePage: data.doc.brief.focus, ...(activeKey && { activeKey }), ...(logoUrl && { logoUrl }) };
 }
 
 /**

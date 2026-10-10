@@ -88,13 +88,20 @@ export const PROMO_SCENES: readonly PromoSceneSpec[] = [
   },
   {
     id: "style",
-    description: "CreateStep («2 Crear») with the Landing card preselected.",
+    description: "LayoutStep («2 Layout») with the Landing set (Inicio + Precios): Inicio's blocks on the canvas and the screen panel.",
     viewports: ["desktop", "mobile"],
-    parts: [{ id: "style-picker", description: "The three cards (brand, landing, app) with their live minis.", transparent: true }],
+    parts: [
+      {
+        id: "style-picker",
+        description: "The screen panel's «Estilo» picker: every style recipe, each previewed with Inicio's blocks in the brand.",
+        transparent: true,
+        unclip: true,
+      },
+    ],
   },
   {
     id: "preview",
-    description: "Composer («3 Ajustar») with Brisa's landing page.",
+    description: "Composer («3 Ajustar») with Brisa's landing page, generated from the Landing set's Inicio screen.",
     viewports: ["desktop", "mobile"],
     parts: [
       {

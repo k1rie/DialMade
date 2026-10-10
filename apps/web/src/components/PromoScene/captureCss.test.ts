@@ -26,9 +26,10 @@ describe("captureCss", () => {
     expect(css).not.toContain(":has(");
   });
 
-  it("lets an unclipped part overflow its ancestors", () => {
-    expect(captureCss({ only: "preview-page", transparent: true, unclip: true })).toContain(
-      `*:has(${partSelector("preview-page")}) { overflow: visible !important; }`,
-    );
+  it("lets an unclipped part overflow its ancestors and paints it whole", () => {
+    const css = captureCss({ only: "preview-page", transparent: true, unclip: true });
+    const part = partSelector("preview-page");
+    expect(css).toContain(`*:has(${part}) { overflow: visible !important; }`);
+    expect(css).toContain(`${part}, ${part} * { content-visibility: visible !important; }`);
   });
 });

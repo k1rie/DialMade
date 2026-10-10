@@ -1,14 +1,16 @@
 import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
+import type { SetTemplateId } from "@dialmade/layout";
 import { extractFromPixels, generateTheme, parseSvgColors, type ExtractResult, type Theme } from "@dialmade/palette";
 import type { ComponentType } from "react";
 import type { ComposerProps } from "@/components/Composer";
-import type { CreateStepProps } from "@/components/CreateStep";
 import type { ExportDialogProps } from "@/components/ExportDialog";
+import type { LayoutStepProps, LayoutStore, Screen } from "@/components/LayoutStep";
 import { FEATURED_SAMPLE, loadSampleFile, type SampleLogo } from "@/components/SampleLogos";
 import { loadDesignEngine } from "@/hooks/useDesignDoc";
 import type { FlowStep } from "@/hooks/usePaletteFlow";
 import { flow } from "@/i18n/flow";
+import { layout as layoutText } from "@/i18n/layout";
 import { brandNameFromFile } from "@/lib/brand-name";
 import { decodeLogo, readLogoFile, type FlowLogo } from "@/lib/image";
 import type { PromoLang, PromoSceneId } from "../../../promo/scenes";
@@ -19,18 +21,21 @@ export const SCENE_STEP: Record<PromoSceneId, FlowStep> = {
   "logo-empty": "drop",
   "logo-loaded": "crop",
   palette: "palette",
-  style: "create",
+  style: "layout",
   preview: "compose",
   export: "compose",
 };
 
-/** The output the story follows: the Palette Lab's preview tab, the card preselected in «Crear» and the Composer's page. */
+/** The output the story follows: the Palette Lab's preview tab, the starting set «Recomendada» in «Layout» and the Composer's page. */
 export const PROMO_KIND: OutputKind = "landing";
+
+/** The starting set the user picks in «Layout» (TemplatePicker's «Landing»: Inicio + Precios), the one PROMO_KIND recommends. */
+export const PROMO_SET: SetTemplateId = "landing";
 
 /** `provenance.createdAt` of the promo doc (the engine stamps the current time). */
 export const PROMO_CREATED_AT = "2026-01-01T00:00:00.000Z";
 
-/** The design half (doc engine, CreateStep, Composer, ExportDialog) loads through PaletteFlow's chunk boundary, as in the app. */
+/** The design half (doc engine, LayoutStep, Composer, ExportDialog) loads through PaletteFlow's chunk boundary, as in the app. */
 const loadDesignHalf = () => import("@/components/PaletteFlow/designHalf");
 export const loadPromoEngine = () => loadDesignHalf().then((m) => m.designEngine);
 
@@ -44,15 +49,20 @@ export type PromoBrand = {
 };
 
 export type PromoViews = {
-  CreateStep?: ComponentType<CreateStepProps>;
+  LayoutStep?: ComponentType<LayoutStepProps>;
   Composer?: ComponentType<ComposerProps>;
   ExportDialog?: ComponentType<ExportDialogProps>;
 };
 
 export type PromoData = {
   brand?: PromoBrand;
-  /** The DesignDoc the flow would have at that step (`initFromPalette` + `setFocus`), with a fixed date. */
+  /**
+   * The DesignDoc the flow would have at that step, with a fixed date: `initFromPalette` in «Layout», plus the
+   * Landing set's «Generar» (`withGeneratedScreens`) in «Ajustar».
+   */
   doc?: DesignDoc;
+  /** «Layout»: the screens of the Landing set, as TemplatePicker leaves them in the draft (LayoutStep's `initialScreens`). */
+  screens?: Screen[];
   views: PromoViews;
 };
 
@@ -98,7 +108,36 @@ async function loadBrand(source: BrandSource): Promise<PromoBrand> {
   return { ...brand, logo: await readLogoFile(file) };
 }
 
-type PromoDesign = Pick<PromoData, "doc" | "views">;
+type PromoDesign = Pick<PromoData, "doc" | "screens" | "views">;
+
+/** Block and screen ids in creation order (`b-000001`, `s-000003`…): the same ids, and pixels, on every run. */
+function sequentialIds(): (prefix: "b" | "s", taken: ReadonlySet<string>) => string {
+  let n = 0;
+  return (prefix, taken) => {
+    let id: string;
+    do id = `${prefix}-${(++n).toString(36).padStart(6, "0")}`;
+    while (taken.has(id));
+    return id;
+  };
+}
+
+/**
+ * A Layout draft with the Landing set applied by the store's own `applySet` (what TemplatePicker's «Landing» card
+ * does), named in `lang` like LayoutStep names it, with sequential ids instead of random ones.
+ */
+async function landingDraft(doc: DesignDoc, lang: PromoLang): Promise<LayoutStore> {
+  const { createLayoutStore } = await import("@/components/LayoutStep/useLayoutStore");
+  const t = layoutText[lang];
+  const store = createLayoutStore({
+    style: doc.brief.recipeId,
+    labelFor: (type) => t.blocks[type].name,
+    screenNameFor: (templateId) => t.templates[templateId].name,
+    copyName: t.screens.copyName,
+    newId: sequentialIds(),
+  });
+  if (store.getState().actions.applySet(PROMO_SET).length === 0) throw new Error(`The "${PROMO_SET}" set created no screens`);
+  return store;
+}
 
 async function loadDesign(brand: BrandSource, scene: PromoSceneId, lang: PromoLang): Promise<PromoDesign> {
   const half = await loadDesignHalf();
@@ -118,21 +157,20 @@ async function loadDesign(brand: BrandSource, scene: PromoSceneId, lang: PromoLa
   if (!created.ok) throw new Error(created.error.message);
   const dated = engine.applyPatch(created.doc, [{ op: "replace", path: "/provenance/createdAt", value: PROMO_CREATED_AT }]);
   if (!dated.ok) throw new Error(dated.error.message);
-  let doc = dated.doc;
-  if (SCENE_STEP[scene] === "compose") {
-    const paged = engine.withFocus(doc, PROMO_KIND);
-    if (!paged.ok) throw new Error(paged.error.message);
-    doc = paged.doc;
+  const draft = await landingDraft(dated.doc, lang);
+
+  if (SCENE_STEP[scene] === "layout") {
+    // «Layout» right after picking the set: the draft has the screens, the doc nothing generated yet.
+    const { screens, screenOrder } = draft.getState();
+    const ordered = screenOrder.flatMap((id) => (screens[id] ? [screens[id]] : []));
+    return { doc: dated.doc, screens: ordered, views: { LayoutStep: await half.loadLayoutStep() } };
   }
 
-  const views: PromoViews = {};
-  if (scene === "style") views.CreateStep = await half.loadCreateStep();
-  else {
-    const [Composer, ExportDialog] = await Promise.all([half.loadComposer(), half.loadExportDialog()]);
-    views.Composer = Composer;
-    views.ExportDialog = ExportDialog;
-  }
-  return { doc, views };
+  // «Ajustar»: the set's «Generar», written into the doc the way the flow's `applyGenerate` writes it.
+  const generated = engine.withGeneratedScreens(dated.doc, draft.getState().actions.generate().screens);
+  if (!generated.ok) throw new Error(generated.error.message);
+  const [Composer, ExportDialog] = await Promise.all([half.loadComposer(), half.loadExportDialog()]);
+  return { doc: generated.doc, views: { Composer, ExportDialog } };
 }
 
 const designs = new Map<string, Promise<PromoDesign>>();
@@ -157,7 +195,7 @@ export async function loadPromoData(scene: PromoSceneId, lang: PromoLang): Promi
   const step = SCENE_STEP[scene];
   if (step === "drop") return { views: {} };
   const source = await loadBrandSource();
-  const design = step === "create" || step === "compose" ? await loadDesignOnce(source, scene, lang) : { views: {} };
+  const design = step === "layout" || step === "compose" ? await loadDesignOnce(source, scene, lang) : { views: {} };
   return { brand: await loadBrand(source), ...design };
 }
 
