@@ -1,0 +1,59 @@
+.dl-sketch-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2cqi;
+  height: 100%;
+  padding: 3.4cqi 4cqi;
+}
+
+.dl-sketch-landing__nav {
+  flex: none;
+  justify-content: space-between;
+  height: 8cqi;
+  /* Ends before the «Esquema» tag. */
+  margin-right: 14cqi;
+  padding: 0 2cqi;
+}
+
+.dl-sketch-landing__menu {
+  display: inline-flex;
+  gap: 1.6cqi;
+}
+
+.dl-sketch-landing__menu > span {
+  padding: 0.6cqi 1.4cqi;
+  border-radius: 1cqi;
+  background: color-mix(in oklab, var(--_line) 14%, transparent);
+}
+
+.dl-sketch-landing__hero {
+  flex: 1;
+  flex-direction: column;
+  gap: 1.6cqi;
+}
+
+.dl-sketch-landing__headline {
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 4.2cqi;
+}
+
+.dl-sketch-landing__actions {
+  display: flex;
+  gap: 1.6cqi;
+}
+
+.dl-sketch-landing__button {
+  height: 6cqi;
+  padding: 0 3cqi;
+  border-radius: 1.6cqi;
+}
+
+.dl-sketch-landing__benefits {
+  flex: none;
+  height: 13cqi;
+}
+
+.dl-sketch-landing__benefit {
+  flex-direction: column;
+  gap: 0.6cqi;
+}

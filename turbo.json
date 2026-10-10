@@ -13,7 +13,14 @@
         "NEXT_PUBLIC_*",
         "DIALMADE_*",
         "SUPABASE_*",
-        "ANTHROPIC_*"
+        "ANTHROPIC_*",
+        "DATABASE_*",
+        "BETTER_AUTH_*",
+        "GITHUB_CLIENT_*",
+        "GOOGLE_CLIENT_*",
+        "RESEND_API_KEY",
+        "SMTP_URL",
+        "STRIPE_*"
       ],
       "outputs": [
         ".next/**",
@@ -27,7 +34,14 @@
       "passThroughEnv": [
         "DIALMADE_*",
         "SUPABASE_*",
-        "ANTHROPIC_*"
+        "ANTHROPIC_*",
+        "DATABASE_*",
+        "BETTER_AUTH_*",
+        "GITHUB_CLIENT_*",
+        "GOOGLE_CLIENT_*",
+        "RESEND_API_KEY",
+        "SMTP_URL",
+        "STRIPE_*"
       ]
     },
     "lint": {},

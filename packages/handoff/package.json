@@ -1,0 +1,49 @@
+{
+  "name": "@dialmade/handoff",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Handoff de diseño: árbol de diseño neutro (auto layout) desde el DesignDoc v2, figma-plan v1 para el plugin de Figma y export TSX (React + Tailwind v4).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./figma-plan": {
+      "types": "./src/figma/schema.ts",
+      "default": "./src/figma/schema.ts"
+    },
+    "./testing": {
+      "types": "./src/testing/fixtures.ts",
+      "default": "./src/testing/fixtures.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dialmade/catalog": "workspace:*",
+    "@dialmade/doc": "workspace:*",
+    "@dialmade/layout": "workspace:*",
+    "@dialmade/palette": "workspace:*",
+    "@dialmade/sections": "workspace:*",
+    "@dialmade/ui": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

@@ -87,7 +87,8 @@ Un lienzo con rejilla. El usuario coloca **rectángulos con nombre** sacados de 
 
 - **HTML/ZIP:** grid con container queries, más `layout.json` y `layout.css`.
 - **DESIGN.md y prompt packs:** incluyen el layout como wireframe ASCII, en orden de lectura y con las reglas de móvil.
-- **Figma:** por ahora, la captura del HTML ya hereda el layout. Más adelante, un `figma-plan` y un plugin con auto layout.
+- **Figma:** `figma-plan.json` (v1, `@dialmade/handoff`) y el plugin local de `packages/figma-plugin`: variables claro/oscuro, estilos, una página por pantalla con auto layout derivado del layout, la Guía de estilo y una página «Flujo» con los enlaces de prototipo.
+- **TSX:** componentes React + Tailwind v4 por sección y una página por pantalla, sobre las variables del tema (carta «Código (TSX)» y carpeta `tsx/` del ZIP).
 
 ## Plan
 

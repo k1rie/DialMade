@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { DialMark } from "@/components/DialMark";
 import { useI18n } from "@/i18n";
+import { AccountMenu } from "./AccountMenu";
 import { LocaleToggle } from "./LocaleToggle";
+import { SaveButton } from "./SaveButton";
 
 export function AppHeader() {
   const { t } = useI18n();
@@ -17,7 +19,11 @@ export function AppHeader() {
         <span className="text-[0.9375rem] font-semibold tracking-[-0.015em]">{t.app.name}</span>
         <span className="hidden text-small text-muted sm:inline">{t.app.tagline}</span>
       </Link>
-      <LocaleToggle />
+      <div className="flex items-center gap-2">
+        <SaveButton />
+        <LocaleToggle />
+        <AccountMenu />
+      </div>
     </header>
   );
 }

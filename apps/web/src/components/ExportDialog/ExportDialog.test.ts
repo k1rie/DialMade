@@ -41,3 +41,14 @@ describe("ExportDialog notice (review B #40)", () => {
     expect(render()).not.toContain("data-notice");
   });
 });
+
+describe("ExportDialog destinations", () => {
+  it("offers the figma-plan, the plugin install steps toggle and the TSX card", () => {
+    const markup = render();
+    expect(markup).toContain("Descargar figma-plan");
+    expect(markup).toContain("Cómo instalar el plugin");
+    expect(markup).toMatch(/aria-expanded="false"[^>]*aria-controls=/);
+    expect(markup).toContain("Código (TSX)");
+    expect(markup).toContain("Descargar TSX");
+  });
+});

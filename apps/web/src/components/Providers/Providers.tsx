@@ -3,8 +3,10 @@
 import { MotionConfig } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/components/AuthProvider";
 import { TOAST_BOTTOM_VAR } from "@/hooks/useToastClearance";
 import { I18nProvider } from "@/i18n";
+import type { AuthAvailability } from "@/lib/auth/availability";
 import { smooth } from "@/lib/motion";
 
 const toasterStyle = {
@@ -21,11 +23,11 @@ const toasterStyle = {
 const toasterOffset = { top: 24, right: 24, left: 24, bottom: `var(${TOAST_BOTTOM_VAR}, 24px)` };
 const toasterMobileOffset = { top: 16, right: 16, left: 16, bottom: `var(${TOAST_BOTTOM_VAR}, 16px)` };
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, availability }: { children: ReactNode; availability?: AuthAvailability }) {
   return (
     <I18nProvider>
       <MotionConfig reducedMotion="user" transition={smooth}>
-        {children}
+        <AuthProvider availability={availability}>{children}</AuthProvider>
         <Toaster
           theme="dark"
           position="bottom-center"

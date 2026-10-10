@@ -12,8 +12,8 @@ import { EXPORT_TOASTER_ID } from "./constants";
 import { copyText, downloadFile, readLogo } from "./files";
 import { figmaTokensJson } from "./tokens";
 
-export type PackId = "code" | "claudeDesign";
-export type BusyAction = PackId | null;
+export type PackId = "code" | "claudeDesign" | "tsx";
+export type BusyAction = PackId | "figmaPlan" | null;
 
 type Options = {
   doc: DesignDoc | null;
@@ -39,7 +39,7 @@ async function aiBlocksCss(doc: DesignDoc): Promise<string | null> {
 }
 
 /** Heavy packs (react-dom/server, fflate, kit CSS) load on first use. */
-export const preloadPacks = () => Promise.all([import("./exportPack"), import("./kitCss")]).catch(() => {});
+export const preloadPacks = () => Promise.all([import("./exportPack"), import("./kitCss"), import("./handoffFiles")]).catch(() => {});
 
 /** Copy and download actions of the Export dialog, with their toasts. */
 export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, dialog }: Options) {
@@ -76,7 +76,7 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
       if (!doc || !derived || busy) return;
       setBusy(pack);
       try {
-        const [{ buildClaudeDesignPack, buildCodePack }, { kitCss }, logo, aiCss] = await Promise.all([
+        const [{ buildClaudeDesignPack, buildCodePack, buildTsxPack }, { kitCss }, logo, aiCss] = await Promise.all([
           import("./exportPack"),
           import("./kitCss"),
           readLogo(logoUrl),
@@ -94,7 +94,7 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
           ...(logo && { logo }),
           ...(aiCss !== null && { ai: { css: aiCss, texts: texts.aiExport.files } }),
         };
-        const built = pack === "code" ? buildCodePack(input) : buildClaudeDesignPack(input);
+        const built = pack === "code" ? buildCodePack(input) : pack === "tsx" ? buildTsxPack(input) : buildClaudeDesignPack(input);
         downloadFile(built.bytes.slice().buffer, built.filename, built.type, dialog.current);
         toast.success(texts.toasts.downloaded(built.filename), toastOptions);
         if (built.skippedSections > 0) toast.warning(texts.toasts.skippedSections(built.skippedSections), toastOptions);
@@ -108,5 +108,20 @@ export function useExportActions({ doc, derived, mode, logoUrl, locale, texts, d
     [doc, derived, busy, logoUrl, locale, mode, texts, dialog],
   );
 
-  return { busy, copyPrompt, downloadFigmaTokens, downloadPack };
+  const downloadFigmaPlan = useCallback(async () => {
+    if (!doc || !derived || busy) return;
+    setBusy("figmaPlan");
+    try {
+      const { HANDOFF_FILES, figmaPlanJson } = await import("./handoffFiles");
+      downloadFile(figmaPlanJson(doc, derived.inputs), HANDOFF_FILES.figmaPlan, "application/json", dialog.current);
+      toast.success(texts.toasts.downloaded(HANDOFF_FILES.figmaPlan), toastOptions);
+    } catch (error) {
+      console.error("[export]", error);
+      toast.error(texts.toasts.failed, toastOptions);
+    } finally {
+      setBusy(null);
+    }
+  }, [doc, derived, busy, texts, dialog]);
+
+  return { busy, copyPrompt, downloadFigmaPlan, downloadFigmaTokens, downloadPack };
 }

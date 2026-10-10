@@ -3,6 +3,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 import { AppHeader } from "@/components/AppHeader";
 import { Providers } from "@/components/Providers";
 import { common } from "@/i18n/common";
+import { authAvailability } from "@/lib/auth/config";
 import { LOCALE_STORAGE_KEY, defaultLocale } from "@/i18n/config";
 import "./globals.css";
 
@@ -32,7 +33,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body className="flex min-h-dvh flex-col">
-        <Providers>
+        {/* Which sign-in methods exist (booleans only; secrets stay on the server). */}
+        <Providers availability={authAvailability()}>
           <AppHeader />
           {children}
         </Providers>

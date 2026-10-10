@@ -116,6 +116,7 @@ export type PaletteFlowAction =
   | { type: "finishImport"; outcome: ImportOutcome }
   | { type: "setPinned"; pinned?: ThemePins }
   | { type: "clearPendingImport" }
+  | { type: "openDesign"; primary: string; secondary?: string; styleId: PaletteStyleId }
   | { type: "reset" };
 
 export const initialPaletteFlowState: PaletteFlowState = {
@@ -237,6 +238,17 @@ export function paletteFlowReducer(state: PaletteFlowState, action: PaletteFlowA
       return JSON.stringify(state.pinned ?? null) === JSON.stringify(action.pinned ?? null) ? state : { ...state, pinned: action.pinned };
     case "clearPendingImport":
       return state.pendingImport ? { ...state, pendingImport: undefined } : state;
+    case "openDesign":
+      // A saved design: its seeds and palette style, straight to «Ajustar» (no logo: it is not stored).
+      return {
+        ...initialPaletteFlowState,
+        previewMode: state.previewMode,
+        previewKind: state.previewKind,
+        step: "compose",
+        primary: toHex(action.primary) ?? DEFAULT_PRIMARY,
+        secondary: toHex(action.secondary),
+        styleId: action.styleId,
+      };
     case "reset":
       return initialPaletteFlowState;
   }
@@ -287,6 +299,8 @@ export type PaletteFlowActions = {
   /** Locked colors of the DesignDoc (`pinnedFor`); `undefined` after «Desbloquear»: palette styles move every color again. */
   setPinned: (pinned?: ThemePins) => void;
   clearPendingImport: () => void;
+  /** «Abrir» from «Mis diseños»: seeds and palette style of the stored doc → step "compose" (the DesignDoc store gets the doc first). */
+  openDesign: (design: { primary: string; secondary?: string; styleId: PaletteStyleId }) => void;
   reset: () => void;
 };
 
@@ -341,6 +355,7 @@ export function PaletteFlowProvider({ children, initialState }: { children: Reac
       finishImport: (outcome) => dispatch({ type: "finishImport", outcome }),
       setPinned: (pinned) => dispatch({ type: "setPinned", pinned }),
       clearPendingImport: () => dispatch({ type: "clearPendingImport" }),
+      openDesign: (design) => dispatch({ type: "openDesign", ...design }),
       reset: () => dispatch({ type: "reset" }),
     }),
     [],

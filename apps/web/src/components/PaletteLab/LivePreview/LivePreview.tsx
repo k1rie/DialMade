@@ -98,7 +98,7 @@ export function LivePreview({ theme, mode, onModeChange, kind, onKindChange, bra
         />
         <div className="relative px-3 py-6 sm:px-8 sm:py-10 xl:px-12">
           <div aria-hidden className="pointer-events-none absolute inset-x-[14%] top-[22%] bottom-[4%] rounded-full bg-(--brand) opacity-35 blur-[72px]" />
-          <PreviewFrame kind={kind} brandName={brandName}>
+          <PreviewFrame>
             <PreviewStage kind={kind} theme={theme} mode={mode} locale={locale} brandName={brandName} logoUrl={logoUrl} />
           </PreviewFrame>
         </div>

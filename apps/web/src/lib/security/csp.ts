@@ -30,6 +30,9 @@ export type AppCspOptions = {
   dev: boolean;
 };
 
+/** Hosts of the profile pictures Better Auth stores from GitHub and Google sign-ins (AccountMenu). */
+const OAUTH_AVATAR_ORIGINS = ["https://avatars.githubusercontent.com", "https://lh3.googleusercontent.com"];
+
 export function appCspDirectives({ previewOrigin, appUrl, dev }: AppCspOptions): Record<string, string[]> {
   const preview = originOf(previewOrigin);
   const frames = preview && preview !== originOf(appUrl) ? [preview] : ["'none'"];
@@ -38,7 +41,8 @@ export function appCspDirectives({ previewOrigin, appUrl, dev }: AppCspOptions):
     "script-src": ["'self'", "'unsafe-inline'", ...(dev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'", GOOGLE_FONTS_CSS],
     "font-src": ["'self'", "data:", GOOGLE_FONTS_FILES],
-    "img-src": ["'self'", "data:", "blob:"],
+    // The account avatar comes from the OAuth provider (GitHub, Google).
+    "img-src": ["'self'", "data:", "blob:", ...OAUTH_AVATAR_ORIGINS],
     // blob:/data: — the app reads its own logo and sample URLs with fetch.
     "connect-src": ["'self'", "blob:", "data:", ANTHROPIC_API_ORIGIN, ...(dev ? ["ws:", "wss:"] : [])],
     "worker-src": ["'self'", "blob:"],

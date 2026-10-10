@@ -157,8 +157,10 @@ export function defaultRecipe(productTypeId: string): StyleRecipe {
 }
 
 export function defaultPairing(productTypeId: string): TypographyPairing {
-  const recipe = defaultRecipe(productTypeId);
   const product = productById.get(productTypeId);
+  // Generic (or unknown) keeps the neutral default pairing, whatever the default recipe pairs with.
+  if (!product) return required(pairingById, DEFAULT_PAIRING_ID, "el pairing");
+  const recipe = defaultRecipe(productTypeId);
   const groupPairing =
     product && isGroup(product.group) && NEUTRAL_TYPE_RECIPES.has(recipe.id) ? GROUP_PAIRING[product.group] : undefined;
   return required(pairingById, groupPairing ?? recipe.pairingId ?? DEFAULT_PAIRING_ID, "el pairing");

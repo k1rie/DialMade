@@ -12,6 +12,12 @@
       "runtimeExecutable": "corepack",
       "runtimeArgs": ["pnpm", "--filter", "site", "exec", "next", "dev", "--port", "3400"],
       "port": 3400
+    },
+    {
+      "name": "web-auth",
+      "runtimeExecutable": "corepack",
+      "runtimeArgs": ["pnpm", "--filter", "web", "exec", "next", "dev", "--port", "3700"],
+      "port": 3700
     }
   ]
 }

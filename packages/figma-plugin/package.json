@@ -1,0 +1,25 @@
+{
+  "name": "@dialmade/figma-plugin",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Plugin de Figma de Dialmade (sin publicar en Community): lee un figma-plan.json y crea variables (claro/oscuro), estilos de texto y sombra, una página por pantalla con auto layout, la Guía de estilo y el flujo prototipado.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@dialmade/handoff": "workspace:*",
+    "@figma/plugin-typings": "1.139.0",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "esbuild": "0.27.7",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.3",
+    "zod": "4.6.5"
+  }
+}
