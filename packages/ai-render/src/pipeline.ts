@@ -7,7 +7,7 @@ import { hash32 } from "./direction";
 import { fixHeadings, newContacts, snippet, warning } from "./gates";
 import type { RenderBlockInput } from "./prompt";
 import { droppedClassRatio, sanitizeBlock, sanitizeSurfaceClasses, type SanitizeFailure, type SanitizeReport } from "./sanitize";
-import { attr, serialize } from "./tree";
+import { attr, elements, parseSanitized, serialize } from "./tree";
 
 /** Gate 2: above this share of dropped class tokens the block is not trusted. */
 export const MAX_DROPPED_CLASS_RATIO = 0.15;
@@ -77,4 +77,28 @@ export function processBlock(raw: string, context: BlockContext): ProcessedBlock
 export function blockBasis(block: RenderBlockInput, locale: string, directionId: string): string {
   const { id: _id, linksTo: _links, h1: _h1, ...rest } = block;
   return hash32(JSON.stringify({ ...rest, locale, directionId })).toString(36);
+}
+
+/**
+ * A stored block made ready for another cell (spec §4.3, the shared kit): the navbar or footer generated once is
+ * cloned into the other screens' blocks of the same type and label. Its root takes `toBlockId`, the ids the sanitizer
+ * prefixed for the source block lose that prefix (so sanitizing it again for the new block prefixes them once), and
+ * the link to `screenId` is the current page (`aria-current="page"`; no other link keeps it). The result is still
+ * untrusted input: it goes through `processBlock` like a model answer.
+ */
+export function retargetBlock(html: string, fromBlockId: string, toBlockId: string, screenId: string): string {
+  const nodes = parseSanitized(html);
+  const prefix = `ai-${fromBlockId.replace(/[^\w-]/g, "").slice(0, 40)}-`;
+  const unprefix = (value: string) => value.split(/\s+/).filter(Boolean).map((id) => (id.startsWith(prefix) ? id.slice(prefix.length) : id)).join(" ");
+  const current = `#screen:${screenId}`;
+  let root = true;
+  for (const element of elements(nodes)) {
+    element.attrs = element.attrs
+      .filter(([name]) => name !== "aria-current" && !(root && name === "data-block-id"))
+      .map(([name, value]): [string, string] => (name === "id" || name === "for" || name === "aria-labelledby" || name === "aria-describedby" || name === "aria-controls" ? [name, unprefix(value)] : [name, value]));
+    if (root) element.attrs.push(["data-block-id", toBlockId]);
+    if (element.tag === "a" && attr(element, "href") === current) element.attrs.push(["aria-current", "page"]);
+    root = false;
+  }
+  return serialize(nodes);
 }

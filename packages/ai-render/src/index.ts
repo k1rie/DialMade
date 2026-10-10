@@ -24,7 +24,7 @@ export {
   screenInput,
   type ScreenInputOptions,
 } from "./input";
-export { MAX_DROPPED_CLASS_RATIO, blockBasis, processBlock, type BlockContext, type ProcessedBlock } from "./pipeline";
+export { MAX_DROPPED_CLASS_RATIO, blockBasis, processBlock, retargetBlock, type BlockContext, type ProcessedBlock } from "./pipeline";
 export {
   AI_RENDER_PROMPT_VERSION,
   AI_RENDER_SYSTEM_PROMPT,
