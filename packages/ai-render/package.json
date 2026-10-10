@@ -70,7 +70,8 @@
   "scripts": {
     "build": "tsup",
     "preflight": "node scripts/build-preflight.mjs",
-    "eval:variety": "vitest run --config eval/vitest.config.ts",
+    "eval:variety": "vitest run --config eval/vitest.config.ts eval/variety.eval.ts",
+    "eval:quality": "vitest run --config eval/vitest.config.ts eval/quality.eval.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src",
