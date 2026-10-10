@@ -4,6 +4,7 @@
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
 import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
+import { canonicalChartValues, isChartKind, parseChartValues } from "./chart";
 import { checkClass, type ClassRejection } from "./vocabulary";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
@@ -144,6 +145,18 @@ class Walker {
         else drop(name);
         continue;
       }
+      if (name === "data-chart") {
+        // Charts are drawn from numbers (./chart): `<img data-chart="bar" data-values="1,2,3">`.
+        if (tag === "img" && isChartKind(value.trim())) out.push([name, value.trim()]);
+        else drop(name);
+        continue;
+      }
+      if (name === "data-values") {
+        const series = tag === "img" ? parseChartValues(value) : null;
+        if (series) out.push([name, canonicalChartValues(series)]);
+        else drop(name);
+        continue;
+      }
       if (name === "data-asset") {
         if (tag === "img" && value.trim() === "logo") out.push([name, "logo"]);
         else drop(name);
@@ -235,6 +248,17 @@ class Walker {
       drop(name);
     }
     if (tag === "button" && !out.some(([name]) => name === "type")) out.push(["type", "button"]);
+    if (tag === "img") {
+      // A chart needs both its kind and its numbers; one without the other is dropped, and a chart is a «chart» image.
+      const kind = out.findIndex(([name]) => name === "data-chart");
+      const values = out.findIndex(([name]) => name === "data-values");
+      if (kind >= 0 && values < 0) out.splice(kind, 1);
+      else if (values >= 0 && kind < 0) out.splice(values, 1);
+      else if (kind >= 0) {
+        for (let i = out.length - 1; i >= 0; i--) if (out[i]![0] === "data-placeholder" || out[i]![0] === "data-asset") out.splice(i, 1);
+        out.push(["data-placeholder", "chart"]);
+      }
+    }
     if (tag === "img" && !out.some(([name]) => name === "alt")) out.push(["alt", ""]);
     if (tag === "img" && !out.some(([name]) => name === "data-placeholder" || name === "data-asset")) out.push(["data-placeholder", "photo"]);
     if (tag === "input" && type === "password") out.push(["autocomplete", "off"]);

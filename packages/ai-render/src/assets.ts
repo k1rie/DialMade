@@ -3,6 +3,8 @@
 // (@dialmade/ui, no brand logos) and token-colored placeholder art.
 import { ICONS } from "@dialmade/ui/icons";
 
+export { CHART_KINDS, CHART_LIMITS, canonicalChartValues, chartSvg, isChartKind, parseChartValues, type ChartKind } from "./chart";
+
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** `<svg>` of an icon of the set (a small dot for an unknown name), `currentColor` stroke. */

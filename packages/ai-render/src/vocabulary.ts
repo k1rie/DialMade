@@ -65,7 +65,8 @@ const STATIC = new Set([
   "text-wrap", "text-nowrap", "list-disc", "list-decimal", "list-none", "list-inside", "list-outside",
   "align-top", "align-middle", "align-bottom", "align-baseline",
   // borders & effects
-  "border", "border-0", "border-2", "border-4", "border-solid", "border-dashed", "border-dotted", "border-none",
+  "border", "border-0", "border-2", "border-4", "border-t", "border-b", "border-l", "border-r", "border-x", "border-y",
+  "border-s", "border-e", "border-solid", "border-dashed", "border-dotted", "border-none",
   "border-collapse", "border-separate", "ring", "ring-0", "ring-1", "ring-2", "ring-4", "ring-inset",
   "ring-offset-0", "ring-offset-1", "ring-offset-2", "ring-offset-4",
   "outline", "outline-none", "outline-hidden", "outline-0", "outline-1", "outline-2", "outline-offset-0", "outline-offset-2", "outline-offset-4",

@@ -1,4 +1,6 @@
 export { iconSvg, placeholderSvg } from "./assets";
+export { CHART_KINDS, canonicalChartValues, chartSvg, parseChartValues, type ChartKind } from "./chart";
+export { LIBRARY, fitScore, selectReferences, type LibraryBlock, type LibraryBlockType, type LibraryFits } from "./library";
 export { contrastIssues, fixContrast, themeColorsFromVars, type ContrastIssue, type ContrastMode, type ContrastResult, type ThemeColors } from "./contrast";
 export {
   AXIS_GLOSSARY,

@@ -2,6 +2,7 @@
 // draws are inlined here as SVG. Works on CANONICAL html (what ./tree serializes after ./sanitize): attributes are
 // always double-quoted and escaped, so the patterns below cannot be fooled by the model's own text.
 import { iconSvg, placeholderSvg } from "./assets";
+import { chartSvg, isChartKind, parseChartValues } from "./chart";
 import { elements, parseSanitized, serialize } from "./tree";
 
 const ATTR = (name: string) => new RegExp(`\\s${name}="([^"]*)"`);
@@ -24,8 +25,10 @@ export function inlineAssets(html: string, options: InlineAssetsOptions = {}): s
       if (attrOf(attrs, "data-asset") === "logo" && options.logoUrl) {
         return `<img src="${escape(options.logoUrl)}" alt="${escape(alt)}"${className ? ` class="${className}"` : ""}>`;
       }
+      const chartKind = attrOf(attrs, "data-chart");
+      const series = chartKind && isChartKind(chartKind) ? parseChartValues(unescape(attrOf(attrs, "data-values") ?? "")) : null;
       const kind = attrOf(attrs, "data-asset") === "logo" ? "logo" : (attrOf(attrs, "data-placeholder") ?? "photo");
-      const svg = placeholderSvg(kind, alt);
+      const svg = chartKind && isChartKind(chartKind) && series ? chartSvg(chartKind, series, alt) : placeholderSvg(kind, alt);
       const extra = `${className ? ` class="${className}"` : ""}${alt ? ` aria-label="${escape(alt)}"` : ' aria-hidden="true"'} data-placeholder="${escape(kind)}"`;
       return svg.replace("<svg ", `<svg${extra} `);
     });

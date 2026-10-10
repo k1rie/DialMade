@@ -12,7 +12,7 @@ export const ALLOWED_TAGS: ReadonlySet<string> = new Set([
 
 /** Attributes the sanitizer can output (plus `aria-*`). The runtime drops anything else it is handed. */
 export const ALLOWED_ATTRS: ReadonlySet<string> = new Set([
-  "class", "data-block-id", "data-icon", "data-placeholder", "data-asset", "data-dl-t", "href", "alt", "role", "type",
+  "class", "data-block-id", "data-icon", "data-placeholder", "data-asset", "data-chart", "data-values", "data-dl-t", "href", "alt", "role", "type",
   "placeholder", "for", "id", "name", "scope", "colspan", "rowspan", "datetime", "value", "checked", "disabled",
   "tabindex", "autocomplete",
 ]);
