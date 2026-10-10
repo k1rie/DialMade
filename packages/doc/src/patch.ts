@@ -3,7 +3,7 @@ import { z } from "zod";
 import { cloneJson, jsonEqual } from "./json";
 import { hardLocks, lockPointer } from "./locks";
 import { JSON_POINTER, coversPointer, missingAncestors, parentPointer, pointersOverlap, valueAtPointer } from "./pointer";
-import { DesignDocSchema, type DesignDoc, type Lock, type LockPointer } from "./schema";
+import { DesignDocSchema, documentSizeIssues, type DesignDoc, type Lock, type LockPointer } from "./schema";
 
 const Pointer = z.string().regex(JSON_POINTER, "Expected a JSON Pointer (RFC 6901)");
 
@@ -119,6 +119,10 @@ export function applyPatch(doc: DesignDoc, ops: unknown, options: ApplyPatchOpti
     }
   }
 
+  const oversized = documentSizeIssues(next);
+  if (oversized.length > 0) {
+    return { ok: false, error: { reason: "invalid-document", message: "The patched document is invalid", issues: oversized } };
+  }
   const result = DesignDocSchema.safeParse(next);
   if (!result.success) {
     return { ok: false, error: { reason: "invalid-document", message: "The patched document is invalid", issues: result.error.issues } };

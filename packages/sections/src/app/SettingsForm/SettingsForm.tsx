@@ -5,6 +5,7 @@ import { Button, Card, Input, Select, Switch, Textarea } from "@dialmade/ui";
 import type { SectionComponentProps } from "../../types";
 import { LANGUAGE_OPTIONS, appStrings } from "../content";
 import { WidgetHeader } from "../WidgetHeader";
+import { settingsShown } from "./fields";
 import type { SettingsFormProps } from "./schema";
 import "./SettingsForm.css";
 
@@ -12,7 +13,8 @@ const preventSubmit = (event: FormEvent<HTMLFormElement>) => event.preventDefaul
 
 /**
  * Workspace settings: text fields, selects and switches with the theme applied. Fields are
- * uncontrolled and keyed by their value, so an edit in the inspector shows up at once.
+ * uncontrolled and keyed by their value, so an edit in the inspector shows up at once. `count` shows the
+ * first fields (name, email, language, time zone, about) and then the switches.
  */
 export function SettingsForm({
   title,
@@ -23,6 +25,7 @@ export function SettingsForm({
   language,
   timezone,
   notifications,
+  count,
   variant,
   ctx,
   elementId,
@@ -33,6 +36,9 @@ export function SettingsForm({
   const notificationsId = `${elementId}-notifications`;
   const zones: readonly string[] = strings.timezones;
   const timezones = zones.includes(timezone) ? zones : [timezone, ...zones];
+  const shown = settingsShown(count, notifications.length);
+  const has = (field: (typeof shown.fields)[number]) => shown.fields.includes(field);
+  const toggles = notifications.slice(0, shown.toggles);
 
   return (
     <Card as="section" className="dl-app-settings" data-layout={variant === "split" ? "split" : "stacked"} aria-labelledby={titleId}>
@@ -46,38 +52,48 @@ export function SettingsForm({
             <p className="dl-app-settings__group-hint">{strings.generalHint}</p>
           </div>
           <div className="dl-app-settings__fields">
-            <Input key={`name:${workspaceName}`} label={strings.name} defaultValue={workspaceName} autoComplete="organization" />
-            <Input
-              key={`email:${email}`}
-              type="email"
-              label={strings.email}
-              hint={strings.emailHint}
-              defaultValue={email}
-              iconStart="mail"
-              autoComplete="email"
-            />
-            <Select
-              key={`language:${language}`}
-              label={strings.language}
-              options={LANGUAGE_OPTIONS}
-              defaultValue={language}
-            />
-            <Select
-              key={`timezone:${timezone}`}
-              label={strings.timezone}
-              options={timezones.map((zone) => ({ value: zone, label: zone }))}
-              defaultValue={timezone}
-            />
-            <Textarea
-              key={`about:${about}`}
-              label={strings.about}
-              defaultValue={about}
-              rows={3}
-              fieldClassName="dl-app-settings__wide"
-            />
+            {has("workspaceName") ? (
+              <Input key={`name:${workspaceName}`} label={strings.name} defaultValue={workspaceName} autoComplete="organization" />
+            ) : null}
+            {has("email") ? (
+              <Input
+                key={`email:${email}`}
+                type="email"
+                label={strings.email}
+                hint={strings.emailHint}
+                defaultValue={email}
+                iconStart="mail"
+                autoComplete="email"
+              />
+            ) : null}
+            {has("language") ? (
+              <Select
+                key={`language:${language}`}
+                label={strings.language}
+                options={LANGUAGE_OPTIONS}
+                defaultValue={language}
+              />
+            ) : null}
+            {has("timezone") ? (
+              <Select
+                key={`timezone:${timezone}`}
+                label={strings.timezone}
+                options={timezones.map((zone) => ({ value: zone, label: zone }))}
+                defaultValue={timezone}
+              />
+            ) : null}
+            {has("about") ? (
+              <Textarea
+                key={`about:${about}`}
+                label={strings.about}
+                defaultValue={about}
+                rows={3}
+                fieldClassName="dl-app-settings__wide"
+              />
+            ) : null}
           </div>
         </div>
-        {notifications.length > 0 ? (
+        {toggles.length > 0 ? (
           <div className="dl-app-settings__group" role="group" aria-labelledby={notificationsId}>
             <div className="dl-app-settings__group-head">
               <h3 id={notificationsId} className="dl-app-settings__group-title">
@@ -86,7 +102,7 @@ export function SettingsForm({
               <p className="dl-app-settings__group-hint">{strings.notificationsHint}</p>
             </div>
             <ul className="dl-app-settings__toggles" role="list">
-              {notifications.map((item) => (
+              {toggles.map((item) => (
                 <li key={`${item.id}:${item.enabled}`} className="dl-app-settings__toggle">
                   <Switch
                     className="dl-app-settings__switch"

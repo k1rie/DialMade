@@ -918,6 +918,28 @@ describe("document sync", () => {
     expect(actions.syncFromDoc(doc)).toBe("unchanged");
   });
 
+  it("merges count three-way: Ajustar's ×N survives a draft that changed elsewhere, the draft's own ×N wins", () => {
+    const { state, actions, home, ids } = synced();
+    const base = docOf(state());
+    actions.markSynced(base);
+    const [fromDoc, fromDraft, both] = ids;
+    // The draft: a count of its own on two blocks, and an unrelated note.
+    actions.updateBlock(fromDraft!, { count: 5 }, home);
+    actions.updateBlock(both!, { count: 2 }, home);
+    actions.updateBlock(fromDoc!, { note: "lo que cuenta" }, home);
+    // The doc meanwhile (Ajustar's count knob writes `block.count`).
+    const doc = docOf(screensFromDoc(base), (screens) => {
+      patchBlock(screens, home, fromDoc!, { count: 4 });
+      patchBlock(screens, home, both!, { count: 6 });
+    });
+    expect(actions.syncFromDoc(doc)).toBe("merged");
+    const blocks = state().screens[home]!.layout.blocks;
+    expect(blocks[fromDoc!]!.count).toBe(4);
+    expect(blocks[fromDoc!]!.note).toBe("lo que cuenta");
+    expect(blocks[fromDraft!]!.count).toBe(5);
+    expect(blocks[both!]!.count).toBe(2);
+  });
+
   it("mergeDocScreens drops pins and fingerprints the doc does not have, and keeps identity when nothing changes", () => {
     const { state, home, ids } = synced();
     const draft: HistorySlice = { screens: state().screens, screenOrder: state().screenOrder };

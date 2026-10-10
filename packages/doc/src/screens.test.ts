@@ -44,6 +44,26 @@ function expectOk(result: PatchResult): DesignDoc {
   return result.doc;
 }
 
+/**
+ * A copy of a screen whose block ids (and the page elements named after them) get a suffix: block ids are
+ * unique across screens.
+ */
+function renamedCopy(screen: Mutable, suffix: string): Mutable {
+  const copy = cloneJson(screen);
+  const rename = (id: string) => (Object.hasOwn(screen.layout.blocks, id) ? `${id}-${suffix}` : id);
+  copy.layout.blocks = Object.fromEntries(
+    Object.entries(copy.layout.blocks as Record<string, Mutable>).map(([id, block]) => {
+      if (block.parentId) block.parentId = rename(block.parentId);
+      return [rename(id), block];
+    }),
+  );
+  copy.page.elements = Object.fromEntries(
+    Object.entries(copy.page.elements as Record<string, Mutable>).map(([id, element]) => [rename(id), { ...element, children: element.children.map(rename) }]),
+  );
+  if (copy.page.hidden) copy.page.hidden = copy.page.hidden.map(rename);
+  return copy;
+}
+
 const HOME = "screens/s-home";
 const block = (id: string) => `${HOME}/layout/blocks/${id}`;
 
@@ -88,12 +108,20 @@ describe("DesignDoc v2: screens are valid", () => {
     ["an activeItem in the shell", (d: Mutable) => (d.screens["s-dash"].shell.activeItem = "s-dash")],
     ["MAX_SCREENS screens", (d: Mutable) => {
       for (let i = 0; i < MAX_SCREENS - 3; i++) {
-        const copy = cloneJson(d.screens["s-settings"]);
+        const copy = renamedCopy(d.screens["s-settings"], `x${i}`);
         copy.id = `s-x${i}`;
         copy.route = `/x-${i}`;
         d.screens[copy.id] = copy;
         d.screenOrder.push(copy.id);
       }
+    }],
+    ["the same element ids for the compiled page's own elements (root, shell, layout) on every screen", (d: Mutable) => {
+      expect(d.screens["s-dash"].page.elements.shell).toBeDefined();
+      expect(d.screens["s-home"].page.elements.layout).toBeDefined();
+      expect(d.screens["s-dash"].page.elements.layout).toBeDefined();
+    }],
+    ["a stash of absorbed blocks on a screen page", (d: Mutable) => {
+      d.screens["s-home"].page.stash = { "b-shot": { type: "ui.media", props: { alt: "Captura", ratio: "16:9" } } };
     }],
   ])("accepts %s", (_name, fn) => {
     expect(issuesOf(mutate(fn))).toEqual([]);
@@ -193,6 +221,16 @@ describe("DesignDoc v2: screens rules", () => {
     ["a fingerprint wider than the grid", (d: Mutable) => (d.screens["s-home"].layout.blocks["b-feat"].generated.w = 13), `${block("b-feat")}/generated/w`],
     ["an unknown mobile behavior", (d: Mutable) => (d.screens["s-home"].layout.blocks["b-list"].responsive.mobile.behavior = "fly"), `${block("b-list")}/responsive/mobile/behavior`],
     ["a linkTo that is not an id", (d: Mutable) => (d.screens["s-home"].layout.blocks["b-nav"].linkTo = "/dashboard"), `${block("b-nav")}/linkTo`],
+    // Block ids are unique across screens (decision #42).
+    ["a block id another screen already uses (the later screen is reported)", (d: Mutable) => {
+      d.screens["s-settings"].layout.blocks["b-cal"] = { ...cloneJson(d.screens["s-home"].layout.blocks["b-cal"]), rect: { col: 0, row: 100, w: 8, h: 50 } };
+    }, "screens/s-settings/layout/blocks/b-cal"],
+    // The stash of absorbed blocks.
+    ["a stash entry for an id that has an element", (d: Mutable) => (d.screens["s-home"].page.stash = { "b-cal": { type: "ui.calendar", props: {} } }), `${HOME}/page/stash/b-cal`],
+    ["a brand section in the stash", (d: Mutable) => (d.screens["s-home"].page.stash = { "b-x": { type: "brand.palette", props: {} } }), `${HOME}/page/stash/b-x/type`],
+    ["stash props that are not JSON", (d: Mutable) => (d.screens["s-home"].page.stash = { "b-x": { type: "ui.media", props: { title: { bind: "brand.logo" } } } }), `${HOME}/page/stash/b-x/props/title`],
+    ["an unknown stash member", (d: Mutable) => (d.screens["s-home"].page.stash = { "b-x": { type: "ui.media", props: {}, children: [] } }), `${HOME}/page/stash/b-x`],
+    ["an invalid stash id", (d: Mutable) => (d.screens["s-home"].page.stash = { "bad id": { type: "ui.media", props: {} } }), `${HOME}/page/stash/bad id`],
   ])("rejects %s", (_name, fn, path) => {
     expect(paths(mutate(fn))).toContain(path);
   });
@@ -227,6 +265,47 @@ describe("DesignDoc v2: screens rules", () => {
     expect(issue!.params).toEqual({ layoutCode: code });
     // One problem, one issue: the Zod types do not repeat what validateLayout says.
     expect(issues.filter((i) => i.path === issue!.path)).toHaveLength(1);
+  });
+
+  it("only screen pages keep a stash", () => {
+    const doc = cloneJson(acmeDoc()) as Mutable;
+    doc.pages.landing.stash = { "b-x": { type: "landing.hero", props: {} } };
+    expect(paths(doc)).toContain("pages/landing/stash");
+  });
+
+  it("names both screens when a block id repeats", () => {
+    const issues = issuesOf(
+      mutate((d) => (d.screens["s-settings"].layout.blocks["b-kpis"] = cloneJson(d.screens["s-dash"].layout.blocks["b-kpis"]))),
+    );
+    const issue = issues.find((i) => i.path === "screens/s-settings/layout/blocks/b-kpis");
+    expect(issue?.message).toBe('Block id "b-kpis" is already used by screen "s-dash": block ids are unique across screens');
+    expect(issues.filter((i) => i.path.endsWith("/b-kpis"))).toHaveLength(1);
+  });
+
+  it("rejects oversized documents before the full parse (screens, screenOrder, blocks)", () => {
+    const screens = mutate((d) => {
+      for (let i = 0; i < MAX_SCREENS; i++) d.screens[`s-big${i}`] = { id: `s-big${i}`, broken: true };
+    });
+    // Only the size issue: none of the 24 broken screens was validated.
+    expect(issuesOf(screens)).toEqual([{ path: "screens", message: `At most ${MAX_SCREENS} screens` }]);
+    const order = mutate((d) => (d.screenOrder = Array.from({ length: MAX_SCREENS + 1 }, () => 42)));
+    expect(issuesOf(order)).toEqual([{ path: "screenOrder", message: `At most ${MAX_SCREENS} screens` }]);
+    const blocks = mutate((d) => {
+      d.screens["s-home"].name = 42;
+      d.screens["s-settings"].layout.blocks = Object.fromEntries(Array.from({ length: 201 }, (_, i) => [`b-${i}`, null]));
+    });
+    expect(issuesOf(blocks)).toEqual([
+      { path: "screens/s-settings/layout/blocks", message: "At most 200 blocks", params: { layoutCode: "too-many-blocks" } },
+    ]);
+    // applyPatch checks the same bounds before validating the patched document.
+    const result = applyPatch(screensDoc(), [
+      { op: "replace", path: "/screens/s-settings/layout/blocks", value: Object.fromEntries(Array.from({ length: 201 }, (_, i) => [`b-${i}`, {}])) },
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.reason).toBe("invalid-document");
+      expect(result.error.issues?.map((issue) => issue.path.join("/"))).toEqual(["screens/s-settings/layout/blocks"]);
+    }
   });
 
   it("rejects more than MAX_BLOCKS blocks", () => {

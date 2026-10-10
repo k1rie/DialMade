@@ -16,6 +16,7 @@ import type {
   ScreenKind,
   Structure,
 } from "@dialmade/layout";
+import type { GenerateOptions, GenerateOutcome, RevealState } from "./useGenerateFlow";
 import type { LayoutStore } from "./useLayoutStore";
 
 /** Canvas tool of the bottom bar: Dibujar (R) · Editar (V) · Mano (H). */
@@ -113,14 +114,19 @@ export type LayoutStepProps = {
   style?: StyleChoice;
   /** Called when the user picks another style (Fase B → `actions.setRecipe`). */
   onStyleChange?(style: StyleChoice): void;
-  /** Called after every «Generar». Return `false` when the result could not be applied: no reveal follows. */
+  /**
+   * Called on every «Generar» with the result, before the draft stores it. Return `false` when it could not be
+   * written (a locked value…): the draft keeps its previous fingerprints («Regenerar N» still counts) and no
+   * moment follows.
+   */
   onGenerate?(result: GenerateResult): boolean | void;
   /**
-   * The «Generar» moment is over (the signature reveal of wave 3; for now right after a successful
-   * `onGenerate`): the flow moves on to «Ajustar».
+   * The «Generar» moment is over: the signature reveal in the canvas (≤900 ms, skippable) and, with «Escribir
+   * textos con IA», the copy request until «Ir a Ajustar». The flow moves on to «Ajustar». Without it the step
+   * plays no moment and opens its report instead (the standalone step).
    */
   onRevealEnd?(): void;
-  /** Hover or focus on «Generar» (Fase B: preload the Composer chunk). */
+  /** Hover or focus on «Generar»: preload the Composer chunk. */
   onGenerateIntent?(): void;
   className?: string;
 };
@@ -135,10 +141,15 @@ export type LayoutEnv = {
   narrow: boolean;
   onGenerateIntent?: () => void;
   /**
-   * The flow refused that «Generar» (`onGenerate` returned `false`: a locked value, an invalid write): the
-   * GenerateBar then opens no report, so the flow's question («¿Desbloquear y borrar?») is not covered by it.
+   * «Generar»: the deterministic pass written by the flow, then the moment (and the AI step when it is on). A
+   * `refused` outcome means the flow said why (its toast with the way out): the GenerateBar opens no report
+   * over it. Only `done` (no moment: the standalone step) opens the report.
    */
-  generateRefused: (result: GenerateResult) => boolean;
+  generate: (options?: GenerateOptions) => GenerateOutcome;
+  /** The «Generar» moment in progress (the canvas paints its page layer), or `null`. */
+  reveal: RevealState | null;
+  /** The signature animation ended: played to the end or skipped (click, Esc). */
+  endReveal: () => void;
   /** Moves focus into an area, like F6 (the «Estilo» chip focuses the inspector, «Añadir bloque» the library). */
   focusRegion: (region: LayoutRegion) => void;
 };

@@ -30,6 +30,15 @@ export type PackReadmeInfo = {
 
 const list = (items: readonly string[]) => items.map((item) => `- ${item}`).join("\n");
 
+/**
+ * Files to upload to Claude Design, as code spans: the brief, the theme, the tokens and every preview of the
+ * pack (`info.pages` lists them, `preview.html` first). The logo is appended by the step itself.
+ */
+const uploadFiles = (info: PackReadmeInfo): string => {
+  const previews = info.pages.length > 0 ? info.pages.map((page) => page.path) : ["preview.html"];
+  return ["DESIGN.md", "theme.css", "tokens.tokens.json", ...previews].map((file) => `\`${file}\``).join(", ");
+};
+
 type LayoutFileTexts = { css: string; json: string; flowTitle: string; flowNote: string };
 
 /** «## Pantallas y flujo» of a README: one numbered line per screen with its route, its file and its links. */
@@ -164,7 +173,7 @@ export const exportDialog = defineDictionary({
           "## Cómo usarla",
           "",
           "1. En Claude, crea un artifact de tipo Design System (Claude Design).",
-          `2. Sube estos archivos: \`DESIGN.md\`, \`theme.css\`, \`tokens.tokens.json\`, \`preview.html\`${info.hasLogo ? " y `logo.png`" : ""}.`,
+          `2. Sube estos archivos: ${uploadFiles(info)}${info.hasLogo ? " y `logo.png`" : ""}.`,
           "3. Pega el prompt que copiaste en Dialmade (también está en `prompt.md`).",
           "",
           "## Reglas",
@@ -291,7 +300,7 @@ export const exportDialog = defineDictionary({
           "## How to use it",
           "",
           "1. In Claude, create a Design System artifact (Claude Design).",
-          `2. Upload these files: \`DESIGN.md\`, \`theme.css\`, \`tokens.tokens.json\`, \`preview.html\`${info.hasLogo ? " and `logo.png`" : ""}.`,
+          `2. Upload these files: ${uploadFiles(info)}${info.hasLogo ? " and `logo.png`" : ""}.`,
           "3. Paste the prompt you copied in Dialmade (it's also in `prompt.md`).",
           "",
           "## Rules",

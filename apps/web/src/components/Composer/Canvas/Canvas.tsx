@@ -27,15 +27,43 @@ export type CanvasProps = {
   onSelect: (id: string) => void;
   onDeselect: () => void;
   revealKey: number;
+  /**
+   * «Editar» / «Probar» (only offered when `onPlayingChange` is given: documents with screens). While playing,
+   * the page is not selectable and its links switch screens through `onNavigate`.
+   */
+  playing?: boolean;
+  onPlayingChange?: ((playing: boolean) => void) | undefined;
+  onNavigate?: CanvasViewportProps["onNavigate"];
+  navigationKey?: number;
   onDrop: (item: DroppedItem) => void;
   toolbar: CanvasViewportProps["toolbar"];
   className?: string;
 };
 
+type PreviewUse = "edit" | "play";
+
 const DEVICE_ICONS = { mobile: <PhoneIcon />, tablet: <TabletIcon />, desktop: <MonitorIcon /> } as const;
 
 /** Center column: page tabs, device and color mode, and the live page in its frame. */
-export function Canvas({ doc, target, labelOf, mode, device, logoUrl, selectedId, onSelect, onDeselect, revealKey, onDrop, toolbar, className }: CanvasProps) {
+export function Canvas({
+  doc,
+  target,
+  labelOf,
+  mode,
+  device,
+  logoUrl,
+  selectedId,
+  onSelect,
+  onDeselect,
+  revealKey,
+  playing = false,
+  onPlayingChange,
+  onNavigate,
+  navigationKey,
+  onDrop,
+  toolbar,
+  className,
+}: CanvasProps) {
   const t = useDictionary(composer);
   const actions = useDesignDocActions();
   const regionId = useId();
@@ -45,6 +73,18 @@ export function Canvas({ doc, target, labelOf, mode, device, logoUrl, selectedId
       <div className="flex items-center justify-between gap-2 max-sm:flex-wrap">
         <PageTabs doc={doc} active={target.key} labelOf={labelOf} controls={regionId} />
         <div className="flex shrink-0 items-center gap-1.5">
+          {onPlayingChange && (
+            <Segmented<PreviewUse>
+              label={t.canvas.use.label}
+              layoutId="composer-use"
+              value={playing ? "play" : "edit"}
+              onChange={(value) => onPlayingChange(value === "play")}
+              options={[
+                { value: "edit", label: t.canvas.use.edit },
+                { value: "play", label: t.canvas.use.play },
+              ]}
+            />
+          )}
           <Segmented
             label={t.canvas.device}
             layoutId="composer-device"
@@ -76,6 +116,8 @@ export function Canvas({ doc, target, labelOf, mode, device, logoUrl, selectedId
         onSelect={onSelect}
         onDeselect={onDeselect}
         revealKey={revealKey}
+        {...(playing && { onNavigate })}
+        {...(navigationKey !== undefined && { navigationKey })}
         onDrop={onDrop}
         toolbar={toolbar}
       />

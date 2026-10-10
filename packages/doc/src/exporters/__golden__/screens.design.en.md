@@ -330,6 +330,8 @@ A 10-step scale on a 4px base, tuned to density 5/10 (denser means less air). Va
 
 One route per screen, in this order. Each screen is a 12-column grid (8px rows); its wireframe and its reading order share the same numbers.
 
+In the code pack, each screen carries its `layout.css` (the grid; load it after the kit CSS) and its `layout.json` (blocks, reading order, tablet and phone rules and links) next to its `index.html`.
+
 1. Inicio (`/`) · Public website
 2. Dashboard (`/dashboard`) · App screen · navigation: Sidebar · with page header
 3. Ajustes (`/ajustes`) · App screen · navigation: Sidebar · without page header
@@ -351,25 +353,23 @@ Public website.
 
 +--------------------------------------------------------------+
 | 2. Hero                                                      |
-| con captura del producto      +------------------------------+
-|                               | 3. Captura                   |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               +------------------------------+
+| con captura del producto                                     |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
 |                                                              |
 +--------------------------------------------------------------+
 
 +--------------------------------------------------------------+
-| 4. Características ×3                                        |
+| 3. Características ×3                                        |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -381,7 +381,7 @@ Public website.
 +--------------------------------------------------------------+
 
 +-----------------------------------------+--------------------+
-| 5. Calendario                           | 6. Próximos        |
+| 4. Calendario                           | 5. Próximos        |
 | calendario "semanal"                    |                    |
 |                                         |                    |
 |                                         |                    |
@@ -396,7 +396,7 @@ Public website.
 +-----------------------------------------+--------------------+
 
 +--------------------------------------------------------------+
-| 7. Llamada                                                   |
+| 6. Llamada                                                   |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -407,12 +407,11 @@ Public website.
 Reading order (DOM, focus and phone):
 
 1. Barra de navegación → `landing.navbar@simple` → links to "Dashboard"
-2. Hero → `landing.hero@split` — note: "con captura del producto"
-3. Captura → merged into "Hero"
-4. Características → `landing.features` ×3
-5. Calendario → `ui.calendar@week` — note: "calendario 'semanal'"
-6. Próximos → `ui.list`
-7. Llamada → `landing.cta@banner` → links to "Ajustes"
+2. Hero → `landing.hero@split` (with "Captura" inside) — note: "con captura del producto"
+3. Características → `landing.features` ×3
+4. Calendario → `ui.calendar@week` — note: "calendario 'semanal'"
+5. Próximos → `ui.list`
+6. Llamada → `landing.cta@banner` → links to "Ajustes"
 
 Hidden: "Pie".
 

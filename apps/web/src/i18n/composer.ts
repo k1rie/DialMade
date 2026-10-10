@@ -116,6 +116,14 @@ export const composer = defineDictionary({
       dark: "Oscuro",
       dropHere: "Suelta para aplicarlo a todo el diseño",
       scale: (percent: number) => `${percent} %`,
+      use: {
+        label: "Uso de la vista previa",
+        edit: "Editar",
+        play: "Probar",
+        playing: "Probando: los enlaces cambian de pantalla. Esc vuelve a Editar.",
+        editing: "Editando: elige una sección para ajustarla.",
+        arrived: (screen: string) => `Pantalla «${screen}»`,
+      },
     },
     selection: {
       toolbar: (section: string) => `Sección ${section}`,
@@ -273,6 +281,14 @@ export const composer = defineDictionary({
       dark: "Dark",
       dropHere: "Drop to apply it to the whole design",
       scale: (percent: number) => `${percent}%`,
+      use: {
+        label: "Preview use",
+        edit: "Edit",
+        play: "Try it",
+        playing: "Trying it out: links switch screens. Esc goes back to Edit.",
+        editing: "Editing: pick a section to adjust it.",
+        arrived: (screen: string) => `“${screen}” screen`,
+      },
     },
     selection: {
       toolbar: (section: string) => `${section} section`,

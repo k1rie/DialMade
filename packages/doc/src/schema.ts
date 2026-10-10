@@ -436,6 +436,7 @@ type PageShape = {
   root: string;
   elements: Record<string, { type: string; props: Record<string, unknown>; children: string[] }>;
   hidden?: string[] | undefined;
+  stash?: Record<string, { type: string; props: Record<string, unknown> }> | undefined;
 };
 
 const quoteList = (items: readonly string[]) => {
@@ -489,8 +490,25 @@ function treeIssues(page: PageShape, namespaces: readonly string[], owner: strin
     if (!(id in elements)) issues.push({ message: `Unknown hidden id "${id}"`, path: ["hidden", i] });
     else if (id === root) issues.push({ message: "The root cannot be hidden", path: ["hidden", i] });
   });
+  for (const [id, entry] of Object.entries(page.stash ?? {})) {
+    if (id in elements) issues.push({ message: `"${id}" has an element: only blocks without one are stashed`, path: ["stash", id] });
+    const namespace = entry.type.split(".")[0]!;
+    if (!namespaces.includes(namespace)) {
+      issues.push({ message: `A ${owner} only admits ${quoteList(namespaces)} elements, got "${entry.type}"`, path: ["stash", id, "type"] });
+    }
+    propsIssues(entry.props, ["stash", id, "props"], issues);
+  }
   return issues;
 }
+
+/**
+ * Props of a block that has no element of its own because another block's section absorbed it (a media inside
+ * a hero), kept by `buildPageFromLayout` so moving the block back out restores its copy and pinned values.
+ */
+export const StashedElementSchema = z.strictObject({
+  type: z.string().regex(ELEMENT_TYPE, "Element types are namespaced, e.g. 'landing.hero' or 'ui.button'"),
+  props: z.record(z.string(), z.unknown()),
+});
 
 /** The members of a page, without its rules: `PageSchema` adds the v1 rules, `ScreenSchema` the screen-page ones. */
 const PageShapeSchema = z.strictObject({
@@ -500,6 +518,11 @@ const PageShapeSchema = z.strictObject({
   root: ElementIdSchema,
   elements: z.record(ElementIdSchema, ElementSchema),
   hidden: z.array(ElementIdSchema).optional(),
+  /** Screen pages only: absorbed blocks' props by block id (never an element id of the page). */
+  stash: z
+    .record(ElementIdSchema, StashedElementSchema)
+    .refine((stash) => Object.keys(stash).length <= MAX_BLOCKS, `At most ${MAX_BLOCKS} stashed blocks`)
+    .optional(),
 });
 
 export const PageSchema = PageShapeSchema.superRefine((page, ctx) => {
@@ -507,6 +530,7 @@ export const PageSchema = PageShapeSchema.superRefine((page, ctx) => {
   if (page.kind === "landing" && !getLandingLayout(page.layoutId)) {
     ctx.addIssue({ code: "custom", message: `Unknown landing layout "${page.layoutId}"`, path: ["layoutId"] });
   }
+  if (page.stash !== undefined) ctx.addIssue({ code: "custom", message: "Only screen pages keep a stash", path: ["stash"] });
 });
 
 export const PagesSchema = z
@@ -689,8 +713,9 @@ type ScreensDocShape = {
 
 /**
  * Document rules of the screens: record keys are the ids, `screenOrder` is a permutation of them, routes
- * are unique, links point to existing screens, app screens with navigation share it, and `pages.landing` /
- * `pages.app` are absent once there are screens (one source of truth; `pages.brand` stays).
+ * are unique, block ids are unique across screens (the later screen is reported), links point to existing
+ * screens, app screens with navigation share it, and `pages.landing` / `pages.app` are absent once there are
+ * screens (one source of truth; `pages.brand` stays).
  */
 function screensIssues(doc: ScreensDocShape): Issue[] {
   const issues: Issue[] = [];
@@ -712,6 +737,8 @@ function screensIssues(doc: ScreensDocShape): Issue[] {
   // Checked in display order, so the later screen is the one reported.
   const ordered = [...new Set([...doc.screenOrder.filter((id) => Object.hasOwn(doc.screens, id)), ...keys])];
   const routes = new Map<string, string>();
+  /** Block id → the screen that has it: block ids are element ids of the compiled pages and of the AI pointers. */
+  const blockOwners = new Map<string, string>();
   let nav: { id: string; nav: string } | undefined;
   for (const id of ordered) {
     const screen = doc.screens[id]!;
@@ -728,6 +755,13 @@ function screensIssues(doc: ScreensDocShape): Issue[] {
       }
     }
     for (const [blockId, block] of Object.entries(screen.layout?.blocks ?? {})) {
+      const owner = blockOwners.get(blockId);
+      if (owner !== undefined) {
+        issues.push({
+          message: `Block id "${blockId}" is already used by screen "${owner}": block ids are unique across screens`,
+          path: ["screens", id, "layout", "blocks", blockId],
+        });
+      } else blockOwners.set(blockId, id);
       if (block.linkTo !== undefined && !Object.hasOwn(doc.screens, block.linkTo)) {
         issues.push({ message: `Unknown screen "${block.linkTo}"`, path: ["screens", id, "layout", "blocks", blockId, "linkTo"] });
       }
@@ -737,6 +771,41 @@ function screensIssues(doc: ScreensDocShape): Issue[] {
     for (const kind of ["landing", "app"] as const) {
       if (doc.pages[kind] !== undefined) {
         issues.push({ message: `pages.${kind} must be absent when the document has screens`, path: ["pages", kind] });
+      }
+    }
+  }
+  return issues;
+}
+
+/**
+ * Cheap bounds checked before the full parse (`safeParseDesignDoc`, `applyPatch`): more than `MAX_SCREENS`
+ * screens (or `screenOrder` entries), or a layout with more than `MAX_BLOCKS` blocks, is rejected without
+ * validating a single screen, so an oversized document never pays for the whole parse. Same paths and
+ * messages as the full parse (the blocks issue keeps its engine code in `params.layoutCode`). Empty when the
+ * input is within bounds or is not shaped like a document (the parse reports that).
+ */
+export function documentSizeIssues(input: unknown): z.core.$ZodIssue[] {
+  if (!isPlainObject(input)) return [];
+  const issues: z.core.$ZodIssue[] = [];
+  const custom = (path: PropertyKey[], message: string, params?: Record<string, unknown>): z.core.$ZodIssue => ({
+    code: "custom",
+    path,
+    message,
+    input: undefined,
+    ...(params && { params }),
+  });
+  const { screens, screenOrder } = input;
+  if (Array.isArray(screenOrder) && screenOrder.length > MAX_SCREENS) issues.push(custom(["screenOrder"], `At most ${MAX_SCREENS} screens`));
+  if (isPlainObject(screens)) {
+    const keys = Object.keys(screens);
+    if (keys.length > MAX_SCREENS) issues.push(custom(["screens"], `At most ${MAX_SCREENS} screens`));
+    else {
+      for (const key of keys) {
+        const screen = screens[key];
+        const blocks = isPlainObject(screen) && isPlainObject(screen.layout) ? screen.layout.blocks : undefined;
+        if (isPlainObject(blocks) && Object.keys(blocks).length > MAX_BLOCKS) {
+          issues.push(custom(["screens", key, "layout", "blocks"], `At most ${MAX_BLOCKS} blocks`, { layoutCode: "too-many-blocks" }));
+        }
       }
     }
   }
@@ -833,6 +902,8 @@ export type DesignSystem = z.output<typeof SystemSchema>;
 export type Reference = z.output<typeof ReferenceSchema>;
 export type Provenance = z.output<typeof ProvenanceSchema>;
 export type PageElement = z.output<typeof ElementSchema>;
+/** An absorbed block's props in `page.stash` (screen pages). */
+export type StashedElement = z.output<typeof StashedElementSchema>;
 export type Page = z.output<typeof PageSchema>;
 export type Pages = z.output<typeof PagesSchema>;
 export type DesignDoc = z.output<typeof DesignDocSchema>;

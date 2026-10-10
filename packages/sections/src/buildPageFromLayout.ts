@@ -1,4 +1,12 @@
-import { DesignDocError, LAYOUT_PAGE_ID, PAGE_DIAL_DEFAULTS, ROOT_ELEMENT_ID, type Page, type PageElement } from "@dialmade/doc";
+import {
+  DesignDocError,
+  LAYOUT_PAGE_ID,
+  PAGE_DIAL_DEFAULTS,
+  ROOT_ELEMENT_ID,
+  type Page,
+  type PageElement,
+  type StashedElement,
+} from "@dialmade/doc";
 import {
   COL_PX,
   ROW_UNIT,
@@ -25,6 +33,7 @@ import {
   type ScreenKind,
   type Structure,
 } from "@dialmade/layout";
+import { shellCopyCandidates, shellScreenCopy, shellScreenPurpose } from "./app/Shell/screenCopy";
 import { APP_SHELL_TYPE, VARIANT_PROP, pageRootType } from "./constants";
 import { deriveSeed } from "./content/rng";
 import { resolveSectionProps, storedDefaultProps } from "./props";
@@ -64,9 +73,15 @@ export interface BuildFromLayoutOptions {
    * pinned values. Pinned values (`block.pinned`) are written back in both modes.
    */
   mode?: "layout" | "content";
-  /** App screens: `app.shell` props shared by every app screen (from another screen's page); they win over `previous`. */
+  /**
+   * App screens: `app.shell` props shared by every app screen (from another screen's page); they win over
+   * `previous`. Pass only shared keys: `SHELL_SCREEN_KEYS` belong to each screen.
+   */
   shellProps?: Readonly<Record<string, unknown>>;
-  /** The screen's name: the shell's page title. */
+  /**
+   * The screen's name: the shell's page title, and (with its blocks and the product) the purpose that picks
+   * the frame's subtitle and primary action (`shellScreenCopy`). Stored values the build did not write stay.
+   */
   screenTitle?: string;
   /** The screen's id: the active nav item when the nav is built from screens. */
   screenId?: string;
@@ -83,7 +98,10 @@ export interface BuildFromLayoutResult {
   css: string;
   /** `block.generated` of every block (absorbed ones included), to write in the same batch as the page. */
   fingerprints: Record<BlockId, GeneratedFingerprint>;
-  /** Blocks merged into their parent's section (a media inside a hero): no element. */
+  /**
+   * Blocks merged into their parent's section (a media inside a hero): no element. Their previous props (if
+   * any) are kept in `page.stash`, so moving one back out restores its copy and pinned values.
+   */
   absorbed: BlockId[];
   /** `inferStructure` warnings of the compiled layout plus `not-accepted` for moved children. */
   warnings: LayoutWarning[];
@@ -198,6 +216,43 @@ function topUp(props: Props, fresh: Props): Props {
 /* ------------------------------------------------------------------------------------------------ */
 /* Blocks                                                                                           */
 /* ------------------------------------------------------------------------------------------------ */
+
+/**
+ * The previous props of a block: its element of the previous page or, while it was absorbed (no element of
+ * its own), its entry in the previous page's `stash`. `undefined` for a block the previous page never had.
+ */
+function previousBlockElement(previous: Page | undefined, id: BlockId): PageElement | undefined {
+  if (!previous) return undefined;
+  if (hasOwn(previous.elements, id)) return previous.elements[id];
+  const stashed = previous.stash && hasOwn(previous.stash, id) ? previous.stash[id] : undefined;
+  return stashed ? { type: stashed.type, props: stashed.props, children: [] } : undefined;
+}
+
+/**
+ * `page.stash` entry of an absorbed block: its previous props (element or stash), so moving it back out
+ * restores its copy and pinned values. In mode "content" (locale or product change) the copy is regenerated
+ * for the new context, keeping the variant and the pinned values, so it never comes back in the old
+ * language. `undefined` when the previous page had nothing for it.
+ */
+function stashEntry(
+  id: BlockId,
+  block: LayoutBlock,
+  previous: Page | undefined,
+  registry: SectionRegistry,
+  ctx: ContentContext,
+  mode: "layout" | "content",
+): StashedElement | undefined {
+  const source = previousBlockElement(previous, id);
+  if (!source) return undefined;
+  if (mode === "layout") return { type: source.type, props: source.props };
+  const def = registry.get(source.type);
+  if (!def) return { type: source.type, props: source.props };
+  const blockCtx = { ...ctx, seed: deriveSeed(ctx.seed, id) };
+  const fresh: Props = { ...storedDefaultProps(def, blockCtx), ...(def.layout?.defaults?.(blockCtx) ?? {}) };
+  const variant = variantOf(def, source.props[VARIANT_PROP]);
+  if (variant) fresh[VARIANT_PROP] = variant;
+  return { type: source.type, props: writePinned(fresh, source.props, block.pinned, false) };
+}
 
 function sameFingerprint(a: GeneratedFingerprint | undefined, b: GeneratedFingerprint): boolean {
   return (
@@ -362,6 +417,9 @@ function shellVariant(nav: AppShell["nav"], current: unknown): string {
   return nav;
 }
 
+/** Page-header copy of the frame derived per screen (`shellScreenCopy`); a value that is not generated is kept. */
+const SHELL_SCREEN_COPY_KEYS = ["subtitle", "primaryAction"] as const;
+
 function shellElementProps(
   shell: AppShell,
   ctx: ContentContext,
@@ -369,6 +427,7 @@ function shellElementProps(
   previous: Page | undefined,
   options: BuildFromLayoutOptions,
   mode: "layout" | "content",
+  blockTypes: readonly LibraryBlockType[],
 ): Props {
   const def = registry.get(APP_SHELL_TYPE);
   const fresh: Props = def ? storedDefaultProps(def, ctx) : {};
@@ -380,6 +439,15 @@ function shellElementProps(
   props[VARIANT_PROP] = shellVariant(shell.nav, props[VARIANT_PROP]);
   props.showPageHeader = shell.header;
   if (options.screenTitle) props.title = options.screenTitle;
+
+  // The screen's own subtitle and primary action (from its name, its blocks and the product), unless the
+  // stored value is not one the build writes: then the user or the AI wrote it and it stays.
+  const derived = shellScreenCopy(shellScreenPurpose(options.screenTitle ?? "", blockTypes), ctx);
+  const generated = shellCopyCandidates(ctx);
+  for (const key of SHELL_SCREEN_COPY_KEYS) {
+    const current = props[key];
+    if (typeof current !== "string" || generated[key].has(current)) props[key] = derived[key];
+  }
 
   const screens = (options.navScreens ?? []).slice(0, SHELL_NAV_MAX);
   if (screens.length > 0) {
@@ -414,9 +482,11 @@ function compareByPosition(layout: LayoutDoc) {
  * Compiles a screen's layout to its page: root (`${kind}.page`) → `shell` (`app.shell`, app screens whose nav
  * is not `none`) → `layout` (`ui.region` scope) → the inferred regions (`ui.region` `r-…`, structural) and the
  * blocks (element id = block id, type = the library's `sectionType`) as `toElementTree` nests them, overlays
- * last. Accepted children of non-container blocks are absorbed first (`absorbChildren`). Each block gets fresh
- * props (per-block seed after the first block of a section type), its `fit` and, with `options.previous`, the
- * merge rules of `options.mode`. Deterministic; throws `DesignDocError` on an invalid layout.
+ * last. Accepted children of non-container blocks are absorbed first (`absorbChildren`); their previous props
+ * go to `page.stash` and come back when the block is moved out. Each block gets fresh props (per-block seed
+ * after the first block of a section type), its `fit` and, with `options.previous`, the merge rules of
+ * `options.mode`. App frames get the screen's own title, subtitle and primary action (`shellScreenCopy`).
+ * Deterministic; throws `DesignDocError` on an invalid layout.
  */
 export function buildPageFromLayout(
   layout: LayoutDoc,
@@ -499,7 +569,15 @@ export function buildPageFromLayout(
   if (withShell) {
     add(SHELL_ELEMENT_ID, {
       type: APP_SHELL_TYPE,
-      props: shellElementProps(shell, ctx, registry, previous, options, mode),
+      props: shellElementProps(
+        shell,
+        ctx,
+        registry,
+        previous,
+        options,
+        mode,
+        structure.order.filter((id) => !hiddenInLayout(id)).map((id) => compiled.blocks[id]!.type),
+      ),
       children: [LAYOUT_SCOPE_ID],
     });
   }
@@ -543,7 +621,7 @@ export function buildPageFromLayout(
           soon: libraryDef.status === "soon",
         });
       }
-      const previousElement = previous?.elements[el.id];
+      const previousElement = previousBlockElement(previous, el.id);
       const props = blockProps(
         { block, type, def, ctx: blockCtx, fit, overrides, previous: previousElement, mode },
         fingerprint,
@@ -562,11 +640,14 @@ export function buildPageFromLayout(
 
   dedupeTextTitles(elements, freshText);
 
+  const stash: Record<BlockId, StashedElement> = {};
   for (const child of absorbedIds) {
     const block = layout.blocks[child]!;
     fingerprints[child] = fingerprintOf(block, ABSORBED_VARIANT);
     const host = absorb.absorbed[child]!;
     if (block.linkTo && !hasOwn(links, host)) links[host] = block.linkTo;
+    const entry = stashEntry(child, block, previous, registry, ctx, mode);
+    if (entry) stash[child] = entry;
   }
 
   // The previous page's dials (also when it has none), unless the screen changed kind.
@@ -578,6 +659,7 @@ export function buildPageFromLayout(
     root: ROOT_ELEMENT_ID,
     elements,
     ...(hidden.length > 0 && { hidden }),
+    ...(Object.keys(stash).length > 0 && { stash }),
   };
   return {
     page,

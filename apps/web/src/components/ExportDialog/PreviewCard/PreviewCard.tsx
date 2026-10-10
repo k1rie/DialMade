@@ -1,11 +1,12 @@
 "use client";
 
 import type { OutputKind } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import type { DesignDoc, PageKey, Screen } from "@dialmade/doc";
 import { MiniApp, MiniBrand, MiniLanding, contentContextFromDoc, initialsOf } from "@dialmade/sections";
 import { useMemo, type CSSProperties } from "react";
 import { ThemeScope } from "@/components/ThemeScope";
 import type { PreviewMode } from "@/hooks/usePaletteFlow";
+import { ScreenMini } from "./ScreenMini";
 
 export type PreviewCardProps = {
   doc: DesignDoc;
@@ -16,6 +17,10 @@ export type PreviewCardProps = {
   kindLabel: string;
   /** Accessible name of the card. */
   label: string;
+  /** A Modo Layout screen: the card shows its own page, scaled down, instead of the kind's mini. */
+  screen?: Screen;
+  /** Page whose dials theme the card (a screen id or a kind). Default: `kind`. */
+  pageKey?: PageKey;
 };
 
 const MINIS = { brand: MiniBrand, landing: MiniLanding, app: MiniApp } as const;
@@ -27,8 +32,12 @@ const surface: CSSProperties = {
   color: "var(--foreground)",
 };
 
-/** The direction at a glance, painted with the user's theme: logo, name, tagline and the page mini. */
-export function PreviewCard({ doc, kind, mode, logoUrl, kindLabel, label }: PreviewCardProps) {
+/**
+ * The direction at a glance, painted with the user's theme: logo, name, tagline and the page mini (a screen's
+ * real page at small scale, or the kind's mini). With a screen there is no color interpolation: a whole page
+ * sits inside.
+ */
+export function PreviewCard({ doc, kind, mode, logoUrl, kindLabel, label, screen, pageKey }: PreviewCardProps) {
   const ctx = useMemo(
     () => contentContextFromDoc(doc, { locale: doc.brief.locale, ...(logoUrl && { logoUrl }) }),
     [doc, logoUrl],
@@ -37,8 +46,10 @@ export function PreviewCard({ doc, kind, mode, logoUrl, kindLabel, label }: Prev
 
   return (
     <ThemeScope
-      kind={kind}
+      doc={doc}
+      kind={pageKey ?? kind}
       mode={mode}
+      transition={!screen}
       role="img"
       aria-label={label}
       className="relative isolate block overflow-hidden rounded-card border border-app"
@@ -78,7 +89,7 @@ export function PreviewCard({ doc, kind, mode, logoUrl, kindLabel, label }: Prev
           )}
         </div>
         <div className="pointer-events-none hidden overflow-hidden rounded-[10px] shadow-[0_18px_40px_-18px_oklch(0_0_0/0.45)] sm:block">
-          <Mini ctx={ctx} />
+          {screen ? <ScreenMini doc={doc} screen={screen} mode={mode} {...(logoUrl && { logoUrl })} /> : <Mini ctx={ctx} />}
         </div>
       </div>
       <div aria-hidden className="flex flex-col">

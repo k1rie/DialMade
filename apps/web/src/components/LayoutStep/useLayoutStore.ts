@@ -198,8 +198,12 @@ export type LayoutActions = {
   markSynced: (doc: ScreensSource) => void;
 
   /* Generate. */
-  /** Structure, responsive, CSS and ASCII of every screen, in order; stores the fingerprints. */
-  generate: () => GenerateResult;
+  /**
+   * Structure, responsive, CSS and ASCII of every screen, in order; stores the result and the fingerprints.
+   * With `accept`, it is asked first: when it returns `false` (the flow could not write the result, e.g. a
+   * locked value) nothing is stored, so «Regenerar N bloques» still counts those blocks.
+   */
+  generate: (options?: GenerateOptions) => GenerateResult;
   /** Blocks new, changed (type, w, h, count, note) or removed since the last `generate` (all of them before it). */
   changedCount: () => number;
 
@@ -241,6 +245,12 @@ export type LayoutState = {
 
 export type HistorySlice = { screens: Record<ScreenId, Screen>; screenOrder: ScreenId[] };
 
+/** Options of `generate`. */
+export type GenerateOptions = {
+  /** Called with the result before it is stored; `false` = refused (the store stays as it was). */
+  accept?: (result: GenerateResult) => boolean;
+};
+
 /** The screens of a DesignDoc as the draft reads them (a doc `Screen` also carries its `page`). */
 export type ScreensSource = { readonly screens: Readonly<Record<ScreenId, Screen>>; readonly screenOrder: readonly ScreenId[] };
 
@@ -253,6 +263,9 @@ export type DocSync = { doc: ScreensSource; key: string; draft: HistorySlice };
 /** What `syncFromDoc` did. */
 export type SyncOutcome = "unchanged" | "reseeded" | "merged";
 export type LayoutStore = StoreApi<LayoutState> & { temporal: StoreApi<TemporalState<HistorySlice>> };
+
+/** One screen of `selectChangedBlocks`. */
+export type ChangedBlocks = { screenId: ScreenId; changed: BlockId[]; all: boolean };
 
 /* ------------------------------------------------------------------------------------------------ */
 /* Pure helpers                                                                                     */
@@ -543,8 +556,13 @@ function mergeBlock(block: LayoutBlock, base: LayoutBlock | undefined, doc: Layo
   const draftHidden = block.hidden === true;
   // Hidden: the side that changed it since the last sync wins; with no change in the draft, the document's.
   const hidden = doc && base && draftHidden === (base.hidden === true) ? doc.hidden === true : draftHidden;
-  if (sameJson(block.pinned, pinned) && sameJson(block.generated, generated) && draftHidden === hidden) return block;
+  // Count, the same way: Ajustar's count knob writes `block.count` (the layout owns it), so a ×N changed there
+  // while the draft also changed elsewhere is kept, unless the draft changed that count itself.
+  const count = doc && base && block.count === base.count ? doc.count : block.count;
+  if (sameJson(block.pinned, pinned) && sameJson(block.generated, generated) && draftHidden === hidden && block.count === count) return block;
   const next: LayoutBlock = { ...block };
+  if (count !== undefined) next.count = count;
+  else delete next.count;
   if (pinned) next.pinned = [...pinned];
   else delete next.pinned;
   if (generated) next.generated = generated;
@@ -556,10 +574,10 @@ function mergeBlock(block: LayoutBlock, base: LayoutBlock | undefined, doc: Layo
 
 /**
  * Merges what changed in the document into a draft that also changed (rules of `syncFromDoc`): screens, order,
- * geometry, type, label, note, count and links stay as in `draft`; for every block `pinned` and `generated` come
- * from `doc` (dropped when the document does not have the block), and `hidden` is three-way against `base` (the
- * document at the last sync). Keeps the identity of everything that does not change (the draft itself when
- * nothing does).
+ * geometry, type, label, note and links stay as in `draft`; for every block `pinned` and `generated` come from
+ * `doc` (dropped when the document does not have the block), and `hidden` and `count` are three-way against
+ * `base` (the document at the last sync): the side that changed them wins, the draft when both did. Keeps the
+ * identity of everything that does not change (the draft itself when nothing does).
  */
 export function mergeDocScreens(draft: HistorySlice, base: HistorySlice | null, doc: HistorySlice): HistorySlice {
   let screens: Record<ScreenId, Screen> | undefined;
@@ -624,6 +642,39 @@ export function selectChangedCount(state: ScreensView & Pick<LayoutState, "gener
   if (prints) for (const [id, base] of Object.entries(prints)) if (!screens[id]) count += Object.keys(base).length;
   changedMemo.set(screens, { order: screenOrder, prints, value: count });
   return count;
+}
+
+/**
+ * The blocks «Regenerar N bloques» would rebuild, per screen in order: new or changed since the last «Generar»
+ * (removed blocks have no section left). `all` is true when no block of that screen has a fingerprint yet (a new
+ * or never generated screen).
+ */
+export function selectChangedBlocks(state: ScreensView & Pick<LayoutState, "generatedPrints">): ChangedBlocks[] {
+  const { screens, screenOrder, generatedPrints: prints } = state;
+  const out: ChangedBlocks[] = [];
+  for (const id of screenOrder) {
+    const screen = screens[id];
+    if (!screen) continue;
+    const base = prints?.[id];
+    const changed: BlockId[] = [];
+    let printed = 0;
+    for (const [blockId, block] of Object.entries(screen.layout.blocks)) {
+      const print = base?.[blockId] ?? block.generated;
+      if (print) printed++;
+      if (!print || !matchesPrint(print, block)) changed.push(blockId);
+    }
+    out.push({ screenId: id, changed, all: printed === 0 });
+  }
+  return out;
+}
+
+/** Whether «Generar» ran: in this session, or before (the document's blocks carry their fingerprints). */
+export function selectHasGenerated(state: ScreensView & Pick<LayoutState, "generated">): boolean {
+  if (state.generated !== null) return true;
+  return state.screenOrder.some((id) => {
+    const screen = state.screens[id];
+    return screen !== undefined && Object.values(screen.layout.blocks).some((block) => block.generated !== undefined);
+  });
 }
 
 /* ------------------------------------------------------------------------------------------------ */
@@ -1183,7 +1234,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
           /* ---------------------------------------------------------------------------------------- */
           /* Generate                                                                                 */
           /* ---------------------------------------------------------------------------------------- */
-          generate: () => {
+          generate: (options) => {
             const state = get();
             const changed = selectChangedCount(state);
             const screens: GeneratedScreen[] = [];
@@ -1213,6 +1264,7 @@ export function createLayoutStore(init: LayoutStoreInit = {}): LayoutStore {
               prints[screenId] = screenPrints;
             }
             const result: GenerateResult = { screens, changed };
+            if (options?.accept && !options.accept(result)) return result;
             set({ generated: result, generatedPrints: prints });
             return result;
           },
@@ -1385,3 +1437,4 @@ export function useScreenResponsive(screenId?: ScreenId): ResponsiveLayout | nul
 
 /** N of «Regenerar N bloques». */
 export const useChangedCount = (): number => useLayoutStore(selectChangedCount);
+export const useHasGenerated = (): boolean => useLayoutStore(selectHasGenerated);

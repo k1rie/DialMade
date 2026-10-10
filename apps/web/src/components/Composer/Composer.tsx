@@ -1,7 +1,7 @@
 "use client";
 
 import { outputKindOptions } from "@dialmade/catalog";
-import type { PageKey } from "@dialmade/doc";
+import { hasScreens, type PageKey } from "@dialmade/doc";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { AiCopyError, useAiCopy, type AiCopyRequest, type AiCopyResult } from "@/hooks/useAiCopy";
@@ -20,6 +20,7 @@ import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
 import { formatUsd } from "@/lib/money";
+import { linkedScreen } from "@/lib/screen-layout";
 import { BriefPanel } from "./BriefPanel";
 import { Canvas } from "./Canvas";
 import { ComposerTopBar } from "./ComposerTopBar";
@@ -83,6 +84,12 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
   const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const [aiSection, setAiSection] = useState<string | null>(null);
   const [height, setHeight] = useState<number | null>(null);
+  // «Probar» (documents with screens): the preview behaves like the site and its links switch screens.
+  const [playing, setPlaying] = useState(false);
+  const [navigationKey, setNavigationKey] = useState(0);
+  // Polite status for the play mode; `n` makes the same message announce again (a second visit to a screen).
+  const [status, setStatus] = useState({ text: "", n: 0 });
+  const announce = useCallback((text: string) => setStatus((current) => ({ text, n: current.n + 1 })), []);
 
   // On large screens the Composer fills the viewport below the stepper; the columns scroll inside.
   const measureRef = useCallback((root: HTMLDivElement | null) => {
@@ -131,12 +138,37 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
     },
     [activeTarget],
   );
+  /** «Editar» / «Probar». Entering play mode drops the selection (its toolbar edits, play mode does not). */
+  const changePlaying = useCallback(
+    (next: boolean) => {
+      setPlaying(next);
+      if (next) setSelection(null);
+      announce(next ? t.canvas.use.playing : t.canvas.use.editing);
+    },
+    [announce, t],
+  );
+
+  /** A screen link activated in «Probar»: its screen becomes the active page, as if its tab had been picked. */
+  const navigate = useCallback(
+    (linkId: string) => {
+      const doc = store.getState().doc;
+      const to = doc ? linkedScreen(doc, linkId) : null;
+      if (!doc || !to) return;
+      actions.setActiveKey(to);
+      setNavigationKey((key) => key + 1);
+      announce(t.canvas.use.arrived(doc.screens[to]!.name));
+    },
+    [store, actions, announce, t],
+  );
+
   const selectFromList = useCallback(
     (id: string) => {
+      // Picking a section to adjust is editing.
+      if (playing) changePlaying(false);
       selectFromCanvas(id);
       setRevealKey((key) => key + 1);
     },
-    [selectFromCanvas],
+    [selectFromCanvas, playing, changePlaying],
   );
   const deselect = useCallback(() => setSelection(null), []);
 
@@ -271,10 +303,14 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
       ? selection.id
       : null;
 
+  const canPlay = doc ? hasScreens(doc) : false;
+  const play = playing && canPlay;
+
   useComposerShortcuts({
     undo: history.undo,
     redo: history.redo,
-    deselect,
+    // Esc leaves «Probar» first.
+    deselect: () => (play ? changePlaying(false) : deselect()),
     move: (delta) => {
       if (selectedId) moveSection(selectedId, delta);
     },
@@ -292,6 +328,10 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
       style={{ "--composer-h": height ? `${height}px` : `max(${MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
     >
       <DeckFonts />
+      <p role="status" className="sr-only">
+        {status.text}
+        {status.n % 2 ? "\u200b" : ""}
+      </p>
       <ComposerTopBar
         doc={doc}
         target={target}
@@ -329,6 +369,10 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
           onSelect={selectFromCanvas}
           onDeselect={deselect}
           revealKey={revealKey}
+          playing={play}
+          onPlayingChange={canPlay ? changePlaying : undefined}
+          onNavigate={navigate}
+          navigationKey={navigationKey}
           onDrop={onCanvasDrop}
           toolbar={{
             aiAvailable: ai.available,

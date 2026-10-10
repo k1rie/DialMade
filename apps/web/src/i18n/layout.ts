@@ -708,6 +708,12 @@ export const layout = defineDictionary({
       generating: "Generando…",
       skip: "Saltar animación",
       again: "Generar de nuevo",
+      /* After the signature moment, while the generated page stays in the canvas (AI copy). */
+      reveal: {
+        toAdjust: "Ir a Ajustar",
+        keepEditing: "Seguir editando el layout",
+        barLabel: "Textos con IA",
+      },
       /** Status of the bottom bar without the warnings, which are a button: «3 pantallas · 24 bloques (2 libres)». */
       summary: (s: Omit<GenerateStatus, "warnings">) =>
         [
@@ -1290,6 +1296,11 @@ export const layout = defineDictionary({
       generating: "Generating…",
       skip: "Skip animation",
       again: "Generate again",
+      reveal: {
+        toAdjust: "Go to Adjust",
+        keepEditing: "Keep editing the layout",
+        barLabel: "AI copy",
+      },
       summary: (s: Omit<GenerateStatus, "warnings">) =>
         [
           s.screens > 1 && plural(s.screens, "screen", "screens"),

@@ -1,8 +1,9 @@
 import { MAX_PINNED, applyPatch, screenPointer, type DesignDoc } from "@dialmade/doc";
-import { sectionRegistry } from "@dialmade/sections";
+import { blockCount, estimateContent } from "@dialmade/layout";
+import { buildPageFromLayout, contentContextFromDoc, sectionRegistry } from "@dialmade/sections";
 import { describe, expect, it } from "vitest";
 import { sampleDoc, sampleScreensDoc } from "@/lib/ai/testing";
-import { canHide, hiddenOps, isPageKind, pageBase, pageTarget, sectionRows, setPropOps } from "./pageOps";
+import { COUNT_PROP, canHide, hiddenOps, isPageKind, pageBase, pageTarget, sectionRows, setPropOps } from "./pageOps";
 
 function patched(doc: DesignDoc, ops: Parameters<typeof applyPatch>[1]): DesignDoc {
   const result = applyPatch(doc, ops);
@@ -86,5 +87,73 @@ describe("sectionRows", () => {
     const rows = sectionRows(target, sectionRegistry);
     expect(rows.reorderable).toBe(true);
     expect(rows.ids).toEqual(target.page.elements[target.page.root]!.children);
+  });
+});
+
+/** The id of the first block of `type` on a screen of `sampleScreensDoc`. */
+function blockIdOf(doc: DesignDoc, screenId: string, type: string): string {
+  const entry = Object.entries(doc.screens[screenId]!.layout.blocks).find(([, block]) => block.type === type);
+  if (!entry) throw new Error(`No ${type} block on ${screenId}`);
+  return entry[0];
+}
+
+/** «Generar» again for one screen, as the store does: the screen's page is the previous page. */
+function regenerate(doc: DesignDoc, screenId: string) {
+  const screen = doc.screens[screenId]!;
+  return buildPageFromLayout(screen.layout, screen.kind, screen.shell, contentContextFromDoc(doc), { previous: screen.page, screenId, screenTitle: screen.name });
+}
+
+describe("count edits on a screen", () => {
+  it("write the repeatable block's count in the same patch, unpinned, so the Layout chip shows the same ×N", () => {
+    const doc = sampleScreensDoc();
+    const id = blockIdOf(doc, "s-home", "features");
+    const ops = setPropOps(doc, pageTarget(doc, "s-home")!, id, COUNT_PROP, 5);
+    const next = patched(doc, ops);
+    const block = next.screens["s-home"]!.layout.blocks[id]!;
+    expect(next.screens["s-home"]!.page.elements[id]!.props[COUNT_PROP]).toBe(5);
+    expect(block.count).toBe(5);
+    expect(block.pinned ?? []).not.toContain("/count");
+    expect(blockCount(block)).toBe(5);
+    expect(estimateContent(block)).toEqual({ kind: "count", unit: "items", value: 5 });
+    // The same value again writes only the prop.
+    expect(setPropOps(next, pageTarget(next, "s-home")!, id, COUNT_PROP, 5)).toHaveLength(1);
+  });
+
+  it("drop a /count pin left by an older edit, and keep the other pins", () => {
+    const doc = sampleScreensDoc();
+    const id = blockIdOf(doc, "s-home", "features");
+    const pinnedPath = screenPointer("s-home", "layout", "blocks", id, "pinned");
+    const onlyCount = patched(doc, [{ op: "add", path: pinnedPath, value: ["/count"] }]);
+    const a = patched(onlyCount, setPropOps(onlyCount, pageTarget(onlyCount, "s-home")!, id, COUNT_PROP, 2));
+    expect(a.screens["s-home"]!.layout.blocks[id]!.pinned).toBeUndefined();
+    expect(a.screens["s-home"]!.layout.blocks[id]!.count).toBe(2);
+
+    const withOthers = patched(doc, [{ op: "add", path: pinnedPath, value: ["/title", "/count", "/subtitle"] }]);
+    const b = patched(withOthers, setPropOps(withOthers, pageTarget(withOthers, "s-home")!, id, COUNT_PROP, 2));
+    expect(b.screens["s-home"]!.layout.blocks[id]!.pinned).toEqual(["/title", "/subtitle"]);
+  });
+
+  it("pin as before when the value is outside the block's range or the block is not repeatable", () => {
+    const doc = sampleScreensDoc();
+    const features = blockIdOf(doc, "s-home", "features");
+    const outside = setPropOps(doc, pageTarget(doc, "s-home")!, features, COUNT_PROP, 9);
+    expect(outside.some((op) => op.path.endsWith("/count") && op.path.includes("/layout/"))).toBe(false);
+    expect(outside.some((op) => op.path.endsWith("/pinned"))).toBe(true);
+
+    // A list's rows come from its height, not from `block.count`.
+    const list = blockIdOf(doc, "s-detail", "list");
+    const next = patched(doc, setPropOps(doc, pageTarget(doc, "s-detail")!, list, COUNT_PROP, 4));
+    expect(next.screens["s-detail"]!.layout.blocks[list]!.count).toBeUndefined();
+    expect(next.screens["s-detail"]!.layout.blocks[list]!.pinned).toEqual(["/count"]);
+  });
+
+  it("survive «Generar», and a later ×N change in Layout wins over the Ajustar edit", () => {
+    const doc = sampleScreensDoc();
+    const id = blockIdOf(doc, "s-home", "features");
+    const edited = patched(doc, setPropOps(doc, pageTarget(doc, "s-home")!, id, COUNT_PROP, 5));
+    expect(regenerate(edited, "s-home").page.elements[id]!.props[COUNT_PROP]).toBe(5);
+
+    const relaid = patched(edited, [{ op: "replace", path: screenPointer("s-home", "layout", "blocks", id, "count"), value: 2 }]);
+    expect(regenerate(relaid, "s-home").page.elements[id]!.props[COUNT_PROP]).toBe(2);
   });
 });

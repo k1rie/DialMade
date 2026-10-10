@@ -1,6 +1,7 @@
 import { OUTPUT_KINDS, type OutputKind } from "@dialmade/catalog";
 import { MAX_PINNED, type DesignDoc, type Page, type PageKey, type PatchOperation, type Screen } from "@dialmade/doc";
-import { SHELL_ELEMENT_ID, isStructuralElement, type SectionRegistry } from "@dialmade/sections";
+import { getBlockDef, isLibraryBlockType } from "@dialmade/layout";
+import { SHELL_ELEMENT_ID, SHELL_SCREEN_KEYS, isStructuralElement, type SectionRegistry } from "@dialmade/sections";
 
 /**
  * The page the Composer shows and edits: a page kind's page (`"brand"`, legacy `"landing"`/`"app"`), or a
@@ -48,17 +49,47 @@ function pinOps(target: PageTarget, id: string, prop: string): PatchOperation[] 
   return block.pinned ? [{ op: "add", path: `${path}/-`, value: pin }] : [{ op: "add", path, value: [pin] }];
 }
 
+/** The prop of a repeatable section that mirrors its block's ×N (`block.count`, the chip of the Layout canvas). */
+export const COUNT_PROP = "count";
+
+/**
+ * A count edit on a repeatable block (Features, Logos, Testimonials, Pricing, KPIs, Cards) as layout data: writes
+ * `block.count`, so the Layout canvas shows the same ×N, and drops a `/count` pin left by an older edit. The count
+ * is NOT pinned: the layout is its single source of truth, so a later ×N change in «Editar layout» wins on «Generar»
+ * (a pin would silently override it and the canvas chip would lie). `null` when the edit is not that: another prop,
+ * not a block, a block that is not repeatable, or a value outside the block's range (then it is pinned as usual).
+ */
+function countOps(target: PageTarget, id: string, prop: string, value: unknown): PatchOperation[] | null {
+  const block = prop === COUNT_PROP ? blockOf(target, id) : undefined;
+  if (!block || !target.screen || !isLibraryBlockType(block.type)) return null;
+  const def = getBlockDef(block.type);
+  const range = def.repeatable;
+  if (!range || target.page.elements[id]?.type !== def.sectionType) return null;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < range.min || value > range.max) return null;
+  const path = blockPath(target.screen, id);
+  const ops: PatchOperation[] = block.count === value ? [] : [{ op: "add", path: `${path}/count`, value }];
+  const pinned = block.pinned ?? [];
+  const pin = pinned.indexOf(`/${COUNT_PROP}`);
+  if (pin >= 0) ops.push(pinned.length === 1 ? { op: "remove", path: `${path}/pinned` } : { op: "remove", path: `${path}/pinned/${pin}` });
+  return ops;
+}
+
+/** `app.shell` props of one screen (its page header, its active nav item): an edit stays on that screen. */
+const isScreenShellKey = (prop: string) => (SHELL_SCREEN_KEYS as readonly string[]).includes(prop);
+
 /**
  * Sets one prop (`add` creates or replaces an object member, so it works for stored and default-only props).
- * On a screen, in the same patch: a block's edited prop is pinned, so «Generar» again keeps it; and the app
- * frame (`shell`) is shared, so its edit goes to every app screen that has one.
+ * On a screen, in the same patch: a block's edited prop is pinned, so «Generar» again keeps it, except a
+ * repeatable block's count, which is written to `block.count` instead (`countOps`); and the app frame (`shell`)
+ * is shared, so its edit goes to every app screen that has one, except the keys of one screen
+ * (`SHELL_SCREEN_KEYS`: title, subtitle, primary action, active item, page header), which stay on it.
  */
 export function setPropOps(doc: DesignDoc, target: PageTarget, id: string, prop: string, value: unknown): PatchOperation[] {
   const ops: PatchOperation[] = [{ op: "add", path: propPath(target.key, id, prop), value }];
   const screen = target.screen;
   if (!screen) return ops;
-  ops.push(...pinOps(target, id, prop));
-  if (id === SHELL_ELEMENT_ID && screen.kind === "app") {
+  ops.push(...(countOps(target, id, prop, value) ?? pinOps(target, id, prop)));
+  if (id === SHELL_ELEMENT_ID && screen.kind === "app" && !isScreenShellKey(prop)) {
     for (const other of doc.screenOrder) {
       const page = other !== screen.id && Object.hasOwn(doc.screens, other) ? doc.screens[other]!.page : undefined;
       if (page?.elements[SHELL_ELEMENT_ID]?.type === screen.page.elements[SHELL_ELEMENT_ID]?.type) {

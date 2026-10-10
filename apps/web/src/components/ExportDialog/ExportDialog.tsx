@@ -236,6 +236,8 @@ export function ExportDialog({ open, onOpenChange, page }: ExportDialogProps) {
               logoUrl={logoUrl}
               kindLabel={preview.label}
               label={t.preview.label(doc.brand.name, preview.label)}
+              pageKey={preview.key}
+              {...(preview.screen && { screen: preview.screen })}
             />
           )}
 

@@ -1,5 +1,6 @@
 import type { Locale } from "@dialmade/catalog";
 import {
+  absorbChildren,
   areaName,
   deriveResponsive,
   getBlockDef,
@@ -12,6 +13,7 @@ import {
   type StructureNode,
 } from "@dialmade/layout";
 import type { AppNavId } from "../constants";
+import { SCREEN_EXPORT_FILES } from "../constants";
 import type { DesignDoc, Screen, ScreenKind, ScreenLayout } from "../schema";
 import { orderedScreens } from "../screens";
 
@@ -23,6 +25,8 @@ const TASK_NAMES = 6;
 type LayoutCopy = {
   flowTitle: string;
   flowIntro: string;
+  /** DESIGN.md only: the per-screen files of the code pack. */
+  files: string;
   kinds: Record<ScreenKind, string>;
   nav: Record<AppNavId, string>;
   navLine: (nav: string) => string;
@@ -35,7 +39,7 @@ type LayoutCopy = {
   readingOrder: string;
   linksTo: (name: string) => string;
   note: (text: string) => string;
-  mergedInto: (name: string) => string;
+  absorbs: (names: string) => string;
   hiddenBlocks: (names: string) => string;
   tablet: string;
   tabletSame: string;
@@ -58,6 +62,7 @@ const ES: LayoutCopy = {
   flowTitle: "Pantallas y flujo",
   flowIntro:
     "Una ruta por pantalla, en este orden. Cada pantalla es una rejilla de 12 columnas (filas de 8 px); su wireframe y su orden de lectura usan los mismos números.",
+  files: `En el pack de código, cada pantalla lleva junto a su \`index.html\` su \`${SCREEN_EXPORT_FILES.layoutCss}\` (la rejilla; va después del CSS del kit) y su \`${SCREEN_EXPORT_FILES.layoutJson}\` (bloques, orden de lectura, reglas de tablet y móvil y enlaces).`,
   kinds: { landing: "Web pública", app: "Pantalla de app" },
   nav: { sidebar: "Lateral", rail: "Rail", topnav: "Superior", none: "Ninguna" },
   navLine: (nav) => `navegación: ${nav}`,
@@ -70,7 +75,7 @@ const ES: LayoutCopy = {
   readingOrder: "Orden de lectura (DOM, foco y móvil):",
   linksTo: (name) => `enlaza a «${name}»`,
   note: (text) => `nota: "${text}"`,
-  mergedInto: (name) => `integrado en «${name}»`,
+  absorbs: (names) => `con ${names} dentro`,
   hiddenBlocks: (names) => `Ocultos: ${names}.`,
   tablet: "Tablet (8 columnas, menos de 64rem)",
   tabletSame: "mismo orden; los anchos se escalan a 8 columnas",
@@ -108,6 +113,7 @@ const EN: LayoutCopy = {
   flowTitle: "Screens and flow",
   flowIntro:
     "One route per screen, in this order. Each screen is a 12-column grid (8px rows); its wireframe and its reading order share the same numbers.",
+  files: `In the code pack, each screen carries its \`${SCREEN_EXPORT_FILES.layoutCss}\` (the grid; load it after the kit CSS) and its \`${SCREEN_EXPORT_FILES.layoutJson}\` (blocks, reading order, tablet and phone rules and links) next to its \`index.html\`.`,
   kinds: { landing: "Public website", app: "App screen" },
   nav: { sidebar: "Sidebar", rail: "Rail", topnav: "Top bar", none: "None" },
   navLine: (nav) => `navigation: ${nav}`,
@@ -120,7 +126,7 @@ const EN: LayoutCopy = {
   readingOrder: "Reading order (DOM, focus and phone):",
   linksTo: (name) => `links to "${name}"`,
   note: (text) => `note: "${text}"`,
-  mergedInto: (name) => `merged into "${name}"`,
+  absorbs: (names) => `with ${names} inside`,
   hiddenBlocks: (names) => `Hidden: ${names}.`,
   tablet: "Tablet (8 columns, under 64rem)",
   tabletSame: "same order; widths scale to 8 columns",
@@ -228,19 +234,45 @@ function regionsOf(structure: Structure): StructureNode[] {
 
 interface ScreenFacts {
   screen: Screen;
+  /**
+   * The layout as the page is built from it (`absorbChildren`, like `buildPageFromLayout`): blocks absorbed
+   * into a non-container block (a media inside a hero) have no element, so they are neither drawn nor
+   * numbered; their host's line says it holds them.
+   */
+  layout: ScreenLayout;
   structure: Structure;
   responsive: ResponsiveLayout;
   hidden: Set<string>;
   /** Visible blocks in reading order: the numbers of the wireframe. */
   visible: string[];
+  /** Host block → the blocks it absorbed, by position. */
+  absorbed: Map<string, string[]>;
+  /** Block → the screen it links to: its own `linkTo`, else the first absorbed block's (the page's links). */
+  links: Map<string, string>;
 }
 
 function factsOf(screen: Screen): ScreenFacts {
-  const structure = inferStructure(screen.layout);
-  const responsive = deriveResponsive(screen.layout, structure);
-  const hidden = hiddenBlocks(screen.layout);
-  const visible = structure.order.filter((id) => Object.hasOwn(screen.layout.blocks, id) && !hidden.has(id));
-  return { screen, structure, responsive, hidden, visible };
+  const absorb = absorbChildren(screen.layout);
+  const layout = absorb.layout;
+  const structure = inferStructure(layout);
+  const responsive = deriveResponsive(layout, structure);
+  const hidden = hiddenBlocks(layout);
+  const visible = structure.order.filter((id) => Object.hasOwn(layout.blocks, id) && !hidden.has(id));
+  const byPosition = (a: string, b: string) => {
+    const ra = screen.layout.blocks[a]!.rect;
+    const rb = screen.layout.blocks[b]!.rect;
+    return ra.row - rb.row || ra.col - rb.col || (a < b ? -1 : a > b ? 1 : 0);
+  };
+  const absorbed = new Map<string, string[]>();
+  const links = new Map<string, string>();
+  for (const [id, block] of Object.entries(layout.blocks)) if (block.linkTo !== undefined) links.set(id, block.linkTo);
+  for (const child of Object.keys(absorb.absorbed).sort(byPosition)) {
+    const host = absorb.absorbed[child]!;
+    absorbed.set(host, [...(absorbed.get(host) ?? []), child]);
+    const to = screen.layout.blocks[child]!.linkTo;
+    if (to !== undefined && !links.has(host)) links.set(host, to);
+  }
+  return { screen, layout, structure, responsive, hidden, visible, absorbed, links };
 }
 
 const labelOf = (screen: Screen, id: string) => plainText(screen.layout.blocks[id]?.label ?? id);
@@ -256,9 +288,9 @@ function flowLines(doc: DesignDoc, all: readonly ScreenFacts[], L: LayoutCopy, l
   });
   out.push("", L.linksTitle, "");
   const links: string[] = [];
-  for (const { screen, visible } of all) {
+  for (const { screen, visible, links: linksOf } of all) {
     const targets = visible.flatMap((id) => {
-      const to = screen.layout.blocks[id]!.linkTo;
+      const to = linksOf.get(id);
       return to !== undefined && Object.hasOwn(doc.screens, to) ? [`${quote(nameOf(to))} (${L.linkFrom(labelOf(screen, id))})`] : [];
     });
     if (targets.length > 0) links.push(`- ${plainText(screen.name)} → ${targets.join(" · ")}`);
@@ -272,25 +304,25 @@ function flowLines(doc: DesignDoc, all: readonly ScreenFacts[], L: LayoutCopy, l
   return out;
 }
 
-function readingOrderLines(doc: DesignDoc, facts: ScreenFacts, L: LayoutCopy): string[] {
-  const { screen, visible } = facts;
+function readingOrderLines(doc: DesignDoc, facts: ScreenFacts, L: LayoutCopy, locale: Locale): string[] {
+  const { screen, layout, visible } = facts;
   return visible.map((id, i) => {
-    const block = screen.layout.blocks[id]!;
+    const block = layout.blocks[id]!;
     const element = screen.page.elements[id];
     let target: string;
     if (element) {
       const variant = typeof element.props.variant === "string" && element.props.variant ? `@${plainText(element.props.variant)}` : "";
       target = `\`${element.type}${variant}\``;
-    } else if (block.parentId !== undefined && Object.hasOwn(screen.layout.blocks, block.parentId)) {
-      target = L.mergedInto(labelOf(screen, block.parentId));
     } else {
       target = `\`${isLibraryBlockType(block.type) ? getBlockDef(block.type).sectionType : block.type}\``;
     }
     const count = block.count !== undefined ? ` ×${block.count}` : "";
+    const inside = facts.absorbed.get(id);
+    const holds = inside ? ` (${L.absorbs(nameList(inside.map((child) => labelOf(screen, child)), locale))})` : "";
     const note = block.note ? ` — ${L.note(quoted(block.note))}` : "";
-    const link =
-      block.linkTo !== undefined && Object.hasOwn(doc.screens, block.linkTo) ? ` → ${L.linksTo(plainText(doc.screens[block.linkTo]!.name))}` : "";
-    return `${i + 1}. ${labelOf(screen, id)} → ${target}${count}${note}${link}`;
+    const to = facts.links.get(id);
+    const link = to !== undefined && Object.hasOwn(doc.screens, to) ? ` → ${L.linksTo(plainText(doc.screens[to]!.name))}` : "";
+    return `${i + 1}. ${labelOf(screen, id)} → ${target}${count}${holds}${note}${link}`;
   });
 }
 
@@ -370,17 +402,17 @@ function fenceSafe(layout: ScreenLayout): ScreenLayout {
 }
 
 function screenLines(doc: DesignDoc, facts: ScreenFacts, L: LayoutCopy, locale: Locale): string[] {
-  const { screen, structure, responsive } = facts;
+  const { screen, layout, structure, responsive } = facts;
   const out = [`### ${plainText(screen.name)} (\`${screen.route}\`)`, ""];
   const head = [L.kinds[screen.kind]];
   if (screen.shell) head.push(L.navLine(L.nav[screen.shell.nav]), L.header(screen.shell.header));
   out.push(`${head.join(" · ")}.`, "");
-  const wireframe = toAsciiWireframe(fenceSafe(screen.layout), { width: WIREFRAME_WIDTH, numbered: true, structure, responsive });
+  const wireframe = toAsciiWireframe(fenceSafe(layout), { width: WIREFRAME_WIDTH, numbered: true, structure, responsive });
   if (!wireframe) {
     out.push(L.empty, "");
     return out;
   }
-  out.push("```text", wireframe, "```", "", L.readingOrder, "", ...readingOrderLines(doc, facts, L), "");
+  out.push("```text", wireframe, "```", "", L.readingOrder, "", ...readingOrderLines(doc, facts, L, locale), "");
   const hiddenIds = structure.order.filter((id) => facts.hidden.has(id));
   if (hiddenIds.length > 0) out.push(L.hiddenBlocks(nameList(hiddenIds.map((id) => labelOf(screen, id)), locale)), "");
   out.push(tabletLine(facts, L, locale), mobileLine(facts, L, locale), ...gridLines(facts, L, locale), "");
@@ -390,15 +422,20 @@ function screenLines(doc: DesignDoc, facts: ScreenFacts, L: LayoutCopy, locale: 
 /**
  * The «Pantallas y flujo» block of DESIGN.md (inside «## Layout») and of the prompt packs: the screens in
  * order with their routes and links, then one `### {name} (\`/route\`)` per screen with its ASCII wireframe,
- * numbered reading order (section type@variant, ×N, note, link), tablet and phone rules and the
- * `grid-template-areas` of regions without a clean cut. Empty for documents without screens. Deterministic.
+ * numbered reading order (section type@variant, ×N, absorbed blocks, note, link), tablet and phone rules and
+ * the `grid-template-areas` of regions without a clean cut. The wireframe and the numbers follow the layout as
+ * the page is built (absorbed blocks inside their host's line, not as boxes). `files` (DESIGN.md) adds a line
+ * on each screen's `layout.css` and `layout.json` in the code pack. Empty for documents without screens.
+ * Deterministic.
  */
-export function screensLayoutLines(doc: DesignDoc, locale: Locale): string[] {
+export function screensLayoutLines(doc: DesignDoc, locale: Locale, options: { files?: boolean } = {}): string[] {
   const screens = orderedScreens(doc);
   if (screens.length === 0) return [];
   const L = COPY[locale];
   const all = screens.map(factsOf);
-  return [...flowLines(doc, all, L, locale), ...all.flatMap((facts) => screenLines(doc, facts, L, locale))];
+  const flow = flowLines(doc, all, L, locale);
+  if (options.files) flow.splice(flow.indexOf(L.flowIntro) + 2, 0, L.files, "");
+  return [...flow, ...all.flatMap((facts) => screenLines(doc, facts, L, locale))];
 }
 
 /** What a prompt pack builds when there are screens: «Inicio, Precios y Dashboard» / "Home, Pricing and Dashboard screens". */

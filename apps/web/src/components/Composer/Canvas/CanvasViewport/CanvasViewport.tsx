@@ -10,7 +10,7 @@ import { composer } from "@/i18n/composer";
 import { DEVICE_WIDTHS } from "@/lib/devices";
 import type { DroppedItem } from "@/lib/dnd";
 import { canvasLayoutId } from "@/lib/layout-ids";
-import { smooth } from "@/lib/motion";
+import { ease, reducedFade, smooth } from "@/lib/motion";
 import type { PageTarget } from "../../pageOps";
 import { CanvasDropZone } from "../CanvasDropZone";
 import { PagePreview } from "../PagePreview";
@@ -32,6 +32,13 @@ export type CanvasViewportProps = {
   onDeselect: () => void;
   /** Changes when the selection should scroll into view (picked from the list, moved). */
   revealKey: number;
+  /** «Probar»: the page is not selectable and its screen links call this (see `PagePreview`). */
+  onNavigate?: ((linkId: string) => void) | undefined;
+  /**
+   * Changes on every «Probar» navigation: the new screen starts at its top, settles in like a device switch and
+   * takes the focus (the link that was activated is gone), so Tab goes on from the new page.
+   */
+  navigationKey?: number;
   onDrop: (item: DroppedItem) => void;
   toolbar: Pick<SelectionToolbarProps, "aiAvailable" | "aiBusy" | "onMove" | "onHide" | "onImproveCopy">;
 };
@@ -52,6 +59,8 @@ export function CanvasViewport({
   onSelect,
   onDeselect,
   revealKey,
+  onNavigate,
+  navigationKey = 0,
   onDrop,
   toolbar,
 }: CanvasViewportProps) {
@@ -81,7 +90,7 @@ export function CanvasViewport({
   }, []);
 
   // Switching device: a short settle (≤250 ms, transform + opacity) on the sizer, never on the
-  // scaled frame, whose transform is the scale.
+  // scaled frame, whose transform is the scale. A «Probar» navigation reuses it.
   const settleRef = useRef<HTMLDivElement | null>(null);
   const previousDevice = useRef(device);
   useEffect(() => {
@@ -92,6 +101,23 @@ export function CanvasViewport({
     const controls = animate(sizer, { opacity: [0.35, 1], y: [10, 0] }, { duration: 0.25, ease: [0.22, 1, 0.36, 1] });
     return () => controls.stop();
   }, [device, reduce]);
+
+  // «Probar» navigation: like opening a page, the new screen starts at its top; the focus moves to the canvas
+  // region (named after the screen) because the activated link is gone. The device settle (≤250 ms); with
+  // reduced motion, a 150 ms fade.
+  useEffect(() => {
+    if (!navigationKey) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    scroller.scrollTo({ top: 0, behavior: "auto" });
+    scroller.focus({ preventScroll: true });
+    const sizer = settleRef.current;
+    if (!sizer) return;
+    const controls = reduce
+      ? animate(sizer, { opacity: [0.35, 1] }, reducedFade)
+      : animate(sizer, { opacity: [0.35, 1], y: [10, 0] }, { duration: 0.25, ease });
+    return () => controls.stop();
+  }, [navigationKey, reduce]);
 
   // Bring the selection into view when it was picked outside the canvas (list, move).
   useEffect(() => {
@@ -116,7 +142,9 @@ export function CanvasViewport({
         id={id}
         role="region"
         aria-label={label}
-        className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain [background-image:radial-gradient(oklch(1_0_0/0.05)_1px,transparent_1px)] [background-size:24px_24px]"
+        // Focus target after a «Probar» navigation (never a Tab stop).
+        tabIndex={-1}
+        className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-contain outline-none [background-image:radial-gradient(oklch(1_0_0/0.05)_1px,transparent_1px)] [background-size:24px_24px]"
         onClick={onBackgroundClick}
       >
         <div
@@ -142,13 +170,21 @@ export function CanvasViewport({
             style={{ height: frameHeight * scale }}
           >
             <div ref={frameRef} className="absolute top-0 left-0 origin-top-left" style={{ width: deviceWidth, transform: `scale(${scale})` }}>
-              <PagePreview doc={doc} target={target} mode={mode} selectedId={selectedId} onSelect={onSelect} logoUrl={logoUrl} />
+              <PagePreview
+                doc={doc}
+                target={target}
+                mode={mode}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                logoUrl={logoUrl}
+                onNavigate={onNavigate}
+              />
             </div>
           </div>
         </div>
       </div>
       <AnimatePresence>
-        {selectedId && (
+        {selectedId && !onNavigate && (
           <SelectionToolbar
             key={`${target.key}:${selectedId}`}
             doc={doc}
@@ -167,8 +203,8 @@ export function CanvasViewport({
 
   return (
     <CanvasDropZone label={label} hint={t.canvas.dropHere} onDrop={onDrop} className="relative min-h-[60vh] flex-1 rounded-panel lg:min-h-0">
-      {/* The frame alone shares `canvasLayoutId` (wave 3: with the Layout canvas): it grows into the canvas
-          while the page fades in with the step, so the page itself is never stretched. */}
+      {/* The frame alone shares `canvasLayoutId` with the Layout canvas: it grows into the canvas while the page
+          fades in with the step, so the page itself is never stretched. */}
       <motion.div
         aria-hidden
         layoutId={canvasLayoutId}

@@ -229,7 +229,8 @@ function frontmatter(doc: DesignDoc, t: ResolvedTokens, description: string): Ya
  * DESIGN.md (Google's spec, alpha): YAML frontmatter with `colors`, `typography`, `rounded`,
  * `spacing` and `components` (kebab-case names, `#rrggbb`, px, `{group.token}` references), then
  * Overview, Colors, Typography, Layout, Elevation & Depth, Shapes, Components, Motion and Do's and Don'ts.
- * With screens, «Layout» also carries «Pantallas y flujo» and one block per screen (`screensLayoutLines`),
+ * With screens, «Layout» also carries «Pantallas y flujo» (with the per-screen `layout.css` / `layout.json`
+ * of the code pack) and one block per screen (`screensLayoutLines`),
  * and «Pages» says «Layout propio» for them. Documents without screens export what they did before v2.
  */
 export function toDesignMd(doc: DesignDoc, options: DesignMdOptions = {}): string {
@@ -308,7 +309,7 @@ export function toDesignMd(doc: DesignDoc, options: DesignMdOptions = {}): strin
     `- ${L.container}: ${t.layout.container}px (\`--dl-container\`)`,
     `- ${L.sectionPy}: ${t.layout.sectionPy}px (\`--dl-section-py\`)`,
     "",
-    ...screensLayoutLines(doc, locale),
+    ...screensLayoutLines(doc, locale, { files: true }),
   );
 
   const flat = SHADOW_NAMES.every((name) => t.shadows[name].length === 0);

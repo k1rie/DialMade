@@ -4,6 +4,7 @@ import type { Locale, OutputKind } from "@dialmade/catalog";
 import {
   EXPORT_FILES,
   PROMPT_TARGETS,
+  SCREEN_EXPORT_FILES,
   compileThemeVars,
   fontsUrlFor,
   resolveFonts,
@@ -205,10 +206,10 @@ export function buildCodePack(input: PackInput): BuiltFile {
     for (const screen of screens) {
       const folder = screen.dir ? `${screen.dir}/` : "";
       const linkHref = linkResolver(screens, (to) => relativeHref(screen, to));
-      // layout.css sits next to the page and loads after the kit CSS.
-      files[`${folder}index.html`] = render(screenTarget(screen, linkHref), screen.dir ? "../" : "", ["layout.css"]);
-      files[`${folder}layout.css`] = screen.css;
-      files[`${folder}layout.json`] = json(layoutJson(screen, linkHref));
+      // layout.css sits next to the page and loads after the kit CSS (the names DESIGN.md and the prompts use).
+      files[`${folder}index.html`] = render(screenTarget(screen, linkHref), screen.dir ? "../" : "", [SCREEN_EXPORT_FILES.layoutCss]);
+      files[`${folder}${SCREEN_EXPORT_FILES.layoutCss}`] = screen.css;
+      files[`${folder}${SCREEN_EXPORT_FILES.layoutJson}`] = json(layoutJson(screen, linkHref));
     }
     if (doc.pages.brand) files["brand/index.html"] = render(kindTarget(input, "brand"), "../");
     const root = screens.find((screen) => screen.dir === "") ?? screens[0]!;

@@ -110,7 +110,7 @@ describe("Modo Layout flow", () => {
     expect(block(hidden).hidden).toBeUndefined();
   });
 
-  it("an edit of the app frame goes to every app screen that has one", () => {
+  it("an edit of the app frame goes to every app screen that has one, except the keys of one screen", () => {
     const { actions, layout, doc, target, generate } = flow();
     const ids = layout.getState().actions.applySet("saas-app");
     generate();
@@ -118,8 +118,20 @@ describe("Modo Layout flow", () => {
     expect(framed.length).toBeGreaterThan(1);
     const first = target(framed[0]);
     expect(canHide(first, SHELL_ELEMENT_ID)).toBe(false);
-    expect(actions.applyPatch(setPropOps(doc(), first, SHELL_ELEMENT_ID, "subtitle", "Tu semana de un vistazo")).ok).toBe(true);
-    for (const id of framed) expect(doc().screens[id]!.page.elements[SHELL_ELEMENT_ID]!.props.subtitle).toBe("Tu semana de un vistazo");
+    expect(actions.applyPatch(setPropOps(doc(), first, SHELL_ELEMENT_ID, "tone", "inverted")).ok).toBe(true);
+    for (const id of framed) expect(doc().screens[id]!.page.elements[SHELL_ELEMENT_ID]!.props.tone).toBe("inverted");
+
+    // The page header belongs to its screen: a subtitle edit on one screen leaves the others' alone, and
+    // «Generar» again keeps it (an edited value is not one the build writes).
+    const subtitles = framed.map((id) => doc().screens[id]!.page.elements[SHELL_ELEMENT_ID]!.props.subtitle);
+    expect(actions.applyPatch(setPropOps(doc(), target(framed[0]), SHELL_ELEMENT_ID, "subtitle", "Tu semana de un vistazo")).ok).toBe(true);
+    const subtitleOf = (id: string) => doc().screens[id]!.page.elements[SHELL_ELEMENT_ID]!.props.subtitle;
+    expect(subtitleOf(framed[0]!)).toBe("Tu semana de un vistazo");
+    framed.slice(1).forEach((id, index) => expect(subtitleOf(id)).toBe(subtitles[index + 1]));
+    layout.getState().actions.syncFromDoc(doc());
+    generate();
+    expect(subtitleOf(framed[0]!)).toBe("Tu semana de un vistazo");
+    framed.slice(1).forEach((id, index) => expect(subtitleOf(id)).toBe(subtitles[index + 1]));
   });
 
   it("the code pack has one index.html per screen, plus the style guide", () => {

@@ -20,6 +20,7 @@ import { cloneJson, isPlainObject } from "./json";
 import {
   DesignDocSchema,
   PagesSchema,
+  documentSizeIssues,
   type DesignDoc,
   type DesignDocInput,
   type Dials,
@@ -60,9 +61,15 @@ export function migrateDesignDoc(input: unknown): unknown {
   return { ...input, version: 2 };
 }
 
-/** Validates (and fills defaults of) a stored document, migrating older versions first. */
+/**
+ * Validates (and fills defaults of) a stored document, migrating older versions first. More than
+ * `MAX_SCREENS` screens or `MAX_BLOCKS` blocks in a screen fails before the full parse (`documentSizeIssues`).
+ */
 export function safeParseDesignDoc(input: unknown): SafeParseResult {
-  const result = DesignDocSchema.safeParse(migrateDesignDoc(input));
+  const migrated = migrateDesignDoc(input);
+  const oversized = documentSizeIssues(migrated);
+  if (oversized.length > 0) return { success: false, issues: oversized };
+  const result = DesignDocSchema.safeParse(migrated);
   return result.success ? { success: true, data: result.data } : { success: false, issues: result.error.issues };
 }
 

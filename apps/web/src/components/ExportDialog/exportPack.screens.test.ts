@@ -5,6 +5,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { exportDialog } from "@/i18n/export";
 import { sampleDoc } from "@/lib/ai/testing";
+import { SCREEN_ATTRIBUTE } from "@/lib/screen-layout";
 import { buildClaudeDesignPack, buildCodePack, exportOptions, type PackInput } from "./exportPack";
 import { LAYOUT_JSON_FORMAT, screenPages } from "./screenPages";
 import { screensFixture } from "./testing";
@@ -120,6 +121,9 @@ describe("«Código» with screens", () => {
       const html = text(files, `${folder}index.html`);
       const css = text(files, `${folder}layout.css`);
       expect(css, page.id).toBe(page.css);
+      // One screen per file: the export keeps the unscoped rules (the app's scoped variant is for in-app rendering).
+      expect(css, page.id).not.toContain(SCREEN_ATTRIBUTE);
+      expect(html, page.id).not.toContain(`${SCREEN_ATTRIBUTE}=`);
       const kit = html.indexOf(`href="${base}assets/dialmade-sections.css"`);
       const layout = html.indexOf('href="layout.css"');
       expect(kit, page.id).toBeGreaterThan(0);
@@ -235,6 +239,19 @@ describe("«Claude Design» with screens", () => {
     expect(readme).toContain("- `preview-brand.html`: Guía de estilo.");
     expect(readme).toContain("## Pantallas y flujo");
     expect(readme).toContain("2. Precios (`/precios`): `preview-precios.html` → Entrar");
+  });
+
+  it("README's upload step names every preview file of the pack, in es and en", () => {
+    const previews = Object.keys(files).filter((path) => path.endsWith(".html"));
+    const step = text(files, "README.md").split("\n").find((line) => line.startsWith("2. Sube estos archivos:"))!;
+    expect(step).toBe(
+      "2. Sube estos archivos: `DESIGN.md`, `theme.css`, `tokens.tokens.json`, `preview.html`, `preview-precios.html`, `preview-entrar.html`, `preview-app-dashboard.html`, `preview-app-2.html`, `preview-brand.html` y `logo.png`.",
+    );
+    for (const file of previews) expect(step).toContain(`\`${file}\``);
+    const en = unzip(buildClaudeDesignPack(input(doc, { locale: "en", texts: exportDialog.en.files })).bytes, "brisa-claude-design");
+    const enStep = text(en, "README.md").split("\n").find((line) => line.startsWith("2. Upload these files:"))!;
+    for (const file of previews) expect(enStep).toContain(`\`${file}\``);
+    expect(enStep.endsWith("`preview-brand.html`.")).toBe(true);
   });
 
   it("the root screen gets its own preview name when it is not the first one", () => {

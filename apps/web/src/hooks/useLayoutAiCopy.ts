@@ -65,8 +65,12 @@ export type LayoutAiRun = {
 };
 
 export type UseLayoutAiCopy = {
-  /** `null` without a document or when the targets have no text to write. Cached per document and targets. */
-  estimate: (targets: readonly ScreenCopyTarget[]) => LayoutAiEstimate | null;
+  /**
+   * `null` without a document or when the targets have no text to write. Cached per document and targets. `doc`
+   * estimates another document than the store's: the one «Generar» is about to write, so the cost shows before
+   * the deterministic pass runs.
+   */
+  estimate: (targets: readonly ScreenCopyTarget[], doc?: DesignDoc | null) => LayoutAiEstimate | null;
   /**
    * ONE request for every target screen. Resolves with the summary once the answer is applied (one undo
    * step), `null` when cancelled (nothing applied); rejects with `AiCopyError`: the blocks turn «Error» when a
@@ -123,8 +127,8 @@ export function useLayoutAiCopy(): UseLayoutAiCopy {
   const { generateCopy, cancel: cancelRequest, reset: resetRequest, manualJob: manualCopyJob, model } = ai;
 
   const estimate = useCallback(
-    (targets: readonly ScreenCopyTarget[]): LayoutAiEstimate | null => {
-      const doc = store?.getState().doc ?? null;
+    (targets: readonly ScreenCopyTarget[], explicit?: DesignDoc | null): LayoutAiEstimate | null => {
+      const doc = explicit ?? store?.getState().doc ?? null;
       if (!doc) return null;
       const screens = normalizeScreenTargets(targets);
       const key = JSON.stringify(screens);

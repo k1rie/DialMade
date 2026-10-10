@@ -120,25 +120,23 @@ Public website.
 
 +--------------------------------------------------------------+
 | 2. Hero                                                      |
-| con captura del producto      +------------------------------+
-|                               | 3. Captura                   |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               +------------------------------+
+| con captura del producto                                     |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
 |                                                              |
 +--------------------------------------------------------------+
 
 +--------------------------------------------------------------+
-| 4. Características ×3                                        |
+| 3. Características ×3                                        |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -150,7 +148,7 @@ Public website.
 +--------------------------------------------------------------+
 
 +-----------------------------------------+--------------------+
-| 5. Calendario                           | 6. Próximos        |
+| 4. Calendario                           | 5. Próximos        |
 | calendario "semanal"                    |                    |
 |                                         |                    |
 |                                         |                    |
@@ -165,7 +163,7 @@ Public website.
 +-----------------------------------------+--------------------+
 
 +--------------------------------------------------------------+
-| 7. Llamada                                                   |
+| 6. Llamada                                                   |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -176,12 +174,11 @@ Public website.
 Reading order (DOM, focus and phone):
 
 1. Barra de navegación → `landing.navbar@simple` → links to "Dashboard"
-2. Hero → `landing.hero@split` — note: "con captura del producto"
-3. Captura → merged into "Hero"
-4. Características → `landing.features` ×3
-5. Calendario → `ui.calendar@week` — note: "calendario 'semanal'"
-6. Próximos → `ui.list`
-7. Llamada → `landing.cta@banner` → links to "Ajustes"
+2. Hero → `landing.hero@split` (with "Captura" inside) — note: "con captura del producto"
+3. Características → `landing.features` ×3
+4. Calendario → `ui.calendar@week` — note: "calendario 'semanal'"
+5. Próximos → `ui.list`
+6. Llamada → `landing.cta@banner` → links to "Ajustes"
 
 Hidden: "Pie".
 
@@ -320,3 +317,5 @@ Reading order (DOM, focus and phone):
 - `figma-dark.tokens.json`: Figma color variables, dark mode
 - `figma-numbers.tokens.json`: Figma number variables (radii, spacing and components)
 - `DESIGN.md`: agent-readable brief (DESIGN.md spec)
+- `layout.css`: each screen's grid, next to its `index.html` in the code pack; load it after the kit CSS
+- `layout.json`: each screen's layout (blocks, reading order, tablet and phone rules and links), next to its `index.html`

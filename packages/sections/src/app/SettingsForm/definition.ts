@@ -1,6 +1,7 @@
 import { t } from "../../content/t";
 import { defineSection } from "../../defineSection";
 import { appStrings, brandSlug } from "../content";
+import { SETTINGS_CHIP_RANGE, SETTINGS_DEFAULT_COUNT, settingsFieldsFor, visibleSettings } from "./fields";
 import { SettingsForm } from "./SettingsForm";
 import { settingsFormSchema, type SettingsFormProps } from "./schema";
 
@@ -16,6 +17,15 @@ export const settingsFormSection = defineSection<SettingsFormProps>({
   schema: settingsFormSchema,
   knobs: [
     { key: "variant", label: t("Composición", "Layout"), control: "select", scope: "section" },
+    {
+      key: "count",
+      label: t("Campos", "Fields"),
+      control: "slider",
+      min: SETTINGS_CHIP_RANGE.min,
+      max: SETTINGS_CHIP_RANGE.max,
+      step: 1,
+      scope: "section",
+    },
     { key: "title", label: t("Título", "Title"), control: "text", scope: "section" },
     { key: "email", label: t("Correo", "Email"), control: "text", scope: "section" },
   ],
@@ -31,12 +41,14 @@ export const settingsFormSection = defineSection<SettingsFormProps>({
       language: ctx.locale,
       timezone: strings.timezones[0],
       notifications: strings.toggles.map((toggle, index) => ({ ...toggle, enabled: index < 2 })),
+      count: SETTINGS_DEFAULT_COUNT,
     };
   },
   layout: {
-    owns: [],
-    // Labels beside the fields need room: two columns from 8 grid columns.
-    fit: ({ w }) => ({ variant: w >= 8 ? "split" : "stacked" }),
+    owns: ["count"],
+    // Labels beside the fields need room: two columns from 8 grid columns. Fields: what the chip promised.
+    fit: (input) => ({ variant: input.w >= 8 ? "split" : "stacked", props: { count: settingsFieldsFor(input) } }),
   },
+  visible: visibleSettings,
   Component: SettingsForm,
 });

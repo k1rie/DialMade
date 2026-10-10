@@ -27,6 +27,14 @@ export {
   type SectionRegistry,
 } from "./registry";
 export { appSections } from "./app";
+export {
+  SHELL_SCREEN_KEYS,
+  SHELL_SCREEN_PURPOSES,
+  shellCopyCandidates,
+  shellScreenCopy,
+  shellScreenPurpose,
+  type ShellScreenPurpose,
+} from "./app/Shell";
 export { brandSections } from "./brand";
 export { landingSections } from "./landing";
 export {

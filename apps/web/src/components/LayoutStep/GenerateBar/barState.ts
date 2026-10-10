@@ -43,7 +43,7 @@ export type CtaState =
 export type CtaInput = {
   /** Blocks in every screen. */
   blocks: number;
-  /** Whether «Generar» ran at least once in this session. */
+  /** Whether «Generar» ran: in this session, or before (the document's blocks carry their fingerprints). */
   generated: boolean;
   /** `changedCount()`: blocks new, changed or removed since the last «Generar». */
   changed: number;

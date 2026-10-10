@@ -102,6 +102,8 @@ export const BlockFrame = memo(function BlockFrame({
         layout
         layoutDependency={layoutKey}
         transition={{ layout: layoutTransition }}
+        // The «Generar» moment fades the whole box (flash included) as its section appears under it.
+        data-block-box={id}
         className="absolute [&>span:first-child]:absolute [&>span:first-child]:inset-0"
         style={{ left, top, width, height, zIndex }}
       >

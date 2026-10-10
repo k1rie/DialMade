@@ -5,7 +5,7 @@
 import "./ThemeScope.css";
 
 import type { Locale, TypographyPairing } from "@dialmade/catalog";
-import type { DesignDoc, PageKey } from "@dialmade/doc";
+import type { DesignDoc, PageKey, ScreenId } from "@dialmade/doc";
 import { ThemeStyles } from "@dialmade/sections";
 import { UiProvider } from "@dialmade/ui";
 import { useMemo, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
@@ -20,6 +20,7 @@ import type { PreviewMode } from "@/hooks/usePaletteFlow";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { deriveDesign } from "@/lib/design-derived";
+import { SCREEN_ATTRIBUTE } from "@/lib/screen-layout";
 
 export type ThemeScopeProps = Omit<HTMLAttributes<HTMLElement>, "style" | "children"> & {
   /** Default: the store's `previewMode`. */
@@ -29,6 +30,12 @@ export type ThemeScopeProps = Omit<HTMLAttributes<HTMLElement>, "style" | "child
    * (`selectActiveKey`); `null` = global dials.
    */
   kind?: PageKey | null;
+  /**
+   * Screen rendered inside (Modo Layout): marks the subtree with `data-dl-screen`, so that screen's scoped layout
+   * CSS (`scopedScreenCss` from `@/lib/screen-layout`) applies here and nowhere else. Several screens can then
+   * render at once (reveal layer, thumbnails). It does not pick the dials: pass `kind` for that.
+   */
+  screen?: ScreenId | null;
   /** Default: the store's doc. */
   doc?: DesignDoc;
   /** Explicit variables (e.g. a live Palette Lab theme without a doc). Win over `doc`. */
@@ -57,6 +64,7 @@ const detachedStore = createDesignDocStore();
 export function ThemeScope({
   mode: modeProp,
   kind,
+  screen,
   doc: docProp,
   vars: varsProp,
   pairing: pairingProp,
@@ -95,6 +103,7 @@ export function ThemeScope({
         className={cn("app-theme-scope", className)}
         data-transition={transition ? undefined : "off"}
         style={style}
+        {...(screen && { [SCREEN_ATTRIBUTE]: screen })}
         {...rest}
       >
         {children}

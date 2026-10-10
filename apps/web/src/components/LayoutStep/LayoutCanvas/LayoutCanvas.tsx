@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/Button";
 import { useDictionary } from "@/i18n";
 import { layout as layoutText } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
+import { canvasLayoutId } from "@/lib/layout-ids";
+import { smooth } from "@/lib/motion";
 import { describeAdjustments } from "../adjustments";
 import { INSPECTOR_NAME_ID, REGION_AUTOFOCUS_ATTR } from "../constants";
 import { getResponsive } from "../structureCache";
@@ -44,6 +46,7 @@ import { DrawTool } from "./DrawTool";
 import { DropOverlay } from "./DropOverlay";
 import { EmptyHint } from "./EmptyHint";
 import { FrameBar } from "./FrameBar";
+import { GenerateReveal } from "./GenerateReveal";
 import {
   adjustedIds,
   askingStillValid,
@@ -67,6 +70,7 @@ import {
 } from "./gestures";
 import { GridOverlay } from "./GridOverlay";
 import { ResizeHandles } from "./ResizeHandles";
+import { RevealChips } from "./RevealChips";
 import { regionOutlines, StructureOverlay, type ReadingNumber } from "./StructureOverlay";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import { useLibraryDrop } from "./useLibraryDrop";
@@ -76,6 +80,9 @@ import { WhatIsThis } from "./WhatIsThis";
 export type LayoutCanvasProps = { className?: string };
 
 const EMPTY_LAYOUT: LayoutDoc = { version: 1, columns: 12, rowUnit: 8, blocks: {} };
+
+/** Element id of the app frame in a screen's page (`SHELL_ELEMENT_ID` of @dialmade/sections). */
+const SHELL_ID = "shell";
 
 /** Dot grid of the canvas background (DESIGN-BRIEF: 1 px white dots at 5 %, every 24 px). */
 const DOT_GRID = "[background-image:radial-gradient(oklch(1_0_0/0.05)_1px,transparent_1px)] [background-size:24px_24px]";
@@ -118,7 +125,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const store = useLayoutStoreApi();
   const actions = useLayoutActions();
   const history = useLayoutHistory();
-  const { focusRegion } = useLayoutEnv();
+  const { focusRegion, doc, reveal, endReveal } = useLayoutEnv();
   const screen = useActiveScreen();
   const selectedId = useSelectedId();
   const tool = useLayoutStore((state) => state.tool);
@@ -137,6 +144,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const derived = derivedLayoutFor(screen?.layout ?? null, device, getResponsive);
   const shell = screen?.kind === "app" ? screen.shell : null;
   const deviceName = t.devices[device];
+  // «Generar» moment: the generated page under the boxes (the active screen, once the doc has its page). While a
+  // moment runs the canvas is a preview: no gestures, no keys, no handles or badges.
+  const revealing = reveal !== null;
+  const revealHere =
+    reveal && reveal.layer && screen && Object.hasOwn(doc.screens, screen.id) ? { ...reveal, play: reveal.phase === "playing" && reveal.screenId === screen.id } : null;
 
   /* ---- Geometry: the frame is measured, never scaled. ---- */
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -528,11 +540,11 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   // New arrays on every edit; BlockFrame compares them by content, so only blocks whose warnings changed re-render.
   const warningViews = useMemo(() => {
     const out = new Map<BlockId, BlockWarningView[]>();
-    if (!structure || !editable) return out;
+    if (!structure || !editable || revealing) return out;
     const label = (id: BlockId) => layout.blocks[id]?.label ?? id;
     for (const [id, warnings] of warningsByBlock(structure.warnings)) out.set(id, buildWarningViews(warnings, label, t));
     return out;
-  }, [structure, editable, layout, t]);
+  }, [structure, editable, revealing, layout, t]);
 
   const activeId = gesture && (gesture.kind === "move" || gesture.kind === "resize") ? gesture.id : grabId;
   const rectFor = (id: BlockId): GridRect | null => {
@@ -561,7 +573,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     const z = stacking.get(id) ?? 1;
     return [{ id, block, rect, box, zIndex: lifted(id) ? Z_ACTIVE + z : z }];
   });
-  const selectedItem = editable && tool === "edit" && !grab ? items.find((item) => item.id === selectedId) : undefined;
+  const selectedItem = editable && tool === "edit" && !grab && !revealing ? items.find((item) => item.id === selectedId) : undefined;
 
   const dropTarget = (() => {
     if (!editable) return null;
@@ -583,11 +595,16 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       : t.canvas.dropHere;
 
   const rows = frameRows(bottomRow([...items.map((item) => item.rect), drawRect, drop.ghost?.rect]), editable ? extraRows : 0);
-  const frameHeight = frameHeightPx(geometry, rows);
+  // While the generated page stays, the frame grows to show all of it.
+  const [revealHeight, setRevealHeight] = useState(0);
+  const frameHeight = Math.max(frameHeightPx(geometry, rows), revealHere ? revealHeight : 0);
   const gridHeight = rows * metrics.rowPx;
 
-  const outlines = useMemo(() => (showStructure && editable && structure ? regionOutlines(structure.root) : []), [showStructure, editable, structure]);
-  const numbers: ReadingNumber[] = showStructure ? items.map((item, index) => ({ id: item.id, left: item.box.left, top: item.box.top, n: index + 1 })) : [];
+  const outlines = useMemo(
+    () => (showStructure && editable && !revealing && structure ? regionOutlines(structure.root) : []),
+    [showStructure, editable, revealing, structure],
+  );
+  const numbers: ReadingNumber[] = showStructure && !revealing ? items.map((item, index) => ({ id: item.id, left: item.box.left, top: item.box.top, n: index + 1 })) : [];
 
   const hiddenHere = derived
     ? (structure?.order ?? []).filter((id) => derived.blocks[id]?.hidden && layout.blocks[id]).map((id) => ({ id, name: layout.blocks[id]!.label }))
@@ -634,6 +651,36 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
       if (box) revealBox(reveal.edge === "bottom" ? { top: box.top + box.height - metrics.rowPx, height: metrics.rowPx } : box, "nearest", false);
     }
   });
+
+  /* ---- «Generar» moment: the canvas is a preview ---- */
+  // Presses never reach the canvas gestures (a press during the animation skips it, in GenerateReveal); only the
+  // chips' «Reintentar» stays usable. Scrolling still works.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!revealing || !root) return;
+    const block = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest("[data-reveal-interactive]")) return;
+      event.stopPropagation();
+    };
+    root.addEventListener("pointerdown", block, true);
+    root.addEventListener("click", block, true);
+    return () => {
+      root.removeEventListener("pointerdown", block, true);
+      root.removeEventListener("click", block, true);
+    };
+  }, [revealing]);
+  // Another screen opened while the moment plays: the moment is over (that screen's page just shows).
+  const playingScreen = reveal?.phase === "playing" ? reveal.screenId : null;
+  const shownScreen = screen?.id ?? null;
+  useEffect(() => {
+    if (playingScreen !== null && shownScreen !== null && playingScreen !== shownScreen) endReveal();
+  }, [playingScreen, shownScreen, endReveal]);
+  const revealLayerRef = useRef<HTMLDivElement | null>(null);
+  const revealOrder = items.map((item) => item.id);
+  const labelOfSection = useCallback(
+    (id: string) => (id === SHELL_ID && shell ? t.canvas.navFrame(t.nav[shell.nav]) : (layout.blocks[id]?.label ?? id)),
+    [shell, layout, t],
+  );
 
   /* ---- Keyboard ---- */
   const keyboard = useCanvasKeyboard({
@@ -719,7 +766,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     <div
       ref={rootRef}
       className={cn("relative flex min-h-0 flex-1 flex-col gap-2", className)}
-      onKeyDown={keyboard.onKeyDown}
+      onKeyDown={revealing ? undefined : keyboard.onKeyDown}
       onBlur={keyboard.onBlur}
       onFocus={onFocus}
     >
@@ -738,101 +785,140 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
           }}
         />
       )}
-      <motion.div
-        ref={setScroller}
-        layoutScroll
-        tabIndex={-1}
-        {...(items.length === 0 && { [REGION_AUTOFOCUS_ATTR]: "" })}
-        onPointerDown={onPointerDown}
-        className={cn(
-          // `isolate`: the canvas z-indices (blocks, handles, overlays) stay inside it, under the page's bars and popovers.
-          // Stable gutter: the scrollbar appearing must not change the measured width (and the frame's).
-          "relative isolate min-h-[24rem] flex-1 overflow-auto overscroll-contain rounded-panel border border-app bg-app/70 [scrollbar-gutter:stable]",
-          DOT_GRID,
-          tool === "hand" && "touch-none",
-          tool === "hand" && (gesture?.kind === "pan" ? "cursor-grabbing" : "cursor-grab"),
-        )}
-      >
-        <div className="mx-auto pb-28" style={{ width: geometry.frameWidth, paddingTop: FRAME_GUTTER_PX, visibility: available > 0 ? "visible" : "hidden" }}>
-          <FrameBar size={t.canvas.frameSize(deviceName, geometry.deviceWidth)} grid={t.canvas.grid(metrics.columns)} />
-          <div className="relative rounded-b-[12px] border border-t-0 border-app-strong bg-app shadow-lift" style={{ height: frameHeight }}>
-            {shell && <AppFrame geometry={geometry} navName={t.nav[shell.nav]} onActivate={() => {
-              select(null);
-              focusRegion("inspector");
-            }} />}
-            <div
-              ref={gridRef}
-              // `data-tool` drives the blocks' cursors (group `canvas`): a tool change never re-renders them.
-              data-tool={tool}
-              className={cn("group/canvas absolute select-none", tool === "draw" && editable && "cursor-crosshair touch-none")}
-              style={{ left: geometry.content.left, top: geometry.content.top, width: geometry.content.width, height: gridHeight }}
-            >
-              <GridOverlay columns={metrics.columns} colPx={metrics.colPx} rowPx={metrics.rowPx} active={gestureActive} />
-              {items.map((item) => {
-                const chip = chipTexts.get(item.id) ?? null;
-                const roomy = item.box.width >= CHIP_MIN_PX.width && item.box.height >= CHIP_MIN_PX.height;
-                return (
-                  <BlockFrame
-                    key={item.id}
-                    id={item.id}
-                    block={item.block}
-                    rect={item.rect}
-                    left={item.box.left}
-                    top={item.box.top}
-                    width={item.box.width}
-                    height={item.box.height}
-                    zIndex={item.zIndex}
-                    selected={item.id === selectedId}
-                    active={item.id === activeId}
-                    grabbed={item.id === grabId}
-                    dropTarget={item.id === dropTarget}
-                    editable={editable}
-                    autoFocus={item.id === autoFocusId}
-                    chip={roomy ? chip : null}
-                    warnings={warningViews.get(item.id)}
-                    flashKey={flash.ids.has(item.id) ? flash.key : 0}
-                    layoutKey={layoutKeyOf(device, item.rect)}
-                    describedBy={editable ? instructionsId : derivedId}
-                    onApplyFix={onApplyFix}
-                  />
-                );
-              })}
-              {selectedItem && (
-                <ResizeHandles
-                  blockId={selectedItem.id}
-                  left={selectedItem.box.left}
-                  top={selectedItem.box.top}
-                  width={selectedItem.box.width}
-                  height={selectedItem.box.height}
-                  badge={(warningViews.get(selectedItem.id)?.length ?? 0) > 0}
-                />
-              )}
-              <AnimatePresence>
-                {showStructure && <StructureOverlay key="structure" outlines={outlines} metrics={metrics} numbers={numbers} />}
-              </AnimatePresence>
-              {editable && <DrawTool box={drawRect ? blockBox(drawRect, metrics, 1) : null} anchor={anchor} anchorHint={t.canvas.drawStart} />}
-              <DropOverlay state={drop.state} ghost={ghost} hint={dropHint} />
-              {empty && editable && drop.state === "idle" && !drawRect && <EmptyHint />}
-            </div>
-          </div>
-          {editable && (
-            <div className="mt-3 flex justify-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                data-canvas-ignore=""
-                aria-label={t.canvas.addSpaceLabel}
-                onClick={() => {
-                  actions.addSpace(screen.id);
-                  announce(t.announce.spaceAdded);
-                }}
-              >
-                {t.canvas.addSpace}
-              </Button>
-            </div>
+      <div className="relative flex min-h-[24rem] flex-1 flex-col">
+        {/* The canvas surface alone shares `canvasLayoutId` with Ajustar's canvas: it grows into it (and back) while
+            the steps cross-fade; the blocks and the page are never stretched. Measured only when the screen changes. */}
+        <motion.div
+          aria-hidden
+          layoutId={canvasLayoutId}
+          layoutDependency={screen.id}
+          transition={smooth}
+          className="pointer-events-none absolute inset-0 rounded-panel border border-app bg-app/70"
+        />
+        <motion.div
+          ref={setScroller}
+          layoutScroll
+          tabIndex={-1}
+          {...(items.length === 0 && { [REGION_AUTOFOCUS_ATTR]: "" })}
+          onPointerDown={onPointerDown}
+          className={cn(
+            // `isolate`: the canvas z-indices (blocks, handles, overlays) stay inside it, under the page's bars and popovers.
+            // Stable gutter: the scrollbar appearing must not change the measured width (and the frame's). The surface
+            // (background, border) is the shared frame behind it; the transparent border keeps the same geometry.
+            "relative isolate min-h-[24rem] flex-1 overflow-auto overscroll-contain rounded-panel border border-transparent [scrollbar-gutter:stable]",
+            DOT_GRID,
+            tool === "hand" && "touch-none",
+            tool === "hand" && (gesture?.kind === "pan" ? "cursor-grabbing" : "cursor-grab"),
           )}
-        </div>
-      </motion.div>
+        >
+          <div className="mx-auto pb-28" style={{ width: geometry.frameWidth, paddingTop: FRAME_GUTTER_PX, visibility: available > 0 ? "visible" : "hidden" }}>
+            <FrameBar size={t.canvas.frameSize(deviceName, geometry.deviceWidth)} grid={t.canvas.grid(metrics.columns)} />
+            <div className="relative rounded-b-[12px] border border-t-0 border-app-strong bg-app shadow-lift" style={{ height: frameHeight }}>
+              {shell && <AppFrame geometry={geometry} navName={t.nav[shell.nav]} onActivate={() => {
+                select(null);
+                focusRegion("inspector");
+              }} />}
+              <AnimatePresence>
+                {revealHere && (
+                  <GenerateReveal
+                    key={`${revealHere.id}:${screen.id}`}
+                    doc={doc}
+                    screenId={screen.id}
+                    play={revealHere.play}
+                    deviceWidth={geometry.deviceWidth}
+                    scale={geometry.k}
+                    layerRef={revealLayerRef}
+                    gridRef={gridRef}
+                    skipAreaRef={rootRef}
+                    order={revealOrder}
+                    onPlayed={endReveal}
+                    onHeight={setRevealHeight}
+                  />
+                )}
+              </AnimatePresence>
+              <div
+                ref={gridRef}
+                // `data-tool` drives the blocks' cursors (group `canvas`): a tool change never re-renders them.
+                data-tool={tool}
+                // During a «Generar» moment the boxes are faded out: out of the Tab order and the pointer's way.
+                inert={revealing}
+                className={cn(
+                  "group/canvas absolute select-none",
+                  tool === "draw" && editable && "cursor-crosshair touch-none",
+                  revealing && "pointer-events-none",
+                )}
+                style={{ left: geometry.content.left, top: geometry.content.top, width: geometry.content.width, height: gridHeight }}
+              >
+                <GridOverlay columns={metrics.columns} colPx={metrics.colPx} rowPx={metrics.rowPx} active={gestureActive} />
+                {items.map((item) => {
+                  const chip = chipTexts.get(item.id) ?? null;
+                  const roomy = item.box.width >= CHIP_MIN_PX.width && item.box.height >= CHIP_MIN_PX.height;
+                  return (
+                    <BlockFrame
+                      key={item.id}
+                      id={item.id}
+                      block={item.block}
+                      rect={item.rect}
+                      left={item.box.left}
+                      top={item.box.top}
+                      width={item.box.width}
+                      height={item.box.height}
+                      zIndex={item.zIndex}
+                      selected={item.id === selectedId}
+                      active={item.id === activeId}
+                      grabbed={item.id === grabId}
+                      dropTarget={item.id === dropTarget}
+                      editable={editable}
+                      autoFocus={item.id === autoFocusId}
+                      chip={roomy ? chip : null}
+                      warnings={warningViews.get(item.id)}
+                      flashKey={flash.ids.has(item.id) ? flash.key : 0}
+                      layoutKey={layoutKeyOf(device, item.rect)}
+                      describedBy={editable ? instructionsId : derivedId}
+                      onApplyFix={onApplyFix}
+                    />
+                  );
+                })}
+                {selectedItem && (
+                  <ResizeHandles
+                    blockId={selectedItem.id}
+                    left={selectedItem.box.left}
+                    top={selectedItem.box.top}
+                    width={selectedItem.box.width}
+                    height={selectedItem.box.height}
+                    badge={(warningViews.get(selectedItem.id)?.length ?? 0) > 0}
+                  />
+                )}
+                <AnimatePresence>
+                  {showStructure && !revealing && <StructureOverlay key="structure" outlines={outlines} metrics={metrics} numbers={numbers} />}
+                </AnimatePresence>
+                {editable && <DrawTool box={drawRect ? blockBox(drawRect, metrics, 1) : null} anchor={anchor} anchorHint={t.canvas.drawStart} />}
+                <DropOverlay state={drop.state} ghost={ghost} hint={dropHint} />
+                {empty && editable && drop.state === "idle" && !drawRect && <EmptyHint />}
+              </div>
+              {revealHere && reveal?.phase === "holding" && (
+                <RevealChips screenId={screen.id} layerRef={revealLayerRef} doc={doc} labelOf={labelOfSection} />
+              )}
+            </div>
+            {editable && !revealing && (
+              <div className="mt-3 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  data-canvas-ignore=""
+                  aria-label={t.canvas.addSpaceLabel}
+                  onClick={() => {
+                    actions.addSpace(screen.id);
+                    announce(t.announce.spaceAdded);
+                  }}
+                >
+                  {t.canvas.addSpace}
+                </Button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
       <p id={instructionsId} className="sr-only">
         {t.canvas.instructions(shortcutsEnabled)}
       </p>

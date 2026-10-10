@@ -1,6 +1,6 @@
 import type { Locale } from "@dialmade/catalog";
 import { shadowCss } from "../compile";
-import { EXPORT_FILES } from "../constants";
+import { EXPORT_FILES, SCREEN_EXPORT_FILES } from "../constants";
 import { createPage } from "../doc";
 import type { DesignDoc, Page } from "../schema";
 import { hasScreens, renderTargets } from "../screens";
@@ -25,6 +25,8 @@ export type PromptTarget = (typeof PROMPT_TARGETS)[number];
 interface Ctx {
   name: string;
   focus: string;
+  /** Claude Design: the previews to upload («`preview.html` si lo tienes», or one per screen). */
+  previews: string;
   fontsUrl: string;
   heading: string;
   body: string;
@@ -82,8 +84,12 @@ type Copy = {
   routesFigma: string;
   rulesTitle: string;
   rules: string[];
+  /** `Ctx.previews` without screens and with them. */
+  previews: { page: string; screens: string };
   filesTitle: string;
   files: Record<keyof typeof EXPORT_FILES, string>;
+  /** Files listed after `files` when the document has screens (one per screen in the code pack). */
+  screenFiles: Record<keyof typeof SCREEN_EXPORT_FILES, string>;
   appendixCss: string;
   appendixRule: string;
   ruleDescription: (name: string) => string;
@@ -109,8 +115,8 @@ const ES: Copy = {
     },
     "claude-design": {
       title: (c) => `${c.name}: design system para Claude Design`,
-      before: () => [
-        `En Claude, crea un artifact de tipo Design System (Claude Design) y sube del pack exportado: \`${EXPORT_FILES.designMd}\`, \`${EXPORT_FILES.themeCss}\`, \`${EXPORT_FILES.dtcg}\`, los logos y \`preview.html\` si lo tienes. Después pega este texto.`,
+      before: (c) => [
+        `En Claude, crea un artifact de tipo Design System (Claude Design) y sube del pack exportado: \`${EXPORT_FILES.designMd}\`, \`${EXPORT_FILES.themeCss}\`, \`${EXPORT_FILES.dtcg}\`, los logos y ${c.previews}. Después pega este texto.`,
       ],
       task: (c) => `Crea el design system de ${c.name} a partir de los archivos subidos y, con él, «${c.focus}».`,
       steps: (c) => [
@@ -226,6 +232,7 @@ const ES: Copy = {
     "Un solo display por vista; la jerarquía sale de la escala tipográfica.",
     "Anima con CSS o Motion (motion.dev), nunca con GSAP, y sin pasar de la duración `slow`.",
   ],
+  previews: { page: "`preview.html` si lo tienes", screens: "los `preview*.html` (uno por pantalla) si los tienes" },
   filesTitle: "Archivos del pack",
   files: {
     themeCss: "todas las variables CSS (`:root` y `.dark`)",
@@ -234,6 +241,10 @@ const ES: Copy = {
     figmaDark: "variables de color de Figma, modo oscuro",
     figmaNumbers: "variables numéricas de Figma (radios, espacios y componentes)",
     designMd: "brief legible para agentes (spec DESIGN.md)",
+  },
+  screenFiles: {
+    layoutCss: "la rejilla de cada pantalla, junto a su `index.html` en el pack de código; va después del CSS del kit",
+    layoutJson: "el layout de cada pantalla (bloques, orden de lectura, reglas de tablet y móvil y enlaces), junto a su `index.html`",
   },
   appendixCss: "CSS del tema",
   appendixRule: "Contenido de `.cursor/rules/dialmade-design.mdc`",
@@ -260,8 +271,8 @@ const EN: Copy = {
     },
     "claude-design": {
       title: (c) => `${c.name}: design system for Claude Design`,
-      before: () => [
-        `In Claude, create a Design System artifact (Claude Design) and upload from the export pack: \`${EXPORT_FILES.designMd}\`, \`${EXPORT_FILES.themeCss}\`, \`${EXPORT_FILES.dtcg}\`, the logo files and \`preview.html\` if you have it. Then paste this text.`,
+      before: (c) => [
+        `In Claude, create a Design System artifact (Claude Design) and upload from the export pack: \`${EXPORT_FILES.designMd}\`, \`${EXPORT_FILES.themeCss}\`, \`${EXPORT_FILES.dtcg}\`, the logo files and ${c.previews}. Then paste this text.`,
       ],
       task: (c) => `Create the ${c.name} design system from the uploaded files and use it to build the ${c.focus}.`,
       steps: (c) => [
@@ -377,6 +388,7 @@ const EN: Copy = {
     "One display per view; hierarchy comes from the type scale.",
     "Animate with CSS or Motion (motion.dev), never GSAP, and never beyond the `slow` duration.",
   ],
+  previews: { page: "`preview.html` if you have it", screens: "the `preview*.html` files (one per screen) if you have them" },
   filesTitle: "Files in the pack",
   files: {
     themeCss: "every CSS variable (`:root` and `.dark`)",
@@ -385,6 +397,10 @@ const EN: Copy = {
     figmaDark: "Figma color variables, dark mode",
     figmaNumbers: "Figma number variables (radii, spacing and components)",
     designMd: "agent-readable brief (DESIGN.md spec)",
+  },
+  screenFiles: {
+    layoutCss: "each screen's grid, next to its `index.html` in the code pack; load it after the kit CSS",
+    layoutJson: "each screen's layout (blocks, reading order, tablet and phone rules and links), next to its `index.html`",
   },
   appendixCss: "Theme CSS",
   appendixRule: "Content of `.cursor/rules/dialmade-design.mdc`",
@@ -502,6 +518,7 @@ export function toPromptPack(
   const ctx: Ctx = {
     name: doc.brand.name,
     focus: screens ? screenNames(doc, locale) : kindLabel(doc.brief.focus, locale),
+    previews: screens ? copy.previews.screens : copy.previews.page,
     fontsUrl,
     heading: light.fonts.heading.family ?? "system-ui",
     body: light.fonts.body.family ?? "system-ui",
@@ -545,6 +562,11 @@ export function toPromptPack(
       `## ${copy.filesTitle}`,
       "",
       ...(Object.keys(EXPORT_FILES) as (keyof typeof EXPORT_FILES)[]).map((key) => `- \`${EXPORT_FILES[key]}\`: ${copy.files[key]}`),
+      ...(screens
+        ? (Object.keys(SCREEN_EXPORT_FILES) as (keyof typeof SCREEN_EXPORT_FILES)[]).map(
+            (key) => `- \`${SCREEN_EXPORT_FILES[key]}\`: ${copy.screenFiles[key]}`,
+          )
+        : []),
       "",
     );
   }

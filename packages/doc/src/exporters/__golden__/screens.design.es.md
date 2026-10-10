@@ -330,6 +330,8 @@ Escala de 10 pasos con base de 4 px, ajustada a densidad 5/10 (más densidad, me
 
 Una ruta por pantalla, en este orden. Cada pantalla es una rejilla de 12 columnas (filas de 8 px); su wireframe y su orden de lectura usan los mismos números.
 
+En el pack de código, cada pantalla lleva junto a su `index.html` su `layout.css` (la rejilla; va después del CSS del kit) y su `layout.json` (bloques, orden de lectura, reglas de tablet y móvil y enlaces).
+
 1. Inicio (`/`) · Web pública
 2. Dashboard (`/dashboard`) · Pantalla de app · navegación: Lateral · con cabecera de página
 3. Ajustes (`/ajustes`) · Pantalla de app · navegación: Lateral · sin cabecera de página
@@ -351,25 +353,23 @@ Web pública.
 
 +--------------------------------------------------------------+
 | 2. Hero                                                      |
-| con captura del producto      +------------------------------+
-|                               | 3. Captura                   |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               |                              |
-|                               +------------------------------+
+| con captura del producto                                     |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
+|                                                              |
 |                                                              |
 +--------------------------------------------------------------+
 
 +--------------------------------------------------------------+
-| 4. Características ×3                                        |
+| 3. Características ×3                                        |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -381,7 +381,7 @@ Web pública.
 +--------------------------------------------------------------+
 
 +-----------------------------------------+--------------------+
-| 5. Calendario                           | 6. Próximos        |
+| 4. Calendario                           | 5. Próximos        |
 | calendario "semanal"                    |                    |
 |                                         |                    |
 |                                         |                    |
@@ -396,7 +396,7 @@ Web pública.
 +-----------------------------------------+--------------------+
 
 +--------------------------------------------------------------+
-| 7. Llamada                                                   |
+| 6. Llamada                                                   |
 |                                                              |
 |                                                              |
 |                                                              |
@@ -407,12 +407,11 @@ Web pública.
 Orden de lectura (DOM, foco y móvil):
 
 1. Barra de navegación → `landing.navbar@simple` → enlaza a «Dashboard»
-2. Hero → `landing.hero@split` — nota: "con captura del producto"
-3. Captura → integrado en «Hero»
-4. Características → `landing.features` ×3
-5. Calendario → `ui.calendar@week` — nota: "calendario 'semanal'"
-6. Próximos → `ui.list`
-7. Llamada → `landing.cta@banner` → enlaza a «Ajustes»
+2. Hero → `landing.hero@split` (con «Captura» dentro) — nota: "con captura del producto"
+3. Características → `landing.features` ×3
+4. Calendario → `ui.calendar@week` — nota: "calendario 'semanal'"
+5. Próximos → `ui.list`
+6. Llamada → `landing.cta@banner` → enlaza a «Ajustes»
 
 Ocultos: «Pie».
 

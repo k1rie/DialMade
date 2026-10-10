@@ -4,6 +4,7 @@
 import type { DesignDoc, Screen, ScreenId } from "@dialmade/doc";
 import {
   absorbChildren,
+  DEFAULT_SCOPE,
   deriveResponsive,
   inferStructure,
   toCss,
@@ -52,6 +53,42 @@ export function compileScreenLayout(screen: Pick<Screen, "layout" | "kind">): Co
   };
   compiledCache.set(screen.layout, { ...compiledCache.get(screen.layout), [screen.kind]: compiled });
   return compiled;
+}
+
+/**
+ * Attribute that marks where a screen renders inside the app (`ThemeScope`'s `screen` prop sets it). The scoped
+ * layout CSS (`scopedScreenCss`) only matches inside it, so several screens can render at once.
+ */
+export const SCREEN_ATTRIBUTE = "data-dl-screen";
+
+/**
+ * Scope selector of a screen's layout inside the app: its layout element under the element marked with
+ * `SCREEN_ATTRIBUTE`. Inside `:where()`, so every rule keeps the specificity of the export's CSS (the layout's
+ * `display: none` and the sections' zero-specificity rules win or lose exactly as they do in the export).
+ */
+export function screenScope(screenId: ScreenId): string {
+  return `:where([${SCREEN_ATTRIBUTE}="${screenId.replace(/["\\]/g, "\\$&")}"]) ${DEFAULT_SCOPE}`;
+}
+
+// One scoped CSS per compiled layout and screen id (the compile is already one per layout object and kind).
+const scopedCache = new WeakMap<CompiledScreenLayout, Map<ScreenId, string>>();
+
+/**
+ * The screen's layout CSS for in-app rendering (the Composer's preview, reveal layers, thumbnails): the same
+ * rules as `compileScreenLayout(screen).css`, each selector scoped by `screenScope(screen.id)`. Render it under
+ * an element with `data-dl-screen="<screen.id>"` (`<ThemeScope screen={id}>`). The export keeps the unscoped
+ * `css`: one screen per HTML file.
+ */
+export function scopedScreenCss(screen: Pick<Screen, "id" | "layout" | "kind">): string {
+  const compiled = compileScreenLayout(screen);
+  const byId = scopedCache.get(compiled) ?? new Map<ScreenId, string>();
+  const cached = byId.get(screen.id);
+  if (cached !== undefined) return cached;
+  const { layout, structure, responsive } = compiled;
+  const css = toCss(layout, { kind: screen.kind, structure, responsive, scope: screenScope(screen.id) });
+  byId.set(screen.id, css);
+  scopedCache.set(compiled, byId);
+  return css;
 }
 
 const compareIds = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);

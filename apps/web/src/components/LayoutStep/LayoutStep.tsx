@@ -14,16 +14,21 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useStore } from "zustand";
+import { AiKeyDialog } from "@/components/AiKeyDialog";
+import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Button } from "@/components/ui/Button";
+import type { AiCopyResult } from "@/hooks/useAiCopy";
 import { useToastClearance } from "@/hooks/useToastClearance";
 import { locales, useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { snappy, tween } from "@/lib/motion";
+import { AiRunBar } from "./AiRunBar";
 import { BlockInspector } from "./BlockInspector";
 import { BlockLibrary } from "./BlockLibrary";
 import { LAYOUT_BOTTOM_GAP, LAYOUT_MIN_HEIGHT, NARROW_QUERY, WIDE_QUERY } from "./constants";
 import { GenerateBar } from "./GenerateBar";
+import { countStats } from "./GenerateBar/barState";
 import { BlocksIcon, LayersIcon } from "./icons";
 import { LayersList } from "./LayersList";
 import { LayoutCanvas } from "./LayoutCanvas";
@@ -32,6 +37,7 @@ import { ScreenPanel } from "./ScreenPanel";
 import { ScreensPanel } from "./ScreensPanel";
 import { TemplatePicker } from "./TemplatePicker";
 import type { GenerateResult, LayoutEnv, LayoutStepProps, LeftTab } from "./types";
+import { GenerateAiProvider, useGenerateFlow } from "./useGenerateFlow";
 import { createLayoutStore, LayoutStoreProvider, selectActiveScreen, selectSelectedId } from "./useLayoutStore";
 import { TAB_REGION, useLayoutShortcuts } from "./useLayoutShortcuts";
 import { useMediaQuery } from "./useMediaQuery";
@@ -57,6 +63,10 @@ const TAB_PANEL = { active: { opacity: 1 }, inactive: { opacity: 0 } } as const;
  * Owns the areas F6 / Shift+F6 cycle through and the props ↔ store wiring. Under 640 px the canvas is
  * replaced by layers + «Añadir bloque» + inspector. Must be rendered inside `DndProvider` (library drags,
  * announcements).
+ *
+ * «Generar» (`useGenerateFlow`): the flow writes the result (`onGenerate`), the canvas plays the signature moment
+ * over the generated page, the optional AI copy runs in one request (its bar replaces the GenerateBar while the
+ * page stays) and `onRevealEnd` hands over to «Ajustar».
  */
 export function LayoutStep({
   doc,
@@ -160,29 +170,25 @@ export function LayoutStep({
   const reportStyle = useEffectEvent((next: string) => {
     if (next !== style) onStyleChange?.(next);
   });
-  // Leaving for «Ajustar» right after Generar: the bar (and the report it would open) goes with the step.
-  const [leaving, setLeaving] = useState(false);
-  // Results the flow refused (the store calls the subscription below synchronously inside `generate()`).
-  const [refused] = useState(() => new WeakSet<GenerateResult>());
-  const generateRefused = useCallback((result: GenerateResult) => refused.has(result), [refused]);
-  const reportGenerate = useEffectEvent((result: GenerateResult) => {
-    if (onGenerate?.(result) === false) {
-      refused.add(result);
-      return;
-    }
-    if (!onRevealEnd) return;
-    // Wave 3 plays the signature reveal before this; for now the moment ends right away.
-    setLeaving(true);
-    onRevealEnd();
-  });
   useEffect(
     () =>
       store.subscribe((state, previous) => {
         if (state.style !== previous.style) reportStyle(state.style);
-        if (state.generated && state.generated !== previous.generated) reportGenerate(state.generated);
       }),
     [store],
   );
+
+  /* ---- «Generar»: the flow writes it, the canvas plays the moment, the optional AI writes the copy ---- */
+  const announce = useDndAnnounce({ politeness: "polite" });
+  const announceGenerated = useCallback(
+    (result: GenerateResult) => {
+      const totals = countStats(result.screens);
+      announce(t.announce.generated(totals.screens, totals.blocks));
+    },
+    [announce, t],
+  );
+  const flow = useGenerateFlow({ store, narrow, onGenerate, onRevealEnd, announceGenerated });
+  const { reveal, leaving, generate, endPlaying } = flow;
 
   // «Bloques» is the left tab on desktop. On a phone the layers list is the main view (no canvas to drag
   // onto); widening again goes back to «Bloques» unless the user picked a tab in between.
@@ -212,8 +218,8 @@ export function LayoutStep({
 
   const kind = preferredKind ?? doc.brief.focus;
   const env = useMemo<LayoutEnv>(
-    () => ({ doc, hasImportedGuide, preferredKind: kind, narrow, onGenerateIntent: generateIntent, generateRefused, focusRegion }),
-    [doc, hasImportedGuide, kind, narrow, generateIntent, generateRefused, focusRegion],
+    () => ({ doc, hasImportedGuide, preferredKind: kind, narrow, onGenerateIntent: generateIntent, generate, reveal, endReveal: endPlaying, focusRegion }),
+    [doc, hasImportedGuide, kind, narrow, generateIntent, generate, reveal, endPlaying, focusRegion],
   );
 
   /* ---- Left tabs (Bloques | Capas) ---- */
@@ -250,13 +256,32 @@ export function LayoutStep({
     [],
   );
 
+  /* ---- The floating bar: Generar, or the AI copy's run while the generated page stays ---- */
+  const leaveReveal = flow.keepEditing;
+  const keepEditing = useCallback(() => {
+    leaveReveal();
+    // The boxes come back (the grid is no longer inert after this render): focus returns to the canvas.
+    requestAnimationFrame(() => focusRegion("canvas"));
+  }, [leaveReveal, focusRegion]);
+  const bar = leaving ? null : reveal?.phase === "holding" ? (
+    <AiRunBar onCancel={flow.cancel} onKeepEditing={keepEditing} onFinish={flow.finish} />
+  ) : (
+    parts.generateBar
+  );
+  const { ai, run } = flow.aiValue;
+  const dialogReason = (run.kind === "failed" ? run.fallback : null) ?? (ai.available ? null : ai.fallbackReason);
+  // While the generated page shows, the panels pause (no edit can land under it): the bar decides what's next.
+  const paused = reveal !== null;
+  const pausedLook = reveal?.phase === "holding" && "opacity-60 transition-opacity duration-200";
+
   /* ---- Areas ---- */
   const screensArea = (
     <section
       data-layout-region="screens"
       aria-label={t.regions.screens}
       tabIndex={-1}
-      className={cn(PANEL, "shrink-0 overflow-y-auto overscroll-contain p-3 lg:max-h-[42%]")}
+      inert={paused}
+      className={cn(PANEL, "shrink-0 overflow-y-auto overscroll-contain p-3 lg:max-h-[42%]", pausedLook)}
     >
       {parts.screens}
     </section>
@@ -267,7 +292,8 @@ export function LayoutStep({
       data-layout-region={leftRegion}
       aria-label={t.regions[leftRegion]}
       tabIndex={-1}
-      className={cn(PANEL, "min-h-[24rem] flex-1 lg:min-h-0")}
+      inert={paused}
+      className={cn(PANEL, "min-h-[24rem] flex-1 lg:min-h-0", pausedLook)}
     >
       <div role="tablist" aria-label={t.topBar.leftPanel} onKeyDown={onTabKeyDown} className="flex shrink-0 gap-1 border-b border-app px-3 pt-2">
         {LEFT_TABS.map((id, index) => {
@@ -327,7 +353,8 @@ export function LayoutStep({
       data-layout-region="inspector"
       aria-label={t.regions.inspector}
       tabIndex={-1}
-      className={cn(PANEL, "min-h-[16rem] overflow-y-auto overscroll-contain p-4 lg:min-h-0")}
+      inert={paused}
+      className={cn(PANEL, "min-h-[16rem] overflow-y-auto overscroll-contain p-4 lg:min-h-0", pausedLook)}
     >
       {selectedId ? parts.blockInspector : parts.screenPanel}
     </section>
@@ -345,13 +372,13 @@ export function LayoutStep({
       <div className="flex flex-col gap-3">
         <p className="rounded-control border border-app bg-white/[0.02] px-3 py-2 text-caption text-muted">{t.narrow.message}</p>
         {screensArea}
-        <Button variant="primary" size="md" aria-label={t.narrow.addBlockLabel} onClick={() => focusRegion("library")}>
+        <Button variant="primary" size="md" aria-label={t.narrow.addBlockLabel} disabled={paused} onClick={() => focusRegion("library")}>
           {t.narrow.addBlock}
         </Button>
         {leftArea}
         {inspectorArea}
         <div ref={toastClearanceRef} className="sticky bottom-3 z-20 flex justify-center">
-          {!leaving && parts.generateBar}
+          {bar}
         </div>
       </div>
     );
@@ -377,7 +404,7 @@ export function LayoutStep({
           ref={toastClearanceRef}
           className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto"
         >
-          {!leaving && parts.generateBar}
+          {bar}
         </div>
       </div>
     );
@@ -397,17 +424,34 @@ export function LayoutStep({
 
   return (
     <LayoutStoreProvider store={store} env={env}>
-      <div
-        ref={measureRef}
-        role="region"
-        aria-label={t.region}
-        onFocus={rememberFocus}
-        className={cn("mx-auto flex w-full max-w-[1760px] flex-col gap-3", hasScreens && !narrow && "lg:h-(--layout-h)", className)}
-        style={{ "--layout-h": height ? `${height}px` : `max(${LAYOUT_MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
-      >
-        {hasScreens && parts.topBar}
-        {body}
-      </div>
+      <GenerateAiProvider value={flow.aiValue}>
+        <div
+          ref={measureRef}
+          role="region"
+          aria-label={t.region}
+          onFocus={rememberFocus}
+          className={cn("mx-auto flex w-full max-w-[1760px] flex-col gap-3", hasScreens && !narrow && "lg:h-(--layout-h)", className)}
+          style={{ "--layout-h": height ? `${height}px` : `max(${LAYOUT_MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
+        >
+          {hasScreens && (
+            <div inert={paused} className={cn("flex-none", pausedLook)}>
+              {parts.topBar}
+            </div>
+          )}
+          {body}
+        </div>
+        <AiKeyDialog<AiCopyResult>
+          open={flow.dialog !== null}
+          onOpenChange={(next) => {
+            if (!next) flow.closeDialog();
+          }}
+          reason={dialogReason}
+          manual={flow.manual}
+          initialView={flow.dialog ?? "key"}
+          onManualResult={flow.onManualResult}
+          onKeySaved={flow.onKeySaved}
+        />
+      </GenerateAiProvider>
     </LayoutStoreProvider>
   );
 }

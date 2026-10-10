@@ -94,6 +94,10 @@ describe("export packs", () => {
     expect(preview).toContain("data:image/png;base64,");
     expect(preview).not.toContain("assets/dialmade-ui.css");
     expect(files[`${root}README.md`]).toContain("brand book");
+    // The upload step names every preview, not only the first one.
+    expect(files[`${root}README.md`]).toContain(
+      "2. Sube estos archivos: `DESIGN.md`, `theme.css`, `tokens.tokens.json`, `preview.html`, `preview-brand.html` y `logo.png`.",
+    );
     expect(files[`${root}prompt.md`]).toContain("Claude Design");
   });
 

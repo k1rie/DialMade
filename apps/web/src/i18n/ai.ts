@@ -125,6 +125,40 @@ export const ai = defineDictionary({
       cancelled: "Cancelado. No se cambió ningún texto.",
       done: (n: number) => `${n} ${plural(n, "bloque con textos nuevos", "bloques con textos nuevos")}.`,
       stale: (n: number) => `${n} ${plural(n, "texto se quedó como lo editaste", "textos se quedaron como los editaste")}.`,
+      /* «Escribir textos con IA», next to «Generar» (Modo Layout). */
+      control: "Textos con IA",
+      controlState: (on: boolean): string => (on ? "activado" : "desactivado"),
+      title: "Escribir textos con IA",
+      description:
+        "Después de generar, la IA reescribe los textos de tus pantallas en una sola petición. Las notas de tus bloques le dicen qué contar. Sin IA, los textos de ejemplo ya quedan listos.",
+      switchLabel: "Escribir los textos con IA al generar",
+      usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      withKey: "con tu key",
+      blocked: {
+        "free-tier-exhausted": "sin usos gratis este mes",
+        "budget-exceeded": "la IA gratis se agotó este mes",
+        "daily-limit": "límite diario de IA gratis alcanzado",
+        "not-configured": "IA gratis no disponible en este servidor",
+      } satisfies Record<AiFallbackReason, string>,
+      scope: (blocks: number, changedOnly: boolean) =>
+        changedOnly
+          ? `Solo ${plural(blocks, "el bloque que cambió", `los ${blocks} bloques que cambiaron`)}.`
+          : `${blocks} ${plural(blocks, "bloque", "bloques")} con texto, en todas las pantallas.`,
+      noFields: "Estas pantallas no tienen textos que escribir.",
+      ctaHint: "Genera el diseño y después la IA escribe los textos.",
+      useKey: "Usar mi propia key",
+      manageKey: "Gestionar mi key",
+      useClaude: "Copiar prompt para mi Claude",
+      claudeHint: "Gratis con tu cuenta de Claude: generamos el diseño y te damos el prompt. Pegas aquí su respuesta.",
+      /* The run, in the bar that replaces «Generar» while the page stays. */
+      writing: (n: number) => `Escribiendo los textos de ${n} ${plural(n, "bloque", "bloques")}…`,
+      cancel: "Cancelar",
+      cancelledSpent: "El uso ya contó.",
+      errors: (n: number) => `${n} ${plural(n, "bloque falló", "bloques fallaron")}.`,
+      noChanges: "La IA dejó los textos como estaban.",
+      manualWaiting: "Pega la respuesta de Claude para aplicar los textos.",
+      retryAll: (n: number) => `Reintentar ${plural(n, "el bloque con error", `los ${n} bloques con error`)}`,
+      chipsLabel: "Textos con IA por bloque",
     },
     vision: {
       label: "Analizar estilo con IA",
@@ -264,6 +298,38 @@ export const ai = defineDictionary({
       cancelled: "Cancelled. No text was changed.",
       done: (n: number) => `${n} ${plural(n, "block", "blocks")} with new copy.`,
       stale: (n: number) => `${n} ${plural(n, "text", "texts")} kept as you edited ${plural(n, "it", "them")}.`,
+      control: "AI copy",
+      controlState: (on: boolean) => (on ? "on" : "off"),
+      title: "Write copy with AI",
+      description:
+        "After generating, AI rewrites the copy of your screens in a single request. Your blocks' notes tell it what to say. Without AI, the sample copy is ready anyway.",
+      switchLabel: "Write the copy with AI when generating",
+      usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      withKey: "with your key",
+      blocked: {
+        "free-tier-exhausted": "no free uses left this month",
+        "budget-exceeded": "free AI is used up this month",
+        "daily-limit": "daily free AI limit reached",
+        "not-configured": "free AI isn't available on this server",
+      },
+      scope: (blocks: number, changedOnly: boolean) =>
+        changedOnly
+          ? `Only ${plural(blocks, "the block that changed", `the ${blocks} blocks that changed`)}.`
+          : `${blocks} ${plural(blocks, "block", "blocks")} with copy, across all screens.`,
+      noFields: "These screens have no copy to write.",
+      ctaHint: "Generates the design, then AI writes the copy.",
+      useKey: "Use my own key",
+      manageKey: "Manage my key",
+      useClaude: "Copy prompt for my Claude",
+      claudeHint: "Free with your Claude account: we generate the design and give you the prompt. Paste its answer here.",
+      writing: (n: number) => `Writing the copy of ${n} ${plural(n, "block", "blocks")}…`,
+      cancel: "Cancel",
+      cancelledSpent: "The use was already counted.",
+      errors: (n: number) => `${n} ${plural(n, "block", "blocks")} failed.`,
+      noChanges: "AI left the copy as it was.",
+      manualWaiting: "Paste Claude's answer to apply the copy.",
+      retryAll: (n: number) => `Retry ${plural(n, "the failed block", `the ${n} failed blocks`)}`,
+      chipsLabel: "AI copy per block",
     },
     vision: {
       label: "Analyze style with AI",

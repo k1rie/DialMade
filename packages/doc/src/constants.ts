@@ -158,6 +158,16 @@ export const EXPORT_FILES = {
   designMd: "DESIGN.md",
 } as const;
 
+/**
+ * Files the code pack writes next to each screen's `index.html` (Modo Layout), referenced by DESIGN.md and
+ * the prompt packs' file list when the document has screens. Apart from `EXPORT_FILES` because they repeat
+ * per screen and only exist in documents with screens.
+ */
+export const SCREEN_EXPORT_FILES = {
+  layoutCss: "layout.css",
+  layoutJson: "layout.json",
+} as const;
+
 // ── screens (DesignDoc v2, Modo Layout) ──────────────────────────────────────────
 
 /** Kinds of a screen. The template sets it; it is never inferred from the blocks. */

@@ -144,3 +144,28 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 86. **`Segmented`, `Popover` y `PanelSection` viven en `components/ui/`.** El `Popover` compartido es la versión de `LayoutStep` (Tab fuera de los extremos lo cierra), así que el Composer gana ese arreglo de teclado. La barra de acento de `Segmented` es opcional y solo la usa `LayoutStep`, porque cambia el aspecto y la estética la decide el usuario.
 87. **Anuncios:** el feedback de arrastre sigue siendo `assertive`; en `LayoutStep` todo es `polite` salvo los rechazos (vista de solo lectura, última pantalla, ya está arriba o abajo, solo en pantallas de app).
 88. **Toasts:** suben por encima de la barra inferior del lienzo mientras está visible (`--app-toast-bottom`, `useToastClearance` en `src/hooks/`).
+
+## Flujo, store y Ajustar (ola 2)
+
+89. **El paso «Crear» pasa a llamarse «Layout»** en todo el flujo (stepper, etapas, CTA «Crear layout →» del Palette Lab, «Editar layout» en Ajustar). `CreateStep` se borró; sus piezas (`KindCard`, `MiniPreview`, `RecommendQuestion` y `DetailsPanel`) viven en `LayoutStep/TemplatePicker/`.
+90. **Selector de inicio:** `KindCard` es ahora la carta de conjunto (mini con la marca, nombre, descripción y «Para ti si…»). La pestaña del Palette Lab recomienda: landing → «Landing», app → «SaaS app». Si la respuesta a «¿No sabes cuál?» es «Pasárselo a mi diseñador o a mi IA», no se recomienda ninguno y una nota explica que la guía de estilo se genera siempre.
+91. **El draft del layout vive a nivel del flujo,** uno por documento, así que salir de Layout no lo pierde. Al volver se sincroniza con `doc.screens` (comparando contenido):
+    - Draft sin cambios desde la última sincronización: pasa a ser lo del documento.
+    - Los dos cambiaron: geometría, tipo, nombre, nota, `count` y enlaces vienen del draft; `pinned` y `generated`, del documento; `hidden` se fusiona a tres bandas. No se añade ningún paso de deshacer.
+92. **Generar** escribe todo en una sola escritura validada (pantallas, huellas, marco de app compartido, guía de estilo y foco) y tarda unos 6–9 ms con 200 bloques. La primera vez reinicia el historial, para no poder deshacer hasta un documento vacío.
+93. **Candados al generar:** un valor bloqueado que Generar cambiaría conserva su valor. Si un bloque borrado tiene un candado, la escritura falla y aparece un toast con «Desbloquear y borrar»; el reintento usa `allowLocked` y quita los candados que quedan colgando.
+94. **Estilo:** «Tu guía de estilo» es la opción por defecto si hay una guía importada (`provenance.imports` no vacío), hasta que el usuario elige una receta. Elegir receta llama a `setRecipe(id, { cascade: true })`; si está bloqueada, el selector vuelve atrás y un toast ofrece «Desbloquear».
+95. **Marco de app compartido:** solo una pantalla que gana marco (nueva, o que no lo tenía) copia las props del primer marco existente; los marcos que ya existen conservan las suyas. Los cambios del marco hechos en Ajustar se aplican a todas las pantallas de app con marco del mismo tipo.
+96. **Ajustar en pantallas:** las pestañas son las pantallas y después «Guía de estilo»; no hay «+ Añadir página» (las pantallas se añaden en Layout) ni se reordenan secciones (el orden lo da el layout; aviso «El orden y el tamaño se cambian en Layout.»).
+    - Ocultar escribe `page.hidden` y `layout.blocks[id].hidden` en un solo parche; solo se pueden ocultar bloques del layout.
+    - Editar un knob o la variante añade esa prop a `layout.blocks[id].pinned` en el mismo parche, para que regenerar no la toque.
+    - El copy de la IA no se fija: sobrevive a regenerar el layout, pero no a un cambio de idioma o de producto.
+
+## IA y export (ola 2)
+
+97. **Una petición por Generar:** si se piden más de 64 secciones en total, se mandan las pantallas enteras. Cada nota de bloque lleva también su `count` y el nombre de la pantalla enlazada. Los bloques absorbidos no llevan nota.
+98. **Campos que la IA no toca en pantallas:** además de las notas y nombres de bloque, los nombres ficticios de personas de las listas, los `meta` de listas y tarjetas, y el título, la navegación y el buscador del marco (los reescribe el build). El subtítulo y la acción principal del marco sí, para que la IA pueda ajustarlos por pantalla.
+99. **`<` y `>` se escapan** en el JSON que va a la IA (`page_copy` y `layout_notes`), también en las peticiones antiguas; el valor JSON es el mismo.
+100. **Estados por bloque:** un bloque que el usuario editó durante la petición queda en «Sin cambios»; «Error» solo cuando reintentar puede ayudar (red, saturación, respuesta inútil). Sin usos gratis, sin clave o sin configuración, se abre el menú de la IA en lugar de marcar error.
+101. **El CSS del export y de la preview sale del layout compilado** (sin los bloques absorbidos), con la misma función en los dos sitios (`lib/screen-layout.ts`), para que el HTML exportado y la preview coincidan.
+102. **ZIP:** la raíz es la pantalla con ruta `/` (si no hay, la primera). En el pack de Claude Design, `preview.html` es siempre la primera pantalla. `layout.json` añade `absorbed` (bloque → anfitrión), que explica por qué algunos bloques no salen en `order`. Los textos del usuario en el README pierden comillas invertidas y saltos de línea.

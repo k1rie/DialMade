@@ -112,17 +112,45 @@ describe("DESIGN.md with screens", () => {
       .filter((line) => /^\d+\. /.test(line))
       .map((line) => line.slice(0, line.indexOf(" → ")));
     expect(boxes.sort()).toEqual(list.sort());
-    expect(list).toEqual(["1. Barra de navegación", "2. Hero", "3. Captura", "4. Características", "5. Calendario", "6. Próximos", "7. Llamada"]);
+    expect(list).toEqual(["1. Barra de navegación", "2. Hero", "3. Características", "4. Calendario", "5. Próximos", "6. Llamada"]);
+  });
+
+  it("draws the layout the page is built from: an absorbed block is inside its host's line, not a box", () => {
+    const home = section(toDesignMd(doc, { locale: "es" }), "### Inicio (`/`)");
+    const wireframe = home.slice(home.indexOf("```text"), home.indexOf("```", home.indexOf("```text") + 3));
+    expect(doc.screens["s-home"]!.layout.blocks["b-shot"]?.parentId).toBe("b-hero");
+    expect(wireframe).not.toContain("Captura");
+    expect(home).not.toMatch(/^\d+\. Captura/m);
+    expect(home).toContain("2. Hero → `landing.hero@split` (con «Captura» dentro)");
+    expect(section(toDesignMd(doc, { locale: "en" }), "### Inicio (`/`)")).toContain('2. Hero → `landing.hero@split` (with "Captura" inside)');
+    // The absorbed block's link goes to its host, as in the page (`buildPageFromLayout` links).
+    const linked = patched(doc, [{ op: "add", path: "/screens/s-home/layout/blocks/b-shot/linkTo", value: "s-dash" }]);
+    const md = toDesignMd(linked, { locale: "es" });
+    expect(section(md, "### Inicio (`/`)")).toContain("2. Hero → `landing.hero@split` (con «Captura» dentro) — nota: \"con captura del producto\" → enlaza a «Dashboard»");
+    expect(section(md, "### Pantallas y flujo")).toContain("«Dashboard» (desde «Hero»)");
+  });
+
+  it("names each screen's layout.css and layout.json of the code pack, in DESIGN.md only once", () => {
+    const md = toDesignMd(doc, { locale: "es" });
+    const flow = section(md, "### Pantallas y flujo");
+    expect(flow).toContain("En el pack de código, cada pantalla lleva junto a su `index.html` su `layout.css`");
+    expect(flow).toContain("y su `layout.json` (bloques, orden de lectura, reglas de tablet y móvil y enlaces).");
+    expect(toDesignMd(doc, { locale: "en" })).toContain("In the code pack, each screen carries its `layout.css`");
+    expect(md.match(/`layout\.json`/g)).toHaveLength(1);
+    // The prompt packs list them with the other files instead (not inside their layout block).
+    const pack = toPromptPack(doc, "claude", "es");
+    expect(section(pack, "### Pantallas y flujo")).not.toContain("layout.css");
+    expect(section(pack, "## Archivos del pack")).toContain("- `layout.css`: la rejilla de cada pantalla");
+    expect(section(pack, "## Archivos del pack")).toContain("- `layout.json`: el layout de cada pantalla");
   });
 
   it("writes type@variant, ×N, the quoted note, the link, absorbed blocks and hidden ones", () => {
     const home = section(toDesignMd(doc, { locale: "es" }), "### Inicio (`/`)");
     expect(home).toContain("1. Barra de navegación → `landing.navbar@simple` → enlaza a «Dashboard»");
-    expect(home).toContain('2. Hero → `landing.hero@split` — nota: "con captura del producto"');
-    expect(home).toContain("3. Captura → integrado en «Hero»");
-    expect(home).toContain("4. Características → `landing.features` ×3");
-    expect(home).toContain("5. Calendario → `ui.calendar@week` — nota: \"calendario 'semanal'\"");
-    expect(home).toContain("7. Llamada → `landing.cta@banner` → enlaza a «Ajustes»");
+    expect(home).toContain('2. Hero → `landing.hero@split` (con «Captura» dentro) — nota: "con captura del producto"');
+    expect(home).toContain("3. Características → `landing.features` ×3");
+    expect(home).toContain("4. Calendario → `ui.calendar@week` — nota: \"calendario 'semanal'\"");
+    expect(home).toContain("6. Llamada → `landing.cta@banner` → enlaza a «Ajustes»");
     expect(home).toContain("Ocultos: «Pie».");
     expect(home).not.toMatch(/\d+\. Pie/);
   });
@@ -186,7 +214,7 @@ describe("DESIGN.md with screens", () => {
     ]);
     const md = toDesignMd(evil, { locale: "es" });
     const home = section(md, "### Inicio (`/`)");
-    expect(home).toContain("2. Hero → `landing.hero@split` — nota: \"nota con código\"");
+    expect(home).toContain("2. Hero → `landing.hero@split` (con «Captura» dentro) — nota: \"nota con código\"");
     const fence = home.slice(home.indexOf("```text") + 7, home.indexOf("\n```\n"));
     expect(fence).not.toContain("`");
     expect(fence).toContain("2. Hero");
@@ -239,6 +267,16 @@ describe("prompt packs with screens", () => {
       expect(steps.at(-2)).toMatch(/^\d+\. (Una|One) ruta|route per screen/);
     },
   );
+
+  it("lists layout.css and layout.json only with screens; Claude Design asks for every preview", () => {
+    for (const target of PROMPT_TARGETS.filter((t) => t !== "v0")) {
+      expect(toPromptPack(doc, target, "en")).toContain("- `layout.css`: each screen's grid");
+      expect(toPromptPack(acmeDoc(), target, "en")).not.toContain("layout.css");
+    }
+    expect(toPromptPack(doc, "claude-design", "es")).toContain("los logos y los `preview*.html` (uno por pantalla) si los tienes.");
+    expect(toPromptPack(doc, "claude-design", "en")).toContain("the logo files and the `preview*.html` files (one per screen) if you have them.");
+    expect(toPromptPack(acmeDoc(), "claude-design", "es")).toContain("los logos y `preview.html` si lo tienes.");
+  });
 
   it("names the screens as the thing to build", () => {
     expect(toPromptPack(doc, "claude", "es")).toContain("Construye «Inicio, Dashboard y Ajustes» para Acme Cloud");

@@ -31,6 +31,7 @@ import {
   type Rand,
 } from "@dialmade/layout/testing";
 import { VARIANT_PROP } from "./constants";
+import { SHELL_SCREEN_PURPOSES, shellScreenCopy, shellScreenPurpose } from "./app/Shell";
 import { buildPageFromLayout, LAYOUT_SCOPE_ID, REGION_TYPE, SHELL_ELEMENT_ID, type BuildFromLayoutOptions } from "./buildPageFromLayout";
 import { contentContextFromDoc } from "./context";
 import { PageRenderer } from "./PageRenderer";
@@ -272,6 +273,128 @@ describe("buildPageFromLayout: props", () => {
     expect(cssIds(result.css)).not.toContain("pic");
   });
 
+  describe("a block absorbed into a hero and moved back out keeps its copy (page.stash)", () => {
+    const outside = makeLayout([
+      { id: "hero", type: "hero", rect: [0, 0, 12, 60] },
+      { id: "note", type: "text", rect: [0, 62, 12, 16] },
+      { id: "feat", type: "features", rect: [0, 80, 12, 40] },
+    ]);
+    const inside = (layout: LayoutDoc): LayoutDoc => {
+      const next = structuredClone(layout);
+      next.blocks.note = { ...next.blocks.note!, parentId: "hero", rect: { col: 1, row: 4, w: 5, h: 16 } };
+      return next;
+    };
+    const out = (layout: LayoutDoc): LayoutDoc => {
+      const next = structuredClone(layout);
+      const { parentId: _parent, ...block } = next.blocks.note!;
+      next.blocks.note = { ...block, rect: { col: 0, row: 62, w: 12, h: 16 } };
+      return next;
+    };
+
+    /** Generate, then «Ajustar»: a pinned title and an unpinned AI rewrite on the text block. */
+    function edited() {
+      const first = build(outside);
+      const page = structuredClone(first.page);
+      page.elements.note!.props.title = "Mi nota fijada";
+      page.elements.note!.props.body = "Escrito por la IA";
+      const layout = withFingerprints(outside, first.fingerprints);
+      layout.blocks.note = { ...layout.blocks.note!, pinned: ["/title"] };
+      return { page, layout };
+    }
+
+    it("absorbing stashes the props; moving out restores copy and pins; nothing else changes", () => {
+      const { page, layout } = edited();
+      const absorbed = build(inside(layout), "landing", { previous: page });
+      expect(absorbed.absorbed).toEqual(["note"]);
+      expect(absorbed.page.elements.note).toBeUndefined();
+      expect(absorbed.page.stash).toEqual({ note: { type: "ui.text", props: page.elements.note!.props } });
+      expect(checkScreenPage(absorbed.page, "landing")).toEqual([]);
+
+      const back = build(out(withFingerprints(inside(layout), absorbed.fingerprints)), "landing", { previous: absorbed.page });
+      expect(back.absorbed).toEqual([]);
+      expect(back.page.stash).toBeUndefined();
+      expect(back.page.elements.note!.props).toMatchObject({ title: "Mi nota fijada", body: "Escrito por la IA" });
+      expect(back.page.elements.feat!.props).toEqual(page.elements.feat!.props);
+      expect(checkScreenPage(back.page, "landing")).toEqual([]);
+    });
+
+    it("the stash survives several regenerates (idempotent) and follows the block to another host", () => {
+      const { page, layout } = edited();
+      const once = build(inside(layout), "landing", { previous: page });
+      const twice = build(withFingerprints(inside(layout), once.fingerprints), "landing", { previous: once.page });
+      expect(twice.page).toEqual(once.page);
+      // A second hero takes it: the stash stays the block's.
+      const moved = structuredClone(withFingerprints(inside(layout), once.fingerprints));
+      moved.blocks.hero2 = { type: "hero", label: "Hero 2", rect: { col: 0, row: 130, w: 12, h: 60 }, z: 9 };
+      moved.blocks.note = { ...moved.blocks.note!, parentId: "hero2", rect: { col: 1, row: 134, w: 5, h: 16 } };
+      const other = build(moved, "landing", { previous: twice.page });
+      expect(other.page.stash?.note?.props.title).toBe("Mi nota fijada");
+    });
+
+    it("a locale change while absorbed regenerates the stashed copy in the new language, keeping the pins", () => {
+      const { page, layout } = edited();
+      const absorbed = build(inside(layout), "landing", { previous: page });
+      const en = contentContextFromDoc(acmeDoc({ locale: "en" }));
+      const translated = build(withFingerprints(inside(layout), absorbed.fingerprints), "landing", { previous: absorbed.page, mode: "content" }, en);
+      const stashed = translated.page.stash!.note!.props;
+      expect(stashed.title).toBe("Mi nota fijada");
+      expect(stashed.body).not.toBe("Escrito por la IA");
+      const back = build(out(withFingerprints(inside(layout), translated.fingerprints)), "landing", { previous: translated.page }, en);
+      expect(back.page.elements.note!.props.title).toBe("Mi nota fijada");
+      expect(back.page.elements.note!.props.body).toBe(stashed.body);
+    });
+
+    it("every type a hero accepts (media, text, form) gets its pinned edits back after a round trip", () => {
+      for (const type of ["media", "text", "form"] as const) {
+        const base = makeLayout([
+          { id: "hero", type: "hero", rect: [0, 0, 12, 60] },
+          { id: "kid", type, rect: [0, 62, 6, 40] },
+        ]);
+        const first = build(base);
+        const page = structuredClone(first.page);
+        const def = sectionRegistry.get(page.elements.kid!.type)!;
+        const leaves = stringLeaves(page.elements.kid!.props).filter((pointer) => !OVERRIDE_KEYS.has(pointer.split("/")[1]!));
+        expect(leaves.length, type).toBeGreaterThan(0);
+        // The first free-text leaf (enums such as a media ratio reject the edit).
+        const pointer = leaves.find((leaf) => {
+          const before = readAt(page.elements.kid!.props, leaf);
+          setAt(page.elements.kid!.props, leaf, `Editado ${type}`);
+          if (resolveSectionProps(def, page.elements.kid!.props, ctx).invalidKeys.length === 0) return true;
+          setAt(page.elements.kid!.props, leaf, before);
+          return false;
+        });
+        expect(pointer, type).toBeDefined();
+        if (!pointer) continue;
+        const layout = withFingerprints(base, first.fingerprints);
+        layout.blocks.kid = { ...layout.blocks.kid!, pinned: [pointer] };
+
+        const nested = structuredClone(layout);
+        nested.blocks.kid = { ...nested.blocks.kid!, parentId: "hero", rect: { col: 6, row: 4, w: 6, h: 40 } };
+        const absorbed = build(nested, "landing", { previous: page });
+        expect(absorbed.absorbed, type).toEqual(["kid"]);
+        const outAgain = structuredClone(withFingerprints(nested, absorbed.fingerprints));
+        const { parentId: _host, ...kid } = outAgain.blocks.kid!;
+        outAgain.blocks.kid = { ...kid, rect: { col: 0, row: 62, w: 6, h: 40 } };
+        const back = build(outAgain, "landing", { previous: absorbed.page });
+        expect(readAt(back.page.elements.kid!.props, pointer), `${type} ${pointer}`).toBe(`Editado ${type}`);
+      }
+    });
+
+    it("a block absorbed on the first Generate has no stash and comes out with fresh copy; deleting it drops its stash", () => {
+      const first = build(inside(outside));
+      expect(first.page.stash).toBeUndefined();
+      const back = build(out(withFingerprints(inside(outside), first.fingerprints)), "landing", { previous: first.page });
+      const fresh = build(outside).page.elements.note!.props;
+      expect(back.page.elements.note!.props.title).toBe(fresh.title);
+
+      const { page, layout } = edited();
+      const absorbed = build(inside(layout), "landing", { previous: page });
+      const gone = structuredClone(withFingerprints(inside(layout), absorbed.fingerprints));
+      delete gone.blocks.note;
+      expect(build(gone, "landing", { previous: absorbed.page }).page.stash).toBeUndefined();
+    });
+  });
+
   it("a modal keeps its children inside app.confirmDialog (a container), drawn as a bare panel", () => {
     const layout = makeLayout([
       { id: "kpis", type: "kpis", rect: [0, 0, 12, 14] },
@@ -373,6 +496,107 @@ describe("buildPageFromLayout: app shell", () => {
     expect(html).toContain('data-dl-screen-link="s-dash"');
     expect(html).toContain('href="s-dash.html"');
     expect(html).not.toMatch(/<h1\b/);
+  });
+
+  describe("each screen's frame has its own subtitle and primary action", () => {
+    const screens = [
+      { id: "s-dash", name: "Dashboard", layout: makeLayout([{ id: "k", type: "kpis", rect: [0, 0, 12, 14] }, { id: "c", type: "chart", rect: [0, 16, 12, 40] }]) },
+      { id: "s-sett", name: "Ajustes", layout: makeLayout([{ id: "f", type: "settings", rect: [0, 0, 8, 60] }]) },
+      { id: "s-list", name: "Clientes", layout: makeLayout([{ id: "t", type: "table", rect: [0, 0, 12, 70] }]) },
+      { id: "s-cal", name: "Equipo", layout: makeLayout([{ id: "cal", type: "calendar", rect: [0, 0, 12, 60] }]) },
+      { id: "s-prof", name: "Perfil", layout: makeLayout([{ id: "m", type: "media", rect: [0, 0, 4, 30] }, { id: "x", type: "text", rect: [4, 0, 8, 30] }]) },
+    ];
+    const navScreens = screens.map(({ id, name }) => ({ id, name }));
+    const frame = (screen: (typeof screens)[number], options: BuildFromLayoutOptions = {}, context = ctx) =>
+      buildPageFromLayout(screen.layout, "app", SIDEBAR, context, { navScreens, screenId: screen.id, screenTitle: screen.name, ...options });
+    const header = (page: Page) => {
+      const { title, subtitle, primaryAction } = page.elements.shell!.props as Record<string, string>;
+      return { title, subtitle, primaryAction };
+    };
+
+    it("derives them from the name, the blocks and the product: the dashboard keeps the product's copy", () => {
+      const pages = screens.map((screen) => frame(screen).page);
+      const headers = pages.map(header);
+      const shellDefaults = storedDefaultProps(sectionRegistry.get("app.shell")!, ctx);
+      expect(headers[0]).toEqual({ title: "Dashboard", subtitle: shellDefaults.subtitle, primaryAction: shellDefaults.primaryAction });
+      expect(new Set(headers.map((h) => h.subtitle)).size).toBe(screens.length);
+      expect(headers.slice(1).every((h) => h.primaryAction !== shellDefaults.primaryAction)).toBe(true);
+      expect(headers[1]).toEqual({ title: "Ajustes", ...shellScreenCopy("settings", ctx) });
+      expect(headers[2]).toEqual({ title: "Clientes", ...shellScreenCopy("list", ctx) });
+      expect(headers[3]).toEqual({ title: "Equipo", ...shellScreenCopy("calendar", ctx) });
+      expect(headers[4]).toEqual({ title: "Perfil", ...shellScreenCopy("profile", ctx) });
+      for (const page of pages) expect(checkScreenPage(page, "app")).toEqual([]);
+    });
+
+    it("an old frame with the dashboard's copy everywhere is fixed on the next Generate; an edited one is kept", () => {
+      const dash = frame(screens[0]!).page;
+      const settings = screens[1]!;
+      const stale = structuredClone(frame(settings).page);
+      stale.elements.shell!.props = { ...stale.elements.shell!.props, subtitle: dash.elements.shell!.props.subtitle, primaryAction: dash.elements.shell!.props.primaryAction };
+      expect(header(frame(settings, { previous: stale }).page)).toEqual({ title: "Ajustes", ...shellScreenCopy("settings", ctx) });
+
+      const edited = structuredClone(stale);
+      edited.elements.shell!.props = { ...edited.elements.shell!.props, subtitle: "Escrito por la IA", primaryAction: "" };
+      const kept = header(frame(settings, { previous: edited }).page);
+      expect(kept).toEqual({ title: "Ajustes", subtitle: "Escrito por la IA", primaryAction: "" });
+    });
+
+    it("follows a rename or a change of blocks while the copy is generated", () => {
+      const list = screens[2]!;
+      const first = frame(list).page;
+      const renamed = frame({ ...list, name: "Nuevo cliente" }, { previous: first }).page;
+      expect(header(renamed)).toEqual({ title: "Nuevo cliente", ...shellScreenCopy("form", ctx) });
+      const withKpis = { ...list, name: "Ventas", layout: makeLayout([{ id: "k", type: "kpis", rect: [0, 0, 12, 14] }]) };
+      expect(header(frame(withKpis, { previous: renamed }).page).subtitle).toBe(shellScreenCopy("overview", ctx).subtitle);
+    });
+
+    it("a language or product change rewrites the generated copy for the new context", () => {
+      const settings = screens[1]!;
+      const en = frame(settings).page;
+      expect(header(en)).toEqual({ title: "Ajustes", subtitle: "Your workspace, team and preferences.", primaryAction: "Add member" });
+      const es = contentContextFromDoc(acmeDoc({ locale: "es" }));
+      expect(header(frame(settings, { previous: en, mode: "content" }, es).page)).toEqual({
+        title: "Ajustes",
+        subtitle: "Tu espacio, tu equipo y tus preferencias.",
+        primaryAction: "Añadir miembro",
+      });
+      const health = contentContextFromDoc(acmeDoc({ productType: "healthcare-app" }));
+      const list = screens[2]!;
+      expect(header(frame(list, { previous: frame(list).page, mode: "content" }, health).page)).toEqual({ title: "Clientes", ...shellScreenCopy("list", health) });
+    });
+
+    it("purposes: name words first (es and en, accents ignored), then the visible blocks", () => {
+      expect(shellScreenPurpose("Configuración", [])).toBe("settings");
+      expect(shellScreenPurpose("Account settings", ["table"])).toBe("settings");
+      expect(shellScreenPurpose("Ajustes del perfil", [])).toBe("settings");
+      expect(shellScreenPurpose("Mi perfil", [])).toBe("profile");
+      expect(shellScreenPurpose("Detalle del pedido", ["table"])).toBe("detail");
+      expect(shellScreenPurpose("Nuevo pedido", ["form"])).toBe("form");
+      expect(shellScreenPurpose("Checkout", ["form", "list"])).toBe("checkout");
+      expect(shellScreenPurpose("Agenda", [])).toBe("calendar");
+      expect(shellScreenPurpose("Inicio", [])).toBe("overview");
+      expect(shellScreenPurpose("Lista", [])).toBe("list");
+      expect(shellScreenPurpose("Equipo", ["settings", "list"])).toBe("settings");
+      expect(shellScreenPurpose("Equipo", ["kpis", "table"])).toBe("overview");
+      expect(shellScreenPurpose("Equipo", ["form"])).toBe("form");
+      expect(shellScreenPurpose("Equipo", ["table"])).toBe("list");
+      expect(shellScreenPurpose("Equipo", ["media", "cards"])).toBe("profile");
+      expect(shellScreenPurpose("Equipo", ["text"])).toBe("detail");
+      expect(shellScreenPurpose("Equipo", [])).toBe("generic");
+    });
+
+    it("a calendar screen takes the product's booking action when the product books things", () => {
+      const health = contentContextFromDoc(acmeDoc({ productType: "healthcare-app" }));
+      expect(shellScreenCopy("calendar", health).primaryAction).toBe(shellScreenCopy("overview", health).primaryAction);
+      expect(shellScreenCopy("calendar", ctx).primaryAction).toBe("New event");
+      for (const purpose of SHELL_SCREEN_PURPOSES) {
+        for (const context of [ctx, health, contentContextFromDoc(acmeDoc({ locale: "en" }))]) {
+          const value = shellScreenCopy(purpose, context);
+          expect(value.subtitle.length, purpose).toBeGreaterThan(0);
+          expect(value.primaryAction.length, purpose).toBeGreaterThan(0);
+        }
+      }
+    });
   });
 
   it("keeps the shared shell props (shellProps over the previous page) and an inset sidebar", () => {
@@ -761,8 +985,6 @@ function promise(type: LibraryBlockType, estimate: ReturnType<typeof estimateCon
       return ["linkCount", estimate.value];
     case "footer":
       return ["variant", (estimate.value as number) >= 2 ? "columns" : "simple"];
-    case "settings":
-      return null; // «fields 2–8»: app.settingsForm has no field count (documented gap).
     case "media":
       return ["ratio", estimate.value];
     case "hero":
