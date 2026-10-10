@@ -83,6 +83,10 @@ export const palette = defineDictionary({
       text: "Texto",
       ui: "UI",
       note: "WCAG 2.2: 4,5:1 para texto y 3:1 para bordes y controles.",
+      fromGuide: "De tu guía",
+      importedFails: (n: number) => (n === 1 ? "Un par de tu guía no pasa AA: lo dejamos como lo declaraste." : `${n} pares de tu guía no pasan AA: los dejamos como los declaraste.`),
+      fixImported: "Ajustar a AA",
+      fixedImported: (n: number) => (n === 1 ? "Ajustamos 1 color de tu guía para que pase AA." : `Ajustamos ${n} colores de tu guía para que pasen AA.`),
     },
     preview: {
       title: "Vista previa",
@@ -203,6 +207,10 @@ export const palette = defineDictionary({
       text: "Text",
       ui: "UI",
       note: "WCAG 2.2: 4.5:1 for text and 3:1 for borders and controls.",
+      fromGuide: "From your guide",
+      importedFails: (n: number) => (n === 1 ? "One pair from your guide fails AA: we kept it as you declared it." : `${n} pairs from your guide fail AA: we kept them as you declared them.`),
+      fixImported: "Fix to AA",
+      fixedImported: (n: number) => (n === 1 ? "We adjusted 1 color of your guide so it passes AA." : `We adjusted ${n} colors of your guide so they pass AA.`),
     },
     preview: {
       title: "Preview",

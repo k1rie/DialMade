@@ -1,9 +1,22 @@
-import type { CopyApiErrorCode } from "@/lib/ai/api";
+import type { AiApiErrorCode } from "@/lib/ai/api";
+import type { ManualParseError } from "@/lib/ai/manual";
+import type { AiFallbackReason } from "@/lib/ai/policy";
 import { defineDictionary } from "./config";
 
-type ErrorTexts = Record<CopyApiErrorCode | "no-document" | "not-implemented" | "unavailable", string>;
+type ErrorTexts = Record<AiApiErrorCode | "no-document" | "not-implemented" | "unavailable", string>;
 
-/** Texts of the optional AI copy (useAiCopy) and of the BYOK key dialog. */
+/** Codes only the vision AI has, plus the wire codes whose copy text talks about «textos» or «diseño». */
+type VisionErrorTexts = Record<
+  "image-failed" | "images-too-large" | "no-screenshots" | "refused" | "invalid-response" | "invalid-request" | "payload-too-large",
+  string
+>;
+
+type ReasonTexts = Record<AiFallbackReason, (freeUsesTotal: number) => string>;
+type ManualErrorTexts = Record<ManualParseError, string>;
+
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+
+/** Texts of the optional AI (copy, vision), the free-tier meter, the BYOK key dialog and «mi Claude». */
 export const ai = defineDictionary({
   es: {
     errors: {
@@ -17,6 +30,8 @@ export const ai = defineDictionary({
       "no-fields": "Esas secciones no tienen textos que reescribir.",
       "budget-exceeded": "Se agotó el presupuesto de IA de este mes. Puedes seguir con tu propia API key.",
       "daily-limit": "Llegaste al límite diario de peticiones de IA. Vuelve mañana o usa tu propia API key.",
+      "free-tier-exhausted":
+        "Usaste tus usos gratis de IA de este mes. Puedes usar tu propia API key o copiar el prompt para tu Claude.",
       "rate-limited": "Hay demasiadas peticiones ahora mismo. Espera unos segundos y vuelve a intentarlo.",
       overloaded: "El servicio de IA está saturado. Vuelve a intentarlo en un momento.",
       refused: "La IA no quiso escribir esos textos. Prueba con otra petición.",
@@ -29,7 +44,7 @@ export const ai = defineDictionary({
     key: {
       title: "Usa tu propia API key",
       description:
-        "Con tu key de Anthropic, los textos se generan desde tu navegador y los pagas tú. Dialmade no la guarda ni la recibe.",
+        "Con tu key de Anthropic, la IA se usa desde tu navegador y la pagas tú. Dialmade no la guarda ni la recibe.",
       label: "API key de Anthropic",
       placeholder: "sk-ant-…",
       formatHint: "Las keys de Anthropic empiezan por «sk-ant-».",
@@ -46,6 +61,89 @@ export const ai = defineDictionary({
       removed: "Key olvidada.",
       show: "Mostrar key",
       hide: "Ocultar key",
+      fallbackTitle: "Sigue con tu key o con tu Claude",
+      fallbackDescription: "Puedes usar tu propia API key o copiar el prompt para tu Claude.",
+      reasons: {
+        "free-tier-exhausted": (total: number) =>
+          `Usaste tus ${total} ${plural(total, "uso gratis", "usos gratis")} de IA este mes. Puedes usar tu propia API key o copiar el prompt para tu Claude.`,
+        "budget-exceeded": () =>
+          "El presupuesto de IA gratis de este mes se agotó. Puedes usar tu propia API key o copiar el prompt para tu Claude.",
+        "daily-limit": () =>
+          "Llegaste al límite diario de IA gratis desde esta red. Puedes usar tu propia API key o copiar el prompt para tu Claude.",
+        "not-configured": () =>
+          "La IA gratis no está activada en este servidor. Puedes usar tu propia API key o copiar el prompt para tu Claude.",
+      } satisfies ReasonTexts,
+      tabsLabel: "Cómo seguir",
+      tabs: { key: "Usar mi propia key", manual: "Copiar prompt para mi Claude" },
+    },
+    manual: {
+      intro: "Gratis con tu cuenta de Claude: copias el prompt, lo pegas en Claude y nos devuelves su respuesta.",
+      steps: {
+        copy: "Copia el prompt.",
+        paste: "Pégalo en un chat nuevo de claude.ai.",
+        attach: (files: string) => `Adjunta en ese chat, en este orden: ${files}.`,
+        answer: "Copia el JSON que responda Claude y pégalo aquí.",
+      },
+      copy: "Copiar prompt",
+      copied: "Prompt copiado",
+      copyFailed: "No pudimos copiarlo. Selecciona el texto del prompt y cópialo a mano.",
+      promptLabel: "Prompt para Claude",
+      answerLabel: "Respuesta de Claude",
+      answerPlaceholder: "Pega aquí el JSON que te devolvió Claude",
+      use: "Usar esta respuesta",
+      errors: {
+        empty: "Pega primero la respuesta de Claude.",
+        "not-json": "Eso no parece JSON. Copia solo la respuesta de Claude, sin texto alrededor.",
+        "invalid-schema": "El JSON no tiene la forma que pedimos. Pídeselo otra vez a Claude con el mismo prompt.",
+        "no-result": "La respuesta no trae nada que podamos usar aquí.",
+      } satisfies ManualErrorTexts,
+      detail: (detail: string) => `Detalle: ${detail}`,
+      done: "Respuesta validada.",
+      dropped: (n: number) => `Descartamos ${n} ${plural(n, "entrada que no encajaba", "entradas que no encajaban")}.`,
+    },
+    meter: {
+      label: "Usos de IA",
+      freeUses: (left: number, total: number) => `${left} de ${total} ${plural(total, "uso gratis", "usos gratis")} este mes`,
+      byok: "Con tu propia key: no gasta usos gratis",
+      unavailable: "IA gratis no disponible en este servidor",
+      loading: "Cargando usos de IA…",
+      exhausted: "Sigue con tu key o con tu Claude.",
+    },
+    vision: {
+      label: "Analizar estilo con IA",
+      description: "Lee densidad, radios, sombras y tipografía de tus capturas. No inventa colores: solo dice qué papel cumple cada uno.",
+      estimate: (cost: string) => `≈ ${cost}`,
+      usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      blocked: {
+        "free-tier-exhausted": "sin usos gratis este mes",
+        "budget-exceeded": "la IA gratis se agotó este mes",
+        "daily-limit": "límite diario de IA gratis alcanzado",
+        "not-configured": "IA gratis no disponible en este servidor",
+      } satisfies Record<AiFallbackReason, string>,
+      withKey: "con tu key",
+      oneUse: "Cuenta como 1 uso.",
+      preparing: "Preparando las capturas…",
+      analyzing: (n: number) => `Analizando ${n} ${plural(n, "captura", "capturas")}…`,
+      done: (n: number, cost: string) => `${n} ${plural(n, "captura analizada", "capturas analizadas")} · ${cost}`,
+      doneCached: (n: number) => `${n} ${plural(n, "captura analizada", "capturas analizadas")} · sin coste, ya estaba hecho`,
+      doneManual: (n: number) => `${n} ${plural(n, "captura analizada", "capturas analizadas")} con tu Claude`,
+      firstN: (max: number, total: number) => `Se analizan las primeras ${max} de ${total} capturas.`,
+      noScreenshots: "Añade una captura de tu app para usarlo.",
+      chipsHint: "Lo que encuentre entra como sugerencia desbloqueada y nunca cambia lo que viene de tus archivos.",
+      origin: (n: number) => `IA · captura ${n}`,
+      cancel: "Cancelar",
+      retry: "Reintentar",
+      useKey: "Usar mi propia key",
+      useClaude: "Copiar prompt para mi Claude",
+      errors: {
+        "image-failed": "No pudimos preparar una de tus capturas. Prueba con PNG o JPG.",
+        "images-too-large": "Tus capturas pesan demasiado para una sola petición. Prueba con menos.",
+        "no-screenshots": "No hay capturas tuyas que analizar.",
+        refused: "La IA no quiso analizar esas capturas.",
+        "invalid-response": "La IA devolvió un análisis que no pudimos usar. Inténtalo de nuevo.",
+        "invalid-request": "No pudimos enviar las capturas. Inténtalo de nuevo.",
+        "payload-too-large": "Tus capturas pesan demasiado para enviarlas a la IA.",
+      } satisfies VisionErrorTexts,
     },
   },
   en: {
@@ -60,6 +158,7 @@ export const ai = defineDictionary({
       "no-fields": "Those sections have no text to rewrite.",
       "budget-exceeded": "This month's AI budget is used up. You can keep going with your own API key.",
       "daily-limit": "You reached the daily AI request limit. Come back tomorrow or use your own API key.",
+      "free-tier-exhausted": "You used this month's free AI uses. You can use your own API key or copy the prompt for your Claude.",
       "rate-limited": "Too many requests right now. Wait a few seconds and try again.",
       overloaded: "The AI service is overloaded. Try again in a moment.",
       refused: "The AI declined to write that copy. Try a different request.",
@@ -71,7 +170,7 @@ export const ai = defineDictionary({
     },
     key: {
       title: "Use your own API key",
-      description: "With your Anthropic key, copy is generated from your browser and billed to you. Dialmade never stores or receives it.",
+      description: "With your Anthropic key, AI runs from your browser and is billed to you. Dialmade never stores or receives it.",
       label: "Anthropic API key",
       placeholder: "sk-ant-…",
       formatHint: "Anthropic keys start with “sk-ant-”.",
@@ -88,6 +187,86 @@ export const ai = defineDictionary({
       removed: "Key forgotten.",
       show: "Show key",
       hide: "Hide key",
+      fallbackTitle: "Keep going with your key or your Claude",
+      fallbackDescription: "You can use your own API key or copy the prompt for your Claude.",
+      reasons: {
+        "free-tier-exhausted": (total: number) =>
+          `You used your ${total} free AI ${plural(total, "use", "uses")} this month. You can use your own API key or copy the prompt for your Claude.`,
+        "budget-exceeded": () => "This month's free AI budget is used up. You can use your own API key or copy the prompt for your Claude.",
+        "daily-limit": () => "You reached the daily free AI limit from this network. You can use your own API key or copy the prompt for your Claude.",
+        "not-configured": () => "Free AI is not enabled on this server. You can use your own API key or copy the prompt for your Claude.",
+      },
+      tabsLabel: "How to continue",
+      tabs: { key: "Use my own key", manual: "Copy prompt for my Claude" },
+    },
+    manual: {
+      intro: "Free with your Claude account: copy the prompt, paste it into Claude and bring its answer back here.",
+      steps: {
+        copy: "Copy the prompt.",
+        paste: "Paste it into a new chat on claude.ai.",
+        attach: (files: string) => `In that chat, attach in this order: ${files}.`,
+        answer: "Copy the JSON Claude answers with and paste it here.",
+      },
+      copy: "Copy prompt",
+      copied: "Prompt copied",
+      copyFailed: "We couldn't copy it. Select the prompt text and copy it by hand.",
+      promptLabel: "Prompt for Claude",
+      answerLabel: "Claude's answer",
+      answerPlaceholder: "Paste the JSON Claude gave you here",
+      use: "Use this answer",
+      errors: {
+        empty: "Paste Claude's answer first.",
+        "not-json": "That doesn't look like JSON. Copy only Claude's answer, with no text around it.",
+        "invalid-schema": "The JSON doesn't have the shape we asked for. Ask Claude again with the same prompt.",
+        "no-result": "The answer has nothing we can use here.",
+      },
+      detail: (detail: string) => `Detail: ${detail}`,
+      done: "Answer validated.",
+      dropped: (n: number) => `We dropped ${n} ${plural(n, "entry that didn't fit", "entries that didn't fit")}.`,
+    },
+    meter: {
+      label: "AI uses",
+      freeUses: (left: number, total: number) => `${left} of ${total} free ${plural(total, "use", "uses")} this month`,
+      byok: "With your own key: no free uses spent",
+      unavailable: "Free AI isn't available on this server",
+      loading: "Loading AI uses…",
+      exhausted: "Keep going with your key or your Claude.",
+    },
+    vision: {
+      label: "Analyze style with AI",
+      description: "Reads density, corners, shadows and type from your screenshots. It never invents colors: it only says what role each one plays.",
+      estimate: (cost: string) => `≈ ${cost}`,
+      usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      blocked: {
+        "free-tier-exhausted": "no free uses left this month",
+        "budget-exceeded": "free AI is used up this month",
+        "daily-limit": "daily free AI limit reached",
+        "not-configured": "free AI isn't available on this server",
+      },
+      withKey: "with your key",
+      oneUse: "Counts as 1 use.",
+      preparing: "Preparing the screenshots…",
+      analyzing: (n: number) => `Analyzing ${n} ${plural(n, "screenshot", "screenshots")}…`,
+      done: (n: number, cost: string) => `${n} ${plural(n, "screenshot", "screenshots")} analyzed · ${cost}`,
+      doneCached: (n: number) => `${n} ${plural(n, "screenshot", "screenshots")} analyzed · no cost, already done`,
+      doneManual: (n: number) => `${n} ${plural(n, "screenshot", "screenshots")} analyzed with your Claude`,
+      firstN: (max: number, total: number) => `Only the first ${max} of ${total} screenshots are analyzed.`,
+      noScreenshots: "Add a screenshot of your app to use it.",
+      chipsHint: "What it finds comes in as unlocked suggestions and never changes what comes from your files.",
+      origin: (n: number) => `AI · screenshot ${n}`,
+      cancel: "Cancel",
+      retry: "Retry",
+      useKey: "Use my own key",
+      useClaude: "Copy prompt for my Claude",
+      errors: {
+        "image-failed": "We couldn't prepare one of your screenshots. Try PNG or JPG.",
+        "images-too-large": "Your screenshots are too large for one request. Try fewer.",
+        "no-screenshots": "There are no screenshots of yours to analyze.",
+        refused: "The AI declined to analyze those screenshots.",
+        "invalid-response": "The AI returned an analysis we couldn't use. Try again.",
+        "invalid-request": "We couldn't send the screenshots. Try again.",
+        "payload-too-large": "Your screenshots are too large to send to the AI.",
+      },
     },
   },
 });

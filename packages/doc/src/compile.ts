@@ -1,4 +1,5 @@
-import { SCALE_STEPS, formatOklch, toCssVarRecord, type CssColorFormat } from "@dialmade/palette";
+import { SCALE_STEPS, generateTheme, toCssVarRecord, type CssColorFormat, type Theme } from "@dialmade/palette";
+import { opaqueRoles, tokenColorCss } from "./color";
 import type { DesignDoc } from "./schema";
 import { stateColorVars } from "./stateColors";
 import {
@@ -6,16 +7,25 @@ import {
   RADIUS_NAMES,
   SHADOW_NAMES,
   hexToRgb,
+  resolveThemeInputs,
   resolveTokens,
+  scaleOverrides,
+  themeInputFor,
   type DimensionRef,
   type FontSize,
   type ResolvedTokens,
   type ShadowLayer,
   type ShadowRef,
+  type ThemeInputs,
   type TokenOptions,
 } from "./tokens";
 
-export interface CompileThemeVarsOptions extends TokenOptions {
+/**
+ * `mode` plus any of the theme inputs: the missing ones come from `resolveThemeInputs(doc)`, so the
+ * theme is generated with the doc's locked colors as `pinned`. A `theme` passed in should come from
+ * `generateTheme(themeInputFor(doc))` for the same reason.
+ */
+export interface CompileThemeVarsOptions extends Omit<TokenOptions, keyof ThemeInputs>, Partial<ThemeInputs> {
   /** Color value format (default `oklch`, like `toCssVars`). */
   colorFormat?: CssColorFormat;
 }
@@ -97,23 +107,28 @@ export function tokensToCssVars(tokens: ResolvedTokens): Record<string, string> 
 }
 
 /**
- * Color variables for one mode: @dialmade/palette's record, the doc's overrides, a `--color-cta-*`
- * fallback and the derived interaction colors (`STATE_COLOR_VARS`: hover fills, muted text on primary).
+ * Color variables for one mode: @dialmade/palette's record, the doc's colors on top (`tokens.color`
+ * roles and 50–950 scales; alpha kept as `oklch(l c h / a)` or `#rrggbbaa`), a `--color-cta-*`
+ * fallback and the derived interaction colors (`STATE_COLOR_VARS`: hover fills, muted text on
+ * primary), computed on opaque colors.
  */
 export function colorCssVars(
   doc: DesignDoc,
   options: Pick<CompileThemeVarsOptions, "theme" | "mode" | "colorFormat">,
 ): Record<string, string> {
   const format = options.colorFormat ?? "oklch";
-  const vars = toCssVarRecord(options.theme, options.mode, { format });
-  for (const [name, hex] of Object.entries(doc.tokens.color[options.mode])) {
-    if (!hex) continue;
-    vars[`--${name}`] = format === "hex" ? hex.toLowerCase() : formatOklch(hex.toLowerCase());
+  const theme: Theme = options.theme ?? generateTheme(themeInputFor(doc));
+  const vars = toCssVarRecord(theme, options.mode, { format });
+  const own = doc.tokens.color[options.mode];
+  for (const [name, color] of Object.entries(own)) {
+    if (color) vars[`--${name}`] = tokenColorCss(color, format);
   }
-  if (!("--color-cta-500" in vars)) {
-    for (const step of SCALE_STEPS) vars[`--color-cta-${step}`] = `var(--color-brand-${step})`;
+  for (const [name, steps] of scaleOverrides(doc)) {
+    for (const [step, hex] of Object.entries(steps)) vars[`--color-${name}-${step}`] = tokenColorCss(hex, format);
   }
-  Object.assign(vars, stateColorVars(options.theme, options.mode, { format, overrides: doc.tokens.color[options.mode] }));
+  for (const step of SCALE_STEPS) vars[`--color-cta-${step}`] ??= `var(--color-brand-${step})`;
+  const overrides = opaqueRoles(theme, options.mode, own);
+  Object.assign(vars, stateColorVars(theme, options.mode, { format, overrides }));
   return vars;
 }
 
@@ -121,8 +136,10 @@ export function colorCssVars(
  * Every CSS variable of the user's theme contract for one mode: colors (`--background`, `--primary`,
  * `--color-brand-500`…), non-color (`--dl-font-*`, `--dl-fs-*`, `--dl-radius-*`, `--dl-space-*`,
  * `--dl-shadow-*`, `--dl-duration-*`…) and component tokens (`--dl-button-*`, `--dl-card-*`…).
- * Deterministic: same input, same keys in the same order, same values.
+ * The doc's stored values (`tokens.*`: imported or edited) win over the ones derived from the
+ * palette, recipe, pairing and dials. Deterministic: same input, same keys in the same order, same values.
  */
 export function compileThemeVars(doc: DesignDoc, options: CompileThemeVarsOptions): Record<string, string> {
-  return { ...colorCssVars(doc, options), ...tokensToCssVars(resolveTokens(doc, options)) };
+  const resolved = { ...options, ...resolveThemeInputs(doc, options) };
+  return { ...colorCssVars(doc, resolved), ...tokensToCssVars(resolveTokens(doc, resolved)) };
 }

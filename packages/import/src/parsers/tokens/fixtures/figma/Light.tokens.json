@@ -1,0 +1,31 @@
+{
+  "surface": {
+    "page": {
+      "$type": "color",
+      "$value": { "colorSpace": "srgb", "components": [1, 1, 1], "alpha": 1, "hex": "#FFFFFF" },
+      "$extensions": { "com.figma.variableId": "VariableID:20:1", "com.figma.scopes": ["FRAME_FILL"], "com.figma.codeSyntax": { "WEB": "var(--background)" } }
+    }
+  },
+  "action": {
+    "main": {
+      "$type": "color",
+      "$value": "{brisa.500}",
+      "$extensions": {
+        "com.figma.variableId": "VariableID:20:2",
+        "com.figma.scopes": ["ALL_FILLS"],
+        "com.figma.codeSyntax": { "WEB": "var(--primary)" },
+        "com.figma.aliasData": { "targetVariableId": "VariableID:10:1", "targetVariableName": "brisa/500", "targetVariableSetName": "Primitives" }
+      }
+    },
+    "on-main": {
+      "$type": "color",
+      "$value": "{palette.white}",
+      "$extensions": {
+        "com.figma.variableId": "VariableID:20:3",
+        "com.figma.codeSyntax": { "WEB": "var(--primary-foreground)" },
+        "com.figma.aliasData": { "targetVariableId": "VariableID:10:2", "targetVariableName": "brisa/50", "targetVariableSetName": "Primitives" }
+      }
+    }
+  },
+  "$extensions": { "com.figma.modeName": "Light" }
+}

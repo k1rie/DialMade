@@ -32,7 +32,7 @@ export type ThemeScopeProps = Omit<HTMLAttributes<HTMLElement>, "style" | "child
   vars?: ThemeVars;
   /** Fonts to link when `vars` is given without a doc. */
   pairing?: Pick<TypographyPairing, "googleFontsUrl"> | null;
-  /** Links the pairing's Google Fonts (default true). */
+  /** Links the Google Fonts of the doc (its own families or the pairing's) or of `pairing` (default true). */
   fonts?: boolean;
   /** Locale of @dialmade/ui's internal texts. Default: the doc's `brief.locale`, else the app's. */
   locale?: Locale;
@@ -78,7 +78,8 @@ export function ThemeScope({
   const derived = useMemo(() => (doc ? deriveDesign(doc, pageKind) : null), [doc, pageKind]);
 
   const vars = varsProp ?? derived?.vars[mode];
-  const pairing = fonts ? (pairingProp ?? derived?.pairing ?? null) : null;
+  // The doc's own imported families load too (fontsUrlFor), not only the pairing's.
+  const fontsHref = !fonts ? null : pairingProp !== undefined ? (pairingProp?.googleFontsUrl ?? null) : (derived?.fontsUrl ?? null);
   const locale = localeProp ?? doc?.brief.locale ?? appLocale;
 
   return (
@@ -87,7 +88,7 @@ export function ThemeScope({
         as={as}
         vars={vars}
         mode={mode}
-        pairing={pairing}
+        fontsHref={fontsHref}
         className={cn("app-theme-scope", className)}
         data-transition={transition ? undefined : "off"}
         style={style}

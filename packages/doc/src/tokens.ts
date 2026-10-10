@@ -4,12 +4,34 @@ import {
   getMotionTier,
   getStyleRecipe,
   getTypographyPairing,
+  googleFontsCss2Url,
+  type FontRequest,
   type MotionTier,
   type StyleRecipe,
   type TypographyPairing,
 } from "@dialmade/catalog";
-import { ROLE_KEYS, cssVarName, generateTheme, scaleGroups, type ColorMode, type Theme } from "@dialmade/palette";
-import type { ComponentShape, ComponentSize, DesignDoc, Dials } from "./schema";
+import {
+  ROLE_KEYS,
+  SCALE_STEPS,
+  cssVarName,
+  formatOklch,
+  generateTheme,
+  scaleGroups,
+  type ColorMode,
+  type GenerateThemeInput,
+  type RoleKey,
+  type ScaleStep,
+  type ScaleStepNumber,
+  type Theme,
+  type ThemePins,
+  type ThemeRoles,
+} from "@dialmade/palette";
+import { normalizeTokenColor, opaqueRoles } from "./color";
+import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES } from "./constants";
+import { isLocked } from "./locks";
+import type { ColorScaleTokens, ComponentShape, ComponentSize, DesignDoc, Dials, FontFamilyTokenValue } from "./schema";
+
+export { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES };
 
 export interface ThemeInputs {
   /** From `generateTheme` (@dialmade/palette). */
@@ -25,22 +47,74 @@ export interface TokenOptions extends ThemeInputs {
   pageDials?: Partial<Dials>;
 }
 
+const ROLE_BY_NAME = new Map<string, RoleKey>(ROLE_KEYS.map((key) => [cssVarName(key), key]));
+
+const scaleSteps = (scale: ColorScaleTokens): ScaleStep[] =>
+  SCALE_STEPS.flatMap((step: ScaleStepNumber) => {
+    const hex = scale[String(step)];
+    return hex ? [{ step, hex: hex.toLowerCase(), oklch: formatOklch(hex.toLowerCase()) }] : [];
+  });
+
+/**
+ * The locked part of `tokens.color` as @dialmade/palette pins: roles keyed like `ThemeRoles`
+ * (`primaryForeground`, alpha kept) and the 50–950 scales. Locked means «tu guía manda»: the theme
+ * is built around these values. Unlocked colors still win in `compileThemeVars`, but do not anchor
+ * the theme (e.g. «Color de botón»). `undefined` when nothing is pinned.
+ */
+export function pinnedFor(doc: DesignDoc): ThemePins | undefined {
+  const pins: ThemePins = {};
+  for (const mode of ["light", "dark"] as const) {
+    const roles: Partial<ThemeRoles> = {};
+    for (const [name, value] of Object.entries(doc.tokens.color[mode])) {
+      const key = ROLE_BY_NAME.get(name);
+      if (key && value && isLocked(doc, `/tokens/color/${mode}/${name}`)) roles[key] = normalizeTokenColor(value);
+    }
+    if (Object.keys(roles).length > 0) pins[mode] = roles;
+  }
+  const scales: NonNullable<ThemePins["scales"]> = {};
+  for (const name of ["brand", "accent"] as const) {
+    const scale = doc.tokens.color.scales?.[name];
+    if (scale && isLocked(doc, `/tokens/color/scales/${name}`)) {
+      const steps = scaleSteps(scale);
+      if (steps.length > 0) scales[name] = steps;
+    }
+  }
+  if (scales.brand || scales.accent) pins.scales = scales;
+  return pins.light || pins.dark || pins.scales ? pins : undefined;
+}
+
+/** What `resolveThemeInputs` passes to `generateTheme`: seeds, palette style and the locked colors as `pinned`. */
+export function themeInputFor(doc: DesignDoc): GenerateThemeInput {
+  const { brand, brief } = doc;
+  const pinned = pinnedFor(doc);
+  return {
+    primary: brand.seeds.primary,
+    ...(brand.seeds.secondary && { secondary: brand.seeds.secondary }),
+    achromatic: brand.achromatic,
+    style: brief.paletteStyleId,
+    ...(pinned && { pinned }),
+  };
+}
+
 /** Catalog objects and theme for the doc's choices; any of them can be overridden (live previews). */
 export function resolveThemeInputs(doc: DesignDoc, overrides: Partial<ThemeInputs> = {}): ThemeInputs {
-  const { brand, brief } = doc;
+  const { brief } = doc;
   return {
-    theme:
-      overrides.theme ??
-      generateTheme({
-        primary: brand.seeds.primary,
-        ...(brand.seeds.secondary && { secondary: brand.seeds.secondary }),
-        achromatic: brand.achromatic,
-        style: brief.paletteStyleId,
-      }),
+    theme: overrides.theme ?? generateTheme(themeInputFor(doc)),
     recipe: overrides.recipe ?? getStyleRecipe(brief.recipeId) ?? getStyleRecipe(DEFAULT_RECIPE_ID)!,
     pairing: overrides.pairing ?? getTypographyPairing(brief.pairingId) ?? getTypographyPairing(DEFAULT_PAIRING_ID)!,
     motionTier: overrides.motionTier ?? getMotionTier(brief.motionTier) ?? getMotionTier("standard")!,
   };
+}
+
+/** The doc's own 50–950 scales by export name (`accent` → `cta`): step → `#rrggbb`. */
+export function scaleOverrides(doc: DesignDoc): [string, Record<number, string>][] {
+  const out: [string, Record<number, string>][] = [];
+  for (const [name, exported] of [["brand", "brand"], ["accent", "cta"]] as const) {
+    const scale = doc.tokens.color.scales?.[name];
+    if (scale) out.push([exported, Object.fromEntries(scaleSteps(scale).map((s) => [s.step, s.hex]))]);
+  }
+  return out;
 }
 
 // ── dial math ──────────────────────────────────────────────────────────────────
@@ -59,11 +133,8 @@ const even = (value: number) => Math.round(value / 2) * 2;
 
 // ── model ──────────────────────────────────────────────────────────────────────
 
-export const FONT_SIZE_NAMES = ["display", "h1", "h2", "h3", "body", "small", "caption"] as const;
 export type FontSizeName = (typeof FONT_SIZE_NAMES)[number];
-export const RADIUS_NAMES = ["sm", "md", "lg", "xl", "full"] as const;
 export type RadiusName = (typeof RADIUS_NAMES)[number];
-export const SHADOW_NAMES = ["sm", "md", "lg"] as const;
 export type ShadowName = (typeof SHADOW_NAMES)[number];
 
 export interface FontToken {
@@ -71,7 +142,12 @@ export interface FontToken {
   family: string | null;
   /** Full CSS `font-family` value. */
   stack: string;
+  /** Available weights; empty when unknown (own families without `weights`). */
   weights: number[];
+  /** `tokens`: the doc's own family (`tokens.typography`); absent: from the pairing. */
+  source?: "tokens";
+  /** Google Fonts family to load for this role (`null`: nothing to load). Absent for pairing fonts, which all load. */
+  load?: string | null;
 }
 
 /** `minPx < px` means the size is fluid between 375px and 1280px viewports. */
@@ -116,7 +192,11 @@ export interface ComponentTokens {
 export interface ResolvedTokens {
   mode: ColorMode;
   dials: Dials;
-  /** Role → `#rrggbb` for this mode, with the doc's color overrides applied. Keys are CSS names (`primary-foreground`). */
+  /**
+   * Role → `#rrggbb` for this mode, with the doc's color overrides applied. Keys are CSS names
+   * (`primary-foreground`). A color with alpha is composited over this mode's background; the CSS and
+   * DTCG exports keep the real alpha.
+   */
   colors: Record<string, string>;
   /** Scale group (`brand`, `cta`, `neutral`, `success`…) → step → `#rrggbb`. */
   scales: Record<string, Record<number, string>>;
@@ -146,6 +226,27 @@ const ELEVATION_SHADOW: Record<0 | 1 | 2 | 3, ShadowRef> = { 0: "none", 1: "sm",
 
 const quoteFamily = (family: string) => `"${family.replace(/"/g, "")}"`;
 
+/** CSS generic families and system keywords, written unquoted in a stack (lowercase). */
+const UNQUOTED_FAMILIES = new Set([
+  "serif",
+  "sans-serif",
+  "monospace",
+  "cursive",
+  "fantasy",
+  "system-ui",
+  "ui-serif",
+  "ui-sans-serif",
+  "ui-monospace",
+  "ui-rounded",
+  "math",
+  "emoji",
+  "fangsong",
+  "-apple-system",
+  "blinkmacsystemfont",
+]);
+
+const cssFamily = (name: string) => (UNQUOTED_FAMILIES.has(name.toLowerCase()) ? name : quoteFamily(name));
+
 function familyWeights(pairing: TypographyPairing, role: "heading" | "body"): number[] {
   const own = pairing[role];
   const other = pairing[role === "heading" ? "body" : "heading"];
@@ -163,21 +264,77 @@ export function nearestWeight(target: number, available: readonly number[]): num
   });
 }
 
-const isMono = (font: { family: string; fallback: string }) => /monospace/.test(font.fallback) || /\bmono\b/i.test(font.family);
+const isMono = (font: FontToken) => /monospace/.test(font.stack) || /\bmono\b/i.test(font.family ?? "");
 
 function fontToken(font: { family: string; fallback: string }, weights: number[]): FontToken {
   return { family: font.family, stack: `${quoteFamily(font.family)}, ${font.fallback}`, weights };
 }
 
-function resolveFonts(pairing: TypographyPairing): ResolvedTokens["fonts"] {
-  const heading = fontToken(pairing.heading, familyWeights(pairing, "heading"));
-  const body = fontToken(pairing.body, familyWeights(pairing, "body"));
-  const mono = isMono(pairing.heading)
-    ? { family: pairing.heading.family, stack: `${quoteFamily(pairing.heading.family)}, ${SYSTEM_MONO}`, weights: heading.weights }
-    : isMono(pairing.body)
-      ? { family: pairing.body.family, stack: `${quoteFamily(pairing.body.family)}, ${SYSTEM_MONO}`, weights: body.weights }
-      : { family: null, stack: SYSTEM_MONO, weights: [400, 500, 700] };
+/** The doc's own family: `family, substitute, ...fallback` (or the pairing's fallback for the role). */
+function ownFontToken(own: FontFamilyTokenValue, defaultFallback: string): FontToken {
+  const names = [own.family, ...(own.substitute ? [own.substitute] : []), ...(own.fallback ?? [])];
+  const seen = new Set<string>();
+  const unique = names.filter((name) => !seen.has(name.toLowerCase()) && seen.add(name.toLowerCase()));
+  const stack = unique.map(cssFamily).join(", ");
+  return {
+    family: own.family,
+    stack: own.fallback && own.fallback.length > 0 ? stack : `${stack}, ${defaultFallback}`,
+    weights: [...new Set(own.weights ?? [])].sort((a, b) => a - b),
+    source: "tokens",
+    load: own.source === "google" ? own.family : (own.substitute ?? null),
+  };
+}
+
+/** Mono role taken from a heading/body family that is monospaced. */
+function monoFrom(font: FontToken): FontToken {
+  if (font.source !== "tokens") return { family: font.family, stack: `${quoteFamily(font.family!)}, ${SYSTEM_MONO}`, weights: font.weights };
+  const lead = font.stack.split(", ").filter((part) => !UNQUOTED_FAMILIES.has(part.toLowerCase()));
+  return { ...font, stack: [...lead, SYSTEM_MONO].join(", ") };
+}
+
+/**
+ * Heading, body and mono families: the doc's own (`tokens.typography`) where set, the pairing's
+ * otherwise. A monospaced heading or body also serves as mono.
+ */
+export function resolveFonts(doc: Pick<DesignDoc, "tokens">, pairing: TypographyPairing): ResolvedTokens["fonts"] {
+  const own = doc.tokens.typography;
+  const heading = own.heading ? ownFontToken(own.heading, pairing.heading.fallback) : fontToken(pairing.heading, familyWeights(pairing, "heading"));
+  const body = own.body ? ownFontToken(own.body, pairing.body.fallback) : fontToken(pairing.body, familyWeights(pairing, "body"));
+  const mono = own.mono
+    ? ownFontToken(own.mono, SYSTEM_MONO)
+    : isMono(heading)
+      ? monoFrom(heading)
+      : isMono(body)
+        ? monoFrom(body)
+        : { family: null, stack: SYSTEM_MONO, weights: [400, 500, 700] };
   return { heading, body, mono };
+}
+
+/**
+ * Google Fonts css2 URL for the doc's fonts: the pairing's URL when no own family is set, otherwise
+ * the loadable families (Google source or free substitute) with their weights. `null` when the own
+ * families need nothing from Google Fonts.
+ */
+export function fontsUrlFor(doc: Pick<DesignDoc, "tokens">, pairing: TypographyPairing): string | null {
+  const own = doc.tokens.typography;
+  if (!own.heading && !own.body && !own.mono) return pairing.googleFontsUrl;
+  const fonts = resolveFonts(doc, pairing);
+  const requests: FontRequest[] = [];
+  for (const font of [fonts.heading, fonts.body, fonts.mono]) {
+    const family = font.source === "tokens" ? font.load : font.family;
+    if (family) requests.push({ family, weights: font.weights });
+  }
+  return requests.length > 0 ? googleFontsCss2Url(requests) : null;
+}
+
+/** Line height, tracking or weight of the first heading step (h1, h2, display, h3) the doc sets. */
+function headingMetric(doc: DesignDoc, key: "lineHeight" | "letterSpacing" | "weight"): number | undefined {
+  const scale = doc.tokens.typography.scale;
+  for (const name of ["h1", "h2", "display", "h3"] as const) {
+    const value = scale[name]?.[key];
+    if (value !== undefined) return value;
+  }
+  return undefined;
 }
 
 function resolveFontSizes(doc: DesignDoc, variance: number): Record<FontSizeName, FontSize> {
@@ -291,16 +448,13 @@ export function resolveTokens(doc: DesignDoc, options: TokenOptions): ResolvedTo
   const { theme, recipe, pairing, motionTier, mode } = options;
   const dials: Dials = { ...doc.brief.dials, ...options.pageDials };
   const { variance, density } = dials;
-  const roles = mode === "light" ? theme.light : theme.dark;
-
-  const colors: Record<string, string> = {};
-  for (const key of ROLE_KEYS) colors[cssVarName(key)] = roles[key];
-  for (const [name, hex] of Object.entries(doc.tokens.color[mode])) if (hex) colors[name] = hex.toLowerCase();
+  const colors = opaqueRoles(theme, mode, doc.tokens.color[mode]);
 
   const scales: ResolvedTokens["scales"] = {};
   for (const [name, steps] of scaleGroups(theme)) scales[name] = Object.fromEntries(steps.map((s) => [s.step, s.hex]));
+  for (const [name, own] of scaleOverrides(doc)) scales[name] = { ...scales[name], ...own };
 
-  const fonts = resolveFonts(pairing);
+  const fonts = resolveFonts(doc, pairing);
   const radiusFactor = dialLerp(variance, 0.5, 1, 1.5);
   const ro = doc.tokens.radius;
   const radius: Record<RadiusName, number> = {
@@ -318,11 +472,17 @@ export function resolveTokens(doc: DesignDoc, options: TokenOptions): ResolvedTo
   const heightFactor = dialLerp(density, 1.1, 1, 0.85);
   const borderWidth = doc.tokens.borderWidth ?? recipe.borderWidth;
   const neutral = theme.scales.neutral;
-  const shadows = resolveShadows(recipe.shadow, mode, {
+  const derivedShadows = resolveShadows(recipe.shadow, mode, {
     shadow: neutral[neutral.length - 1]!.hex,
     primary: colors.primary!,
     foreground: colors.foreground!,
   });
+  const elevation = doc.tokens.elevation;
+  const shadows: Record<ShadowName, ShadowLayer[]> = {
+    sm: elevation.sm ? elevation.sm.map((layer) => ({ ...layer, color: layer.color.toLowerCase() })) : derivedShadows.sm,
+    md: elevation.md ? elevation.md.map((layer) => ({ ...layer, color: layer.color.toLowerCase() })) : derivedShadows.md,
+    lg: elevation.lg ? elevation.lg.map((layer) => ({ ...layer, color: layer.color.toLowerCase() })) : derivedShadows.lg,
+  };
   const shadowRef = (ref: ShadowRef): ShadowRef => (ref !== "none" && shadows[ref].length > 0 ? ref : "none");
 
   const mo = doc.tokens.motion;
@@ -361,6 +521,7 @@ export function resolveTokens(doc: DesignDoc, options: TokenOptions): ResolvedTo
     sidebar: { w: SIDEBAR_WIDTH[sys.sidebar.width ?? "normal"] },
   };
 
+  const typeScale = doc.tokens.typography.scale;
   return {
     mode,
     dials,
@@ -368,9 +529,15 @@ export function resolveTokens(doc: DesignDoc, options: TokenOptions): ResolvedTo
     scales,
     fonts,
     fontSizes: resolveFontSizes(doc, variance),
-    lineHeights: { tight: round(dialLerp(variance, 1.25, 1.15, 1.05), 2), body: round(dialLerp(density, 1.7, 1.6, 1.45), 2) },
-    heading: { weight: nearestWeight(recipe.headingWeight, fonts.heading.weights), tracking: recipe.headingTracking },
-    bodyWeight: nearestWeight(400, fonts.body.weights),
+    lineHeights: {
+      tight: headingMetric(doc, "lineHeight") ?? round(dialLerp(variance, 1.25, 1.15, 1.05), 2),
+      body: typeScale.body?.lineHeight ?? round(dialLerp(density, 1.7, 1.6, 1.45), 2),
+    },
+    heading: {
+      weight: headingMetric(doc, "weight") ?? nearestWeight(recipe.headingWeight, fonts.heading.weights),
+      tracking: headingMetric(doc, "letterSpacing") ?? recipe.headingTracking,
+    },
+    bodyWeight: typeScale.body?.weight ?? nearestWeight(400, fonts.body.weights),
     radius,
     space,
     layout: {

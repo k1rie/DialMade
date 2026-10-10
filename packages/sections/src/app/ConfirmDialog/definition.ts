@@ -8,7 +8,7 @@ import { confirmDialogSchema, type ConfirmDialogProps } from "./schema";
 
 const SUBJECT_KINDS = new Set(["id", "person", "company", "choice", "money", "date", "time"]);
 
-/** The first row of the profile's table, as the thing being confirmed («#10482 · Lucía Herrera · 129 €»). */
+/** The first row of the profile's table, as the thing being confirmed («#10482 · Lucía Herrera · $129»). */
 function subjectOf(ctx: ContentContext): string {
   const { columns, rows } = tableData(ctx, 1);
   const row = rows[0];

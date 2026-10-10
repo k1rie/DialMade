@@ -1,7 +1,7 @@
 "use client";
 
 import { getStyleRecipe, getTypographyPairing, styleRecipes, typographyPairings } from "@dialmade/catalog";
-import type { DesignDoc } from "@dialmade/doc";
+import { isLocked, type DesignDoc } from "@dialmade/doc";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { DropSlot, type DropSlotState } from "@/components/dnd/DropSlot";
@@ -48,7 +48,7 @@ export function DirectionControl({ doc, mode }: DirectionControlProps) {
 
   const recipe = getStyleRecipe(doc.brief.recipeId);
   const pairing = getTypographyPairing(doc.brief.pairingId);
-  const locked = doc.brief.locks.includes("pairingId");
+  const locked = isLocked(doc, "/brief/pairingId");
   const currentVars = sampleVars(doc, {}, mode);
 
   const recipeVars = useMemo(() => styleRecipes.map((r) => sampleVars(doc, recipeChoice(doc, r.id), mode)), [doc, mode]);

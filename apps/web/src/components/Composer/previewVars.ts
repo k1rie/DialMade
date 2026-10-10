@@ -1,5 +1,5 @@
 import { getStyleRecipe } from "@dialmade/catalog";
-import type { Brief, DesignDoc } from "@dialmade/doc";
+import { isLocked, type Brief, type DesignDoc } from "@dialmade/doc";
 import type { ThemeVars } from "@/hooks/useDesignDoc";
 import type { PreviewMode } from "@/hooks/usePaletteFlow";
 import { deriveDesign } from "@/lib/design-derived";
@@ -60,10 +60,9 @@ export function sampleVars(doc: DesignDoc, choice: BriefChoice, mode: PreviewMod
 export function recipeChoice(doc: DesignDoc, recipeId: string): BriefChoice {
   const recipe = getStyleRecipe(recipeId);
   if (!recipe) return { recipeId };
-  const locks = doc.brief.locks;
   return {
     recipeId,
-    ...(recipe.pairingId && !locks.includes("pairingId") && { pairingId: recipe.pairingId }),
-    ...(!locks.includes("motionTier") && { motionTier: recipe.defaultMotion }),
+    ...(recipe.pairingId && !isLocked(doc, "/brief/pairingId") && { pairingId: recipe.pairingId }),
+    ...(!isLocked(doc, "/brief/motionTier") && { motionTier: recipe.defaultMotion }),
   };
 }

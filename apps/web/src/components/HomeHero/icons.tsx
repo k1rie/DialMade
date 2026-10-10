@@ -43,3 +43,10 @@ export const ArrowRightIcon = (props: IconProps) => (
     <path d="M3.25 8h9.5M8.75 4l4 4-4 4" />
   </svg>
 );
+
+export const LayersIcon = (props: IconProps) => (
+  <svg {...base} {...props}>
+    <path d="m8 2.25 5.75 3L8 8.25l-5.75-3L8 2.25Z" />
+    <path d="m2.25 8 5.75 3 5.75-3M2.25 10.75l5.75 3 5.75-3" />
+  </svg>
+);

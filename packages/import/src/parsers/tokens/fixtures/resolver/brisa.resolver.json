@@ -1,0 +1,30 @@
+{
+  "name": "Brisa",
+  "version": "2025.10",
+  "description": "Brisa (fictional brand): foundation + light/dark + an optional night brand.",
+  "sets": {
+    "foundation": { "sources": [{ "$ref": "./foundation.tokens.json" }] }
+  },
+  "modifiers": {
+    "theme": {
+      "contexts": {
+        "light": [{ "$ref": "themes/light.tokens.json" }],
+        "dark": [{ "$ref": "themes/dark.tokens.json" }]
+      },
+      "default": "light"
+    },
+    "brand": {
+      "contexts": {
+        "brisa": [],
+        "nocturna": [{ "$ref": "brands/nocturna.tokens.json#/brand/nocturna" }]
+      },
+      "default": "brisa"
+    }
+  },
+  "resolutionOrder": [
+    { "$ref": "#/sets/foundation" },
+    { "$ref": "#/modifiers/theme" },
+    { "$ref": "#/modifiers/brand" },
+    { "type": "set", "name": "remote", "sources": [{ "$ref": "https://tokens.example.com/extra.json" }] }
+  ]
+}

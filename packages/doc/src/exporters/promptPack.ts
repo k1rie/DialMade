@@ -3,7 +3,7 @@ import { shadowCss } from "../compile";
 import { EXPORT_FILES } from "../constants";
 import { createPage } from "../doc";
 import type { DesignDoc, Page } from "../schema";
-import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, type ResolvedTokens } from "../tokens";
+import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, fontsUrlFor, type ResolvedTokens } from "../tokens";
 import {
   kindLabel,
   mdTable,
@@ -476,10 +476,11 @@ export function toPromptPack(
   const copy = COPY[locale];
   const spec = copy.targets[target];
   const { inputs, light, dark } = resolveExport(doc, options);
+  const fontsUrl = fontsUrlFor(doc, inputs.pairing) ?? inputs.pairing.googleFontsUrl;
   const ctx: Ctx = {
     name: doc.brand.name,
     focus: kindLabel(doc.brief.focus, locale),
-    fontsUrl: inputs.pairing.googleFontsUrl,
+    fontsUrl,
     heading: light.fonts.heading.family ?? "system-ui",
     body: light.fonts.body.family ?? "system-ui",
     fast: light.motion.fast,
@@ -502,7 +503,7 @@ export function toPromptPack(
     ...spec.steps(ctx).map((line, i) => `${i + 1}. ${line}`),
     "",
     ...brief(doc, light, dark, locale, copy, {
-      fontsUrl: inputs.pairing.googleFontsUrl,
+      fontsUrl,
       recipe: inputs.recipe.label[locale],
       recipeDescription: inputs.recipe.description[locale],
       paletteStyle: inputs.theme.styleId,

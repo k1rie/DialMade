@@ -1,96 +1,146 @@
-// Server only. Hard monthly budget and per-IP daily limit, kept IN THE MEMORY OF THE PROCESS.
-//
-// That is enough for one long-lived Node server (and `next dev`), but not for production on
-// serverless: every instance has its own counters and a cold start resets them, so ./server keeps the
-// hosted AI off when it detects a serverless platform (fails closed). To enable it there, persist
-// the ledger (e.g. a Supabase table `ai_budget(month text primary key, spent_usd numeric)` updated with
-// an atomic `update … set spent_usd = spent_usd + $1 where month = $2 and spent_usd + $1 <= $3`, and
-// `ai_requests(day, ip_hash, count)` for the IP limit) and keep these functions as its interface.
+// Server only. The ledger IN THE MEMORY OF THE PROCESS, with the same rules as the SQL one
+// (supabase/migrations/*_ai_ledger.sql). Not a hard limit with several instances or after a restart, so
+// ./getAiLedger only uses it outside production (and tests use it directly).
+import { randomUUID } from "node:crypto";
+import { RESERVATION_TTL_SECONDS } from "./config";
+import { limitReason, type AiLedger, type AiLedgerUsage } from "./ledger";
 
-type Ledger = {
+type Reservation = {
+  deviceId: string;
+  ipHash: string;
   month: string;
-  spentUsd: number;
-  reservedUsd: number;
   day: string;
-  requestsByIp: Map<string, number>;
+  reservedUsd: number;
+  settledUsd: number | null;
+  status: "reserved" | "settled" | "released" | "expired";
+  createdAt: number;
 };
 
-const LEDGER_KEY = Symbol.for("dialmade.ai.ledger");
-type LedgerHost = typeof globalThis & { [LEDGER_KEY]?: Ledger };
+type State = {
+  months: Map<string, { spentUsd: number; reservedUsd: number }>;
+  /** `${month}|${deviceId}` → free uses used. */
+  uses: Map<string, number>;
+  /** `${day}|${ipHash}` → requests. */
+  ipDays: Map<string, number>;
+  reservations: Map<string, Reservation>;
+};
+
+const STATE_KEY = Symbol.for("dialmade.ai.memoryLedger");
+type StateHost = typeof globalThis & { [STATE_KEY]?: State };
+
+/** One state per process (on globalThis so dev hot reloads keep it). */
+function state(): State {
+  return ((globalThis as StateHost)[STATE_KEY] ??= { months: new Map(), uses: new Map(), ipDays: new Map(), reservations: new Map() });
+}
 
 const monthOf = (now: Date) => now.toISOString().slice(0, 7);
 const dayOf = (now: Date) => now.toISOString().slice(0, 10);
+const round6 = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
 
-/** One ledger per process (on globalThis so dev hot reloads keep it). Rolls over by UTC month/day. */
-function ledger(now: Date): Ledger {
-  const host = globalThis as LedgerHost;
-  const current = (host[LEDGER_KEY] ??= {
-    month: monthOf(now),
-    spentUsd: 0,
-    reservedUsd: 0,
-    day: dayOf(now),
-    requestsByIp: new Map(),
-  });
-  if (current.month !== monthOf(now)) {
-    current.month = monthOf(now);
-    current.spentUsd = 0;
-    current.reservedUsd = 0;
-  }
-  if (current.day !== dayOf(now)) {
-    current.day = dayOf(now);
-    current.requestsByIp.clear();
-  }
-  return current;
+function monthRow(s: State, month: string) {
+  let row = s.months.get(month);
+  if (!row) s.months.set(month, (row = { spentUsd: 0, reservedUsd: 0 }));
+  return row;
 }
 
-/** Budget left this month: limit − spent − reserved by requests in flight. Never negative. */
-export function remainingBudgetUsd(monthlyBudgetUsd: number, now = new Date()): number {
-  const l = ledger(now);
-  return Math.max(0, monthlyBudgetUsd - l.spentUsd - l.reservedUsd);
-}
-
-export type BudgetReservation = {
-  readonly amountUsd: number;
-  /** Records what the request really cost and frees the reservation. */
-  settle: (costUsd: number) => void;
-  /** Frees the reservation without spending (the request was not billed). */
-  release: () => void;
-};
-
-/**
- * Reserves the worst-case cost of a request before calling the API. Returns `null` when it does not
- * fit in what is left, so concurrent requests can never overspend the month together.
- */
-export function reserveBudget(amountUsd: number, monthlyBudgetUsd: number, now = new Date()): BudgetReservation | null {
-  if (!(amountUsd >= 0) || amountUsd > remainingBudgetUsd(monthlyBudgetUsd, now)) return null;
-  const l = ledger(now);
-  const month = l.month;
-  l.reservedUsd += amountUsd;
-  let open = true;
-  const close = (costUsd: number) => {
-    if (!open) return;
-    open = false;
-    // After a month rollover the reservation was already dropped; the cost lands in the new month.
-    if (l.month === month) l.reservedUsd = Math.max(0, l.reservedUsd - amountUsd);
-    l.spentUsd += Math.max(0, costUsd);
+function usageOf(s: State, month: string, deviceId: string, day: string, ipHash: string): AiLedgerUsage {
+  const row = s.months.get(month);
+  return {
+    month,
+    spentUsd: round6(row?.spentUsd ?? 0),
+    reservedUsd: round6(row?.reservedUsd ?? 0),
+    freeUsesUsed: s.uses.get(`${month}|${deviceId}`) ?? 0,
+    ipRequestsToday: s.ipDays.get(`${day}|${ipHash}`) ?? 0,
   };
-  return { amountUsd, settle: (costUsd) => close(costUsd), release: () => close(0) };
 }
 
-/** Counts one request for `ip` today; false (and nothing counted) when it already reached `limit`. */
-export function takeDailyRequest(ip: string, limit: number, now = new Date()): boolean {
-  const l = ledger(now);
-  const used = l.requestsByIp.get(ip) ?? 0;
-  if (used >= limit) return false;
-  l.requestsByIp.set(ip, used + 1);
-  return true;
+/** Unanswered reservations past the TTL are charged in full (unknown outcome). */
+function expire(s: State, now: Date): void {
+  const limit = now.getTime() - RESERVATION_TTL_SECONDS * 1000;
+  for (const reservation of s.reservations.values()) {
+    if (reservation.status !== "reserved" || reservation.createdAt >= limit) continue;
+    const row = monthRow(s, reservation.month);
+    row.reservedUsd = Math.max(0, row.reservedUsd - reservation.reservedUsd);
+    row.spentUsd += reservation.reservedUsd;
+    reservation.status = "expired";
+    reservation.settledUsd = reservation.reservedUsd;
+  }
+  const today = dayOf(now);
+  for (const key of s.ipDays.keys()) if (!key.startsWith(`${today}|`)) s.ipDays.delete(key);
 }
 
-export function requestsLeftToday(ip: string, limit: number, now = new Date()): number {
-  return Math.max(0, limit - (ledger(now).requestsByIp.get(ip) ?? 0));
+export function memoryAiLedger(): AiLedger {
+  const usageAfter = (s: State, r: Reservation) => usageOf(s, r.month, r.deviceId, r.day, r.ipHash);
+
+  return {
+    kind: "memory",
+    async usage({ deviceId, ipHash, now = new Date() }) {
+      return usageOf(state(), monthOf(now), deviceId, dayOf(now), ipHash);
+    },
+    async reserve(request) {
+      const now = request.now ?? new Date();
+      const s = state();
+      expire(s, now);
+      const month = monthOf(now);
+      const day = dayOf(now);
+      const amountUsd = round6(request.amountUsd);
+      if (!(amountUsd >= 0)) throw new RangeError("amountUsd must be a number >= 0");
+      const before = usageOf(s, month, request.deviceId, day, request.ipHash);
+      const reason = limitReason(before, request, amountUsd);
+      if (reason) return { ok: false, reason, usage: before };
+
+      monthRow(s, month).reservedUsd += amountUsd;
+      s.uses.set(`${month}|${request.deviceId}`, before.freeUsesUsed + 1);
+      s.ipDays.set(`${day}|${request.ipHash}`, before.ipRequestsToday + 1);
+      const reservationId = randomUUID();
+      s.reservations.set(reservationId, {
+        deviceId: request.deviceId,
+        ipHash: request.ipHash,
+        month,
+        day,
+        reservedUsd: amountUsd,
+        settledUsd: null,
+        status: "reserved",
+        createdAt: now.getTime(),
+      });
+      return { ok: true, reservationId, usage: usageOf(s, month, request.deviceId, day, request.ipHash) };
+    },
+    async settle(reservationId, costUsd) {
+      const s = state();
+      const r = s.reservations.get(reservationId);
+      if (!r) return null;
+      const cost = round6(Math.max(0, costUsd));
+      const row = monthRow(s, r.month);
+      if (r.status === "reserved") {
+        row.reservedUsd = Math.max(0, row.reservedUsd - r.reservedUsd);
+        row.spentUsd += cost;
+      } else if (r.status === "expired") {
+        row.spentUsd = Math.max(0, row.spentUsd + cost - (r.settledUsd ?? 0));
+      } else {
+        return usageAfter(s, r);
+      }
+      r.status = "settled";
+      r.settledUsd = cost;
+      return usageAfter(s, r);
+    },
+    async release(reservationId) {
+      const s = state();
+      const r = s.reservations.get(reservationId);
+      if (!r) return null;
+      const row = monthRow(s, r.month);
+      if (r.status === "reserved") row.reservedUsd = Math.max(0, row.reservedUsd - r.reservedUsd);
+      else if (r.status === "expired") row.spentUsd = Math.max(0, row.spentUsd - (r.settledUsd ?? 0));
+      else return usageAfter(s, r);
+      const key = `${r.month}|${r.deviceId}`;
+      s.uses.set(key, Math.max(0, (s.uses.get(key) ?? 0) - 1));
+      r.status = "released";
+      r.settledUsd = 0;
+      return usageAfter(s, r);
+    },
+  };
 }
 
 /** Tests only. */
 export function resetAiLedger(): void {
-  delete (globalThis as LedgerHost)[LEDGER_KEY];
+  delete (globalThis as StateHost)[STATE_KEY];
 }

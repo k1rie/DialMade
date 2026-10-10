@@ -20,7 +20,7 @@ describe("brand.type", () => {
       "Leyenda",
     ]);
     expect(steps[0]?.textContent).toContain("Acme Cloud");
-    expect(steps[4]?.textContent).toMatch(/16 px · 1,6 · 400/);
+    expect(steps[4]?.textContent).toMatch(/16 px · 1\.6 · 400/);
     expect(steps[0]?.textContent).toMatch(/\d+–\d+ px/);
     expect(screen.getByRole("heading", { level: 3, name: "Pesos" })).toBeTruthy();
   });

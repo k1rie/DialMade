@@ -5,14 +5,14 @@ import { useEffect, useRef, useState } from "react";
 const hasFiles = (event: DragEvent) => !!event.dataTransfer && Array.from(event.dataTransfer.types).includes("Files");
 
 /**
- * Turns the whole window into a drop target for files while mounted (a drop anywhere never
- * navigates away). Returns true while files are dragged over the page.
+ * Turns the whole window into a drop target for files while mounted and `enabled` (a drop anywhere
+ * never navigates away) and hands over every dropped file. Returns true while files are dragged over the page.
  */
-export function useWindowFileDrop(onFile: (file: File) => void, enabled = true): boolean {
+export function useWindowFileDrop(onFiles: (files: File[]) => void, enabled = true): boolean {
   const [over, setOver] = useState(false);
-  const onFileRef = useRef(onFile);
+  const onFilesRef = useRef(onFiles);
   useEffect(() => {
-    onFileRef.current = onFile;
+    onFilesRef.current = onFiles;
   });
 
   useEffect(() => {
@@ -47,8 +47,8 @@ export function useWindowFileDrop(onFile: (file: File) => void, enabled = true):
       if (!hasFiles(event)) return;
       event.preventDefault();
       reset();
-      const file = event.dataTransfer?.files[0];
-      if (file) onFileRef.current(file);
+      const files = Array.from(event.dataTransfer?.files ?? []);
+      if (files.length > 0) onFilesRef.current(files);
     };
     window.addEventListener("dragenter", onEnter);
     window.addEventListener("dragover", onOver);

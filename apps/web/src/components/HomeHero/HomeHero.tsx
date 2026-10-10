@@ -10,13 +10,14 @@ import { Kbd } from "@/components/ui/Kbd";
 import { DEFAULT_PRIMARY } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
 import { home } from "@/i18n/home";
+import { importText } from "@/i18n/import";
 import { cn } from "@/lib/cn";
 import { LOGO_ACCEPT, MAX_LOGO_BYTES, MAX_LOGO_MB, isAcceptedLogo } from "@/lib/image";
 import { popVariants, smooth } from "@/lib/motion";
 import { ColorPanel } from "./ColorPanel";
 import { HeroPopover } from "./HeroPopover";
 import { HeroSample, type HeroSampleState } from "./HeroSample";
-import { DropletIcon, LinkIcon, UploadIcon } from "./icons";
+import { DropletIcon, LayersIcon, LinkIcon, UploadIcon } from "./icons";
 import { UrlPanel } from "./UrlPanel";
 import { useLogoPaste } from "./useLogoPaste";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
@@ -27,6 +28,8 @@ export type HomeHeroProps = {
   onFile: (file: File) => void;
   /** «No tengo logo»: go straight to the palette, optionally with a starting color (any CSS color). */
   onSkip: (primary?: string) => void;
+  /** «Ya tengo marca o app», or dropped files that are not one logo: opens «Trae tu marca» with them. */
+  onImport: (files?: File[]) => void;
   /** True while the flow reads/validates the file. */
   busy?: boolean;
   /** Localized error from the last attempt (also shown as a toast by the flow). */
@@ -40,8 +43,12 @@ type PanelId = "url" | "color";
  * secondary ways in (URL, color without logo, sample logos). Files can be dropped anywhere on the
  * page or pasted with Cmd/Ctrl+V; sample tiles can be dragged into the zone or clicked.
  */
-export function HomeHero({ onFile, onSkip, busy = false, error }: HomeHeroProps) {
+/** One image the Home can crop as a logo (SVG, PNG, JPG or WebP within the logo limit). */
+const isHomeLogo = (file: File) => isAcceptedLogo(file) && file.size <= MAX_LOGO_BYTES;
+
+export function HomeHero({ onFile, onSkip, onImport, busy = false, error }: HomeHeroProps) {
   const t = useDictionary(home);
+  const entry = useDictionary(importText).entry;
   const { t: common } = useI18n();
   const keys = usePlatformKeys();
   const urlPanelId = useId();
@@ -71,7 +78,18 @@ export function HomeHero({ onFile, onSkip, busy = false, error }: HomeHeroProps)
     [busy, common, onFile],
   );
 
-  const fileOver = useWindowFileDrop(submit);
+  /** One logo → crop, as always; several files or anything that is not a logo → «Trae tu marca». */
+  const route = useCallback(
+    (files: File[]) => {
+      if (busy) return;
+      const [first] = files;
+      if (files.length === 1 && first && isHomeLogo(first)) submit(first);
+      else if (files.length > 0) onImport(files);
+    },
+    [busy, submit, onImport],
+  );
+
+  const fileOver = useWindowFileDrop(route);
   useLogoPaste({
     onFile: submit,
     onUrl: (url) => {
@@ -222,7 +240,13 @@ export function HomeHero({ onFile, onSkip, busy = false, error }: HomeHeroProps)
         }}
       />
 
-      <div role="group" aria-label={t.hero.otherWays} className="relative flex items-center gap-1">
+      <div role="group" aria-label={t.hero.otherWays} className="relative flex flex-wrap items-center justify-center gap-1">
+        <Button variant="ghost" size="sm" leadingIcon={<LayersIcon />} disabled={working} onClick={() => onImport()}>
+          {entry.home}
+        </Button>
+        <span aria-hidden className="text-subtle">
+          ·
+        </span>
         <Button
           ref={urlTriggerRef}
           variant="ghost"

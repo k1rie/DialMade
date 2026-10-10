@@ -1,0 +1,17 @@
+Brisa (fictional brand) — brand colors
+
+- Primary: #3A5BD9
+- Accent: rgb(240 160 36)
+- Background = #FAFAF7
+- Text: oklch(0.21 0.02 264)
+- Border: hsl(220 14% 90% / 0.6)
+--brand-secondary: #7c3aed;
+$danger: #E5484D;
+"success": "2f9e44",
+Ocean 500: lab(52% -10 -30)
+Highlight: rebeccapurple
+Fallback: transparent
+
+## Dark mode
+Background: #0B0D12
+Text: #ECEDEE

@@ -25,12 +25,4 @@ export function estimateCopyCost(doc: DesignDoc, kind: OutputKind, sectionIds?: 
   return (input * price.input + output * price.output) / 1_000_000;
 }
 
-export function formatUsd(usd: number, locale: string): string {
-  const digits = usd < 0.01 ? 3 : 2;
-  return new Intl.NumberFormat(locale === "es" ? "es-ES" : "en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(usd);
-}
+export { formatUsd } from "@/lib/money";

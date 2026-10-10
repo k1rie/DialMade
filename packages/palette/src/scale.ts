@@ -1,8 +1,10 @@
 import {
   clamp,
   formatOklch,
+  hexToOklab,
   hueDelta,
   mix,
+  oklabToOklch,
   oklchOf,
   oklchToHex,
   requireHex,
@@ -109,6 +111,40 @@ export function buildScale(
   }
 
   return { steps: toSteps(hexes), anchorStep: SCALE_STEPS[anchor]! };
+}
+
+/**
+ * An imported scale as the 11 steps 50–950. Given steps keep their exact hex (alpha dropped); a
+ * missing step is interpolated in OKLab between its nearest given neighbors, or continued along the
+ * Tailwind curve past the last given step. Steps outside 50–950 are ignored.
+ */
+export function completeScale(steps: readonly { step: number; hex: string }[]): ScaleStep[] | undefined {
+  const known: (string | undefined)[] = SCALE_STEPS.map(() => undefined);
+  for (const s of steps) {
+    const i = SCALE_STEPS.indexOf(s.step as ScaleStepNumber);
+    if (i >= 0) known[i] = requireHex(s.hex, `scale step ${s.step}`);
+  }
+  const given = known.flatMap((hex, i) => (hex ? [i] : []));
+  if (given.length === 0) return undefined;
+
+  const hexes = known.map((hex, i) => {
+    if (hex) return hex;
+    const lo = given.filter((j) => j < i).at(-1);
+    const hi = given.find((j) => j > i);
+    if (lo !== undefined && hi !== undefined) {
+      const a = hexToOklab(known[lo]!);
+      const b = hexToOklab(known[hi]!);
+      const t = (i - lo) / (hi - lo);
+      return oklchToHex(oklabToOklch({ l: mix(a.l, b.l, t), a: mix(a.a, b.a, t), b: mix(a.b, b.b, t) }));
+    }
+    const j = (lo ?? hi)!;
+    const from = oklchOf(known[j]!);
+    const chromatic = smoothstep(0.02, 0.06, from.c);
+    const curve = (k: number) => mix(TAILWIND_L_NEUTRAL[k]!, TAILWIND_L_CHROMATIC[k]!, chromatic);
+    const c = Math.min((from.c * TAILWIND_CHROMA_BELL[i]!) / TAILWIND_CHROMA_BELL[j]!, from.c * CHROMA_CAP);
+    return oklchToHex({ l: clamp(from.l + curve(i) - curve(j), 0, 1), c, h: from.h });
+  });
+  return toSteps(hexes);
 }
 
 /** Tinted neutral scale on Tailwind's neutral lightness curve; chroma follows a softened bell. */

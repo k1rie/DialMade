@@ -1,0 +1,15 @@
+{
+  "color": {
+    "background": {
+      "$type": "color",
+      "$value": { "colorSpace": "srgb", "components": [1, 1, 1], "alpha": 1, "hex": "#FFFFFF" },
+      "$extensions": {
+        "com.figma.variableId": "VariableID:30:1",
+        "com.figma.modes": {
+          "Light": { "colorSpace": "srgb", "components": [1, 1, 1], "alpha": 1, "hex": "#FFFFFF" },
+          "Dark": { "colorSpace": "srgb", "components": [0.04, 0.04, 0.05], "alpha": 1, "hex": "#0A0A0D" }
+        }
+      }
+    }
+  }
+}

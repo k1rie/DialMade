@@ -1,4 +1,4 @@
-import { formatOklch, hexToRgb, oklchComponents } from "./color";
+import { formatOklch, hexToRgb, oklchComponents, splitAlpha } from "./color";
 import type { ScaleStep } from "./scale";
 import type { ColorMode } from "./styles";
 import type { RoleKey, Theme, ThemeRoles } from "./theme";
@@ -77,6 +77,7 @@ export function scaleGroups(theme: Theme): [string, ScaleStep[]][] {
 
 export type CssColorFormat = "oklch" | "hex";
 
+/** `oklch(L C H)` or hex; a translucent role gives `oklch(L C H / a)` or `#rrggbbaa`. */
 const cssValue = (hex: string, format: CssColorFormat) => (format === "hex" ? hex : formatOklch(hex));
 
 /** Scales that become Tailwind utilities (`bg-brand-500`, `text-cta-700`). */
@@ -162,7 +163,8 @@ export function toGlobalsCss(theme: Theme): string {
 
 export const DTCG_EXTENSION = "design.dialmade";
 
-export type DtcgOklchValue = { colorSpace: "oklch"; components: [number, number, number]; hex: string };
+/** `alpha` only appears on translucent colors (DTCG's default is 1); `hex` is always the opaque `#rrggbb`. */
+export type DtcgOklchValue = { colorSpace: "oklch"; components: [number, number, number]; alpha?: number; hex: string };
 export type DtcgSrgbValue = { colorSpace: "srgb"; components: [number, number, number]; alpha: number; hex: string };
 export type DtcgColorToken<V> = { $type: "color"; $value: V; $extensions?: Record<string, unknown> };
 type TokenGroup<V> = Record<string, DtcgColorToken<V>>;
@@ -176,15 +178,21 @@ export type DtcgDocument = {
 
 export type FigmaTokensDocument = { color: TokenGroup<DtcgSrgbValue> };
 
-const oklchValue = (hex: string): DtcgOklchValue => ({ colorSpace: "oklch", components: oklchComponents(hex), hex });
+const oklchValue = (color: string): DtcgOklchValue => {
+  const { hex, alpha } = splitAlpha(color);
+  const components = oklchComponents(hex);
+  return alpha < 1 ? { colorSpace: "oklch", components, alpha, hex } : { colorSpace: "oklch", components, hex };
+};
 
-const srgbValue = (hex: string): DtcgSrgbValue => {
+const srgbValue = (color: string): DtcgSrgbValue => {
+  const { hex, alpha } = splitAlpha(color);
   const [r, g, b] = hexToRgb(hex).map((v) => Number((v / 255).toFixed(5))) as [number, number, number];
-  return { colorSpace: "srgb", components: [r, g, b], alpha: 1, hex };
+  return { colorSpace: "srgb", components: [r, g, b], alpha, hex };
 };
 
 /**
- * DTCG 2025.10 tokens. Colors use `{ colorSpace: 'oklch', components, hex }`.
+ * DTCG 2025.10 tokens. Colors use `{ colorSpace: 'oklch', components, hex }`, plus `alpha` when a
+ * pinned role is translucent.
  * Modes: one document. Each semantic token's `$value` is its light value, and both modes live in
  * `$extensions["design.dialmade"].modes`. Tools that need one file per mode (Figma) use
  * `toFigmaTokens(theme, mode)`.
@@ -227,7 +235,8 @@ export function toDTCG(theme: Theme): DtcgDocument {
 }
 
 /**
- * One DTCG file per mode for Figma's native Variables import: sRGB only (components 0..1) + hex.
+ * One DTCG file per mode for Figma's native Variables import: sRGB only (components 0..1), the real
+ * `alpha` and the opaque hex.
  * Tokens sit under `color`, so they import as `color/primary`, `color/brand-500`… matching
  * Tailwind's `--color-primary` / `--color-brand-500`.
  */

@@ -166,12 +166,13 @@ describe("generadores", () => {
 describe("formato", () => {
   it("sigue las convenciones de cada idioma", () => {
     const nbsp = (s: string) => s.replace(/[  ]/g, " ");
-    expect(nbsp(formatValue(29, "currency", "es"))).toBe("29 €");
+    expect(nbsp(formatValue(29, "currency", "es"))).toBe("$29");
+    expect(nbsp(formatValue(1249.5, "currency", "es"))).toBe("$1,249.50");
     expect(formatValue(29, "currency", "en")).toBe("$29");
     expect(formatValue(48200, "currency", "en")).toBe("$48.2K");
-    expect(nbsp(formatValue(12480, "number", "es"))).toBe("12.480");
+    expect(nbsp(formatValue(12480, "number", "es"))).toBe("12,480");
     expect(formatValue(12480, "number", "en")).toBe("12,480");
-    expect(nbsp(formatValue(4.5, "percent", "es"))).toBe("4,5 %");
+    expect(nbsp(formatValue(4.5, "percent", "es"))).toBe("4.5%");
     expect(formatValue(4.5, "percent", "en")).toBe("4.5%");
     expect(formatValue(182, "ms", "en")).toBe("182 ms");
     expect(formatDuration(272, "es")).toBe("4 min 32 s");

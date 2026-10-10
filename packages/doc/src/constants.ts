@@ -22,6 +22,74 @@ export const LOCK_KEYS = [
   "dials.density",
 ] as const;
 
+/**
+ * The JSON Pointer each legacy lock key stands for. Legacy keys stay valid in `brief.locks` as soft
+ * locks: `isLocked` honors them, `applyPatch` does not enforce them (only pointer locks are hard).
+ */
+export const LEGACY_LOCK_POINTERS = {
+  seeds: "/brand/seeds",
+  paletteStyleId: "/brief/paletteStyleId",
+  recipeId: "/brief/recipeId",
+  pairingId: "/brief/pairingId",
+  motionTier: "/brief/motionTier",
+  "dials.variance": "/brief/dials/variance",
+  "dials.motion": "/brief/dials/motion",
+  "dials.density": "/brief/dials/density",
+} as const satisfies Record<(typeof LOCK_KEYS)[number], `/${string}`>;
+
+/** Top-level members of the DesignDoc a lock or an import field may point into. */
+export const POINTER_ROOTS = ["brand", "brief", "tokens", "system", "references", "pages"] as const;
+
+/** Where a third-party import may not write: colors, font families and the brand itself (only attributes). */
+export const THIRD_PARTY_FORBIDDEN_POINTERS = [
+  "/brand",
+  "/tokens/color",
+  "/tokens/typography/heading",
+  "/tokens/typography/body",
+  "/tokens/typography/mono",
+] as const;
+
+export const OWNERSHIP_IDS = ["own", "third-party"] as const;
+
+export const REFERENCE_KINDS = ["upload", "url", "mobbin-link"] as const;
+export const REFERENCE_ORIGINS = ["screenshot", "pdf-page"] as const;
+
+/** Kinds of import source. The last six arrive after v1. */
+export const IMPORT_SOURCE_KINDS = [
+  "paste",
+  "css",
+  "tokens",
+  "design-md",
+  "screenshot",
+  "font-name",
+  "tailwind-config",
+  "scss",
+  "palette-file",
+  "pdf",
+  "font-file",
+  "url",
+] as const;
+
+export const CONFIDENCE_LEVELS = ["exact", "high", "medium", "low"] as const;
+
+/** How an imported value was obtained; `edited` = the user changed it in the review. */
+export const IMPORT_METHODS = ["declared", "named", "pixel", "pdf-text", "ai", "edited"] as const;
+
+export const FONT_SOURCES = ["google", "system", "local", "unknown"] as const;
+
+export const FINGERPRINT_METHODS = ["pixel", "ai", "manual"] as const;
+export const FINGERPRINT_MODES = ["light", "dark", "mixed"] as const;
+export const FINGERPRINT_DENSITIES = ["airy", "balanced", "compact"] as const;
+export const FINGERPRINT_RADII = ["none", "sm", "md", "lg", "full"] as const;
+export const RECIPE_SHADOWS = ["none", "soft", "crisp", "deep", "glow"] as const;
+export const RECIPE_SURFACES = ["flat", "layered", "glass", "outlined"] as const;
+export const TYPE_CLASSES = ["geometric", "grotesque", "humanist", "serif", "slab", "mono", "display"] as const;
+export const FINGERPRINT_COLOR_ROLES = ["background", "foreground", "primary", "secondary", "cta", "muted", "border", "other"] as const;
+
+export const FONT_SIZE_NAMES = ["display", "h1", "h2", "h3", "body", "small", "caption"] as const;
+export const RADIUS_NAMES = ["sm", "md", "lg", "xl", "full"] as const;
+export const SHADOW_NAMES = ["sm", "md", "lg"] as const;
+
 export const BINDABLE_PATHS = ["brand.name", "brand.tagline"] as const;
 
 export const DEFAULT_DIALS = { variance: 5, motion: 5, density: 5 } as const;

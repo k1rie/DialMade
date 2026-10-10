@@ -24,6 +24,19 @@ describe("applyPatch", () => {
     expect(next.pages.app).toEqual(doc.pages.app);
   });
 
+  it("never mutates the operations: the same ops replay identically", () => {
+    const doc = acmeDoc();
+    const ops = [
+      { op: "add", path: "/pages/landing/elements/hero-1/props/items", value: ["a"] },
+      { op: "add", path: "/pages/landing/elements/hero-1/props/items/-", value: "b" },
+    ];
+    const before = cloneJson(ops);
+    const first = applyPatch(doc, ops);
+    expect(first.ok && first.doc.pages.landing!.elements["hero-1"]!.props).toEqual({ items: ["a", "b"] });
+    expect(ops).toEqual(before);
+    expect(applyPatch(doc, ops)).toEqual(first);
+  });
+
   it("edits global tokens and system recipes", () => {
     const next = expectOk(
       applyPatch(acmeDoc(), [

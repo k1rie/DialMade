@@ -1,6 +1,6 @@
 import type { Locale } from "@dialmade/catalog";
 
-const INTL_LOCALE: Record<Locale, string> = { es: "es-ES", en: "en-US" };
+const INTL_LOCALE: Record<Locale, string> = { es: "es-MX", en: "en-US" };
 
 export function intlLocale(locale: Locale): string {
   return INTL_LOCALE[locale];
@@ -14,7 +14,7 @@ export function formatCompact(value: number, locale: Locale): string {
   return formatNumber(value, locale, { notation: "compact", maximumFractionDigits: 1 });
 }
 
-/** `12.5` → `+12,5 %` (es) / `+12.5%` (en). */
+/** `12.5` → `+12.5%` (es-MX and en-US). */
 export function formatDeltaPercent(delta: number, locale: Locale): string {
   return formatNumber(delta / 100, locale, {
     style: "percent",

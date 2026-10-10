@@ -4,7 +4,7 @@ import type { Locale, OutputKind } from "@dialmade/catalog";
 import type { DesignDoc, Page } from "@dialmade/doc";
 import { buildDefaultPage } from "./buildPage";
 import { contentContextFromDoc } from "./context";
-import { pairingForDoc, themeVarsCss } from "./lib/themeVars";
+import { fontsUrlForDoc, themeVarsCss } from "./lib/themeVars";
 import { PageRenderer, type PageRendererProps } from "./PageRenderer";
 import { sectionRegistry, type SectionRegistry } from "./registry";
 import { ThemeStyles } from "./ThemeStyles";
@@ -24,7 +24,7 @@ export interface RenderStaticPageOptions {
   css?: string | readonly string[];
   /** Stylesheets linked in the head, e.g. hosted copies of dialmade-ui.css and dialmade-sections.css. */
   stylesheets?: readonly string[];
-  /** Google Fonts of the pairing (default true). */
+  /** Google Fonts of the doc: its own families, or the pairing's (default true). */
   fonts?: boolean;
   registry?: SectionRegistry;
   /** A section that throws is left out of the HTML and reported here. */
@@ -116,7 +116,7 @@ export function renderStaticPage(
     createElement(ThemeStyles, { mode, fontsHref: null }, createElement(PageRenderer, { ...base, exclude })),
   );
 
-  const fontsHref = options.fonts === false ? undefined : pairingForDoc(doc).googleFontsUrl;
+  const fontsHref = options.fonts === false ? undefined : fontsUrlForDoc(doc);
   const css = typeof options.css === "string" ? [options.css] : (options.css ?? []);
   const head = [
     `<meta charset="utf-8">`,

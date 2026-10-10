@@ -1,13 +1,16 @@
 "use client";
 
 import { outputKindOptions } from "@dialmade/catalog";
-import { PALETTE_STYLES, type ColorMode, type PaletteStyleId } from "@dialmade/palette";
-import { useCallback, useId, useRef } from "react";
+import { PALETTE_STYLES, cssVarName, generateTheme, type ColorMode, type PaletteStyleId, type RoleKey, type ThemePins } from "@dialmade/palette";
+import { useCallback, useEffect, useId, useRef } from "react";
+import { toast } from "sonner";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
-import { useDesignDoc, useDesignDocActions } from "@/hooks/useDesignDoc";
+import { Button } from "@/components/ui/Button";
+import { useDesignDoc, useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
 import { usePaletteFlow } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
 import { flow } from "@/i18n/flow";
+import { importText } from "@/i18n/import";
 import { palette } from "@/i18n/palette";
 import { brandNameFromFile } from "@/lib/brand-name";
 import { cn } from "@/lib/cn";
@@ -16,6 +19,8 @@ import { AchromaticNotice } from "./AchromaticNotice";
 import { BrandHeader } from "./BrandHeader";
 import type { SeedRole } from "./constants";
 import { ContrastTable } from "./ContrastTable";
+import { LayersIcon } from "./icons";
+import { ImportedLocks } from "./ImportedLocks";
 import { brandSlug, formatHex } from "./format";
 import { LabBar } from "./LabBar";
 import { LabSection } from "./LabSection";
@@ -30,6 +35,9 @@ export type PaletteLabProps = {
   className?: string;
 };
 
+/** `pointer` or an ancestor is in `locks` (the doc's hard locks are JSON Pointers). */
+const lockedIn = (locks: readonly string[], pointer: string) => locks.some((lock) => lock === pointer || pointer.startsWith(`${lock}/`));
+
 /**
  * «1 Marca» — Palette Lab (ref. Recraft's palette popover + Klaviyo's live preview). Left: logo colors,
  * primary/secondary seeds with a picker, palette styles, the 50–950 scale and AA contrast. Right: the
@@ -39,11 +47,13 @@ export type PaletteLabProps = {
 export function PaletteLab({ className }: PaletteLabProps) {
   const { state, actions } = usePaletteFlow();
   const designActions = useDesignDocActions();
+  const docStore = useDesignDocStore();
   const docName = useDesignDoc((s) => s.doc?.brand.name);
   const croppedLogoUrl = useDesignDoc((s) => s.logoUrl);
   const { t, locale } = useI18n();
   const p = useDictionary(palette);
   const f = useDictionary(flow);
+  const imp = useDictionary(importText);
   const announce = useDndAnnounce();
   const panelRef = useRef<HTMLElement>(null);
   const colorsId = useId();
@@ -65,11 +75,22 @@ export function PaletteLab({ className }: PaletteLabProps) {
 
   const { theme, primary, secondary, styleId, previewMode, previewKind, extract, logo } = state;
 
+  const unlockImportedRef = useRef<() => void>(() => {});
+
   /** Placing a color that already fills the other role swaps them instead of duplicating it. */
   const placeSeed = useCallback(
     (role: SeedRole, hex: string): boolean => {
       if (role === "primary" && hex === primary) return false;
       if (role === "secondary" && hex === secondary) return false;
+      const locks = docStore.getState().doc?.brief.locks ?? [];
+      const touched: SeedRole[] = hex === primary || hex === secondary ? ["primary", "secondary"] : [role];
+      const blocked = touched.find((seed) => lockedIn(locks, `/brand/seeds/${seed}`));
+      if (blocked) {
+        // An import locked it («tu guía manda»): the doc would ignore the change, so say why.
+        const label = blocked === "primary" ? p.seeds.primary : p.seeds.secondary;
+        toast(imp.lab.seedLocked(label), { id: "seed-locked", action: { label: imp.lab.unlock, onClick: () => unlockImportedRef.current() } });
+        return false;
+      }
       if (role === "primary" && hex === secondary) actions.swapSeeds();
       else if (role === "secondary" && hex === primary) {
         if (!secondary) return false;
@@ -77,8 +98,64 @@ export function PaletteLab({ className }: PaletteLabProps) {
       } else actions.setSeeds({ [role]: hex });
       return true;
     },
-    [actions, primary, secondary],
+    [actions, primary, secondary, docStore, p, imp],
   );
+
+  /** «Desbloquear» the imported colors: the doc drops their locks and palette styles move them again. */
+  const unlockImported = useCallback(() => {
+    const doc = docStore.getState().doc;
+    if (doc) {
+      const locks = doc.brief.locks.filter((lock) => !(lock.startsWith("/tokens/color") || lock.startsWith("/brand/seeds")));
+      if (locks.length !== doc.brief.locks.length) {
+        const result = designActions.applyPatch([{ op: "replace", path: "/brief/locks", value: locks }], { allowLocked: true });
+        if (!result.ok) {
+          toast.error(t.errors.generic);
+          return;
+        }
+      }
+    }
+    actions.setPinned(undefined);
+    announce(imp.lab.unlocked);
+    // The note with the button unmounts: focus goes to its section instead of the page top.
+    requestAnimationFrame(() => document.getElementById(seedsId)?.focus({ preventScroll: true }));
+  }, [docStore, designActions, actions, announce, imp, t, seedsId]);
+  useEffect(() => {
+    unlockImportedRef.current = unlockImported;
+  }, [unlockImported]);
+
+  /**
+   * «Ajustar a AA» for the guide's own pairs: the engine generates those text colors again without
+   * their pin (so contrast enforcement moves them), and they stay locked with the new value. A user
+   * action, so it may change locked tokens.
+   */
+  const fixImportedAa = useCallback(() => {
+    const pins = state.pinned;
+    if (!theme || !primary || !pins) return;
+    const targets = new Map<string, { mode: ColorMode; role: RoleKey }>();
+    for (const check of theme.contrast) {
+      if (check.pass || check.source !== "imported") continue;
+      const role = check.pair.split("/")[0] as RoleKey;
+      if (pins[check.mode]?.[role] !== undefined) targets.set(`${check.mode}:${role}`, { mode: check.mode, role });
+    }
+    if (targets.size === 0) return;
+    const unpinned: ThemePins = { ...pins, light: { ...pins.light }, dark: { ...pins.dark } };
+    for (const { mode, role } of targets.values()) delete unpinned[mode]![role];
+    const fixed = generateTheme({ primary, ...(secondary && { secondary }), style: styleId, pinned: unpinned });
+    const next: ThemePins = { ...pins, light: { ...pins.light }, dark: { ...pins.dark } };
+    const ops = [...targets.values()].map(({ mode, role }) => {
+      next[mode]![role] = fixed[mode][role];
+      return { op: "add" as const, path: `/tokens/color/${mode}/${cssVarName(role)}`, value: fixed[mode][role] };
+    });
+    if (docStore.getState().doc) {
+      const result = designActions.applyPatch(ops, { allowLocked: true });
+      if (!result.ok) {
+        toast.error(t.errors.generic);
+        return;
+      }
+    }
+    actions.setPinned(next);
+    announce(p.contrast.fixedImported(targets.size));
+  }, [state.pinned, theme, primary, secondary, styleId, docStore, designActions, actions, announce, p, t]);
 
   const selectStyle = useCallback(
     (id: PaletteStyleId, defaultMode: ColorMode) => {
@@ -96,6 +173,7 @@ export function PaletteLab({ className }: PaletteLabProps) {
   const kindOption = outputKindOptions.find((option) => option.id === previewKind) ?? outputKindOptions[0]!;
   const swatches = extract?.swatches ?? [];
   const seedLabels: Record<SeedRole, string> = { primary: p.seeds.primary, secondary: p.seeds.secondary };
+  const pinnedCount = Object.keys(state.pinned?.light ?? {}).length + Object.keys(state.pinned?.dark ?? {}).length;
 
   return (
     <div className={cn("mx-auto grid w-full max-w-[1280px] items-start gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]", className)}>
@@ -110,7 +188,18 @@ export function PaletteLab({ className }: PaletteLabProps) {
           onRecrop={logo ? actions.editCrop : undefined}
         />
 
-        <LabSection title={p.colors.title} headingId={colorsId} aside={swatches.length > 0 ? p.colors.count(swatches.length) : undefined}>
+        <LabSection
+          title={p.colors.title}
+          headingId={colorsId}
+          aside={
+            <span className="inline-flex items-center gap-2">
+              {swatches.length > 0 && p.colors.count(swatches.length)}
+              <Button variant="ghost" size="sm" leadingIcon={<LayersIcon />} title={imp.entry.labHint} className="-my-1.5" onClick={() => actions.openImport()}>
+                {imp.entry.lab}
+              </Button>
+            </span>
+          }
+        >
           <LogoColors
             swatches={swatches}
             primary={primary}
@@ -136,6 +225,11 @@ export function PaletteLab({ className }: PaletteLabProps) {
             onRemoveSecondary={() => actions.setSeeds({ secondary: null })}
             onSwap={actions.swapSeeds}
           />
+          {pinnedCount > 0 && (
+            <div className="mt-3">
+              <ImportedLocks count={pinnedCount} onUnlock={unlockImported} />
+            </div>
+          )}
           {theme.achromatic && (
             <div className="mt-3">
               <AchromaticNotice
@@ -156,7 +250,7 @@ export function PaletteLab({ className }: PaletteLabProps) {
         </LabSection>
 
         <LabSection title={p.contrast.title} headingId={contrastId}>
-          <ContrastTable theme={theme} mode={previewMode} />
+          <ContrastTable theme={theme} mode={previewMode} {...(state.pinned && { onFixImported: fixImportedAa })} />
         </LabSection>
       </section>
 

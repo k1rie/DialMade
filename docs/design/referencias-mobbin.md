@@ -49,6 +49,12 @@ Recopiladas el 2026-10-09 desde la cuenta de Mobbin del usuario (plataforma Web)
 | 10 | | B | Descript | Recents: grilla de thumbnails | https://mobbin.com/screens/75945354-f320-4626-b775-2e069eb49402 |
 | 10 | | C | Replit | Projects: grilla limpia | https://mobbin.com/screens/f3338c1a-fc51-4dd1-abbb-82c56c8f02da |
 | 10 | | D | Recraft | Banner y grilla de proyectos | https://mobbin.com/screens/31b0967e-ea8f-4419-8018-2f20f4124ade |
+| 11 | Lienzo de layout (modo principal, propuesto el 2026-10-10) | A | Gumloop | Librería de elementos a la izquierda (Inputs, Structure) y un área «arrastra elementos aquí» | https://mobbin.com/screens/d7e88d46-ff4b-4838-9692-9d00398d2980 |
+| 11 | | B | Replit | Lienzo con grilla de puntos, boceto y nota adhesiva, panel de plantillas y librería a la derecha, y barra inferior (Chat · Draw · Edit · Generate) | https://mobbin.com/screens/514ef62f-0725-4daa-8b52-5b327bda21ac |
+| 11 | | C | Xero | Modo edición del dashboard: widgets como tarjetas que se arrastran y reacomodan, y botón «Add widget» | https://mobbin.com/screens/c86d6e12-6b97-47de-b96b-33e24d57e1fe |
+| 11 | | D | fal | Lienzo de puntos con un nodo y un menú «+» de tipos (estilo React Flow), y barra inferior mínima | https://mobbin.com/screens/281cb501-ce68-4719-9cec-d36e7fae0715 |
+| 11 | | E | Tana | Pizarra con formas y notas, y un panel de propiedades (color, borde, tamaño, texto) | https://mobbin.com/screens/e6a4f557-91f0-422f-8f2f-ccb0f7c7b7fe |
+| 11 | | F | Klaviyo | Librería de bloques en grilla (Text, Image, Split, Button, Table, Columns, Section…) y preview con Desktop/Mobile | https://mobbin.com/screens/9f447b88-48de-4b06-a7b7-875cf34940a8 |
 
 ## Elegidas (2026-10-09)
 
@@ -64,3 +70,4 @@ Recopiladas el 2026-10-09 desde la cuenta de Mobbin del usuario (plataforma Web)
 | 8 | Modo edición | **C Replit + D MagicPath** | El inspector y la barra de herramientas de Replit, más el árbol de capas y la selección con medida de MagicPath |
 | 9 | Login | **D Devin** en la página `/login`, y **A MagicPath** (modal sobre la vista actual) cuando el login se pide desde otra sección | Confirmado: el usuario quería escribir «la primera» (9A MagicPath, modal sobre la vista actual) |
 | 10 | Mis diseños | **A Magnific + C Replit** | Las tarjetas de proyectos recientes de Magnific, más la grilla limpia con búsqueda y filtros de Replit |
+| 11 | Lienzo de layout (modo principal) | **B Replit + F Klaviyo** | Lienzo libre con grilla de puntos y barra inferior (Chat · Draw · Edit · Generate) de Replit, más la librería de bloques en grilla y el toggle Desktop/Mobile de Klaviyo. Elegido el 2026-10-10 |

@@ -565,3 +565,29 @@ En Claude Design editas conversando y tocando el diseño: comentas sobre un elem
 **Licencia:** recomiendo **MIT** para todo el repo, con el NOTICE de los dos repos de origen. La decisión es tuya; el scaffold no incluye LICENSE.
 
 **Ojo con las marcas:** las demos y los ejemplos usan logos ficticios. Si haces una demo con un logo real, que sea el tuyo o uno con permiso.
+
+---
+
+## 16. Cambio de posicionamiento (2026-10-10)
+
+**El Modo Layout es la funcionalidad estrella.** Funciona como un lienzo libre: el usuario coloca rectángulos con nombre, sacados de una librería de bloques, y luego genera el diseño con todo el contexto. La referencia elegida es 11B Replit + 11F Klaviyo.
+
+Lo demás pasa a complementarlo:
+- marca (logo → paleta, importar guía);
+- referencias;
+- IA;
+- guía de estilo;
+- exportes.
+
+**Plan de LinkedIn reordenado:** el primer post (o el principal) muestra «dibujo mi layout con bloques → Dialmade lo convierte en un diseño con mi marca». Los posts de paleta, importación y export quedan como complementos.
+
+La especificación está en construcción (`docs/design/`).
+
+### 16.1 Orden del flujo y selector de estilo (decisión del usuario, 2026-10-10)
+
+1. **Primero va la marca:** logo, colores y diseños existentes (importar guía). Así el layout ya conoce la marca.
+2. **Luego, el lienzo de layout,** con un **selector de estilo**:
+   - **«Tu guía de estilo»** aparece si el usuario importó la suya, y conserva sus valores bloqueados.
+   - Luego van las recetas del catálogo: Glassmorphism, Minimalista, Soft UI, Neubrutal suave, Editorial, Dark luxury, Tech (tipo Railway), Bento, Corporate, Playful, Organic, Retro-futurista.
+   - Cada opción muestra una **preview sencilla**: los bloques del propio layout (o una mini genérica) pintados con la paleta de la marca y los radios, sombras y superficies del estilo.
+3. **Después:** Generar → Ajustar → Exportar.

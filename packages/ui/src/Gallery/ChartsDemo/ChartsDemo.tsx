@@ -14,7 +14,7 @@ export function ChartsDemo() {
   const copy = useGalleryCopy();
   const t = copy.charts;
   const currency = (value: number) =>
-    formatNumber(value, locale, { style: "currency", currency: copy.table.currency, notation: "compact", maximumFractionDigits: 1 });
+    formatNumber(value, locale, { style: "currency", currency: copy.table.currency, currencyDisplay: "narrowSymbol", notation: "compact", maximumFractionDigits: 1 });
   return (
     <>
       <GalleryDemo label={t.bar} bare>

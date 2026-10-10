@@ -1,0 +1,707 @@
+{
+ "research:prior-art": {
+  "summary": "ESTADO DEL ARTE: DE LAYOUT CON BLOQUES A UI (verificado el 2026-10-10)\n\nVEREDICTO CORTO\nColocar cajas con nombre y que de ahí salga la vista no es una idea nueva. Tiene precedentes:\n- Balsamiq: una biblioteca cerrada de controles de wireframe.\n- Airbnb «Sketching Interfaces» (2017): mapeaba bocetos a los componentes de su design system.\n- Microsoft Sketch2Code (2018): detectaba cajas, las pasaba a una rejilla con un «layout algorithm» y generaba HTML.\n- tldraw Make Real (nov-2023) y el «wireframe to code» de Excalidraw (dic-2023): dibujo libre con texto → HTML mediante un LLM de visión.\n- Hoy: Relume (secciones con nombre → wireframe con su librería de más de 1.000 componentes → style guide), MockFlow (wireframe con biblioteca de widgets → «Convert to hi-fi image» con color y fuente de marca) y Wiretext (biblioteca de navbar, tablas y modales → Markdown/MCP para agentes).\n\nLo que NO encontré es la combinación concreta:\n- bloques TIPADOS de un catálogo cerrado, colocados en 2D;\n- dirección de marca determinista a partir del logo;\n- render instantáneo sin IA y sin créditos;\n- export neutral (Figma, Claude Design, Framer, DTCG, HTML);\n- IA opcional que solo rellena;\n- open source MIT a $0.\n\nQue no lo encontrara no significa que no exista.\n\nMATRIZ POR HERRAMIENTA\nFormato: input | ¿bloques etiquetados de una librería? | ¿aplica la marca o paleta del usuario? | salida | precio. [ofic] = fuente primaria; [3ros] = reseñas o directorios, no verificado.\n\n1. tldraw Make Real\n   - Input: dibujo libre con texto. Lo seleccionado se exporta como imagen y se envía a GPT-4V (post del 18-nov-2023).\n   - Bloques: no. El modelo interpreta píxeles.\n   - Marca: no (Tailwind genérico).\n   - Salida: un HTML único en un iframe sobre el canvas; se itera anotando encima.\n   - Precio: BYOK de OpenAI. El repo make-real está archivado desde el 20-feb-2026 [ofic].\n   - LICENCIA: el SDK de tldraw «no es de licencia permisiva». En producción no funciona sin license key: trial de 100 días, comercial vía ventas, o hobby discrecional con la marca de agua «made with tldraw». En un proyecto MIT, cada usuario downstream necesita su propia licencia [ofic]. Queda descartado para Dialmade.\n2. Uizard (de Miro desde 2024; la fecha exacta varía según la fuente)\n   - Input: foto de un boceto (Wireframe Scanner), captura o texto (Autodesigner).\n   - Bloques: no dice que reconozca un set fijo. Después se edita con su biblioteca.\n   - Marca: sí, «Generate themes and brand kits», más Wireframe Mode (lo-fi ↔ hi-fi).\n   - Salida: pantalla editable o prototipo, código CSS/React en Pro+ (los checkmarks de la página no se leen bien).\n   - Precio: Free (3 gen/mes), Pro $12/mes anual (500), Business $39/mes anual (5.000) [ofic].\n3. Visily\n   - Input: texto o captura → wireframe. El boceto cuesta 10 créditos por pantalla (página de créditos de 2024, vista vía buscador).\n   - Bloques: tiene «Smart Components» para editar, pero la IA no los exige.\n   - Marca: «Generate Theme» y 2 temas por workspace en Pro.\n   - Salida: diseño editable; Figma y código en Pro+.\n   - Precio: Starter $0 (300 créditos), Pro $14/editor/mes, Business $29 anual [ofic].\n4. Relume (el MÁS CERCANO)\n   - Input: brief o PDF → sitemap. El título y la descripción de cada sección hacen de «section prompt», y de ahí salen el wireframe y los diseños.\n   - Bloques: SÍ. La IA «selecciona de componentes que construyen sus diseñadores» (más de 1.000), y se cambian variantes por sección.\n   - Marca: style guide de colores, tipografía y spacing. No vi que extraiga la marca de un logo.\n   - Salida: Figma (auto-layout + variables), Webflow (Client-First), React (Tailwind + shadcn/ui), un MCP de la librería y una página «Claude Design Export».\n   - Precio: Free, Starter desde $18/mes, Pro desde $40/mes, Team $36/mes con mínimo de 3 [ofic].\n   - Límite: el layout es una pila vertical de secciones de marketing, no un lienzo 2D libre.\n5. Framer Wireframer (21-may-2025)\n   - Input: prompt.\n   - Bloques: no. Se enfoca en «structure, not style».\n   - Marca: no en el wireframe; se estiliza después en Framer.\n   - Salida: layout responsive en el canvas de Framer.\n   - Precio: disponible para todos según la prensa [ofic parcial].\n6. Figma Make\n   - Input: prompt más adjuntos (PDF, md, CSV/JSON, capturas, guías de marca, SVG; según figma.com/make también frames de Figma).\n   - Bloques: no. Los Make kits (2-abr-2026) son componentes y estilos de tu design system más guías.\n   - Marca: sí, vía Make kits.\n   - Salida: prototipo en código.\n   - Precio: incluido en el seat Full (INFORME).\n   - Relacionado: First Draft (Figma Design) arma diseños con «stacks of components» de 4 librerías de Figma (de lo-fi a hi-fi), pero solo desde un prompt y todavía sin tu design system [ofic].\n7. Google Stitch\n   - Input: canvas infinito (18-mar-2026) con texto, imágenes y código como contexto. Bocetos y voz según terceros.\n   - Bloques: no.\n   - Marca: sí, con DESIGN.md o «extraer el design system de una URL».\n   - Salida: pantallas y código [ofic]; Figma según el modo [3ros].\n   - Precio: gratis en beta [3ros].\n   - El propio post de Google lo dice: «Instead of starting with a wireframe», empieza por el objetivo.\n8. v0\n   - Input: texto e imágenes, capturas o Figma [3ros].\n   - Bloques: no.\n   - Marca: a través de tu código o shadcn.\n   - Salida: React/Next.\n   - Precio: Free (7 msg/día), Plus $30/usuario, Business $100 [ofic].\n9. Magic Patterns\n   - Input: prompt, capturas, componentes y reglas de design system.\n   - Bloques: no.\n   - Marca: sí, importando tu design system.\n   - Salida: prototipos hi-fi en código.\n   - Precio: Starter $20/seat, Business $100/seat [ofic].\n10. Balsamiq AI\n   - Input: texto, código, specs, capturas o fotos de bocetos.\n   - Bloques: SÍ, pero al revés: la salida son wireframes hechos con SU biblioteca de controles.\n   - Marca: no, todo es lo-fi.\n   - Salida: wireframes editables, PNG/PDF; MCP según su página de producto.\n   - Precio: créditos de la Space; el precio no lo verifiqué [ofic].\n11. Excalidraw (MIT)\n   - Input: boceto y/o texto dentro de un frame.\n   - Bloques: no. Envía un JPG del frame más los textos a un backend hosted (VITE_APP_AI_BACKEND); al pasar el límite (429) remite a Excalidraw+ [código ofic].\n   - Marca: no.\n   - Salida: HTML.\n   - Precio: gratis con límite; Excalidraw+ de pago.\n12. Builder.io Fusion\n   - Input: prompt más tu repo y tu Figma.\n   - Bloques: usa TUS componentes (mapea Figma → MUI).\n   - Marca: sí, tu design system.\n   - Salida: PRs a GitHub.\n   - Precio: Free (60 créditos), Pro $24, Team $40. «Design System Intelligence» es solo de Enterprise [ofic].\n13. MagicPath 2.0\n   - Input: prompt o imagen de referencia, en canvas infinito con variantes, multiplayer y agentes externos.\n   - Bloques: no.\n   - Marca: temas reutilizables.\n   - Salida: React + TS + Tailwind, import/export de Figma.\n   - Precio: Pro entre $21 y $30, las fuentes no coinciden [3ros].\n14. Variant\n   - Input: prompt → feed infinito de variaciones al hacer scroll (Style Dropper, Shuffle Layout, Remix Colors).\n   - Bloques: no.\n   - Marca: parcial.\n   - Salida: HTML/React.\n   - Precio: Free (300 diseños/mes), Pro $20 [3ros].\n15. UX Pilot\n   - Input: boceto, prompt, PRD, capturas o PDF.\n   - Bloques: no.\n   - Marca: paso de lo-fi a hi-fi «on-brand» con un clic; importa componentes de Figma.\n   - Salida: Figma (two-way), código, GitHub [ofic].\n   - Precio: Pro $19/mes anual o $29 mensual [3ros].\n16. Banani\n   - Input: prompt, imágenes, capturas y links de Figma; tiene «Image to Wireframe».\n   - Bloques: no.\n   - Marca: tokens manuales; importar un design system es solo de Enterprise.\n   - Salida: Figma, HTML/CSS, MCP.\n   - Precio: Free (12 créditos/mes + 3/día), Plus $12 (tachado $20), Pro $30 (tachado $50) [ofic].\n\nExtras relevantes que no estaban en tu lista:\n- MockFlow: wireframe con biblioteca → imagen hi-fi con color y fuente de marca; MCP; «build prompt» para Claude Code.\n- Wiretext: wireframes en texto → Markdown/MCP para agentes.\n- Miro Prototypes: post-its, PRDs y diagramas → pantallas.\n- Claude Design: incluido en Free; acepta wireframes y capturas; toma el design system de un repo o de archivos; exporta HTML, PDF y PPTX, y envía a Canva, v0, Lovable y Claude Code [ofic].\n\nQUÉ PATRONES HAY\n- (a) Visión sobre dibujo libre (Make Real, Excalidraw, Uizard, Stitch, v0, Claude Design). La IA «reinterpreta» tu layout, cobra créditos por cada generación y necesita un modelo de visión.\n- (b) Catálogo cerrado que la IA elige a partir de un texto (Relume, First Draft). Sale consistente, pero el usuario no decide la geometría.\n- (c) Biblioteca de wireframe sin diseño final (Balsamiq, Wiretext) o con render a imagen (MockFlow).\n- (d) «Trae tu design system» (Builder, Magic Patterns, Make kits, Claude Design). Exige tener ya un design system, que es justo lo que no tiene un dev que no es diseñador.\n\n¿QUÉ TAN INNOVADORA ES?\nLa interacción (cajas con nombre → UI) es conocida. La posición sí es distintiva, por seis cosas que en Dialmade se dan juntas:\n1. Cada caja ES un tipo del catálogo (`landing.navbar`, `app.dataTable`). «Generar» es un render determinista, instantáneo, sin IA y sin créditos.\n2. El layout del usuario se respeta 1:1, en lugar de que la IA lo «interprete».\n3. La marca sale del logo (OKLCH, AA), sin pedir un design system.\n4. El export es neutral: Figma, Claude Design, Framer, DTCG y HTML.\n5. La IA solo rellena (copy, mapear etiquetas libres a tipos, variantes) y devuelve un JSON Patch.\n6. Es MIT y cuesta $0.\n\nNinguna de las herramientas revisadas junta las seis. Las más cercanas: Relume (cumple la 1 en vertical y, en parte, la 4) y MockFlow (cumple en parte la 1 y la 3).\n\nSobre «es mucho mejor que escribir»: la evidencia no lo respalda en general. Stitch apuesta explícitamente por empezar desde la intención y no desde un wireframe. Lo defendible es esto: para quien ya sabe qué pantalla quiere, colocar bloques es más preciso y más barato que describirla. Conviene ofrecer las dos vías.\n\nENCAJE CON EL CÓDIGO\n- `PageSchema` (`packages/doc/src/schema.ts:448`, strictObject) es un árbol con `children` ordenados y sin geometría.\n- `app.shell` coloca los widgets en una rejilla de 12 columnas con spans fijos en CSS (`packages/sections/src/app/Shell/Shell.css:486-498`).\n- Catálogo actual:\n  - landing: navbar, hero, features, pricing, socialProof, testimonials, cta, footer.\n  - app: shell, kpiRow, chartCard, dataTable, activity, settingsForm, emptyState, confirmDialog, componentGallery.\n  - NO hay calendario, ni grid de cards genérico, ni formulario o lista libres.\n\nCÓMO CONTARLO EN LINKEDIN\nSin «primero», «nadie lo hace», «revolucionario» ni «adiós Figma». Reconoce los precedentes en una línea y enseña lo concreto. Borrador:\n\n«Dibujar cajas y que salga una UI no es nuevo: Balsamiq, Sketch2Code o tldraw Make Real ya lo hacen. Lo que estoy probando en Dialmade es otra cosa. Cada caja es un bloque con nombre de un catálogo (navbar, tabla, KPIs…). Tu marca sale de tu logo. Al pulsar Generar, la vista aparece al instante, sin IA y sin créditos. Si quieres, la IA solo escribe el copy. Lo exportas a Figma, Claude Design o Framer. Open source (MIT). ¿Qué bloque te falta?»\n\nAcompáñalo con un video de unos 20 s en el que las cajas se transforman en la UI.\n\nHERRAMIENTAS PARA CONSTRUIRLO\n- tldraw: no, por la licencia.\n- Excalidraw: es MIT, pero es una pizarra de trazo libre y su IA vive en un backend hosted.\n- Lo recomendado: un canvas propio con rejilla y snapping sobre `@dnd-kit/react` 0.5.0, que ya está en `apps/web`.\n- Como referencia u opción para colisiones y breakpoints: react-grid-layout (MIT, unas 22k estrellas, activo) o gridstack.js (MIT). No verifiqué su accesibilidad por teclado.",
+  "recommendations": [
+   {
+    "item": "Modo Layout sobre una rejilla con snapping, no sobre trazo libre",
+    "detail": "Canvas de 12 columnas con filas de alto fijo, donde cada bloque ocupa (x, y, w, h). Se siente freeform (arrastras y redimensionas donde quieras), pero el resultado es una rejilla que se compila a CSS grid sin ambigüedad. Es lo mismo que hacía el 'layout algorithm' de Sketch2Code, que convertía cajas detectadas en una rejilla, pero sin el paso de visión. Se construye sobre @dnd-kit/react 0.5.0 (ya está en apps/web) con un modificador de snap. Alternativas WCAG 2.5.7: clic en un bloque de la librería lo coloca en el primer hueco libre; flechas para mover y Shift+flechas para redimensionar; menú 'Mover a…' y tamaños rápidos (1/3, 1/2, ancho completo). Space y Enter quedan reservados para coger y soltar, y aria-live anuncia posición y tamaño. Solo se describen estructura e interacción: la estética del canvas sale de las referencias de Mobbin que elija el usuario.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "https://github.com/clauderic/dnd-kit",
+     "https://www.theregister.com/2018/08/29/microsoft_sketch2code_html",
+     "https://visualstudiomagazine.com/articles/2018/09/10/sketch2code-ai.aspx",
+     "https://github.com/react-grid-layout/react-grid-layout",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md"
+    ]
+   },
+   {
+    "item": "Geometría como dato en el DesignDoc: campo opcional `layout` en Page",
+    "detail": "Hoy PageSchema (packages/doc/src/schema.ts:448) es un strictObject con árbol y children, sin posiciones, y el Shell fija los spans en CSS (Shell.css:486-498). Propuesta: añadir `layout?: { cols: 12, items: { [elementId]: { lg: {x,y,w,h}, md?, sm? } } }`, validado en superRefine (sin solapes, ids existentes). Los children siguen siendo el orden de lectura, que se usa para accesibilidad, export y móvil. Hay que añadir `compileLayout` (grid-template-areas) a los exportadores de HTML y DESIGN.md, y que los parches RFC 6902 y los locks cubran /layout. Ojo: el branch wip/import-brand tiene cambios sin commitear en packages/doc, así que conviene cerrarlo antes de tocar el schema.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/schema.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/Shell/Shell.css",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Render 'wireframe' en el PageRenderer y transición firma caja → sección",
+    "detail": "Un modo `wireframe` en el que cada bloque se pinta como rectángulo con su nombre (es/en) y una silueta mínima, reutilizando la idea de packages/sections/src/minis. 'Generar' pasa del modo wireframe al render tematizado con la marca y la transición comparte layoutId de motion: cada caja se transforma en su sección real. Es el momento firma: ≤900 ms, se puede saltar y con reduced motion queda en un fade de 150 ms. Sin IA tarda menos de 100 ms porque es un render determinista. Es el mejor clip para LinkedIn.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/minis"
+    ]
+   },
+   {
+    "item": "Librería de bloques con categorías, búsqueda es/en y sinónimos deterministas",
+    "detail": "Un panel con categorías (Navegación, Contenido, Datos, Formularios, Marketing) generado desde listSections() del registro. La búsqueda usa un diccionario de sinónimos en src/i18n, por ejemplo 'calendario/agenda/calendar' → app.calendar y 'tarjetas/cards' → grid de cards, así que funciona sin IA. Cada bloque muestra su mini y sus variantes. Los bloques que aún no existen salen con el badge 'Pronto' y un contador de votos, como ya se decidió para los tipos de salida.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/registry.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md"
+    ]
+   },
+   {
+    "item": "Bloque 'Personalizado' con etiqueta libre, sin HTML libre",
+    "detail": "Para lo que el catálogo no cubre. Sin IA se ve como un placeholder etiquetado y elegante, y viaja así a los exports (Figma, layout.md). Con IA, un modelo barato mapea la etiqueta al tipo de catálogo más cercano y propone el swap, o lo deja como placeholder con copy. Se respeta la regla de oro del INFORME §4.2: la IA nunca produce HTML libre como fuente de verdad.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Ampliar el catálogo app.* con los bloques que pide un layout",
+    "detail": "Faltan calendario, grid de cards, formulario genérico, lista, tabs, stats, media, mapa (placeholder) y sidebar de filtros. Cada uno con variantes, knobs y copy determinista, como el resto de @dialmade/sections. Se priorizan por votos. El modo layout encaja sobre todo con Dashboard, que hoy está en 'Pronto': puede valer la pena adelantarlo.",
+    "effort": "L",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md"
+    ]
+   },
+   {
+    "item": "IA para rellenar con todo el contexto, enviando JSON y no una imagen",
+    "detail": "Make Real manda un PNG del dibujo y Excalidraw manda un JPG del frame más los textos, así que dependen de un modelo de visión. Dialmade puede mandar el layout estructurado: tipos, posiciones, etiquetas, brief, productType y marca. El modelo devuelve un JSON Patch validado con copy y variantes coherentes con toda la pantalla. Sale más barato y sin ambigüedad (estimación propia, sin medir: unos cientos de tokens por pantalla frente al coste de una imagen). Se usa con el presupuesto duro o BYOK de src/lib/ai.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://github.com/excalidraw/excalidraw/blob/master/excalidraw-app/components/AI.tsx",
+     "https://tldraw.dev/blog/make-real-the-story-so-far"
+    ]
+   },
+   {
+    "item": "Vía inversa: 'Describe tu pantalla' → layout de bloques editable",
+    "detail": "Para quien prefiere escribir. Es la apuesta de Stitch ('Instead of starting with a wireframe') y de Framer Wireframer. La IA propone el JSON de bloques en la rejilla y el usuario lo ajusta arrastrando. Sin IA, se ofrecen 6 a 8 layouts de partida por tipo de producto, deterministas. Así no hay que afirmar que los bloques son 'mejores que escribir': se ofrecen ambos.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://blog.google/innovation-and-ai/models-and-research/google-labs/stitch-ai-ui-design/",
+     "https://www.framer.com/updates/wireframer"
+    ]
+   },
+   {
+    "item": "Responsive derivado: móvil y tablet por orden de lectura, con overrides",
+    "detail": "Un layout 2D libre no se traslada solo a 390 px. Se deriva sm/md apilando por orden de lectura (y, luego x) y se permite override por breakpoint. Al lado del canvas se ven tres miniaturas de dispositivo. react-grid-layout implementa layouts por breakpoint y sirve de referencia.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "https://github.com/react-grid-layout/react-grid-layout",
+     "https://github.com/gridstack/gridstack.js"
+    ]
+   },
+   {
+    "item": "Exportar el layout como contexto para la IA del usuario",
+    "detail": "Añadir layout.md (wireframe en texto o ASCII más una tabla de bloques) y el JSON a los prompt packs y al futuro MCP de solo lectura (get_layout), para que Claude Code, Cursor o Claude Design reciban la estructura exacta. Wiretext, MockFlow, Balsamiq y Miro ya exponen wireframes a agentes por Markdown o MCP, así que es una expectativa del mercado, no un extra.",
+    "effort": "S",
+    "phase": "v1.1",
+    "sources": [
+     "https://wiretext.app/",
+     "https://mockflow.com/",
+     "https://miro.com/prototypes/",
+     "https://balsamiq.com/support/docs/wireframing/ai/"
+    ]
+   },
+   {
+    "item": "Decisión: no usar tldraw; Excalidraw tampoco para el modo principal",
+    "detail": "La licencia de tldraw no es permisiva: en producción exige license key (comercial de pago o hobby discrecional con marca de agua), y en un repo MIT cada usuario downstream necesita su propia licencia. Excalidraw es MIT, pero es una pizarra de trazo libre, su 'wireframe to code' depende de un backend hosted fuera del repo y el trazo libre va en contra del determinismo. Se recomienda un canvas propio de rejilla con dnd-kit.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "https://tldraw.dev/community/license",
+     "https://tldraw.dev/sdk-features/license-key",
+     "https://github.com/excalidraw/excalidraw",
+     "https://plus.excalidraw.com/changelog/3"
+    ]
+   },
+   {
+    "item": "Comunicación en LinkedIn honesta y verificable",
+    "detail": "Un post con un video de 20 s: arrastrar Navbar, Calendario y Cards, pulsar Generar, ver las cajas transformarse en la UI con la marca del logo y exportar a Figma. El texto reconoce los precedentes en una línea (Balsamiq, Sketch2Code, Make Real) y destaca lo verificable: bloques con nombre de un catálogo, marca desde el logo, sin IA ni créditos para generar, export neutral y MIT. Cierra con una pregunta ('¿Qué bloque te falta?') que alimenta los votos del catálogo. Evitar 'primero', 'nadie lo hace' y 'reemplaza a Figma': Relume y MockFlow lo desmienten en un comentario.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "https://www.relume.ai/",
+     "https://mockflow.com/",
+     "https://tldraw.dev/blog/make-real-the-story-so-far",
+     "https://thenextweb.com/news/airbnb-ai-sketches-design-code/"
+    ]
+   },
+   {
+    "item": "Validar 'mejor que escribir' con una prueba pequeña antes de afirmarlo",
+    "detail": "Cinco devs y la misma tarea (una pantalla de dashboard con calendario). Se compara componer con bloques en Dialmade contra escribir el prompt en Stitch o v0. Se mide el tiempo, cuántas veces corrigen la estructura y la satisfacción. Con eso, el post puede decir algo medido en lugar de opinable.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "https://blog.google/innovation-and-ai/models-and-research/google-labs/stitch-ai-ui-design/",
+     "https://v0.app/pricing"
+    ]
+   },
+   {
+    "item": "Opcional: foto de boceto → bloques (visión, BYOK)",
+    "detail": "Un modelo de visión convierte una foto de pizarra en bloques del catálogo con posiciones, que el usuario corrige. Diferencia poco porque ya lo hacen Uizard, Visily, UX Pilot, Stitch, Balsamiq y Claude Design, así que va al final y solo con IA opcional.",
+    "effort": "L",
+    "phase": "v2",
+    "sources": [
+     "https://uizard.io/wireframe-scanner/",
+     "https://balsamiq.com/support/docs/wireframing/ai/",
+     "https://support.claude.com/en/articles/14604416-get-started-with-claude-design"
+    ]
+   }
+  ],
+  "risks": [
+   "Hay precedentes directos. Relume (secciones con nombre → componentes de su librería → style guide → Figma/Webflow/React/Claude Design) y MockFlow (wireframe con biblioteca → hi-fi con color y fuente de marca, MCP) cubren buena parte de la idea. Presentarla como 'innovadora' o 'la primera' se desmiente fácil en LinkedIn.",
+   "Riesgo de commoditización alto. Stitch es gratis en beta, Claude Design está en el plan Free y acepta wireframes, y Uizard, UX Pilot y Visily ya hacen boceto → hi-fi 'on-brand'. Cualquiera puede añadir 'marca desde el logo' en un sprint.",
+   "Freeform 2D frente a responsive: rectángulos arbitrarios no se traducen bien a móvil. La rejilla con snapping lo mitiga, pero reduce la sensación de 'libre' que pide el usuario.",
+   "Cobertura del catálogo: el usuario pedirá bloques que no existen (hoy no hay calendario, cards genéricas, formulario libre ni tabs). Sin IA, el bloque genérico puede verse pobre y romper el 'wow'.",
+   "Cara de plantilla: un catálogo cerrado más render determinista puede sentirse genérico si las recetas y variantes no tienen suficiente rango. La estética depende de las referencias que el usuario aún tiene que elegir.",
+   "Cambio de schema: PageSchema es strictObject. Añadir `layout` afecta exportadores, parches, locks e importación, y el branch wip/import-brand tiene cambios sin commitear en packages/doc. Hay riesgo de conflicto si se hace en paralelo.",
+   "Accesibilidad: mover y redimensionar en 2D por teclado (WCAG 2.5.7) es más difícil que reordenar una lista, y Space/Enter ya están reservados para coger y soltar. Las librerías de grid de terceros pueden no cumplirlo (no verifiqué su soporte de teclado).",
+   "Deriva de producto: el INFORME §2 dice que Dialmade 'no es un site builder'. Un canvas de layout empuja hacia el page builder y puede diluir el foco en dirección de diseño y handoff.",
+   "Trampa de licencia: si alguien añade tldraw más adelante, el repo MIT dejaría de funcionar en producción sin license key para cada usuario downstream.",
+   "Datos de precios volátiles: muchas cifras (MagicPath, Variant, UX Pilot, v0 con imagen, Stitch gratis) vienen de reseñas de terceros y cambiaron en 2026. Conviene no citarlas en público sin revisar la página oficial ese día."
+  ],
+  "open_questions": [
+   "¿El modo Layout sustituye al Composer como entrada principal o es el primer paso antes del Composer (layout → cartas de estilo y dials → ajuste)?",
+   "¿Para qué tipos de salida aplica? Encaja natural en Dashboard/app (2D). En Landing sería una pila vertical, casi como Relume. En la Guía de estilo no aplica. ¿Adelantamos Dashboard al MVP por esto?",
+   "¿Libertad total en píxeles o rejilla de 12 columnas con snapping? (Recomiendo la rejilla por responsive y determinismo.)",
+   "¿Una pantalla o varias pantallas conectadas (flujo) desde el inicio?",
+   "¿Qué bloques nuevos son prioritarios para la librería (calendario, grid de cards, formulario, tabs, lista, stats, mapa…)?",
+   "¿Qué referencias de Mobbin quiere el usuario para la vista del canvas y para la librería de bloques? La estética la define él.",
+   "¿Se termina antes la importación de guías en curso (wip/import-brand, cambios sin commitear en packages/doc) para no chocar con el cambio de schema?",
+   "¿Quiere ofrecer también la vía 'describe tu pantalla' (texto → bloques), o el modo principal debe ser solo bloques?"
+  ]
+ },
+ "research:ux-canvas": {
+  "summary": "Propuesta de UX para el lienzo de layout. Cubre estructura e interacción; la estética la elige el usuario con sus referencias de Mobbin.\n\nFlujo propuesto: 1 Marca → 2 Layout → 3 Ajustar → 4 Exportar. «Generar diseño» es el CTA que une Layout con Ajustar y no un paso propio, porque no pide decisiones.\n\n**«¿Qué quieres crear?»**\n- Pasa a ser el estado vacío del lienzo, con 3 plantillas: Landing, Dashboard y En blanco. La recomendada viene preseleccionada.\n- La Guía de estilo deja de ser una opción: `pages.brand` se genera siempre y aparece en Ajustar y en Exportar.\n\n**Encaje con la arquitectura**\n- El layout se guarda en el DesignDoc como un `blueprint` por página. La geometría va en unidades de grilla: columnas en X y 8 px en Y.\n- Un compilador determinista en `@dialmade/sections` convierte el blueprint en el árbol de secciones del catálogo cerrado. Ordena por lectura y agrupa en bandas, filas y shell con sidebar.\n- Así la app sigue funcionando sin IA, el móvil se deriva por reglas de apilado y regenerar solo toca los bloques que cambiaron. Cada bloque se enlaza a su elemento con un hash y el parche usa `test` y los locks que ya existen.\n\n**Qué hay hoy en el código**\n- El registro ya cubre 16 de los ~40 bloques de la librería.\n- Los demás se añaden por fases. Mientras tanto se pintan como `ui.placeholder` tematizado.\n- `checkTree` solo admite `kind.*` y `ui.*`, así que los bloques genéricos deben ir en `ui.*`.\n\n**Accesibilidad (WCAG 2.2, verificado en W3C)**\n- 2.5.7 exige una alternativa de **un solo puntero** sin arrastre. El teclado por sí solo no basta.\n- Por eso todo gesto tiene tres alternativas: clic para insertar o mover, dos clics para dibujar y campos numéricos.\n- Además: teclado completo, árbol de capas con el patrón treeview de la APG, handles con zona de toque de 24×24 px (2.5.8) y anuncios aria-live en es/en.\n\n**Posicionamiento: la idea no es nueva (verificado con fuentes, varias de terceros)**\n- Ya existen tldraw Make Real (2023), Uizard, Visily, Google Stitch (entrada de wireframe en Experimental Mode), Relume (sitemap → wireframe con más de 1.000 componentes → style guide → Figma/Webflow/React) y Framer Wireframer.\n- Lo diferencial de Dialmade:\n  - cajas estructuradas de un catálogo cerrado, en lugar de píxeles o bocetos;\n  - funciona sin IA;\n  - la marca exacta desde el logo;\n  - regenera conservando tus ediciones;\n  - exporta el layout a otras herramientas.\n- El INFORME §2 dice «No es un generador de pantallas libre». Hay que reformularlo, no ignorarlo.\n\n**Coste y motor**\n- Coste extra estimado: unas 6–8 semanas para 1 dev sobre el MVP actual. Es estimación propia, sin validar.\n- Motor propio con pointer events + motion, y `@dnd-kit/react` 0.5.0 solo para librería → lienzo y para el árbol de capas.\n- Se descarta tldraw: en producción exige license key (verificado).",
+  "recommendations": [
+   {
+    "item": "Nuevo orden del flujo: Marca → Layout → Ajustar → Exportar, con «Generar» como puente",
+    "detail": "**Stepper de 4 pasos visibles:** 1 Marca (logo, recorte, paleta, «Trae tu marca») · 2 Layout · 3 Ajustar · 4 Exportar.\n- «Generar diseño» es el CTA del paso Layout y el momento firma de la transición.\n- Un paso sin decisiones solo añade fricción, y así se respeta la regla de ≤5 pasos.\n\n**Cambios en el código:**\n- `CreateStep` se sustituye por `LayoutStep`. Se añade `loadLayoutStep` en `src/components/PaletteFlow/designHalf.ts`.\n- En `usePaletteFlow` y en `FlowStepper`, el paso `create` pasa a llamarse `layout`.\n- El Composer sigue siendo «Ajustar» y gana en `ComposerTopBar` un botón «Editar layout» que vuelve al lienzo.\n\n**Primer uso:** el Palette Lab dice «Crear layout →» y lleva al lienzo con la plantilla recomendada ya marcada. Hay un solo CTA visible en cada momento.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/PaletteFlow/designHalf.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/PaletteFlow/PaletteFlow.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "«¿Qué quieres crear?» pasa a ser las plantillas de inicio, y la Guía de estilo se genera siempre",
+    "detail": "**Estado vacío del marco: 3 cartas dentro del lienzo**\n- **Landing:** bloques de `getLandingLayout(defaultLandingLayout(productType))`.\n- **Dashboard:** Sidebar (`app.shell`, variante `sidebar`) más `APP_SHELL_WIDGETS`.\n- **En blanco.**\n\n**Cómo se elige**\n- La recomendada viene preseleccionada desde la pestaña del Palette Lab (`previewKind`).\n- `RecommendQuestion` se queda como enlace secundario «¿No sabes cuál?», con la misma pregunta determinista.\n- `KindCard` y `MiniPreview` se reutilizan como cartas de plantilla.\n- El CTA cambia de texto según el estado: con el marco vacío dice «Usar plantilla Landing» y con bloques dice «Generar diseño». Así nunca hay un botón deshabilitado sin explicación.\n\n**La Guía de estilo deja de ser opción**\n- `pages.brand` se crea siempre al generar, en determinista y sin IA.\n- Se ve como pestaña en Ajustar y como carta en Exportar.\n\n**Tipo de página:** se infiere de los bloques. Si hay Sidebar o Shell es `app`; si no, `landing`. Se muestra en un chip editable: «Web pública / Pantalla de app».",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/CreateStep/CreateStep.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/packages/catalog/src/data/outputKinds.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/buildPage.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/constants.ts"
+    ]
+   },
+   {
+    "item": "Modelo de datos: `blueprint` por página dentro del DesignDoc, con geometría en unidades de grilla",
+    "detail": "**Campo:** `pages[k].blueprint` opcional, aditivo en v1.\n\n**Estructura**\n```\n{ columns: 12, rowUnit: 8, blocks: Record<id, Block> }\n```\nCada `Block` lleva:\n- `block`: id de la librería.\n- `label?` y `note?` (≤120 caracteres, una línea, sin caracteres de control ni bidi, como `SingleLineText`).\n- `count?`.\n- `x` (columna 0–11), `w` (1–12 columnas), `y` y `h` (múltiplos de 8 px).\n- `parent?`.\n- `overrides?: { tablet?, mobile?: { order?, hidden?, behavior?, h? } }`.\n- `gen?: { elementId, hash }`.\n\n**Por qué en el doc:** comparte el undo/redo de zundo (`beginBatch`/`commitBatch`, un paso por gesto), los parches RFC 6902, los locks y los exports.\n\n**Por qué en unidades de grilla y no en px libres:** el snap es trivial, el responsive se puede derivar y el compilador es estable.\n\n**Metadatos de la librería** (datos en `@dialmade/catalog`): `id`, `category`, `label` es/en, sinónimos es/en, icono, `defaultSize`, `minCols` por breakpoint, `container`/`accepts`, `repeatable`, `section: { type, variantBySize }` y `status: ready|soon`.\n\n**Namespace:** los bloques genéricos (calendario, kanban, chat…) se registran como `ui.*`, porque `checkTree` solo admite `kind.*` y `ui.*`. Así valen en las páginas landing y app sin tocar esa regla.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/schema.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/patch.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/hooks/useDesignDoc.ts",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md"
+    ]
+   },
+   {
+    "item": "Compilador determinista blueprint → página (`buildPageFromBlueprint` en @dialmade/sections)",
+    "detail": "Función pura junto a `buildDefaultPage`, con tests en vitest.\n\n**Pasos**\n1. **Orden de lectura:** por `y`, después por `x`; los hijos van dentro de su contenedor. Ese orden es también el del árbol de capas, el del apilado en móvil y el del DOM de la página generada.\n2. **Bandas:** agrupa los bloques que se solapan en vertical (≥50 % del más bajo). Una banda con un solo bloque de ≥10 columnas es una sección a ancho completo; con varios, es una `ui.row` con columnas por `span`.\n3. **Shell:** un bloque alto, pegado a un borde y que cruza ≥2 bandas se convierte en `app.shell` con variante `sidebar`, y el resto pasa a ser sus hijos.\n4. **Variante por tamaño:** p. ej. un hero de 12 columnas usa `centered`, y uno de ≤8 columnas con un hermano al lado usa `split`.\n5. **`count`:** fija el número de ítems.\n6. **Nota:** se leen palabras clave deterministas es/en. Números («3», «tres») dan el `count`; «semanal» o «mensual» dan la variante.\n7. **Bloques «Pronto»:** salen como `ui.placeholder` tematizado y con su etiqueta.\n\n**Solapes que no son anidamiento:** aviso no bloqueante con arreglos de un clic: «Anidar» o «Poner debajo».\n\n**Garantía:** la misma entrada produce la misma salida, así que la app funciona completa sin IA.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/buildPage.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/types.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/Shell/definition.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Prototipo de 1 semana antes de comprometer el lienzo completo",
+    "detail": "Construir solo:\n- el compilador de la recomendación anterior;\n- un lienzo mínimo: colocar desde la librería con clic, mover y redimensionar con teclado e inspector, y ver el resultado;\n- 5 plantillas de prueba.\n\nQué se mide con 3–5 devs:\n- tiempo hasta el primer diseño, con objetivo de menos de 2 min;\n- si el resultado se parece a lo que dibujaron;\n- dónde se pierden.\n\nCon eso se valida la parte más arriesgada, el mapeo de cajas libres a secciones, antes de invertir en guías inteligentes y motion. Es una estimación propia.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Lienzo: marcos de dispositivo, grilla con snap, guías, colocar, mover, redimensionar, agrupar, zoom y pan",
+    "detail": "**Marco y grilla**\n- El marco de página usa `DEVICE_WIDTHS` (1440/768/390) y crece en vertical. Abajo hay un «+ Añadir espacio».\n- 12, 8 y 4 columnas con gutter.\n- Snap: X siempre a columnas (lo que garantiza el responsive) e Y cada 8 px.\n\n**Guías inteligentes**\n- Alinean bordes y centros con los hermanos y marcan el espaciado igual.\n- Muestran un badge de distancia en px.\n- Alt o ⌥ las oculta mientras arrastras.\n\n**Colocar desde la librería**\n- Al arrastrar aparece un fantasma con el tamaño por defecto.\n- El contenedor válido se marca como drop target y los inválidos bajan a 40 %, que es el patrón actual del DESIGN-BRIEF §5.\n\n**Editar**\n- Mover: arrastrar el cuerpo del bloque.\n- Redimensionar: 8 handles. Pueden verse pequeños, pero la zona de toque es de ≥24×24 px (WCAG 2.5.8).\n- Duplicar: ⌘D, o Alt + arrastrar.\n- Agrupar en un «Contenedor»: ⌘G. Desagrupar: ⇧⌘G.\n- Anidar: soltar dentro de un contenedor.\n- Selección múltiple: Shift + clic y marquesina.\n\n**Zoom y pan**\n- Zoom de 25 a 200 %: ⌘ + scroll o pinza; ⌘0 ajusta y ⌘1 pone 100 %.\n- Pan: scroll o trackpad, rueda central, o herramienta mano con la tecla H.\n- **No se usa Space + arrastrar:** Space queda reservado para coger y soltar (CLAUDE.md).\n\n**Undo/redo:** ⌘Z y ⇧⌘Z, en el historial del doc.\n\n**Etiquetas siempre visibles en cada rectángulo**\n- Icono y nombre del elemento.\n- La nota en una segunda línea, truncada.\n- El badge «×3».\n- Los estados «Nuevo», «Cambiado» y «Editado», con icono y texto.\n- En tamaños pequeños, solo el icono con tooltip.\n\n**Motor**\n- Lógica propia con pointer events y `motion`: como la posición está en unidades de grilla, el snap es un redondeo.\n- `@dnd-kit/react` 0.5.0 solo para librería → lienzo y para el árbol de capas.\n- **Descartados:**\n  - tldraw: en producción exige license key, y la hobby lleva marca de agua (verificado).\n  - react-moveable: MIT, pero su última versión estable es de hace unos 2 años según Cloudsmith, y no verifiqué que tenga teclado.\n  - react-grid-layout: MIT, sin teclado confirmado.\n\n**Rendimiento:** el lienzo pinta rectángulos DOM ligeros, no renders reales de secciones.",
+    "effort": "XL",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/constants.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html",
+     "https://tldraw.dev/community/license",
+     "https://www.jsdelivr.com/package/npm/react-moveable",
+     "https://cloudsmith.com/navigator/npm/react-moveable",
+     "https://www.jsdelivr.com/package/npm/react-grid-layout",
+     "https://help.figma.com/hc/en-us/articles/4404575206295"
+    ]
+   },
+   {
+    "item": "Herramienta «Rectángulo libre» y la pregunta «¿Qué es esto?» adivinada por la forma",
+    "detail": "Es el corazón «freeform» de la propuesta.\n\n**Cómo se dibuja (tecla R), tres formas**\n- Arrastrando.\n- Con dos clics, uno en cada esquina. El W3C lo reconoce como alternativa de un solo puntero.\n- Con Enter, que inserta un bloque de tamaño por defecto en la siguiente posición.\n\n**Al terminar** sale un popover con buscador y 5 sugerencias deducidas de la geometría con heurísticas deterministas:\n- franja fina arriba a todo el ancho → Navbar;\n- alta y estrecha pegada a un borde → Sidebar;\n- ancha y alta al inicio → Hero;\n- ancha al final → Footer;\n- caja mediana → Cards.\n\n**Si no elige nada:** queda como «Bloque libre», que solo tiene nota.\n- Sin IA se pinta como placeholder etiquetado.\n- Con IA, el modelo elige un tipo del catálogo y nunca escribe HTML libre.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Contador de repetición «×N» en los bloques repetibles",
+    "detail": "**Qué bloques:** cards, KPIs, planes, testimonios, ítems del sidebar, columnas del kanban, fotos de la galería y preguntas del FAQ.\n\n**Controles**\n- Stepper −/+ en la barra flotante y en el inspector. Los botones sirven de alternativa por puntero.\n- Badge «×N» en el bloque.\n- Las copias fantasma se dibujan dentro del rectángulo, así que hay un solo objeto que mover.\n- «Separar» lo convierte en N bloques independientes si quieres que cada uno sea distinto.\n\n**Al compilar:** se traduce al número de ítems en las props de la sección. Al regenerar, los ítems que ya tenían texto lo conservan.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/landing/index.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/index.ts"
+    ]
+   },
+   {
+    "item": "Librería: buscador, sugeridos, 8 categorías con ≤5 visibles, «más», favoritos y 40 bloques",
+    "detail": "**Panel izquierdo, de arriba abajo**\n1. Buscador con sinónimos es/en: «header» → Navbar, «agenda» → Calendario, «planes» → Pricing.\n2. «Sugeridos»: 5 bloques según la plantilla y lo que ya hay en el lienzo (después de un Navbar sugiere Hero).\n3. «Favoritos»: aparece cuando marcas alguno con la estrella. Se guardan en localStorage por usuario, envuelto en try/catch.\n4. 8 categorías en acordeón, cada una con 5 bloques visibles y «Ver N más».\n\n**Uso**\n- Clic o Enter en un bloque lo inserta en la siguiente posición: debajo de la selección, o dentro del contenedor seleccionado si es compatible.\n- Arrastrar lo coloca donde lo sueltes.\n- Los bloques que aún no existen llevan el badge «Pronto», el enlace a votar en GitHub y se pueden colocar igual (salen como bloque genérico).\n\n**Los 40 bloques** (✓ = ya existe en el registro, 16 en total)\n- **Navegación:** Navbar ✓, Sidebar ✓ (`app.shell`), Tabs, Footer ✓.\n- **Contenido:** Hero ✓, Cards/Features ✓, Logos ✓ (`socialProof`), Testimonios ✓, Pricing ✓, CTA ✓, FAQ, Banner/aviso, Timeline/pasos.\n- **Datos:** KPIs ✓, Gráfica ✓, Tabla ✓, Actividad ✓, Lista, Kanban, Calendario.\n- **Formularios:** Login/registro, Contacto, Ajustes ✓, Barra de búsqueda, Filtros, Subir archivo.\n- **Media:** Galería, Video, Mapa esquemático.\n- **Comercio:** Producto, Carrito, Checkout.\n- **Social:** Chat, Comentarios, Perfil, Notificaciones.\n- **Utilidades:** Modal ✓ (`confirmDialog`), Estado vacío ✓, Stepper/onboarding, Contenedor.\n- **Fijo arriba del panel:** «Rectángulo libre».",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/landing/index.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/index.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md"
+    ]
+   },
+   {
+    "item": "Bloques nuevos del catálogo por fases, con placeholder tematizado mientras tanto",
+    "detail": "Cada bloque nuevo es una sección `ui.*` hecha con `defineSection`: variantes, knobs, `defaultProps` y copy deterministas en `content/`, y un folder por componente.\n\n**MVP**\n- `ui.placeholder`.\n- 6 de alta demanda: FAQ, Login/registro, Lista, Calendario, Galería, Búsqueda + filtros.\n\n**v1.1:** Kanban, Chat, Tabs, Perfil, Notificaciones, Timeline, Contacto, Banner.\n\n**v2:** Mapa, Video, Producto, Carrito, Checkout, Comentarios, Stepper, Subir archivo.\n\n**Mapa:** sin servicio de mapas externo, para seguir en coste $0. Es una ilustración esquemática con los tokens.\n\n**Prioridad:** la deciden los votos en GitHub, como en `que-quieres-crear.md`.\n\n**Esfuerzo:** cada bloque es S–M (estimación propia); son unos 24 bloques en total.",
+    "effort": "XL",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/types.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/registry.ts",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md"
+    ]
+   },
+   {
+    "item": "Accesibilidad del lienzo: alternativa de puntero a todo arrastre, teclado completo, árbol de capas, inspector numérico y aria-live",
+    "detail": "**Clave (WCAG 2.5.7, AA, verificado en W3C):** la alternativa tiene que funcionar con **un solo puntero y sin arrastre**. El teclado por sí solo **no** cumple el criterio.\n\n**Alternativas por puntero**\n- Clic en la librería inserta el bloque.\n- Barra flotante con «Mover a…» (contenedores y posiciones), «Subir»/«Bajar», «Duplicar» y −/+.\n- Dibujar con dos clics.\n- Inspector con X, Y, ancho y alto numéricos. El W3C acepta la entrada de texto como alternativa.\n\n**Teclado**\n- F6 recorre las regiones: Librería, Lienzo, Inspector y Capas.\n- En el lienzo hay roving tabindex: Tab y Shift+Tab pasan al bloque siguiente o anterior en orden de lectura.\n- Flechas: mueven 1 paso (1 columna o 8 px). Shift + flechas: 4 pasos.\n- Alt o ⌥ + flechas: redimensionan desde el borde derecho o inferior.\n- Space o Enter: cogen el bloque para «Mover a…». Las flechas saltan entre destinos válidos, Space o Enter sueltan y Esc cancela. Es el patrón actual de `useKeyboardTargets`.\n- Supr: elimina, con un toast para deshacer.\n- F2: edita el nombre y la nota.\n- Esc: deselecciona o sube al padre.\n- ⌘A: selecciona todo.\n\n**Árbol de capas** con el patrón treeview de la APG:\n- `role=tree`, `aria-multiselectable`, `aria-level` y `aria-expanded`.\n- Type-ahead, Shift + flechas, Ctrl+A.\n- Reordenar con Space, flechas y Space, o con «Mover a…».\n\n**Cada bloque en el lienzo**\n- `aria-roledescription=\"bloque\"`.\n- `aria-label` con el tipo, la nota y la posición.\n- `aria-describedby` apuntando a las instrucciones (el `DND_INSTRUCTIONS_ID` que ya existe).\n\n**Anuncios** por `DndAnnouncer`, en es/en:\n- `polite` para cambios, p. ej. «Calendario: columnas 1 a 8, 320 px de alto», «Tarjetas: 4», «Movido dentro de Sidebar».\n- `assertive` solo para errores.\n\n**Más reglas**\n- El foco no puede quedar tapado por la barra flotante.\n- Los estados no se indican solo con color.\n- Con reduced motion: sin inclinación, snaps instantáneos y fades de 150 ms.\n\n**Móvil (<640 px):** el lienzo pasa a ser una lista (árbol + insertar), sin arrastre libre.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+     "https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html",
+     "https://www.w3.org/WAI/ARIA/apg/patterns/treeview/",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/dnd/DndProvider/DndProvider.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/dnd.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md"
+    ]
+   },
+   {
+    "item": "Inspector del layout: solo estructura antes de generar",
+    "detail": "**Panel derecho, campos:**\n- **Tipo:** se puede cambiar y se conserva la geometría.\n- **Nombre** y **nota** libre: «3 planes de precios», «calendario semanal».\n- **Cantidad.**\n- **Posición y tamaño numéricos:** columnas y px.\n- **Visible en:** desktop, tablet y móvil.\n- **Comportamiento en móvil:** apilar, carrusel, menú u ocultar.\n- **«Fijo arriba»:** navbar sticky.\n\nNada estético en este paso. Los knobs de variante, color y espaciado siguen en Ajustar, en el `KnobsPanel` actual. Así se separa «qué va dónde» de «cómo se ve».",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/Canvas/SelectionToolbar/KnobsPanel/KnobsPanel.tsx",
+     "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html"
+    ]
+   },
+   {
+    "item": "«Generar diseño»: resumen del contexto, fase determinista inmediata, IA opcional por bloque y progreso visible",
+    "detail": "**Barra inferior**\n- Una línea de estado, p. ej.: «Marca ✓ · AA ✓ · Minimal Swiss + Inter · 9 bloques (1 genérico) · Texto: IA gratis, quedan N».\n- Un solo CTA: «Generar diseño».\n- Al hacer clic en la línea se abre el detalle: marca, estilo, referencias, layout y notas, y el modo de texto (IA gratis, Mi key o Sin IA).\n\n**Fase 1, determinista**\n- Local y en menos de 100 ms.\n- Blueprint → página con copy determinista, más `pages.brand`.\n- Se pinta al instante.\n\n**Fase 2, IA opcional**\n- Peticiones a `/api/ai/copy` con `sectionIds` (máx. 64 hoy), en lotes pequeños y en orden de lectura, para que la parte de arriba termine primero. El system prompt ya es estable y se cachea.\n- El modelo solo devuelve JSON Patch dentro del catálogo: copy y variante entre las del bloque. Si el parche no es válido, se descarta.\n- Cada bloque muestra su estado con chip y texto: En cola · Escribiendo · Listo · Error, con «Reintentar» o «Dejar texto de ejemplo».\n- Cancelar conserva lo ya terminado.\n\n**Sin IA, presupuesto agotado o despliegue serverless:** se queda en la fase 1 con un aviso, y el menú de IA ofrece BYOK. Es el `reportAiError` que ya existe.\n\n**Estilo:** la receta y la tipografía salen por defecto del `productType`. Se cambian en Ajustar sin regenerar, porque son tokens y CSS vars.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/api.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/config.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/prompt.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/serverConfig.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/Composer.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md"
+    ]
+   },
+   {
+    "item": "Volver al layout y regenerar conservando las ediciones de los bloques que no tocaste",
+    "detail": "Cada bloque guarda `gen: { elementId, hash }`. El hash cubre tipo, nota, `count` y el tamaño agrupado en tramos.\n\n**Qué se hace según el cambio**\n- **Solo posición:** `move` del elemento; el contenido se queda igual.\n- **Tamaño que cruza de variante:** cambia la variante y se conservan los textos.\n- **`count`:** se añaden o quitan ítems y se conservan los que ya existían.\n- **Nota (con IA):** se regenera solo el copy.\n- **Tipo:** se regenera el bloque.\n- **Bloque nuevo:** se genera.\n- **Bloque borrado:** se elimina, con undo.\n\n**Garantía para el resto:** el parche incluye operaciones `test` sobre los elementos no tocados, así que nada más cambia. También respeta los hard locks, porque `applyPatch` ya los aplica.\n\n**Botones:** «Regenerar 2 bloques», con el número real. Desde Ajustar, «Editar layout».\n\n**Mismo marco, dos vistas:** el toggle «Layout / Diseño» y una capa opcional con los contornos del layout sobre el diseño.\n\n**Fases**\n- **MVP:** posición, tamaño, count, nuevo y borrado.\n- **v1.1:** el conflicto de un bloque editado en Ajustar que además cambió en el layout. Se pregunta: «Conservar mis textos» o «Regenerar de cero».",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/patch.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/locks.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Responsive derivado: dibujas en desktop y tablet y móvil se generan por reglas",
+    "detail": "**Tablet (8 columnas):** el `span` se escala por 8/12 y se redondea. Si queda por debajo del `minCols` del bloque, salta de línea.\n\n**Móvil (4 columnas):** todo se apila en orden de lectura, con reglas por tipo:\n- Navbar → menú hamburguesa.\n- Sidebar → tab bar inferior o drawer.\n- Cards ×N → 1 columna o carrusel.\n- KPIs ×4 → 2×2.\n- Tabla → lista de tarjetas o scroll horizontal.\n- Hero split → texto arriba y visual debajo.\n- Modal → sheet a pantalla completa.\n- Footer → acordeón.\n\nLas reglas viven en los metadatos de cada bloque de la librería, en datos y no en código del lienzo. Es la misma idea de las Stacks de Framer: dirección, gap y visibilidad por breakpoint.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "https://framer.com/academy/lessons/breakpoints",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/constants.ts"
+    ]
+   },
+   {
+    "item": "Ajuste manual en el marco móvil con herencia desde desktop",
+    "detail": "En el marco Móvil puedes:\n- reordenar dentro de la pila;\n- ocultar el bloque solo en ese dispositivo;\n- cambiar el comportamiento: apilar, carrusel o menú;\n- ajustar la altura.\n\n**Cómo se guarda:** en `overrides.mobile` y `overrides.tablet`. Funciona como los breakpoints de Framer (verificado en Framer Academy): desktop es el padre, lo que cambias en desktop baja a móvil salvo que esté sobrescrito, y cada override se marca y se puede «Restablecer».\n\n**Diseñar en móvil primero:** para pantallas de app se puede dejar para la v2.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "https://framer.com/academy/lessons/breakpoints"
+    ]
+   },
+   {
+    "item": "Exportar también el layout: estructura en prompt packs y DESIGN.md, más un wireframe SVG o PNG",
+    "detail": "**Qué se exporta**\n- El blueprint como lista ordenada: nombre, nota, columnas y comportamiento en móvil. Va en los prompt packs y en DESIGN.md, para que Claude Design, Claude Code o Cursor reproduzcan la misma estructura con tus tokens.\n- Un wireframe SVG o PNG. Google Stitch acepta wireframes como imagen en su Experimental Mode, según guías de terceros (no lo he comprobado en el producto).\n\nRefuerza el posicionamiento «Suiza»: el layout también es portable.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/constants.ts",
+     "https://it.aad.vt.edu/howto/google-stitch/",
+     "https://developers.googleblog.com/stitch-a-new-way-to-design-uis/",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Micro-interacciones «wow» (5), dentro del presupuesto de motion",
+    "detail": "1. **Columnas que respiran:** al coger un bloque aparece la grilla (≤150 ms) y se tiñen las columnas que va a ocupar. Al soltar, spring `snappy` (520/34) al snap y un destello blanco de ≤200 ms.\n2. **«¿Qué es esto?»:** al terminar de dibujar, las 5 sugerencias entran con un stagger de 30 ms (≤200 ms) y la más probable ya resaltada.\n3. **Contador que multiplica:** al pasar de ×3 a ×4, la copia nueva sale de la última con una animación de layout (≤300 ms) y el número cambia con NumberFlow.\n4. **Del layout al diseño (momento firma):**\n   - Cada rectángulo se «revela» como su sección en orden de lectura, desde su centro, con un stagger de 40 ms.\n   - Dura ≤900 ms en total y se salta con clic o Esc.\n   - El progreso de la IA no lleva motion en bucle: solo chip de estado y barra (WCAG 2.2.2).\n5. **Plegado desktop → móvil:** al cambiar de marco, los bloques viajan de su sitio en desktop a la pila (FLIP con spring `smooth`, ≤400 ms). Así el usuario ve las reglas de apilado.\n\nTodo con `<MotionConfig reducedMotion=\"user\">`. Con reduced motion, cada una pasa a un fade de 150 ms.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md"
+    ]
+   },
+   {
+    "item": "Actualizar el posicionamiento: la idea no es nueva, la combinación sí",
+    "detail": "**Ya existe**\n- **tldraw Make Real** (nov-2023): dibujas, se envía como imagen a un modelo de visión y devuelve HTML.\n- **Uizard:** Wireframe Scanner y modo wireframe → mockup.\n- **Visily:** de boceto o captura a alta fidelidad.\n- **Google Stitch:** wireframe como imagen en Experimental Mode.\n- **Relume:** brief → sitemap → wireframes con más de 1.000 componentes → Figma, Webflow o React.\n- **Framer Wireframer:** de un prompt a un layout neutro.\n\n**Lo propio de Dialmade**\n1. Cajas estructuradas de un catálogo cerrado, no píxeles: es determinista, editable y no necesita visión ni IA.\n2. La marca exacta desde el logo, con AA.\n3. Regenera por bloque conservando lo que editaste.\n4. Exportación neutral, layout incluido.\n\n**Cambio en el INFORME §2:** «No es un generador de pantallas libre» pasa a ser «Genera pantallas solo a partir de tu layout, el catálogo y tu marca».\n\nAviso: varias de estas fuentes son del propio fabricante o de terceros.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "https://tldraw.dev/blog/make-real-the-story-so-far",
+     "https://feeds.simonwillison.net/2023/Nov/16/tldrawdraw-a-ui/",
+     "https://uizard.io/wireframe-scanner/",
+     "https://uizard.io/blog/how-to-go-from-wireframe-to-low-fidelity-prototype/",
+     "https://visily.ai/wireframe-ai",
+     "https://it.aad.vt.edu/howto/google-stitch/",
+     "https://www.relume.ai/",
+     "https://www.relume.io/whats-new/july-2026-release",
+     "https://www.framer.com/academy/lessons/generating-layouts-with-ai-using-wireframer",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Estructura de carpetas, paquetes e i18n",
+    "detail": "**App** (un folder por componente):\n```\nsrc/components/LayoutStep/\n  LayoutStep.tsx, index.ts, useLayoutShortcuts.ts, constants.ts, icons.tsx\n  TemplatePicker/\n  LayoutCanvas/\n    GridOverlay/  BlockFrame/  ResizeHandles/  SmartGuides/  DrawTool/\n  BlockLibrary/\n    LibrarySearch/  LibraryItem/\n  LayersTree/\n  BlockInspector/\n  GenerateBar/\n    ContextSummary/\n```\nEl chrome que esté dentro de `ThemeScope` lleva la clase `.app-chrome`.\n\n**Paquetes**\n- Datos de la librería: `@dialmade/catalog`.\n- `BlueprintSchema`: `@dialmade/doc`. La geometría pura (orden de lectura, bandas, derivación responsive) también va aquí o en un paquete nuevo.\n- Compilador: `@dialmade/sections`.\n- Todo con tests en vitest.\n\n**Textos:** diccionario `src/i18n/layout.ts`, con los nombres, sinónimos y anuncios en es/en.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/PaletteFlow/designHalf.ts"
+    ]
+   }
+  ],
+  "risks": [
+   "**Alcance:** un editor de lienzo accesible es la pieza más grande del producto. Puede añadir unas 6–8 semanas para 1 dev al MVP de ~12–15 semanas. Es estimación propia, sin validar, y el prototipo de 1 semana sirve para recalibrarla.",
+   "**Deriva de posicionamiento hacia lo que ya es commodity:** Stitch, Relume, Framer Wireframer, Uizard y Visily ya convierten wireframes o prompts en pantallas. Si el diferencial (marca exacta, catálogo determinista, regenerar conservando y export neutral) no se ve en los primeros 2 minutos, Dialmade parecerá un clon.",
+   "**Cajas libres contra una página en flujo:** con solapes, huecos o columnas raras, el diseño generado no se parecerá a lo que dibujó el usuario. Se mitiga guardando en unidades de grilla, con avisos en vivo y con arreglos de un clic. Aun así, las heurísticas de bandas y shell necesitan muchos tests.",
+   "**Cobertura del catálogo:** 24 de los ~40 bloques no existen todavía. Si se colocan muchos «Pronto», el placeholder puede decepcionar, y cada bloque nuevo cuesta entre S y M.",
+   "**Conflictos de teclado:** Space y Enter están reservados para coger y soltar, así que no puede haber Space+arrastrar para el pan ni Enter para entrar en un grupo. Hay que enseñar atajos nuevos (H, F2, F6) y probarlos con lector de pantalla. El teclado no cumple 2.5.7 por sí solo: siempre hace falta además la alternativa de puntero.",
+   "**Identidad bloque ↔ elemento al regenerar:** puede romperse al agrupar, desagrupar, cambiar el tipo o separar un ×N. Si falla, el usuario pierde ediciones, que es lo peor que puede pasar. Necesita tests de propiedades y operaciones `test` en el parche.",
+   "**Esquema del doc:** `PagesSchema` y `PageSchema` son strict. Añadir `blueprint` obliga a revisar los exportadores, el sync y los docs guardados. Los bloques genéricos tienen que ir en `ui.*` por la regla de namespace de `checkTree`.",
+   "**Coste y disponibilidad de la IA:** generar por bloques multiplica las peticiones. Hay que agruparlas con `sectionIds` y apoyarse en el prompt cache. Además, en serverless la IA está apagada hasta que el ledger sea persistente, así que en Vercel la experiencia por defecto será la determinista.",
+   "**El lienzo no cabe en un teléfono:** en <640 px tiene que degradar a lista e insertar, o la app parecerá rota en móvil.",
+   "Varias afirmaciones sobre la competencia vienen de blogs o guías de terceros y pueden estar desactualizadas: los límites de Stitch, el plan gratis de Framer Wireframer y el flujo actual de Relume."
+  ],
+  "open_questions": [
+   "¿Stepper de 4 pasos (Marca · Layout · Ajustar · Exportar, con «Generar» como puente) o prefieres «Generar» como paso 3 propio, con 5 pasos en total?",
+   "¿Te parece bien que la Guía de estilo deje de ser una opción y se genere siempre, como pestaña en Ajustar y carta en Exportar?",
+   "¿Qué referencias de Mobbin usamos para la vista Layout (lienzo + librería + inspector + capas)? Para Modo edición ya elegiste MagicPath (capas, canvas, propiedades) y Replit. ¿Las reutilizamos o busco opciones nuevas, tipo panel «Insertar» o constructor de wireframes?",
+   "¿Un layout por tipo de página (una landing y una pantalla de app) o varias pantallas por proyecto (Dashboard + Ajustes + Login)? Esto cambia `pages`, que hoy está indexado por tipo.",
+   "Posicionamiento: ¿solo grilla (X en columnas, Y cada 8 px, la opción recomendada) o también px libres tipo Figma, a costa de un responsive menos fiable?",
+   "¿Los bloques «Pronto» se pueden colocar (como bloque genérico) o se muestran deshabilitados hasta que existan?",
+   "¿Qué 6 bloques nuevos entran en el MVP? Propuesta: FAQ, Login/registro, Lista, Calendario, Galería y Búsqueda + filtros.",
+   "¿Exportamos el layout (estructura en los prompt packs y wireframe PNG/SVG para Stitch o Claude Design) ya en la v1.1?",
+   "¿Hace falta «diseñar en móvil primero» para pantallas de app, o basta con desktop como origen y ajustes en el marco móvil?"
+  ]
+ },
+ "research:architecture": {
+  "summary": "Recomiendo construir un lienzo de layout propio con lo que ya hay en el repo, en lugar de adoptar una librería de canvas:\n- pointer events más la geometría de 8 handles de LogoCropper (`resizeRect`, `drawRect`, `moveRect`, `nudgeRect`), que pasa a `src/lib/geometry`;\n- @dnd-kit/react 0.5 solo para soltar bloques desde la librería. En 0.5 existen `SnapModifier` y `RestrictToElement`, pero no hay primitiva de resize (comprobado en node_modules);\n- motion para el feedback.\n\n**Por qué no una librería (tamaños min+gzip de bundlephobia, consultados hoy):**\n- tldraw (~530 KB) exige license key en producción; la licencia Hobby lleva marca de agua y se concede a discreción.\n- Excalidraw (~353 KB) tiene estética a mano alzada.\n- Konva dibuja en canvas: no hay DOM por bloque, así que no hay accesibilidad ni motion.\n- react-grid-layout, react-rnd y react-moveable no documentan teclado.\n- React Flow (MIT, ~60 KB, con teclado y aria-live) queda como plan B.\n\n**Datos.** Un `LayoutSpec` opcional en `pages[k].layout`, aditivo, así que el DesignDoc sigue en v1. Los bloques van en un Record por id, con el rect en enteros de grilla, etiqueta, nota, count, padre, z y una lista de props `pinned`.\n- El layout es la fuente de verdad de la estructura.\n- `Page.elements` es su compilación renderizable: las hojas tienen el mismo id que su bloque y los contenedores inferidos son `ui.region` con id por hash.\n- Las páginas existentes entran al modo layout sin pérdida con `layoutFromPage`.\n\n**Inferencia.** Un paquete puro `@dialmade/layout`, determinista y testeado con fixtures golden y tests de propiedades:\n1. Árbol de contención geométrica.\n2. Política de solapes.\n3. Recursive XY-cut por el hueco más ancho (Nagy y Seth).\n4. Fallback a `grid-template-areas` para los grupos bento.\n5. Gaps cuantizados a los tokens de espaciado.\n6. Orden de lectura para el DOM y el apilado móvil.\n7. Responsive con las container queries que las secciones ya usan, más reglas por tipo de bloque.\n\n**Catálogo.** Cada bloque se resuelve por kind a una sección existente o a una `ui.*` nueva (el esquema ya admite `ui.*` en cualquier página). La variante y la cantidad salen de una `fit()` según el tamaño y la proporción del rectángulo, y `ui.placeholder` garantiza que cualquier cosa que el usuario dibuje se renderiza.\n\n**Generación.** La vía determinista tarda menos de 100 ms. La IA es opcional:\n- Una sola llamada con structured outputs de esquema estable que solo devuelve variantes, ajustes y copy por id. Se valida con `applyPatch` y nunca devuelve HTML.\n- Coste por generación típica (precios verificados hoy): Haiku 5.5 ≈ $0,002; Opus 5.5 ≈ $0,07–0,12.\n- Con el presupuesto de $5 al mes dan para ~2.500 o ~50 generaciones respectivamente.\n\n**Export.**\n- HTML: gratis vía `renderToHtml`.\n- TSX: con áreas de grid con nombre.\n- Figma: auto layout con `layoutMode` GRID y tracks FLEX equivalentes a fr.\n- DESIGN.md y prompt packs: wireframe ASCII y áreas.\n- Ids estables por bloque y una regla de merge que conserva las ediciones al regenerar.\n\n**Advertencia.** La idea no es inédita: tldraw Make Real ya convierte bocetos en HTML con visión. Además, empuja el producto hacia «generador de pantallas», que el INFORME §2 descartaba. Lo diferencial aquí es que el resultado es estructurado, de marca, editable, exportable y funciona sin IA.\n\n**Estimación** (propia, sin validar, 1 dev con agentes): spike de 1 semana, MVP de 7–9 semanas y v1.1 de 6–7. Conviene secuenciarlo después de la rama wip/import-brand, que tiene cambios sin commitear en @dialmade/doc.",
+  "recommendations": [
+   {
+    "item": "Lienzo propio con pointer events, la geometría de LogoCropper, dnd-kit 0.5 y motion (sin librería de canvas)",
+    "detail": "**Comparativa** (bundlephobia, consultado el 2026-10-10, min+gzip):\n- **tldraw 5.5.2** (~530 KB): exige license key en producción y, sin ella, deja de renderizar a los 5 s. La Hobby es discrecional y mantiene la marca de agua «made with tldraw»; la comercial se negocia con ventas. Rompe MIT/$0 y ya estaba descartado en INFORME §4.4. **Descartado.**\n- **@excalidraw/excalidraw 0.18.1** (MIT, ~353 KB): estética a mano alzada y UI propia, y su escena habría que traducirla a bloques semánticos. **Descartado.**\n- **react-moveable 0.56** (MIT, ~74 KB): snap con guías, sin teclado; depscope da 2023 como última actualización. **No.**\n- **react-rnd 10.5** (~13 KB): aplica su propio transform, que choca con motion, y no trae teclado. Licencia MIT no comprobada en su LICENSE.\n- **react-grid-layout 2.3** (~25 KB, React 18+): compactación desactivable (noCompactor, allowOverlap) y 8 handles. El README no menciona teclado y el anidado exige instancias separadas. MIT según un agregador, no confirmado en el README.\n- **Konva 10.7 + react-konva 19.3** (MIT, ~56 + ~45 KB): todo en un canvas, sin DOM por bloque, así que no hay lector de pantalla y motion no anima sus nodos. **No.**\n- **@xyflow/react 12.12** (MIT, ~60 KB): foco, flechas y aria-live, subflows y NodeResizer, pero es un lienzo infinito con aristas y no documenta teclado para el resize. **Plan B.**\n\n**Propuesta: lienzo propio, 0 KB nuevos.**\n- Los bloques son divs absolutos dentro de un frame con grilla.\n- `resizeRect`, `drawRect` (herramienta rectángulo), `moveRect` y `nudgeRect` de `LogoCropper/geometry.ts` pasan a `src/lib/geometry/rect.ts`, porque CLAUDE.md pide que lo compartido viva en src/lib.\n- dnd-kit solo se usa para soltar desde la librería; DropSlot, DraggableItem, useKeyboardTargets y DndAnnouncer ya existen. En 0.5 hay `SnapModifier` (@dnd-kit/abstract/modifiers) y `RestrictToElement` (@dnd-kit/dom/modifiers), comprobado en node_modules, pero no hay resize.\n- Durante el gesto se escribe en motion values, sin re-render del store. Al soltar se aplica un único parche con beginBatch/commitBatch, así que cada gesto es un paso de undo, y entra el spring snappy.\n- Carga diferida con `loadLayoutCanvas` en designHalf.ts.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "https://tldraw.dev/sdk-features/license-key",
+     "https://bundlephobia.com/api/size?package=tldraw",
+     "https://bundlephobia.com/api/size?package=@excalidraw/excalidraw",
+     "https://github.com/excalidraw/excalidraw/",
+     "https://bundlephobia.com/api/size?package=react-moveable",
+     "https://mcp.depscope.dev/pkg/npm/react-moveable",
+     "https://bundlephobia.com/api/size?package=react-rnd",
+     "https://cdn.jsdelivr.net/npm/react-grid-layout@2.2.3/README.md",
+     "https://bundlephobia.com/api/size?package=react-grid-layout",
+     "https://konvajs.org/docs/about.html",
+     "https://bundlephobia.com/api/size?package=konva",
+     "https://bundlephobia.com/api/size?package=react-konva",
+     "https://reactflow.dev/learn/advanced-use/accessibility",
+     "https://bundlephobia.com/api/size?package=@xyflow/react",
+     "https://dndkit.com/react/guides/modifiers",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/LogoCropper/geometry.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/dnd/DndProvider/useKeyboardTargets.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/PaletteFlow/designHalf.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Teclado y alternativas sin arrastre en el lienzo (WCAG 2.5.7)",
+    "detail": "El criterio 2.5.7 exige que todo lo que se hace arrastrando se pueda hacer con un solo puntero sin arrastrar, y un handle de resize cuenta como arrastre.\n\n**Librería**\n- Clic o Enter en un bloque lo inserta en el primer hueco libre, o dentro del contenedor seleccionado.\n\n**Lienzo**\n- Cada bloque es enfocable, con `aria-roledescription` «bloque» y una etiqueta del tipo «Calendario, columnas 1 a 8, filas 3 a 20».\n- Tab entra al lienzo. Las flechas saltan al bloque más cercano en esa dirección, reutilizando `nextTarget` de useKeyboardTargets.\n- Space o Enter coge el bloque; son las teclas reservadas en CLAUDE.md.\n- Con el bloque cogido:\n  - flechas: mueven una celda;\n  - Shift+flechas: redimensionan (derecha y abajo crecen, igual que `nudgeRect`);\n  - Enter suelta y Esc cancela.\n- Supr borra (con toast de deshacer) y ⌘D duplica.\n\n**Alternativas de un solo puntero**\n- Un inspector con campos numéricos: columna, span, fila y alto.\n- La fila de botones «Ajuste fino» de LogoCropper, con los modos mover y tamaño.\n- Un menú «Mover a…» para meter un bloque en un contenedor.\n\n**Anuncios y motion**\n- Los anuncios van por el aria-live de DndAnnouncer, en es y en.\n- `<MotionConfig reducedMotion='user'>`.\n\nHay que probarlo con VoiceOver y NVDA antes de la beta.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/LogoCropper/constants.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/dnd/DndAnnouncer/DndAnnouncer.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md"
+    ]
+   },
+   {
+    "item": "Modelo de datos: LayoutSpec opcional en pages[k].layout (aditivo; DesignDoc sigue en v1)",
+    "detail": "**Esquema Zod en @dialmade/doc:**\n`LayoutSpec = { version: 1, frame: { device: 'desktop'|'tablet'|'mobile', columns: 12|8|4, rowUnit: 8, width: 1440 }, blocks: Record<BlockId, { type: LibraryBlockId, label: string, note?: string (≤500), count?: int, rect: { col, row, w, h } (enteros), parentId?, z: int, hidden?: boolean, props?: { variant?, settings? }, pinned?: string[], responsive?: { tablet?, mobile?: { order?, hidden?, span? } } }> }`\n\n**Por qué un Record por id y no un array.** Los punteros (`/pages/app/layout/blocks/b-x7k2qa/rect`) se mantienen estables para parches, locks y undo. Con un array, `touchedBy` de patch.ts marca el array entero en cada inserción.\n\n**Validación (superRefine):**\n- el padre existe y no hay ciclos;\n- el rect cabe dentro de `columns`;\n- el tipo está en la librería;\n- como máximo 200 bloques;\n- los ids cumplen ElementIdSchema.\n\n**Relación con Page.elements**\n- El layout es la fuente de verdad de la estructura.\n- `elements` es su compilación renderizable: la hoja usa el mismo id que el bloque y los contenedores `ui.region` llevan `r-` + hash de los ids hijos ordenados.\n- El contenido (props, copy, knobs) sigue viviendo en los elementos.\n\n**Convivencia con lo actual**\n- Una página sin `layout` no cambia: se trata como un layout implícito de una columna.\n- `layoutFromPage(page)` crea bloques a ancho completo, en orden de lectura y con altos por tipo, para que cualquier página existente entre al modo layout sin pérdida. En app, `app.shell` pasa a bloques de chrome (sidebar y topbar).\n\n**Ajustes de esquema**\n1. PageSchema valida `layoutId` contra los layouts de landing del catálogo: hay que añadir `freeform` a landingLayouts.json, o saltar esa comprobación cuando la página tiene `layout`.\n2. checkTree ya admite `ui.*` en cualquier kind, así que los bloques transversales van como `ui.*`.\n3. `registry.list(kind)` debe incluir los `ui.*` en todos los kinds; es un cambio aditivo.\n\n**Secuencia.** Conviene hacerlo después de integrar wip/import-brand, que tiene cambios sin commitear en patch.ts, pointer.ts y compile.ts.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/schema.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/patch.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/doc.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/constants.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/registry.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/catalog/src/catalog.ts"
+    ]
+   },
+   {
+    "item": "Paquete puro @dialmade/layout: inferencia determinista (contención + recursive XY-cut + grid areas)",
+    "detail": "**Paquete.** `packages/layout`: TS puro, sin React, como @dialmade/palette. Exporta `inferStructure`, `compileToPage`, `deriveResponsive`, `toCss` y `toAsciiWireframe`.\n\n**Algoritmo** (todo en enteros de grilla):\n1. **Normalizar.** Snap a la grilla, recorte al frame, descarte de áreas nulas y orden estable por (row, col, id).\n2. **Contención.** El `parentId` explícito (soltar dentro) manda. Si no lo hay, el padre es el contenedor más pequeño que incluye al bloque, con el padre expandido 1 unidad y al menos el 90 % del área del hijo dentro.\n   - Solo los tipos contenedor (card, section, panel, modal, sidebar) adoptan hijos.\n   - Un bloque que no es contenedor convierte lo que tiene dentro en pistas: un hero con un media dentro pasa a la variante split.\n3. **Solapes parciales.**\n   - Si el solape es menor del 15 % del bloque menor, se recorta de forma determinista el de menor z.\n   - Los overlays (modal, toast, dropdown, FAB) van a una capa absoluta anclada.\n   - En cualquier otro caso se muestra un aviso visible con arreglos sugeridos; nunca se cambia nada en silencio.\n4. **Recursive XY-cut por grupo de hermanos** (Nagy y Seth). Se proyecta en Y y en X, se buscan bandas vacías con tolerancia τ = 1 unidad y se corta por el hueco más ancho. En caso de empate gana el corte horizontal (orden de lectura). Se repite alternando ejes.\n5. **Grupo sin corte posible** (molinete o bento): se emite CSS grid con `grid-template-areas` a partir de los bordes únicos.\n6. **Nodos de salida.**\n   - Fila: grid de 12 columnas con `grid-column: inicio / span w`, que respeta los huecos y desplazamientos que dibujó el usuario.\n   - Columna: flex column.\n   - Los gaps se cuantizan a `--dl-space-1…10` para que sigan al dial de densidad.\n   - Se detecta la alineación de cada hijo.\n7. **Alto.** El alto dibujado es una pista, no px fijos:\n   - en media, mapa y gráfica fija el aspect-ratio;\n   - en tabla, lista y cards se traduce en número de filas o ítems;\n   - en kind app el frame mide 100dvh y las regiones tienen scroll propio.\n8. **Orden de lectura.** El orden que produce el XY-cut se usa para el DOM, el foco y el apilado en móvil.\n\n**Determinismo.** Solo enteros, orden estable, ids por hash y nada de Date ni random. La contención es O(n²): unas 40.000 comparaciones con 200 bloques. Objetivo de menos de 10 ms, sin medir.\n\n**Tests en vitest**\n- Fixtures golden: holy grail; dashboard (sidebar, KPIs, gráfica 8/4 y tabla); landing apilada; bento; cards anidadas; modal; desalineado ±1; vacío; un solo bloque.\n- Propiedades con fast-check (su licencia no la verifiqué hoy):\n  - cada bloque aparece una sola vez;\n  - recompilar es idempotente;\n  - un jitter dentro de τ no cambia la topología;\n  - las áreas son rectangulares.\n- Más un snapshot de `renderToHtml` con axe.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "https://www-live.dfki.de/fileadmin/user_upload/import/5012_Shafait-xycut-PAMI.pdf",
+     "https://www.haralick.org/conferences/71280952.pdf",
+     "/Users/diegoguerrero/Desktop/designApp/packages/palette/src/theme.ts"
+    ]
+   },
+   {
+    "item": "Responsive derivado: container queries + reglas por tipo de bloque",
+    "detail": "El CSS de @dialmade/sections ya usa container queries en unos 30 archivos (Shell, KpiRow, DataTable, Hero…). El layout compilado hace lo mismo, así que se comporta igual en el marco de preview y en el export.\n\n**Tablet (8 columnas).** Una fila se mantiene si la suma de los anchos mínimos por tipo cabe; si no, hace wrap en orden de lectura. Anchos mínimos de partida, a calibrar:\n- tabla ≥560 px;\n- gráfica ≥320 px;\n- card ≥240 px;\n- calendario mensual ≥640 px.\n\n**Móvil (4 columnas).** Las filas se apilan en orden de lectura, con estas reglas por tipo:\n- sidebar → drawer o bottom nav (variantes de `app.shell`);\n- navbar → menú hamburguesa (la sección ya lo hace);\n- KPIs → 2×2;\n- cards → carrusel o una columna;\n- tabla → lista de tarjetas;\n- filtros → botón que abre un sheet;\n- calendario mensual → agenda;\n- chat → pantalla completa;\n- mapa → 4:3;\n- overlays → sheet inferior.\n\n**Ajustes del usuario por bloque:** «Ocultar en móvil» y orden propio.\n\n**Alcance**\n- **v1.1:** overrides por dispositivo (`responsive.mobile = { order, hidden, span }`) editables desde el lienzo con el toggle de dispositivo.\n- **MVP:** se diseña en desktop y los demás tamaños se derivan.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/Shell/Shell.css",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/landing/LandingSection/LandingSection.css"
+    ]
+   },
+   {
+    "item": "Contenedor ui.region y compilación a Page (PageRenderer, HTML estático y Composer sin cambios de fondo)",
+    "detail": "**La sección `ui.region`.** Es una sección contenedor nueva con props { display: 'stack'|'grid', direction, columns, areas, gap (token), align, responsive }. Pinta grid o flex con custom properties inline (`--dl-col: 1 / span 8`, `--dl-col-sm`) y lleva un `Region.css` con @container.\n\n**Qué funciona sin cambios.** Como es un elemento contenedor más, siguen igual:\n- PageRenderer y ElementView;\n- SectionFrame (la selección en modo edición) y EditInert;\n- renderToHtml (HTML estático sin JS);\n- collectCopyFields de la IA;\n- los outlines de DESIGN.md y de los prompt packs.\n\n**Detalles a cuidar**\n- **En app:**\n  - los bloques de chrome compilan a `app.shell`, con la variante que indique la geometría;\n  - el resto va dentro de un único `ui.region` hijo, para no activar las reglas por `data-dl-type` de `.dl-app-shell__content` (chartCard span 8, activity span 4), que solo afectan a hijos directos.\n- **SectionDefinition:** añadir `layout?: { minWidthPx, fit(size, ctx) }`, opcional y aditivo.\n- **Composer:** si la página tiene layout, `moveOps`, `hiddenOps` y las inserciones se traducen a operaciones sobre el layout y se recompila. Así la estructura tiene una sola fuente de verdad.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/PageRenderer/ElementView/ElementView.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/renderToHtml.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/types.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/pageOps.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/fields.ts"
+    ]
+   },
+   {
+    "item": "Librería de bloques: mapeo a secciones existentes y variante según tamaño y proporción",
+    "detail": "**Clases de tamaño** (medidas en desktop). La función `fit()` elige variante y cantidad a partir de ellas, y en ejecución las container queries corrigen según el ancho real.\n- Ancho: xs (≤2 col), sm (3–4), md (5–7), lg (8–10), xl (11–12).\n- Proporción: alta (<0,8), cuadrada, ancha (>1,8) o tira (>4).\n\n**Mapeo a secciones existentes**\n- **navbar** → `landing.navbar`: bar, o floating si no toca los bordes. En app → `app.shell` con topnav.\n- **sidebar** → `app.shell`: sidebar (≥2 col), rail (1 col) o inset (si deja margen).\n- **footer** → `landing.footer`: columns (≥8 col y ≥6 filas) o simple.\n- **hero** → `landing.hero`: centered, o split si contiene un media a un lado.\n- **features** → `landing.features`: grid, o bento si los tamaños son desiguales.\n- **logos/métricas** → `landing.socialProof`.\n- **testimonios** → `landing.testimonials`: grid (≥8 col) o spotlight.\n- **precios** → `landing.pricing`: cards (≥8 col) o split.\n- **cta** → `landing.cta`: banner si es una tira, split si no.\n- **kpis** → `app.kpiRow`, con count = clamp(⌊w/3⌋, 2, 4); strip si mide ≤2 filas. En landing se resuelve a socialProof metrics, porque esa página solo admite `landing.*` y `ui.*`.\n- **gráfica** → `app.chartCard`: area o line si es ancha, bar si es casi cuadrada.\n- **tabla** → `app.dataTable`: pageSize = clamp(⌊(h − cabecera)/fila⌋, 3, 10), showToolbar si sobra alto, y `ui.list` si mide menos de 6 col.\n- **actividad** → `app.activity`: timeline o list según el ancho.\n- **formulario** → `app.settingsForm`: split (≥8 col) o stacked.\n- **vacío** → `app.emptyState`.\n- **modal** → `app.confirmDialog`, en una capa.\n- **Botón, input, badge o tabs dentro de una card** → pistas de slot con `@dialmade/ui`.\n\n**Si un tipo no tiene sección en ese kind:** se usa su `ui.*` y, si tampoco existe, `ui.placeholder`.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/landing/index.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/index.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/KpiRow/definition.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/DataTable/definition.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/Shell/definition.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/ui/src/index.ts"
+    ]
+   },
+   {
+    "item": "Bloques nuevos del MVP: cards, calendario, texto, media, lista, búsqueda/filtros y placeholder",
+    "detail": "**Estructura.** Van en `packages/sections/src/ui/`, un folder por componente: Component.tsx, Component.css (con @container), definition.ts (variantes, knobs, schema Zod, defaultProps y `fit()`) y tests de render, `fit` y axe.\n\n**Bloques**\n- **ui.cards**: grid N×M si el área es ancha y alta; una fila de N si es ancha y baja (N = ⌊w/3 col⌋ o el count); lista compacta si es estrecha; carrusel en móvil.\n- **ui.calendar**:\n  - vista mes (≥6 col y ≥8 filas);\n  - vista semana (ancha y baja);\n  - agenda (estrecha);\n  - mini-mes (≤3 col).\n  Se hace con CSS grid e `Intl.DateTimeFormat`, con eventos deterministas por productType y seed, sin librerías de pago.\n- **ui.text**: eyebrow, titular y párrafo.\n- **ui.media**: placeholder con el aspect del rect y una ilustración generada con la marca, sin fotos de terceros.\n- **ui.list**: la cantidad de ítems sale del alto.\n- **ui.search**: barra, con resultados si hay alto.\n- **ui.filters**: panel vertical, chips si es horizontal, o botón con sheet en móvil.\n- **ui.placeholder** («Bloque libre»): muestra la etiqueta y la nota con un skeleton tematizado, para que cualquier cosa que dibuje el usuario se renderice. Además alimenta los votos «¿Qué bloque te faltó?» en GitHub, como en que-quieres-crear.md.\n\n**Copy.** Sale de plantillas genéricas con los sustantivos del productType. Escribirlo a mano para los 16 perfiles de `content/profiles` × 2 locales sería lo más caro.",
+    "effort": "L",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/content/generators.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/content/profiles/saas.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md"
+    ]
+   },
+   {
+    "item": "Bloques nuevos de v1.1: kanban, chat, mapa estilizado, galería, carrito/checkout, perfil, notificaciones, timeline, FAQ, auth, stepper y paginación",
+    "detail": "**Bloques**\n- **ui.kanban**: columnas = ⌊w/3 col⌋ y tarjetas por alto. En edición queda inert (es una demo).\n- **ui.chat**: lista de conversaciones más hilo si es ancho; solo el hilo si es estrecho.\n- **ui.map**: mapa SVG estilizado y determinista, con calles y manzanas por seed y pines tintados con la marca.\n  - Sin teselas de terceros, sin Mapbox ni Google Maps y sin servidor de teselas.\n  - Se etiqueta como ilustrativo, no como un mapa real.\n- **ui.gallery**: masonry, grid o carrusel según la proporción.\n- **ui.cart y ui.checkout**: resumen lateral si es estrecho; pasos y resumen si es ancho.\n- **ui.profile**: cabecera, stats y pestañas; una tarjeta si es pequeño.\n- **ui.notifications**: lista, panel o pila de toasts.\n- **ui.timeline**: generaliza `app.activity`.\n- **ui.faq**: acordeón.\n- **ui.auth**: login o registro.\n- **ui.stepper** y **ui.pagination**.\n\n**Requisitos de cada bloque**\n- variantes según el tamaño;\n- copy en es y en;\n- contraste AA con los tokens;\n- container queries;\n- export a HTML;\n- tests.\n\n**Priorización.** Por votos.",
+    "effort": "XL",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/app/Activity/definition.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/ui/src/index.ts"
+    ]
+   },
+   {
+    "item": "Generación determinista sin IA y momento firma",
+    "detail": "**«Generar vista» sin IA** (menos de 100 ms):\n1. `inferStructure(layout)` devuelve el árbol.\n2. Por cada bloque:\n   - se resuelve la sección según el kind;\n   - `fit(size)` da la variante y el count;\n   - `storedDefaultProps(def, ctx)` aporta el copy determinista por productType, locale y seed, igual que `buildDefaultPage`;\n   - de la nota se extraen los números (para el count) y las palabras clave de un diccionario corto es/en por tipo: «buscador» activa showSearch y «anual» el toggle de facturación. El resto de la nota se guarda y viaja a los exports y a la IA.\n3. `compileToPage` produce un parche `replace` sobre `/pages/k/elements` y `/pages/k/root`. Se aplica con `applyPatch`, que valida el esquema y respeta los hard locks, dentro de un batch: queda como un solo paso de undo.\n4. Se renderiza con PageRenderer, ThemeStyles y compileThemeVars, sin cambios.\n\n**Momento firma**\n- Cada rectángulo se transforma en su sección con `layoutId` de motion, en orden de lectura y con stagger de 30 ms.\n- Dura 900 ms como máximo y se salta con un clic.\n- Con reduced motion se reduce a un fade de 150 ms.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/buildPage.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/props.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/patch.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/hooks/useDesignDoc.ts",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/DESIGN-BRIEF.md"
+    ]
+   },
+   {
+    "item": "Generación con IA opcional: una llamada con structured outputs de esquema estable que solo devuelve props, variantes y copy",
+    "detail": "**Accesos**\n- Ruta nueva `/api/ai/layout` con `withAiBudget`, siguiendo el patrón documentado en `lib/ai/access.ts`: estimación con count_tokens → reserva del peor caso → una sola llamada de pago → liquidación con el uso real.\n- La vía BYOK desde el navegador.\n- «Copiar prompt para mi Claude», que cuesta $0.\n\n**Salida.** `output_config.format` con un esquema estable, idéntico en todas las peticiones como `CopyEditsSchema`: `{ blocks: [{ id, variant, settings: [{ key, value: string|number|boolean }] }], copy: [{ id: 'f12', text }] }`. Motivos:\n- structured outputs no admite esquemas recursivos ni límites numéricos o de longitud (el SDK los quita y los valida en cliente);\n- cada esquema nuevo se compila una vez y queda en caché 24 h.\nPor eso no se manda una unión de 40 tipos de props.\n\n**Prompt de sistema.** Estable y cacheado (el mínimo de caché es de 512 tokens en Opus 5.5 y Haiku 5.5). Lleva las reglas y el catálogo compacto: cada bloque con sus variantes y sus ajustes con rango.\n\n**Mensaje de usuario**\n- marca, productType, locale, receta (label y descripción), pairing, dials y motionTier;\n- fingerprint de las referencias, solo atributos y nunca hex de la IA;\n- el layout: id, tipo, etiqueta, nota, count, clase de tamaño, padre y orden de lectura;\n- los campos de copy con los ids de `collectCopyFields`.\nNotas y etiquetas van saneadas entre delimitadores, como en `prompt.ts`: son datos, no instrucciones.\n\n**Validación.** Cada variante o ajuste se convierte en parche y pasa por `applyPatch` y `resolveSectionProps(...).invalidKeys`, como en `editsToPatches`. Lo inválido se descarta y nunca se acepta HTML.\n\n**Aplicación.** Se aplica encima del resultado determinista, con toast de «Deshacer», y no toca props pinned ni hard-locked.",
+    "effort": "M",
+    "phase": "v1.1",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/access.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/generate.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/prompt.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/patches.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/fields.ts",
+     "claude-api skill (bundled reference, cached 2026-10-06): shared/tool-use-concepts.md § Structured Outputs; shared/prompt-caching.md § minimum cacheable prefix"
+    ]
+   },
+   {
+    "item": "Coste por generación y encaje con el free tier y el ledger",
+    "detail": "**Precios por MTok** (verificados hoy en platform.claude.com)\n\n| Modelo | Entrada | Escritura caché 5 min | Lectura caché | Salida |\n|---|---|---|---|---|\n| Haiku 5.5 (prompts ≤100K) | $0,10 | $0,125 | $0,01 | $0,50 |\n| Opus 5.5 | $4 | $5 | $0,20 | $20 |\n\n**Supuestos** (estimación propia):\n- sistema cacheado de ~3K tokens;\n- entrada de ~3,4K tokens con 20 bloques y ~80 campos de copy;\n- salida de ~2,5K tokens;\n- en Opus 5.5 el thinking no se puede desactivar: con effort low le sumo 0,5–2K tokens de salida (sin medir);\n- Haiku 5.5 admite thinking desactivado con effort ≤ high.\n\n**Coste por generación**\n\n| Caso | Haiku 5.5 | Opus 5.5 |\n|---|---|---|\n| Típica (20 bloques), en frío | ≈ $0,0020 | ≈ $0,09–0,12 |\n| Típica (20 bloques), con caché | ≈ $0,0016 | ≈ $0,07–0,10 |\n| Grande (60 bloques, ~8K entrada, ~6K salida) | ≈ $0,004 | ≈ $0,16–0,20 |\n| Reserva del peor caso (maxRequestCostUsd, 8192 tokens de salida) | ≈ $0,005 | ≈ $0,49 |\n\nLa reserva de Opus incluye el salto de fallback a claude-opus-5. Haiku 5.5 no tiene fallback del servidor: una negativa termina en error.\n\n**Encaje con el presupuesto.** Con los $5 al mes de `DEFAULT_MONTHLY_BUDGET_USD` y 5 usos gratis por dispositivo:\n- Haiku: unas 2.500 generaciones al mes;\n- Opus: unas 50, y solo caben unas 10 reservas a la vez.\n\n**Recomendación** (la decisión es tuya)\n- `DIALMADE_AI_FREE_MODEL=claude-haiku-5-5` para el free tier.\n- Opus 5.5 con effort low para BYOK o «calidad alta».\n- Mostrar el coste estimado antes de llamar, con el patrón de `aiEstimate.ts`.\n- Medir con el usage real antes de fijar topes.\n\nEn serverless sigue apagada hasta que el ledger sea persistente; `ledgerSupabase.ts` ya existe.",
+    "effort": "S",
+    "phase": "v1.1",
+    "sources": [
+     "https://platform.claude.com/docs/en/about-claude/pricing",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/pricing.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/config.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/serverConfig.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/aiEstimate.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/lib/ai/ledgerSupabase.ts"
+    ]
+   },
+   {
+    "item": "IDs estables por bloque y regeneración que conserva las ediciones",
+    "detail": "**Ids**\n- El id de bloque se crea al insertarlo (`b-` + 6 caracteres base36 con crypto.getRandomValues) y nunca se deriva de la posición.\n- La hoja compilada usa ese mismo id.\n- Los contenedores `r-<hash>` se mantienen estables mientras no cambie el agrupamiento.\n\n**Al regenerar**\n1. Los contenedores se reconstruyen.\n2. Una hoja que conserva su tipo mantiene sus props. Solo se recalculan los props de fit cuyo key no está en `pinned`, y solo si cambió la clase de tamaño.\n3. Si el tipo cambió, se aplican los defaults y se arrastran por key los textos compatibles (title, subtitle, cta).\n4. Un bloque borrado elimina su elemento; undo lo restaura.\n\n**Protección de las ediciones**\n- Editar texto inline o un knob añade ese key a `pinned` automáticamente.\n- Los hard locks existentes se siguen respetando en `applyPatch`.\n- La IA solo propone cambios en keys no pinned.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/locks.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/schema.ts"
+    ]
+   },
+   {
+    "item": "Export a HTML y TSX: CSS grid con áreas con nombre",
+    "detail": "**HTML (MVP)**\n- Sale gratis de `renderToHtml`, porque `ui.region` emite grid o flex con container queries, sin JS.\n- El ZIP (fflate ya está en las dependencias) suma `layout.json` (el LayoutSpec más el árbol inferido) y `layout.css`.\n\n**TSX (v1.1, junto al Framer TSX del INFORME)**\n- Un componente por página con `grid-template-areas` cuyos nombres son los slugs de las etiquetas del usuario (p. ej. 'nav nav nav' / 'side main main').\n- Los nodos anidados del XY-cut se convierten en flex o grid anidados, con @container para el responsive.\n- Cada área lleva un comentario con la sección, la variante y la nota.\n- Resulta legible tanto para el dev como para su IA.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/sections/src/renderToHtml.ts",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/package.json",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   },
+   {
+    "item": "Export a Figma: auto layout desde el árbol inferido",
+    "detail": "**Correspondencias**\n- Columna → frame VERTICAL con itemSpacing igual al token de gap, enlazado a las variables `space/*` de `toFigmaNumberVars`.\n- Fila de 12 columnas → frame con `layoutMode = 'GRID'` y 12 tracks FLEX:\n  - desde la Update 120 de la Plugin API (noviembre de 2025), un track FLEX acepta valores distintos de 1, que equivalen al fr de CSS;\n  - los hijos se colocan con `setGridChildPosition`.\n- Bento → GRID con tracks a medida.\n- Overlays → posicionamiento absoluto.\n\n**Fases**\n- **MVP:** la captura del HTML (la vía que eligió el spike) ya hereda el layout.\n- **v1.1:** `figma-plan.json` incluye el árbol, para que el Claude del usuario lo construya con el MCP de Figma.\n- **v2:** plugin propio.\n\n**No verificado:** los nombres exactos de las props de span de los hijos dentro de GRID. En mayo de 2025 Figma decía que esa API estaba incompleta; hoy aparece documentada.",
+    "effort": "L",
+    "phase": "v2",
+    "sources": [
+     "https://developers.figma.com/docs/plugins/api/properties/nodes-gridcolumncount",
+     "https://developers.figma.com/docs/plugins/updates/2025/11/06/version-1-update-120",
+     "https://developers.figma.com/docs/plugins/api/properties/nodes-griditemspositioning/",
+     "https://forum.figma.com/ask-the-community-7/i-can-t-find-the-api-docs-for-autolayout-grid-40872",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/exporters/figma.ts"
+    ]
+   },
+   {
+    "item": "DESIGN.md y prompt packs con el layout como contexto",
+    "detail": "Añadir una sección «## Layout» a `toDesignMd` y a `toPromptPack`, con:\n- un wireframe ASCII generado del árbol: unos 64 caracteres de ancho, con cajas y su etiqueta;\n- la lista en orden de lectura: bloque → sección@variante, cantidad y nota del usuario;\n- las reglas de responsive;\n- el snippet de `grid-template-areas`.\n\nEn el prompt pack, el paso pasa a decir «Construye la página con esta grilla y estas áreas». Es el formato que mejor aprovechan Claude Code, Cursor y v0, y no cuesta IA.\n\n**Pendiente de comprobar:** que `@google/design.md lint` acepte una sección extra. No está verificado y la spec sigue en alpha.",
+    "effort": "S",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/exporters/designMd.ts",
+     "/Users/diegoguerrero/Desktop/designApp/packages/doc/src/exporters/promptPack.ts",
+     "https://github.com/google-labs-code/design.md"
+    ]
+   },
+   {
+    "item": "Integración en el flujo, estructura de componentes y rendimiento",
+    "detail": "**Dónde entra en el flujo.** En «2 Crear», como modo principal:\n- Se elige el kind, o se infiere de los bloques (sidebar o shell → app; hero o precios → landing).\n- «Empezar desde plantilla» convierte en bloques los layouts de landing del catálogo y el dashboard con `layoutFromPage`, así nunca se empieza con el lienzo en blanco.\n- El toggle «Layout ⇄ Vista» vive en la misma pantalla.\n- El Composer sigue siendo «3 Ajustar».\n\n**Componentes** (un folder por componente)\n- `LayoutStep/` con `LayoutCanvas/` (`Block/`, `ResizeHandles/`, `StructureOverlay/` para «Ver estructura»), `BlockLibrary/` (`LibraryItem/`) y `BlockInspector/`.\n- Loader en `designHalf.ts`.\n- Diccionario `src/i18n/layout`.\n- `.app-chrome` en el chrome que vaya dentro de ThemeScope.\n\n**Estética.** Queda pendiente de las referencias de Mobbin que elijas. Las de «Modo edición» (8C Replit + 8D MagicPath) ya cubren el inspector y las capas.\n\n**Rendimiento**\n- En el lienzo, cada bloque es un placeholder ligero (icono, etiqueta y skeleton según el tipo), no una sección viva.\n- El arrastre trabaja con motion values y `React.memo` por bloque.\n- La inferencia corre al soltar. Si pasa de 10 ms con 200 bloques, se mueve a un worker como el de paleta.\n- La vista «Vista» renderiza PageRenderer una sola vez.\n- Con 200 bloques o menos no hace falta virtualizar.",
+    "effort": "M",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/CreateStep/CreateStep.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/components/Composer/Composer.tsx",
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/referencias-mobbin.md",
+     "/Users/diegoguerrero/Desktop/designApp/CLAUDE.md",
+     "/Users/diegoguerrero/Desktop/designApp/apps/web/src/workers"
+    ]
+   },
+   {
+    "item": "Plan por fases para 1 dev con agentes",
+    "detail": "Estimación propia, sin validar.\n\n**Spike (1 semana)**\n- promover la geometría a `src/lib`;\n- prototipo del lienzo con 50 bloques;\n- XY-cut con 10 fixtures;\n- decidir la grilla.\n\n**MVP (7–9 semanas)**\n\n| Bloque de trabajo | Semanas |\n|---|---|\n| LayoutSpec y `layoutFromPage` | 1 |\n| `@dialmade/layout` con sus tests | 1,5 |\n| Lienzo, teclado e inspector | 2,5 |\n| `ui.region`, compilación y `fit` de las secciones existentes | 1,5 |\n| Bloques nuevos del MVP | 2 |\n| Exports (HTML, pack, DESIGN.md) | 0,5 |\n| QA de accesibilidad con lectores de pantalla | 1 |\n\nCon agentes, parte de estas tareas se solapan.\n\n**v1.1 (6–7 semanas)**\n- ruta de IA con merge de pinned: 1 semana;\n- 10 bloques nuevos: 3–4;\n- overrides por dispositivo: 1;\n- TSX y figma-plan: 1.\n\n**v2 (8 semanas o más)**\n- plugin de Figma con GRID;\n- varias pantallas por diseño, con flujos y navegación;\n- importar un boceto en papel con visión (~1,3K tokens por imagen);\n- comentarios.\n\n**Impacto en el plan actual.** Esto cambia el orden de `que-quieres-crear.md`, que estimaba 12–15 semanas: absorbe el «Dashboard en Pronto».",
+    "effort": "XL",
+    "phase": "MVP",
+    "sources": [
+     "/Users/diegoguerrero/Desktop/designApp/docs/design/que-quieres-crear.md",
+     "/Users/diegoguerrero/Desktop/designApp/docs/research/INFORME.md"
+    ]
+   }
+  ],
+  "risks": [
+   "Posicionamiento: «dibujar el layout y generar» no es inédito. tldraw Make Real convierte un boceto en HTML con un modelo de visión (https://www.simonwillison.net/2023/Nov/16/tldrawdraw-a-ui, https://tldraw.dev/use-cases/ai-enabled-canvas). Además, el INFORME §2 decía que Dialmade no es un generador de pantallas ni un site builder, y esta propuesta lo acerca al terreno commodity (Claude Design gratis, Stitch). El diferencial tiene que ser explícito: salida estructurada de catálogo cerrado, marca bloqueada, determinista, editable y exportable, y que funciona sin IA.",
+   "Expectativa freeform frente a catálogo cerrado: el usuario va a dibujar bloques que no existen. `ui.placeholder` evita que falle, pero la percepción de calidad depende de la amplitud del catálogo, y eso es lo más caro (variantes, CSS con container queries, copy es/en, tests).",
+   "Copy determinista para los bloques nuevos: hay 16 perfiles de contenido × 2 locales en `content/profiles`. Escribirlo a mano para 20 bloques nuevos dispara el coste; hacen falta plantillas genéricas por sustantivos del productType.",
+   "Semántica del alto: en web el alto lo marca el contenido, así que el alto dibujado no se respeta al píxel. Si no se comunica en la UI (chips como «Tabla · 8 filas»), el usuario sentirá que la vista no se parece a su layout.",
+   "Ambigüedad de la inferencia: solapes, bento y dibujos imprecisos pueden producir agrupaciones inesperadas. Hacen falta tolerancias, la vista «Ver estructura» con filas y columnas inferidas y avisos con arreglo en vez de cambios silenciosos.",
+   "Dos fuentes de verdad: si el Composer sigue reordenando, ocultando o insertando secciones en `elements` cuando la página tiene layout, layout y vista se desincronizan. Todas las operaciones estructurales tienen que pasar por el layout.",
+   "Esquema y secuencia: el layoutId de landing se valida contra el catálogo (falta `freeform`), los namespaces por kind limitan qué secciones admite cada página, y hay topes (PatchSchema de 500 ops, 500 locks). Además, la rama wip/import-brand tiene cambios sin commitear en @dialmade/doc: conviene integrarla antes de tocar el esquema.",
+   "Accesibilidad de un lienzo espacial: el manejo por teclado y el lector de pantalla son difíciles de hacer bien, y WCAG 2.5.7 exige alternativa sin arrastre también para el resize. Sin pruebas con VoiceOver y NVDA hay riesgo de incumplir.",
+   "Dependencias pre-1.0: dnd-kit 0.5 no trae resize, así que los handles son código propio que habrá que mantener. Si el lienzo propio se atasca, el plan B (React Flow) trae su propio modelo de lienzo infinito.",
+   "Coste de la IA: con Opus 5.5 cada reserva de peor caso ronda $0,49, así que con $5 al mes solo caben ~10 a la vez y unas 50 generaciones al mes. Haiku 5.5 no tiene fallback del servidor. Las notas y etiquetas del usuario son un vector de prompt injection: se mandan saneadas como datos y la salida se valida con applyPatch.",
+   "Figma: la API GRID es reciente (incompleta en mayo de 2025) y no verifiqué los nombres de las props de span de los hijos. La vía MVP depende de la captura de HTML.",
+   "Bloque de mapa: tiene que quedar claro que es una ilustración. Las teselas reales (Mapbox, Google, OSM a escala) implican coste o política de uso, y el presupuesto es $0.",
+   "Rendimiento: renderizar secciones vivas dentro del lienzo con 100 o más bloques sería pesado, así que en el lienzo van placeholders y la vista se renderiza aparte.",
+   "Dibujar en un móvil con touch es incómodo: en pantallas pequeñas hace falta el flujo de clic e inspector."
+  ],
+  "open_questions": [
+   "¿El lienzo de layout sustituye a la pantalla «¿Qué quieres crear?» o va después de elegir el tipo? ¿Prefieres que el kind (landing o app) se infiera de los bloques dibujados?",
+   "¿Cada diseño tiene una sola pantalla o varias (un flujo con navegación entre pantallas)? Hoy el DesignDoc guarda una página por kind, y varias pantallas requieren cambiar `pages`.",
+   "¿Grilla con snap (12 columnas en desktop, 4 en móvil, filas de 8 px) o libre sin snap? Recomiendo snap con tolerancia, porque la inferencia es mucho más fiable.",
+   "¿El alto dibujado se respeta literal (pantallas de app a 100dvh con scroll interno) o es solo una pista (web con alto de contenido)? Propuesta: literal en app, pista en landing.",
+   "¿Qué referencias de Mobbin quieres para el lienzo, la librería de bloques y el inspector? La estética de esta vista la eliges tú.",
+   "¿Qué modelo usa el free tier para «Generar con IA»: Haiku 5.5 (≈ $0,002 por generación, ~2.500 al mes con $5) u Opus 5.5 (≈ $0,07–0,12, ~50 al mes)?",
+   "Además de navbar, calendario y cards, ¿qué bloques son imprescindibles en el MVP? ¿Kanban, chat, mapa o checkout pueden esperar a la v1.1 o a los votos?",
+   "¿Actualizamos el posicionamiento del INFORME §2 («no es un generador de pantallas») para reflejar que el layout pasa a ser el modo principal?",
+   "¿Te interesa importar un boceto en papel o una foto (visión) para crear los bloques automáticamente, como opción de v2?",
+   "¿En el MVP se diseña solo en desktop con móvil derivado, o quieres poder dibujar también directamente en móvil (mobile-first)?"
+  ]
+ }
+}

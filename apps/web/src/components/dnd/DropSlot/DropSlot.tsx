@@ -23,6 +23,12 @@ export type DropSlotProps<T extends DndPayload = DndPayload> = {
   /** Children or a render function receiving the live state. */
   children?: ReactNode | ((state: DropSlotState) => ReactNode);
   "aria-label"?: string;
+  /** `group` gives `aria-label` a role that may carry a name (a bare div cannot). */
+  role?: "group";
+  /** DOM id (the `id` above is the droppable's), e.g. to move focus to the slot. */
+  domId?: string;
+  /** `-1` makes the slot a focus target after its inner control goes away. */
+  tabIndex?: number;
 };
 
 const MotionTags = { div: motion.div, li: motion.li, section: motion.section } as const;
@@ -37,6 +43,9 @@ export function DropSlot<T extends DndPayload = DndPayload>({
   className,
   children,
   "aria-label": ariaLabel,
+  role,
+  domId,
+  tabIndex,
 }: DropSlotProps<T>) {
   const acceptKey = typeof accept === "string" ? accept : accept.join("|");
   const types = useMemo(() => acceptKey.split("|"), [acceptKey]);
@@ -83,6 +92,9 @@ export function DropSlot<T extends DndPayload = DndPayload>({
     <Tag
       ref={setRef}
       data-state={state}
+      id={domId}
+      role={role}
+      tabIndex={tabIndex}
       aria-label={ariaLabel}
       className={cn("relative isolate", className)}
       initial={false}

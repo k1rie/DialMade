@@ -47,8 +47,11 @@ export type DesignDocActions = {
   removePage: (kind: OutputKind) => PatchResult;
   /** Page shown in the Composer (ignored when the doc has no such page). Not part of the undo history. */
   setActivePage: (kind: OutputKind) => void;
-  /** RFC 6902 patch validated against DesignDoc v1; an invalid patch leaves the doc untouched. */
-  applyPatch: (ops: unknown) => PatchResult;
+  /**
+   * RFC 6902 patch validated against DesignDoc v1, as one undo step; an invalid patch leaves the doc
+   * untouched. `allowLocked` only for explicit user actions («Desbloquear», editing a locked value).
+   */
+  applyPatch: (ops: unknown, options?: { allowLocked?: boolean }) => PatchResult;
   /** `cascade` also applies the recipe's pairing and motion tier (unless locked). */
   setRecipe: (recipeId: string, options?: { cascade?: boolean }) => PatchResult;
   setPairing: (pairingId: string) => PatchResult;
@@ -216,7 +219,7 @@ export function createDesignDocStore(
           setActivePage: (kind) => {
             if (get().doc?.pages[kind] && get().activePage !== kind) set({ activePage: kind });
           },
-          applyPatch: (ops) => edit((e, doc) => e.applyPatch(doc, ops)),
+          applyPatch: (ops, options) => edit((e, doc) => e.applyPatch(doc, ops, options)),
           setRecipe: (recipeId, options) => edit((e, doc) => e.withRecipe(doc, recipeId, options)),
           setPairing: (pairingId) => edit((e, doc) => e.withPairing(doc, pairingId)),
           setPaletteStyle: (styleId) => edit((e, doc) => e.withPaletteStyle(doc, styleId)),

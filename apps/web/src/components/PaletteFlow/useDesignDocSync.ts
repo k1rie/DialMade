@@ -2,6 +2,7 @@
 
 import type { ExtractResult } from "@dialmade/palette";
 import { useEffect, useRef } from "react";
+import type { DesignDocStore } from "@/hooks/useDesignDoc";
 import { useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
 import { flowPhaseOf, type PaletteFlowActions, type PaletteFlowView } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
@@ -15,7 +16,10 @@ import { flow } from "@/i18n/flow";
  * - back in the Palette Lab, the flow takes the doc's seeds and palette style (an undo in the Composer
  *   may have changed them), so the doc stays the source of truth once it exists. The exception is a
  *   new extraction («Recortar de nuevo»): its seeds go into the doc instead of being overwritten;
- * - back at "drop" (start over, new logo) the doc and its history are dropped.
+ * - back at "drop" (start over, new logo) the doc and its history are dropped;
+ * - imports: references kept before there was a brand («Trae tu marca» from the Home) are applied once
+ *   the doc exists, and in the Palette Lab the theme pins follow the doc's locked colors (`pinnedFor`),
+ *   so an undo or an unlock elsewhere is reflected.
  */
 export function useDesignDocSync(state: PaletteFlowView, flowActions: PaletteFlowActions, onError: (error: unknown) => void) {
   const actions = useDesignDocActions();
@@ -58,6 +62,16 @@ export function useDesignDocSync(state: PaletteFlowView, flowActions: PaletteFlo
     const { primary, secondary } = doc.brand.seeds;
     if (primary !== flowState.primary || secondary !== flowState.secondary) flowActions.setSeeds({ primary, secondary: secondary ?? null });
     if (doc.brief.paletteStyleId !== flowState.styleId) flowActions.setStyle(doc.brief.paletteStyleId);
+    let active = true;
+    import("./designHalf")
+      .then((m) => {
+        const current = store.getState().doc;
+        if (active && current) flowActions.setPinned(m.pinnedFor(current));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [inPalette, store, flowActions, actions]);
 
   const inDesign = flowPhaseOf(state.step) !== "brand";
@@ -68,7 +82,7 @@ export function useDesignDocSync(state: PaletteFlowView, flowActions: PaletteFlo
     actions
       .loadEngine()
       .then(() => {
-        if (!active) return;
+        if (!active) return undefined;
         const isNew = store.getState().doc === null;
         syncedExtract.current = latest.current.extract;
         const doc = actions.initFromPalette(
@@ -77,6 +91,10 @@ export function useDesignDocSync(state: PaletteFlowView, flowActions: PaletteFlo
         );
         if (!doc) throw new Error("Could not create the DesignDoc");
         if (isNew) actions.setPreviewMode(previewMode);
+        const pending = latest.current.pendingImport;
+        if (!pending) return undefined;
+        flowActions.clearPendingImport();
+        return applyPendingImport(store, actions.applyPatch, pending);
       })
       .catch((error: unknown) => {
         if (active) onErrorRef.current(error);
@@ -84,5 +102,21 @@ export function useDesignDocSync(state: PaletteFlowView, flowActions: PaletteFlo
     return () => {
       active = false;
     };
-  }, [inDesign, primary, secondary, styleId, theme, logo, previewKind, previewMode, locale, docText.defaultName, actions, store]);
+  }, [inDesign, primary, secondary, styleId, theme, logo, previewKind, previewMode, locale, docText.defaultName, actions, store, flowActions]);
+}
+
+/** References accepted before there was a brand: one import patch (one undo step) on the new doc. */
+async function applyPendingImport(
+  store: DesignDocStore,
+  applyPatch: (ops: unknown) => unknown,
+  pending: NonNullable<PaletteFlowView["pendingImport"]>,
+) {
+  const { applyImport } = await import("@dialmade/import");
+  const doc = store.getState().doc;
+  if (!doc) return;
+  const result = applyImport(doc, pending.brand, pending.selection, {
+    ownership: pending.ownership,
+    ...(pending.rightsConfirmedAt && { rightsConfirmedAt: pending.rightsConfirmedAt }),
+  });
+  if (result.ok && result.ops.length > 0) applyPatch(result.ops);
 }

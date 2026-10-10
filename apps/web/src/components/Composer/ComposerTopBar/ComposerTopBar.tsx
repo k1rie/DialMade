@@ -5,7 +5,7 @@ import type { DesignDoc } from "@dialmade/doc";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
-import type { UseAiCopy } from "@/hooks/useAiCopy";
+import type { AiCopyResult, UseAiCopy } from "@/hooks/useAiCopy";
 import { useDesignHistory } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
@@ -23,6 +23,7 @@ export type ComposerTopBarProps = {
   aiMenuOpen: boolean;
   onAiMenuOpenChange: (open: boolean) => void;
   onGenerateCopy: (instructions: string) => void;
+  onManualCopy: (result: AiCopyResult) => void;
   onBack: () => void;
   onEditBrand: () => void;
   onExport: () => void;
@@ -39,6 +40,7 @@ export function ComposerTopBar({
   aiMenuOpen,
   onAiMenuOpenChange,
   onGenerateCopy,
+  onManualCopy,
   onBack,
   onEditBrand,
   onExport,
@@ -111,6 +113,7 @@ export function ComposerTopBar({
           pageLabel={pageLabel}
           ai={ai}
           onGenerate={onGenerateCopy}
+          onManualResult={onManualCopy}
         />
         <Button size="sm" variant="primary" leadingIcon={<ExportIcon />} onClick={onExport}>
           {t.topBar.export}

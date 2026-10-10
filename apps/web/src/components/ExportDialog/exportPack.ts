@@ -5,6 +5,8 @@ import {
   EXPORT_FILES,
   PROMPT_TARGETS,
   compileThemeVars,
+  fontsUrlFor,
+  resolveFonts,
   toDTCGFull,
   toDesignMd,
   toFigmaNumberVars,
@@ -50,14 +52,16 @@ export function packKinds(doc: DesignDoc): OutputKind[] {
 
 function readmeInfo(input: PackInput, kinds: readonly OutputKind[]): PackReadmeInfo {
   const { doc, inputs } = input;
+  const fonts = resolveFonts(doc, inputs.pairing);
+  const fontsUrl = fontsUrlFor(doc, inputs.pairing);
   return {
     name: doc.brand.name,
     ...(doc.brand.tagline && { tagline: doc.brand.tagline }),
     focus: input.kindLabel(kinds[0] ?? doc.brief.focus),
     pages: kinds.map((kind) => ({ kind, label: input.kindLabel(kind) })),
-    heading: inputs.pairing.heading.family,
-    body: inputs.pairing.body.family,
-    fontsUrl: inputs.pairing.googleFontsUrl,
+    heading: fonts.heading.family ?? inputs.pairing.heading.family,
+    body: fonts.body.family ?? inputs.pairing.body.family,
+    ...(fontsUrl && { fontsUrl }),
     hasLogo: !!input.logo,
   };
 }

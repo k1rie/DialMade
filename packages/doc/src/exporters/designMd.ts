@@ -1,7 +1,7 @@
 import type { Locale } from "@dialmade/catalog";
 import type { ColorMode } from "@dialmade/palette";
 import type { DesignDoc } from "../schema";
-import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, type DimensionRef, type ResolvedTokens } from "../tokens";
+import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, fontsUrlFor, type DimensionRef, type ResolvedTokens } from "../tokens";
 import { shadowCss } from "../compile";
 import {
   SPACE_NAMES,
@@ -70,8 +70,8 @@ const T = {
     lineHeight: "Interlineado",
     weight: "Peso",
     tracking: "Tracking",
-    typeIntro: (heading: string, body: string, url: string) =>
-      `Títulos en **${heading}** y texto en **${body}** (Google Fonts: ${url}). Display y h1 son fluidos entre 375 px y 1280 px; la tabla muestra el máximo.`,
+    typeIntro: (heading: string, body: string, url: string | null) =>
+      `Títulos en **${heading}** y texto en **${body}**${url ? ` (Google Fonts: ${url})` : ""}. Display y h1 son fluidos entre 375 px y 1280 px; la tabla muestra el máximo.`,
     spacingIntro: (density: number) =>
       `Escala de 10 pasos con base de 4 px, ajustada a densidad ${density}/10 (más densidad, menos aire). Variables \`--dl-space-1\`…\`--dl-space-10\`.`,
     container: "Ancho máximo del contenedor",
@@ -125,8 +125,8 @@ const T = {
     lineHeight: "Line height",
     weight: "Weight",
     tracking: "Tracking",
-    typeIntro: (heading: string, body: string, url: string) =>
-      `Headings in **${heading}**, text in **${body}** (Google Fonts: ${url}). Display and h1 are fluid between 375px and 1280px; the table shows the maximum.`,
+    typeIntro: (heading: string, body: string, url: string | null) =>
+      `Headings in **${heading}**, text in **${body}**${url ? ` (Google Fonts: ${url})` : ""}. Display and h1 are fluid between 375px and 1280px; the table shows the maximum.`,
     spacingIntro: (density: number) =>
       `A 10-step scale on a 4px base, tuned to density ${density}/10 (denser means less air). Variables \`--dl-space-1\`…\`--dl-space-10\`.`,
     container: "Container max width",
@@ -273,7 +273,7 @@ export function toDesignMd(doc: DesignDoc, options: DesignMdOptions = {}): strin
   out.push(
     "## Typography",
     "",
-    L.typeIntro(t.fonts.heading.family ?? "system-ui", t.fonts.body.family ?? "system-ui", pairing.googleFontsUrl),
+    L.typeIntro(t.fonts.heading.family ?? "system-ui", t.fonts.body.family ?? "system-ui", fontsUrlFor(doc, pairing)),
     "",
     mdTable(
       [L.token, L.size, L.lineHeight, L.weight, L.tracking],

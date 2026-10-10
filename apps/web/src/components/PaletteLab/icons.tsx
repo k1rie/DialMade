@@ -108,3 +108,17 @@ export const DragIcon = (props: IconProps) => (
     <circle cx="10" cy="12" r="1" />
   </Icon>
 );
+
+export const LockIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3.25" y="7" width="9.5" height="6.75" rx="1.5" />
+    <path d="M5.25 7V5.25a2.75 2.75 0 0 1 5.5 0V7" />
+  </Icon>
+);
+
+export const LayersIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m8 2.25 5.75 3L8 8.25l-5.75-3L8 2.25Z" />
+    <path d="m2.25 8 5.75 3 5.75-3M2.25 10.75l5.75 3 5.75-3" />
+  </Icon>
+);

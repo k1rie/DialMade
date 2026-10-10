@@ -23,7 +23,7 @@ describe("brand.palette", () => {
     expect(screen.getByRole("table", { name: "Roles en claro y oscuro" })).toBeTruthy();
     const contrast = within(screen.getByRole("table", { name: "Contraste WCAG en modo oscuro" }));
     const row = contrast.getByRole("rowheader", { name: "Tinta sobre Papel" }).closest("tr") as HTMLElement;
-    expect(row.textContent).toMatch(/\d+,\d+:1/);
+    expect(row.textContent).toMatch(/\d+\.\d+:1/);
     expect(row.textContent).toContain("Pasa");
   });
 

@@ -48,6 +48,13 @@ describe("state colors", () => {
     }
   });
 
+  it("a translucent role keeps its alpha in its hover variant", () => {
+    const theme = generateTheme({ primary: "#3a5bd9" });
+    const vars = stateColorVars(theme, "dark", { format: "hex", overrides: { secondary: "#ffffff1a" } });
+    expect(vars["--secondary-hover"]).toMatch(/^#[0-9a-f]{6}1a$/);
+    expect(stateColorVars(theme, "dark", { overrides: { secondary: "#ffffff1a" } })["--secondary-hover"]).toMatch(/\/ 0\.1\)$/);
+  });
+
   it("follows the doc's role overrides", () => {
     const theme = generateTheme({ primary: "#3a5bd9" });
     const vars = stateColorVars(theme, "light", { format: "hex", overrides: { primary: "#fff3b0", "primary-foreground": "#111111" } });

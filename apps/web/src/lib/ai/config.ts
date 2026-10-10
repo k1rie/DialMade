@@ -11,7 +11,11 @@ export const DEFAULT_AI_EFFORT: AiEffort = "low";
 export const MAX_OUTPUT_TOKENS = 8192;
 
 export const DEFAULT_MONTHLY_BUDGET_USD = 5;
-export const DEFAULT_MAX_REQUESTS_PER_IP_PER_DAY = 20;
+/** Free tier policy (docs/design/importar-guia.md, «Política de acceso a la IA»). */
+export const DEFAULT_FREE_USES_PER_MONTH = 5;
+export const DEFAULT_MAX_REQUESTS_PER_IP_PER_DAY = 10;
+/** A reservation without an answer after this long is charged in full (the SQL ledger uses the same). */
+export const RESERVATION_TTL_SECONDS = 600;
 
 /** Server-side refusal fallback chosen by Anthropic per refusal category (`fallbacks: "default"`). */
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";

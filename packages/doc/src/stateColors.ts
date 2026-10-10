@@ -87,14 +87,18 @@ export function stateColorVars(theme: Theme, mode: ColorMode, options: StateColo
   for (const key of ROLE_KEYS) hex[cssVarName(key)] = roles[key].toLowerCase();
   for (const [name, value] of Object.entries(options.overrides ?? {})) if (value) hex[name] = value.toLowerCase();
   const role = (name: string) => hex[name] ?? "#000000";
-  const out = (value: string) => (options.format === "hex" ? value : formatOklch(value));
+  // A translucent role (an imported `#rrggbbaa`) keeps its alpha in its hover and muted variants.
+  const out = (source: string, value: string) => {
+    const color = source.length === 9 ? `${value.slice(0, 7)}${source.slice(7)}` : value;
+    return options.format === "hex" ? color : formatOklch(color);
+  };
 
   return {
-    "--primary-hover": out(hoverFill(role("primary"), role("primary-foreground"))),
-    "--primary-foreground-hover": out(hoverFill(role("primary-foreground"), role("primary"))),
-    "--primary-foreground-muted": out(mutedTextOn(role("primary"), role("primary-foreground"))),
-    "--secondary-hover": out(hoverFill(role("secondary"), role("secondary-foreground"))),
-    "--cta-hover": out(hoverFill(role("cta"), role("cta-foreground"))),
-    "--destructive-hover": out(hoverFill(role("destructive"), role("destructive-foreground"))),
+    "--primary-hover": out(role("primary"), hoverFill(role("primary"), role("primary-foreground"))),
+    "--primary-foreground-hover": out(role("primary-foreground"), hoverFill(role("primary-foreground"), role("primary"))),
+    "--primary-foreground-muted": out(role("primary-foreground"), mutedTextOn(role("primary"), role("primary-foreground"))),
+    "--secondary-hover": out(role("secondary"), hoverFill(role("secondary"), role("secondary-foreground"))),
+    "--cta-hover": out(role("cta"), hoverFill(role("cta"), role("cta-foreground"))),
+    "--destructive-hover": out(role("destructive"), hoverFill(role("destructive"), role("destructive-foreground"))),
   };
 }

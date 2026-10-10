@@ -1,12 +1,12 @@
 import type { MotionTier, OutputKind, StyleRecipe, TypographyPairing } from "@dialmade/catalog";
-import { compileThemeVars, effectiveDials, resolveThemeInputs, type DesignDoc, type Dials, type ThemeInputs } from "@dialmade/doc";
+import { compileThemeVars, effectiveDials, fontsUrlFor, resolveThemeInputs, themeInputFor, type DesignDoc, type Dials, type ThemeInputs } from "@dialmade/doc";
 import { generateTheme, type Theme } from "@dialmade/palette";
 
 export type ThemeVars = Readonly<Record<string, string>>;
 
 /** Everything a preview needs from one DesignDoc (and one page's dials). */
 export type DesignDerived = {
-  /** `generateTheme` of the doc's seeds, achromatic flag and palette style. */
+  /** `generateTheme` of the doc's seeds, achromatic flag, palette style and locked colors (`themeInputFor`). */
   theme: Theme;
   recipe: StyleRecipe;
   pairing: TypographyPairing;
@@ -19,27 +19,28 @@ export type DesignDerived = {
   dials: Dials;
   /** `compileThemeVars` output per mode: colors, `--dl-*` tokens and component variables. */
   vars: { light: ThemeVars; dark: ThemeVars };
+  /** Google Fonts stylesheet: the doc's own families (`tokens.typography`) or the pairing's; `null` = nothing to load. */
+  fontsUrl: string | null;
 };
 
 const THEME_CACHE_SIZE = 12;
 const themeCache = new Map<string, Theme>();
 
-/** generateTheme is the expensive part and only depends on the brand + palette style: cache it by value. */
+/**
+ * generateTheme is the expensive part and only depends on what `themeInputFor` passes it (seeds,
+ * palette style and the locked imported colors as `pinned`): cache it by value. With the pins, a
+ * locked primary anchors the brand scale, CTA, ring and charts here too («tu guía manda»).
+ */
 function themeFor(doc: DesignDoc): Theme {
-  const { seeds, achromatic } = doc.brand;
-  const key = `${seeds.primary}|${seeds.secondary ?? ""}|${achromatic ? 1 : 0}|${doc.brief.paletteStyleId}`;
+  const input = themeInputFor(doc);
+  const key = JSON.stringify(input);
   const cached = themeCache.get(key);
   if (cached) {
     themeCache.delete(key);
     themeCache.set(key, cached);
     return cached;
   }
-  const theme = generateTheme({
-    primary: seeds.primary,
-    ...(seeds.secondary && { secondary: seeds.secondary }),
-    achromatic,
-    style: doc.brief.paletteStyleId,
-  });
+  const theme = generateTheme(input);
   themeCache.set(key, theme);
   if (themeCache.size > THEME_CACHE_SIZE) themeCache.delete(themeCache.keys().next().value as string);
   return theme;
@@ -67,6 +68,7 @@ export function deriveDesign(doc: DesignDoc, kind: OutputKind | null = null): De
     kind: pageKind,
     dials: effectiveDials(doc, pageKind ?? undefined),
     vars: { light: compile("light"), dark: compile("dark") },
+    fontsUrl: fontsUrlFor(doc, inputs.pairing),
   };
 
   if (!perDoc) derivedCache.set(doc, (perDoc = new Map()));

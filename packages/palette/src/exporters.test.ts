@@ -1,6 +1,6 @@
-import { formatHex, parse } from "culori";
+import { formatHex, formatHex8, parse } from "culori";
 import { describe, expect, it } from "vitest";
-import { hexToRgb } from "./color";
+import { hexToRgb, parseColorWithAlpha } from "./color";
 import {
   DTCG_EXTENSION,
   ROLE_KEYS,
@@ -198,5 +198,55 @@ describe("toFigmaTokens", () => {
       expect(doc.color["brand-500"]).toBeDefined();
     }
     expect(Object.keys(toFigmaTokens(theme, "light").color)).toEqual(Object.keys(toFigmaTokens(theme, "dark").color));
+  });
+});
+
+describe("translucent roles", () => {
+  // shadcn-style dark tokens with alpha, as a globals.css import would pin them.
+  const theme = generateTheme({
+    primary: "#3a5bd9",
+    pinned: {
+      dark: {
+        background: "oklch(0.145 0 0)",
+        border: "oklch(1 0 0 / 10%)",
+        input: "oklch(1 0 0 / 15%)",
+        ring: "oklch(0.556 0 0)",
+      },
+    },
+  });
+
+  it("round-trips alpha through CSS, DTCG and Figma", () => {
+    expect(theme.dark.border).toBe("#ffffff1a");
+    expect(theme.dark.input).toBe("#ffffff26");
+
+    const dark = cssDeclarations(toCssVars(theme), ".dark");
+    expect(dark.get("border")).toBe("oklch(1 0 0 / 0.1)");
+    expect(dark.get("input")).toBe("oklch(1 0 0 / 0.15)");
+    for (const name of ["border", "input", "background", "ring"] as const) {
+      expect(parseColorWithAlpha(dark.get(name)!)).toBe(theme.dark[name]);
+    }
+    expect(formatHex8(parse(dark.get("border")!))).toBe("#ffffff1a");
+    expect(formatHex8(parse(dark.get("input")!))).toBe("#ffffff26");
+    expect(cssDeclarations(toCssVars(theme, { format: "hex" }), ".dark").get("border")).toBe("#ffffff1a");
+    expect(toCssVarRecord(theme, "dark")["--input"]).toBe("oklch(1 0 0 / 0.15)");
+    expect(toGlobalsCss(theme)).toContain("--border: oklch(1 0 0 / 0.1);");
+
+    const semantic = toDTCG(theme).semantic;
+    const modes = semantic.border!.$extensions![DTCG_EXTENSION] as { modes: Record<string, unknown> };
+    expect(modes.modes.dark).toEqual({ colorSpace: "oklch", components: [1, 0, 0], alpha: 0.1, hex: "#ffffff" });
+    expect(modes.modes.light).not.toHaveProperty("alpha");
+    expect(semantic.border!.$value).not.toHaveProperty("alpha");
+
+    const figma = toFigmaTokens(theme, "dark").color;
+    expect(figma.border!.$value).toEqual({ colorSpace: "srgb", components: [1, 1, 1], alpha: 0.1, hex: "#ffffff" });
+    expect(figma.input!.$value.alpha).toBe(0.15);
+    expect(toFigmaTokens(theme, "light").color.border!.$value.alpha).toBe(1);
+  });
+
+  it("re-importing the exported CSS gives back the same theme", () => {
+    const dark = cssDeclarations(toCssVars(theme), ".dark");
+    const pinned = Object.fromEntries(ROLE_KEYS.map((key) => [key, dark.get(cssVarName(key))!]));
+    const again = generateTheme({ primary: "#3a5bd9", pinned: { dark: pinned } });
+    expect(again.dark).toEqual(theme.dark);
   });
 });

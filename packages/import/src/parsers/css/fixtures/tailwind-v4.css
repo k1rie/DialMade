@@ -1,0 +1,69 @@
+/* Vereda (fictional brand): Tailwind v4 theme. */
+@import "tailwindcss";
+
+@theme {
+  --color-*: initial;
+  --color-white: #fff;
+  --color-vereda-50: oklch(0.97 0.02 150);
+  --color-vereda-100: oklch(0.94 0.04 150);
+  --color-vereda-200: oklch(0.88 0.08 150);
+  --color-vereda-300: oklch(0.8 0.12 150);
+  --color-vereda-400: oklch(0.71 0.16 150);
+  --color-vereda-500: oklch(0.62 0.19 150);
+  --color-vereda-600: oklch(0.53 0.17 150);
+  --color-vereda-700: oklch(0.45 0.14 150);
+  --color-vereda-800: oklch(0.37 0.11 150);
+  --color-vereda-900: oklch(0.3 0.08 150);
+  --color-vereda-950: oklch(0.21 0.05 150);
+  --color-brand: var(--color-vereda-600);
+  --color-cta: oklch(0.72 0.17 55);
+  --color-ink: #1d2320;
+
+  --font-display: "Satoshi", ui-sans-serif, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-display: 4rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 700;
+  --text-h1: 3rem;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 700;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --leading-snug: 1.3;
+  --tracking-tight: -0.025em;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: calc(0.875rem + 4px);
+  --radius-full: calc(infinity * 1px);
+
+  --shadow-sm: 0 1px 2px 0 rgb(29 35 32 / 0.06);
+  --shadow-md: 0 4px 12px -2px rgb(29 35 32 / 0.12), 0 2px 4px -2px rgb(29 35 32 / 0.08);
+  --shadow-glow: 0 0 0 1px var(--color-vereda-400), 0 0 24px -4px oklch(0.71 0.16 150 / 50%);
+
+  --spacing: 0.3rem;
+  --border-width: 1.5px;
+  --ease-snappy: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-tint: color-mix(in oklab, var(--color-vereda-500) 20%, white);
+  --color-adaptive: light-dark(#fff, #000);
+  --color-relative: oklch(from var(--color-vereda-500) calc(l + 0.1) c h);
+}
+
+:root {
+  --surface: oklch(0.99 0.005 150);
+}
+
+.dark {
+  --surface: oklch(0.2 0.01 150);
+}

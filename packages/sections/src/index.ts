@@ -43,7 +43,7 @@ export {
 } from "./buildPage";
 export { EditInert, PageRenderer, type EditInertProps, type PageRendererProps } from "./PageRenderer";
 export { ThemeStyles, themeStyle, type ThemeStylesProps } from "./ThemeStyles";
-export { pairingForDoc, safeThemeEntries, themeVarsCss } from "./lib/themeVars";
+export { fontsUrlForDoc, pairingForDoc, safeThemeEntries, themeVarsCss } from "./lib/themeVars";
 export { MiniApp, MiniBrand, MiniLanding, miniLabel, type MiniProps } from "./minis";
 export { BrandMark, type BrandMarkLayout, type BrandMarkProps, type BrandMarkSurface } from "./brand/BrandMark";
 export { renderStaticPage, type RenderStaticPageOptions } from "./renderToHtml";

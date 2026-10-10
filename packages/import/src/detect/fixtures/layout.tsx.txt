@@ -1,0 +1,8 @@
+import { Inter, Geist_Mono } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}

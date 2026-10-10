@@ -1,9 +1,12 @@
 "use client";
 
-// Optional copy generation with the Anthropic API (CLAUDE.md, INFORME §5 and §15.2). Two paths:
-// - hosted: POST /api/ai/copy, under the server's hard monthly budget (DIALMADE_AI_MONTHLY_BUDGET_USD);
-// - BYOK: when the user pasted their key (AiKeyDialog), the browser calls api.anthropic.com directly
-//   with the same prompt and validation (@/lib/ai/browser, loaded on demand); no server budget.
+// Optional copy generation with the Anthropic API, under the AI access policy (importar-guia.md,
+// «Política de acceso a la IA»):
+// - hosted free tier: POST /api/ai/copy, N free uses per device per month (DIALMADE_AI_FREE_MODEL)
+//   inside the server's hard monthly budget;
+// - then BYOK: with the user's key (AiKeyDialog) the browser calls api.anthropic.com directly with the
+//   same prompt and validation (@/lib/ai/browser, loaded on demand), with DIALMADE_AI_MODEL;
+// - or «Copiar prompt para mi Claude» (`manualJob`): the pasted JSON goes through the same validation.
 // The model only returns text for the page's text props; the result is an RFC 6902 patch already
 // validated against the DesignDoc and the section schemas. The hook does NOT apply it: the caller
 // previews it and commits it with `useDesignDocActions().applyPatch`. Without AI the app works fully
@@ -11,19 +14,17 @@
 import type { OutputKind } from "@dialmade/catalog";
 import type { PatchOperation } from "@dialmade/doc";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadAiStatus, updateAiCounters, useAiStatus } from "@/hooks/useAiStatus";
 import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { ai } from "@/i18n/ai";
-import {
-  COPY_ENDPOINT,
-  STATUS_ENDPOINT,
-  isCopyApiErrorCode,
-  type AiStatus,
-  type CopyApiErrorCode,
-  type CopyApiSuccess,
-} from "@/lib/ai/api";
+import { COPY_ENDPOINT, isAiApiErrorCode, type AiApiErrorCode, type CopyApiSuccess } from "@/lib/ai/api";
 import { getByokKey, useByokKey } from "@/lib/ai/byokKey";
-import { DEFAULT_AI_MODEL, MAX_INSTRUCTIONS_LENGTH, MAX_SECTION_IDS } from "@/lib/ai/config";
+import { MAX_INSTRUCTIONS_LENGTH, MAX_SECTION_IDS } from "@/lib/ai/config";
+import type { ManualJob } from "@/lib/ai/manual";
+import { copyManualJob } from "@/lib/ai/manualCopy";
+import { aiSourceFor, countersFrom, fallbackReasonOf, hostedBlocker, modelFor, type AiFallbackReason } from "@/lib/ai/policy";
+import { MANUAL_MODEL } from "@/lib/ai/vision/client";
 
 export type AiCopyRequest = {
   kind: OutputKind;
@@ -57,8 +58,8 @@ export type AiCopyErrorCode =
   | "network"
   | "aborted";
 
-/** Finer cause behind `code` (e.g. code "budget-exceeded", reason "daily-limit"). */
-export type AiCopyErrorReason = CopyApiErrorCode | AiCopyErrorCode;
+/** Finer cause behind `code` (e.g. code "budget-exceeded", reason "free-tier-exhausted" or "daily-limit"). */
+export type AiCopyErrorReason = AiApiErrorCode | AiCopyErrorCode;
 
 export class AiCopyError extends Error {
   constructor(
@@ -66,6 +67,8 @@ export class AiCopyError extends Error {
     /** Localized, ready to show. */
     message: string = code,
     readonly reason: AiCopyErrorReason = code,
+    /** Set when the way out is BYOK or «mi Claude» (AiKeyDialog with `reason` and `manual`). */
+    readonly fallback: AiFallbackReason | null = null,
   ) {
     super(message);
     this.name = "AiCopyError";
@@ -81,19 +84,27 @@ export type UseAiCopy = {
   error: AiCopyError | undefined;
   /** Hosted budget left this month in USD; `null` while unknown (or with BYOK). */
   remainingBudgetUsd: number | null;
-  /** False when AI cannot be used (not configured, budget spent): hide or disable the AI affordances. */
+  /** False when AI cannot be used (no free uses, budget spent, not configured, no key): offer BYOK or «mi Claude». */
   available: boolean;
   /** Aborts the request in flight (rejects it with code "aborted"). */
   cancel: () => void;
   /** Back to "idle" and clears the error. */
   reset: () => void;
-  /** Where the next request goes: the user's key (BYOK) or the hosted route; `null` = neither works. */
+  /** Where the next request goes: the user's key (BYOK) or the hosted free tier; `null` = neither works. */
   source: AiCopySource | null;
-  /** Model that will write the copy (the server's `DIALMADE_AI_MODEL`, also used with BYOK). */
+  /** Model of the next request: the free tier's (DIALMADE_AI_FREE_MODEL) or, with BYOK, DIALMADE_AI_MODEL. */
   model: string;
+  /** Free uses left this month for this device; `null` while unknown, with BYOK or when the hosted AI is off. */
+  freeUsesRemaining: number | null;
+  freeUsesTotal: number | null;
+  /** When `available` is false: why (for AiKeyDialog's `reason`). */
+  fallbackReason: AiFallbackReason | null;
+  /** «Copiar prompt para mi Claude» for that request: same prompt and validation. `null` without a doc or text to write. */
+  manualJob: (request: AiCopyRequest) => ManualJob<AiCopyResult> | null;
 };
 
-const CODE_OF: Record<CopyApiErrorCode, AiCopyErrorCode> = {
+/** Wire codes → the coarse codes the Composer branches on; `reason` keeps the exact one. */
+const CODE_OF: Record<AiApiErrorCode, AiCopyErrorCode> = {
   "ai-not-configured": "unavailable",
   "invalid-request": "unavailable",
   "payload-too-large": "unavailable",
@@ -101,6 +112,7 @@ const CODE_OF: Record<CopyApiErrorCode, AiCopyErrorCode> = {
   "no-fields": "no-document",
   "budget-exceeded": "budget-exceeded",
   "daily-limit": "budget-exceeded",
+  "free-tier-exhausted": "budget-exceeded",
   "rate-limited": "unavailable",
   overloaded: "unavailable",
   refused: "invalid-response",
@@ -111,27 +123,18 @@ const CODE_OF: Record<CopyApiErrorCode, AiCopyErrorCode> = {
   aborted: "aborted",
 };
 
-const OFFLINE: AiStatus = { configured: false, model: DEFAULT_AI_MODEL, remainingBudgetUsd: null, minRequestUsd: 0 };
-
-// One status request per page load, shared by every hook instance.
-let statusCache: AiStatus | null = null;
-let statusRequest: Promise<AiStatus> | null = null;
-
-function loadAiStatus(): Promise<AiStatus> {
-  statusRequest ??= fetch(STATUS_ENDPOINT, { cache: "no-store" })
-    .then((response) => (response.ok ? (response.json() as Promise<AiStatus>) : OFFLINE))
-    .catch(() => OFFLINE)
-    .then((status) => (statusCache = status));
-  return statusRequest;
-}
-
 const isAbort = (error: unknown) => error instanceof DOMException && error.name === "AbortError";
+
+const cleanRequest = (request: AiCopyRequest) => ({
+  sectionIds: request.sectionIds ? [...new Set(request.sectionIds)].slice(0, MAX_SECTION_IDS) : undefined,
+  instructions: request.instructions?.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || undefined,
+});
 
 export function useAiCopy(): UseAiCopy {
   const t = useDictionary(ai);
   const store = useOptionalDesignDocStore();
   const byok = useByokKey();
-  const [hosted, setHosted] = useState<AiStatus | null>(statusCache);
+  const { status: hosted } = useAiStatus();
   const [status, setStatus] = useState<AiCopyStatus>("idle");
   const [error, setError] = useState<AiCopyError | undefined>(undefined);
   const controller = useRef<AbortController | null>(null);
@@ -143,30 +146,14 @@ export function useAiCopy(): UseAiCopy {
     hostedRef.current = hosted;
   });
 
-  useEffect(() => {
-    let active = true;
-    void loadAiStatus().then((loaded) => active && setHosted(loaded));
-    return () => {
-      active = false;
-    };
-  }, []);
-
   useEffect(() => () => controller.current?.abort(), []);
-
-  const updateRemaining = useCallback((remainingBudgetUsd: number) => {
-    setHosted((current) => {
-      const next = { ...(current ?? OFFLINE), remainingBudgetUsd };
-      statusCache = next;
-      statusRequest = Promise.resolve(next);
-      return next;
-    });
-  }, []);
 
   const generateCopy = useCallback(
     async (request: AiCopyRequest): Promise<AiCopyResult> => {
       const failure = (reason: AiCopyErrorReason) => {
-        const code = reason in CODE_OF ? CODE_OF[reason as CopyApiErrorCode] : (reason as AiCopyErrorCode);
-        return new AiCopyError(code, texts.current.errors[reason], reason);
+        const code = isAiApiErrorCode(reason) ? CODE_OF[reason] : (reason as AiCopyErrorCode);
+        const fallback = isAiApiErrorCode(reason) ? fallbackReasonOf(reason) : null;
+        return new AiCopyError(code, texts.current.errors[reason], reason, fallback);
       };
 
       const doc = store?.getState().doc ?? null;
@@ -183,25 +170,27 @@ export function useAiCopy(): UseAiCopy {
       setStatus("loading");
       setError(undefined);
 
-      const sectionIds = request.sectionIds ? [...new Set(request.sectionIds)].slice(0, MAX_SECTION_IDS) : undefined;
-      const instructions = request.instructions?.trim().slice(0, MAX_INSTRUCTIONS_LENGTH) || undefined;
+      const { sectionIds, instructions } = cleanRequest(request);
 
       try {
         let result: CopyApiSuccess;
         const apiKey = getByokKey();
+        const current = hostedRef.current ?? (await loadAiStatus());
         if (apiKey) {
           const { ByokCopyError, generateByokCopy } = await import("@/lib/ai/browser");
           try {
             result = await generateByokCopy(
               { doc, kind: request.kind, ...(sectionIds && { sectionIds }), ...(instructions && { instructions }) },
-              { apiKey, model: hostedRef.current?.model ?? DEFAULT_AI_MODEL, signal: own.signal },
+              { apiKey, model: current.model, signal: own.signal },
             );
           } catch (byokError) {
             throw byokError instanceof ByokCopyError ? failure(byokError.code) : byokError;
           }
         } else {
-          const current = hostedRef.current ?? (await loadAiStatus());
-          if (!current.configured) throw failure("ai-not-configured");
+          const blocker = hostedBlocker(current);
+          if (blocker) {
+            throw failure(blocker === "not-configured" ? "ai-not-configured" : blocker);
+          }
           const response = await fetch(COPY_ENDPOINT, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -215,9 +204,9 @@ export function useAiCopy(): UseAiCopy {
             signal: own.signal,
           });
           const body: unknown = await response.json().catch(() => null);
+          updateAiCounters(countersFrom(body));
           const data = (body ?? {}) as Partial<CopyApiSuccess> & { code?: unknown };
-          if (typeof data.remainingBudgetUsd === "number") updateRemaining(data.remainingBudgetUsd);
-          if (!response.ok) throw failure(isCopyApiErrorCode(data.code) ? data.code : "upstream-error");
+          if (!response.ok) throw failure(isAiApiErrorCode(data.code) ? data.code : "upstream-error");
           if (!Array.isArray(data.patches) || !data.usage) throw failure("invalid-response");
           result = data as CopyApiSuccess;
         }
@@ -239,7 +228,31 @@ export function useAiCopy(): UseAiCopy {
         if (controller.current === own) controller.current = null;
       }
     },
-    [store, updateRemaining],
+    [store],
+  );
+
+  const manualJob = useCallback(
+    (request: AiCopyRequest): ManualJob<AiCopyResult> | null => {
+      const doc = store?.getState().doc ?? null;
+      if (!doc?.pages[request.kind]) return null;
+      const { sectionIds, instructions } = cleanRequest(request);
+      const job = copyManualJob({ doc, kind: request.kind, ...(sectionIds && { sectionIds }), ...(instructions && { instructions }) });
+      if (!job) return null;
+      return {
+        prompt: job.prompt,
+        attachments: job.attachments,
+        parse(text) {
+          const parsed = job.parse(text);
+          if (!parsed.ok) return parsed;
+          return {
+            ok: true,
+            value: { patches: parsed.value.patches, usage: { inputTokens: 0, outputTokens: 0, model: MANUAL_MODEL }, costUsd: 0 },
+            dropped: parsed.dropped,
+          };
+        },
+      };
+    },
+    [store],
   );
 
   const cancel = useCallback(() => controller.current?.abort(), []);
@@ -249,11 +262,9 @@ export function useAiCopy(): UseAiCopy {
     setError(undefined);
   }, []);
 
-  // Below the reservation of a typical request the server can only answer 402: offer BYOK instead.
-  const remaining = hosted?.remainingBudgetUsd ?? 0;
-  const hostedAvailable = !!hosted?.configured && remaining > 0 && remaining >= (hosted.minRequestUsd ?? 0);
-  const source: AiCopySource | null = byok.active ? "byok" : hostedAvailable ? "hosted" : null;
-  const model = hosted?.model ?? DEFAULT_AI_MODEL;
+  const source = aiSourceFor(hosted, byok.active);
+  const model = modelFor(source, hosted);
+  const fallbackReason = source === null && hosted ? hostedBlocker(hosted) : null;
 
   return useMemo(
     () => ({
@@ -266,7 +277,11 @@ export function useAiCopy(): UseAiCopy {
       reset,
       source,
       model,
+      freeUsesRemaining: byok.active || !hosted?.configured ? null : hosted.freeUsesRemaining,
+      freeUsesTotal: hosted?.configured ? hosted.freeUsesTotal : null,
+      fallbackReason,
+      manualJob,
     }),
-    [generateCopy, status, error, byok.active, hosted, source, cancel, reset, model],
+    [generateCopy, status, error, byok.active, hosted, source, cancel, reset, model, fallbackReason, manualJob],
   );
 }

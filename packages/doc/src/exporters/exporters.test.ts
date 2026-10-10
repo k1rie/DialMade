@@ -2,10 +2,11 @@ import { getStyleRecipe } from "@dialmade/catalog";
 import { describe, expect, it } from "vitest";
 import { compileThemeVars } from "../compile";
 import { EXPORT_FILES } from "../constants";
-import { applyPatch } from "../patch";
+import { applyImport } from "../applyImport";
+import { applyPatch, lock, unlock } from "../patch";
 import type { DesignDoc } from "../schema";
 import { CONTRACT_VARS } from "../testing/contract";
-import { acmeDoc, monoDoc } from "../testing/fixtures";
+import { IMPORT_SHA, acmeDoc, importedDoc, monoDoc } from "../testing/fixtures";
 import { resolveThemeInputs, resolveTokens } from "../tokens";
 import { toDTCGFull } from "./dtcg";
 import { toDesignMd } from "./designMd";
@@ -199,6 +200,113 @@ describe("toDTCGFull", () => {
     expect(value).toHaveLength(1);
     expect(value[0]!.color.alpha).toBe(0);
     expect(JSON.parse(JSON.stringify(flat))).toEqual(flat);
+  });
+});
+
+describe("toDTCGFull: locks and provenance", () => {
+  const doc = importedDoc();
+  const dtcg = toDTCGFull(doc);
+  const tokens = collectTokens(dtcg);
+  const meta = (path: string) => (tokens.get(path)?.$extensions as Record<string, any> | undefined)?.["design.dialmade"];
+
+  it("marks locked semantic colors with their modes and where they came from", () => {
+    expect(meta("semantic.primary")).toMatchObject({
+      locked: ["light"],
+      provenance: [
+        { sourceId: "src-1", fileName: "globals.css", format: "shadcn-oklch", locator: "globals.css:12 --primary", confidence: "exact", method: "declared", mode: "light" },
+      ],
+    });
+    expect(meta("semantic.primary").modes.light.hex).toBe("#2f4fd0");
+    const border = meta("semantic.border");
+    expect(border.locked).toEqual(["dark"]);
+    expect(border.provenance[0]).toMatchObject({ locator: "globals.css:58 --border", mode: "dark" });
+    expect(border.modes.dark).toMatchObject({ hex: "#ffffff", alpha: 0.1 });
+  });
+
+  it("marks locked dimensions and fonts, with provenance from fields at or below them", () => {
+    expect(meta("dimension.radius.md")).toEqual({
+      locked: true,
+      provenance: [{ sourceId: "src-1", fileName: "globals.css", format: "shadcn-oklch", locator: "globals.css:40 --radius", confidence: "high", method: "declared" }],
+    });
+    expect(tokens.get("dimension.radius.md")!.$value).toEqual({ value: 10, unit: "px" });
+    expect(meta("font.heading")).toMatchObject({ locked: true, provenance: [{ locator: "globals.css:129 --font-heading", confidence: "medium", method: "named" }] });
+    expect(tokens.get("font.heading")!.$value).toEqual(["Brand Grotesk", "Arimo", "system-ui", "sans-serif"]);
+    expect(tokens.get("typography.h1")!.$value).toMatchObject({ lineHeight: 1.1, fontWeight: 700 });
+  });
+
+  it("leaves stored but unlocked values without provenance unannotated", () => {
+    expect(tokens.get("dimension.space.4")!.$value).toEqual({ value: 18, unit: "px" });
+    expect(meta("dimension.space.4")).toBeUndefined();
+    expect(meta("semantic.input")).not.toHaveProperty("locked");
+    expect(meta("semantic.input")).not.toHaveProperty("provenance");
+    expect(meta("dimension.radius.sm")).toBeUndefined();
+  });
+
+  it("lists the locks and the imported files (never fields or contents) at the root", () => {
+    const root = dtcg.$extensions["design.dialmade"] as Record<string, any>;
+    expect(root.locks).toEqual(doc.brief.locks);
+    expect(root.imports).toEqual([
+      {
+        sourceId: "src-1",
+        kind: "css",
+        format: "shadcn-oklch",
+        fileName: "globals.css",
+        sha256: IMPORT_SHA,
+        bytes: 4096,
+        parser: "css@1.0.0",
+        ownership: "own",
+        rightsConfirmedAt: doc.provenance.createdAt,
+      },
+    ]);
+  });
+
+  it("only uses aliases that resolve, also with imported values", () => {
+    for (const alias of [...tokens.values()].flatMap((token) => aliasesIn(token.$value))) expect(tokens.has(alias), alias).toBe(true);
+  });
+
+  it("drops the lock marks after «Desbloquear» and adds provenance for new imports", () => {
+    const unlocked = unlock(doc, "/tokens/radius/md");
+    if (!unlocked.ok) throw new Error(unlocked.error.message);
+    const after = collectTokens(toDTCGFull(unlocked.doc));
+    expect((after.get("dimension.radius.md")!.$extensions as any)["design.dialmade"]).not.toHaveProperty("locked");
+    const imported = applyImport(doc, {
+      source: { sourceId: "src-2", kind: "tokens", format: "dtcg-2025.10", fileName: "tokens.json", sha256: IMPORT_SHA, bytes: 900, parser: "dtcg@1.0.0", ownership: "own" },
+      values: [{ path: "/tokens/space/4", value: 20, locator: "#/space/4", confidence: "exact", method: "declared" }],
+    });
+    if (!imported.ok) throw new Error(imported.error.message);
+    const space = (collectTokens(toDTCGFull(imported.doc)).get("dimension.space.4")!.$extensions as any)["design.dialmade"];
+    expect(space).toEqual({
+      locked: true,
+      provenance: [{ sourceId: "src-2", fileName: "tokens.json", format: "dtcg-2025.10", locator: "#/space/4", confidence: "exact", method: "declared" }],
+    });
+  });
+
+  it("marks the steps of a locked 50–950 scale", () => {
+    const locked = lock(acmeDoc(), "/tokens/color/scales/brand", { value: { "500": "#2f4fd0" } });
+    if (!locked.ok) throw new Error(locked.error.message);
+    const out = collectTokens(toDTCGFull(locked.doc));
+    expect((out.get("primitives.brand.500")!.$value as { hex: string }).hex).toBe("#2f4fd0");
+    expect((out.get("primitives.brand.500")!.$extensions as any)["design.dialmade"]).toEqual({ locked: true });
+    expect((out.get("primitives.brand.600")!.$extensions as any)?.["design.dialmade"]).toEqual({ locked: true });
+    expect(out.get("primitives.neutral.500")!.$extensions).toBeUndefined();
+  });
+
+  it("adds nothing to a doc without imports or locks", () => {
+    const plain = JSON.stringify(toDTCGFull(acmeDoc()));
+    expect(plain).not.toContain('"locked"');
+    expect(plain).not.toContain('"provenance"');
+    expect(plain).not.toContain('"imports"');
+  });
+});
+
+describe("toThemeCss: imported colors", () => {
+  it("keeps the alpha of the imported dark --border and --input", () => {
+    const css = toThemeCss(importedDoc());
+    const dark = cssBlock(css, ".dark");
+    expect(dark.get("--border")).toBe("oklch(1 0 0 / 0.1)");
+    expect(dark.get("--input")).toBe("oklch(1 0 0 / 0.15)");
+    expect(cssBlock(css, ":root").get("--primary")).toBe("oklch(0.489 0.202 267.36)");
+    expect(cssBlock(toThemeCss(importedDoc(), { colorFormat: "hex" }), ".dark").get("--border")).toBe("#ffffff1a");
   });
 });
 

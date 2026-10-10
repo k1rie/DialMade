@@ -1,0 +1,6 @@
+{
+  "color": {
+    "$type": "color",
+    "brand": { "500": { "$value": { "colorSpace": "srgb", "components": [0.23, 0.36, 0.85], "hex": "#3a5bd9" } } }
+  }
+}

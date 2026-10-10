@@ -3,7 +3,7 @@
 import { outputKindOptions, type OutputKind } from "@dialmade/catalog";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
-import { AiCopyError, useAiCopy } from "@/hooks/useAiCopy";
+import { AiCopyError, useAiCopy, type AiCopyResult } from "@/hooks/useAiCopy";
 import {
   selectActivePageKind,
   useActivePageKind,
@@ -14,6 +14,7 @@ import {
   useDesignHistory,
 } from "@/hooks/useDesignDoc";
 import { useDictionary, useI18n } from "@/i18n";
+import { ai as aiText } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
@@ -53,6 +54,7 @@ const BOTTOM_GAP = 24;
 export function Composer({ onExport, onBack, onEditBrand, className }: ComposerProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
+  const texts = useDictionary(aiText);
   const doc = useDesignDoc((state) => state.doc);
   const mode = useDesignDoc((state) => state.previewMode);
   const device = useDesignDoc((state) => state.device);
@@ -156,22 +158,25 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         setAiMenuOpen(true);
         return;
       }
+      const reason = error instanceof AiCopyError ? error.reason : undefined;
       const fallback =
-        code === "budget-exceeded"
-          ? t.ai.errors.budgetExceeded
-          : code === "network"
-            ? t.ai.errors.network
-            : code === "invalid-response"
-              ? t.ai.errors.invalidResponse
-              : t.ai.errors.generic;
+        reason === "free-tier-exhausted" || reason === "daily-limit"
+          ? texts.errors[reason]
+          : code === "budget-exceeded"
+            ? t.ai.errors.budgetExceeded
+            : code === "network"
+              ? t.ai.errors.network
+              : code === "invalid-response"
+                ? t.ai.errors.invalidResponse
+                : t.ai.errors.generic;
       // useAiCopy rejects with messages that are already localized; the codes only pick a fallback.
       const message = error instanceof AiCopyError && error.message !== error.code ? error.message : fallback;
       toast.error(message);
-      // Budget spent, daily limit or a rejected key: the AI menu offers the user's own key.
-      const reason = error instanceof AiCopyError ? error.reason : undefined;
-      if (code === "budget-exceeded" || reason === "invalid-key" || reason === "ai-not-configured") setAiMenuOpen(true);
+      // No free uses, budget spent, daily limit or a rejected key: the AI menu offers the user's own key and «mi Claude».
+      const wayOut = error instanceof AiCopyError && error.fallback !== null;
+      if (wayOut || code === "budget-exceeded" || reason === "invalid-key" || reason === "ai-not-configured") setAiMenuOpen(true);
     },
-    [t],
+    [t, texts],
   );
 
   const improveSection = useCallback(
@@ -213,6 +218,18 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
       }
     },
     [activeKind, ai, actions, history, locale, t, reportAiError],
+  );
+
+  /** A validated «Copiar prompt para mi Claude» answer: applied as one undo step, like a generated one. */
+  const applyManualCopy = useCallback(
+    (result: AiCopyResult) => {
+      if (!actions.applyPatch(result.patches).ok) {
+        toast.error(t.ai.errors.invalidResponse);
+        return;
+      }
+      toast.success(t.ai.manualDone, { action: { label: t.undoAction, onClick: () => history.undo() } });
+    },
+    [actions, history, t],
   );
 
   const onCanvasDrop = useCallback(
@@ -263,6 +280,7 @@ export function Composer({ onExport, onBack, onEditBrand, className }: ComposerP
         aiMenuOpen={aiMenuOpen}
         onAiMenuOpenChange={setAiMenuOpen}
         onGenerateCopy={generatePageCopy}
+        onManualCopy={applyManualCopy}
         onBack={onBack}
         onEditBrand={onEditBrand}
         onExport={onExport}

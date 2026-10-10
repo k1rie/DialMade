@@ -1,6 +1,7 @@
-import { formatHex, parse, wcagContrast } from "culori";
+import { formatHex, formatHex8, parse, wcagContrast } from "culori";
 import { describe, expect, it } from "vitest";
 import {
+  compositeOver,
   contrastRatio,
   cuspLightness,
   ensureContrast,
@@ -11,7 +12,9 @@ import {
   oklchOf,
   oklchToHex,
   parseColor,
+  parseColorWithAlpha,
   pullHue,
+  splitAlpha,
 } from "./color";
 import { mulberry32, randomHex } from "./testing/fixtures";
 
@@ -86,5 +89,42 @@ describe("color math", () => {
     }
     const fixed = oklchOf(ensureContrast("#ff9900", [{ bg: "#ffffff", ratio: 4.5 }]));
     expect(Math.abs(hueDelta(oklchOf("#ff9900").h, fixed.h))).toBeLessThan(2);
+  });
+
+  it("keeps alpha as #rrggbbaa and round-trips it through oklch()", () => {
+    expect(parseColorWithAlpha("oklch(1 0 0 / 10%)")).toBe("#ffffff1a");
+    expect(parseColorWithAlpha("oklch(1 0 0 / 15%)")).toBe("#ffffff26");
+    expect(parseColorWithAlpha("rgb(0 0 0 / 0.5)")).toBe("#00000080");
+    expect(parseColorWithAlpha(" #3A5BD9 ")).toBe("#3a5bd9");
+    expect(parseColorWithAlpha("#3A5BD9FF")).toBe("#3a5bd9");
+    expect(parseColorWithAlpha("#3a5bd980")).toBe("#3a5bd980");
+    expect(parseColorWithAlpha("oklch(0.7 0.1 200 / 1)")).toBe(parseColor("oklch(0.7 0.1 200)"));
+    expect(parseColorWithAlpha("nope")).toBeNull();
+    expect(parseColor("oklch(1 0 0 / 10%)")).toBe("#ffffff");
+
+    expect(splitAlpha("#ffffff1a")).toEqual({ hex: "#ffffff", alpha: 0.1 });
+    expect(splitAlpha("#ffffff26")).toEqual({ hex: "#ffffff", alpha: 0.15 });
+    expect(splitAlpha("#3a5bd9")).toEqual({ hex: "#3a5bd9", alpha: 1 });
+    expect(formatOklch("#ffffff1a")).toBe("oklch(1 0 0 / 0.1)");
+
+    for (const [i, hex] of samples.entries()) {
+      const color = `${hex}${(i % 255).toString(16).padStart(2, "0")}`;
+      const css = formatOklch(color);
+      expect(css).toMatch(/^oklch\([\d.]+ [\d.]+ [\d.]+ \/ [\d.]+\)$/);
+      expect(formatHex8(parse(css))).toBe(color);
+      expect(parseColorWithAlpha(css)).toBe(color);
+    }
+  });
+
+  it("measures translucent colors painted over their background", () => {
+    expect(compositeOver("#ffffff1a", "#0a0a0a")).toBe("#232323");
+    expect(compositeOver("#3a5bd9", "#0a0a0a")).toBe("#3a5bd9");
+    expect(compositeOver("#00000000", "#3a5bd9")).toBe("#3a5bd9");
+    expect(contrastRatio("#ffffff1a", "#0a0a0a")).toBeCloseTo(contrastRatio("#232323", "#0a0a0a"), 10);
+    expect(contrastRatio("#ffffff1a", "#0a0a0a")).toBeLessThan(1.5);
+    expect(contrastRatio("#000000", "#ffffff00")).toBeCloseTo(21, 10);
+    const fixed = ensureContrast("#ffffff1a", [{ bg: "#0a0a0a", ratio: 3 }]);
+    expect(fixed).toMatch(/^#[0-9a-f]{6}$/);
+    expect(contrastRatio(fixed, "#0a0a0a")).toBeGreaterThanOrEqual(3);
   });
 });

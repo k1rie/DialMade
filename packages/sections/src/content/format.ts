@@ -1,8 +1,8 @@
 import type { Locale } from "@dialmade/catalog";
 import type { ValueFormat } from "./types";
 
-const LOCALE_TAGS: Record<Locale, string> = { es: "es-ES", en: "en-US" };
-const CURRENCIES: Record<Locale, string> = { es: "EUR", en: "USD" };
+const LOCALE_TAGS: Record<Locale, string> = { es: "es-MX", en: "en-US" };
+const CURRENCIES: Record<Locale, string> = { es: "USD", en: "USD" };
 
 export const localeTag = (locale: Locale): string => LOCALE_TAGS[locale];
 export const currencyOf = (locale: Locale): string => CURRENCIES[locale];
@@ -36,13 +36,13 @@ export function formatDuration(seconds: number, locale: Locale): string {
 export function formatMoney(value: number, locale: Locale): string {
   const currency = currencyOf(locale);
   if (Math.abs(value) >= 10_000) {
-    return numberFormat(locale, { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(value);
+    return numberFormat(locale, { style: "currency", currency, currencyDisplay: "narrowSymbol", notation: "compact", maximumFractionDigits: 1 }).format(value);
   }
   const digits = Number.isInteger(value) ? 0 : 2;
-  return numberFormat(locale, { style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+  return numberFormat(locale, { style: "currency", currency, currencyDisplay: "narrowSymbol", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
 }
 
-/** Human value for the UI, in the conventions of the locale (es-ES / en-US, EUR / USD). */
+/** Human value for the UI, in the conventions of the locale (es-MX / en-US, USD with the narrow «$»). */
 export function formatValue(value: number, format: ValueFormat, locale: Locale): string {
   switch (format) {
     case "number":

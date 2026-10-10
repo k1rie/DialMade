@@ -45,6 +45,12 @@ describe("renderStaticPage", () => {
     expect(html.indexOf("</head>")).toBeLessThan(html.indexOf("<body>"));
   });
 
+  it("enlaza las familias propias de la guía (tokens.typography), no solo las del pairing", () => {
+    const own: DesignDoc = { ...doc, tokens: { ...doc.tokens, typography: { ...doc.tokens.typography, body: { family: "Lora", source: "google" } } } };
+    const html = renderStaticPage(own, "landing", varsFor(own), { registry: testRegistry });
+    expect(html).toMatch(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]*family=Lora/);
+  });
+
   it("deja fuera las secciones que fallan (sin error boundaries en servidor) y las reporta", () => {
     const onSectionError = vi.fn();
     const page = structuredClone(doc.pages.landing!);

@@ -150,4 +150,31 @@ describe("extractFromPixels", () => {
     expect(() => extractFromPixels(new Uint8ClampedArray(10), 10, 10)).toThrow(RangeError);
     expect(() => extractFromPixels(new Uint8ClampedArray(0), 0, 0)).toThrow(RangeError);
   });
+
+  it("minCoverage keeps a small CTA that the logo default drops", () => {
+    const canvas = whiteCanvas().draw(circle(50, 60, 40), BLUE).draw(circle(140, 20, 3), "#e2581a");
+    const near = (hex: string) => deltaEOK(hexToOklab(hex), hexToOklab("#e2581a")) < 0.03;
+    const logo = extractFromPixels(canvas.data, W, H);
+    expectWellFormed(logo);
+    expect(logo.swatches.some((s) => near(s.hex))).toBe(false);
+    const screenshot = extractFromPixels(canvas.data, W, H, { minCoverage: 0.002 });
+    const cta = screenshot.swatches.find((s) => near(s.hex));
+    expect(cta?.coverage).toBeGreaterThan(0.002);
+    expect(cta?.coverage).toBeLessThan(0.015);
+    expect(screenshot.seeds.primary.hex).toBe(BLUE);
+    expect(() => extractFromPixels(canvas.data, W, H, { minCoverage: -0.1 })).toThrow(RangeError);
+    expect(() => extractFromPixels(canvas.data, W, H, { minCoverage: Number.NaN })).toThrow(RangeError);
+  });
+
+  it("keepChromaticBackground: false drops a colored background like a white one", () => {
+    const canvas = new Canvas(64, 64, [47, 91, 211, 255]).draw(circle(32, 32, 16), AMBER);
+    const kept = extractFromPixels(canvas.data, 64, 64);
+    expect(kept.swatches.map((s) => s.hex)).toContain(BLUE);
+    expect(kept.seeds.primary.hex).toBe(BLUE);
+    const dropped = extractFromPixels(canvas.data, 64, 64, { keepChromaticBackground: false });
+    expectWellFormed(dropped);
+    expect(dropped.background).toBe(BLUE);
+    expect(dropped.swatches.map((s) => s.hex)).not.toContain(BLUE);
+    expect(dropped.seeds.primary.hex).toBe(AMBER);
+  });
 });

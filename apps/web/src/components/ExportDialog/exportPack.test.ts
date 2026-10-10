@@ -2,8 +2,8 @@ import { outputKindOptions, type OutputKind } from "@dialmade/catalog";
 import { resolveThemeInputs } from "@dialmade/doc";
 import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { exportDialog } from "../../i18n/export";
-import { sampleDoc } from "../../lib/ai/testing";
+import { exportDialog } from "@/i18n/export";
+import { sampleDoc } from "@/lib/ai/testing";
 import { buildClaudeDesignPack, buildCodePack, packKinds, type PackInput } from "./exportPack";
 import { slugify } from "./files";
 
@@ -27,6 +27,14 @@ const unzip = (bytes: Uint8Array) =>
   Object.fromEntries(Object.entries(unzipSync(bytes)).map(([path, content]) => [path, path.endsWith(".png") ? content : strFromU8(content)]));
 
 describe("export packs", () => {
+  it("the imported families (tokens.typography) are the ones the HTML links and the README names", () => {
+    const own = { ...doc, tokens: { ...doc.tokens, typography: { ...doc.tokens.typography, body: { family: "Lora", source: "google" as const } } } };
+    const files = unzip(buildCodePack(input({ doc: own, inputs: resolveThemeInputs(own) })).bytes);
+    const root = "brisa-dialmade/";
+    expect(files[`${root}index.html`]).toMatch(/fonts\.googleapis\.com\/css2\?[^"]*family=Lora/);
+    expect(files[`${root}README.md`]).toContain("Lora para texto");
+  });
+
   it("puts the focus page first", () => {
     expect(packKinds(doc)).toEqual(["landing", "brand"]);
   });

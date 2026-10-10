@@ -1,10 +1,26 @@
-import { DTCG_EXTENSION, ROLE_KEYS, cssVarName, toDTCG, type DtcgDocument, type RoleKey, type Theme } from "@dialmade/palette";
-import type { DesignDoc } from "../schema";
+import {
+  DTCG_EXTENSION,
+  ROLE_KEYS,
+  cssVarName,
+  formatOklch,
+  toDTCG,
+  type DtcgDocument,
+  type RoleKey,
+  type ScaleStep,
+  type ScaleStepNumber,
+  type Theme,
+} from "@dialmade/palette";
+import { normalizeTokenColor } from "../color";
+import { isLocked } from "../locks";
+import { pointersOverlap } from "../pointer";
+import type { Confidence, DesignDoc } from "../schema";
 import {
   FONT_SIZE_NAMES,
   RADIUS_NAMES,
   SHADOW_NAMES,
+  fontsUrlFor,
   hexToRgb,
+  scaleOverrides,
   type DimensionRef,
   type ResolvedTokens,
   type ShadowLayer,
@@ -40,17 +56,103 @@ export interface DtcgFullDocument {
 
 const ROLE_BY_NAME = new Map<string, RoleKey>(ROLE_KEYS.map((key) => [cssVarName(key), key]));
 
-/** The theme with the doc's per-mode color overrides applied to its roles. */
+/**
+ * The theme with the doc's colors applied: per-mode roles (alpha kept as `#rrggbbaa`, which the
+ * @dialmade/palette exporters understand) and the 50–950 scales of `tokens.color.scales`.
+ */
 export function themeWithOverrides(doc: DesignDoc, theme: Theme): Theme {
   const apply = (roles: Theme["light"], overrides: Record<string, string | undefined>) => {
     const out = { ...roles };
-    for (const [name, hex] of Object.entries(overrides)) {
+    for (const [name, color] of Object.entries(overrides)) {
       const key = ROLE_BY_NAME.get(name);
-      if (key && hex) out[key] = hex.toLowerCase();
+      if (key && color) out[key] = normalizeTokenColor(color);
     }
     return out;
   };
-  return { ...theme, light: apply(theme.light, doc.tokens.color.light), dark: apply(theme.dark, doc.tokens.color.dark) };
+  const scales = { ...theme.scales };
+  for (const [name, steps] of scaleOverrides(doc)) {
+    const key = name === "cta" ? "accent" : "brand";
+    const byStep = new Map<number, ScaleStep>((scales[key] ?? []).map((s) => [s.step, s]));
+    for (const [step, hex] of Object.entries(steps)) {
+      byStep.set(Number(step), { step: Number(step) as ScaleStepNumber, hex, oklch: formatOklch(hex) });
+    }
+    scales[key] = [...byStep.values()].sort((a, b) => a.step - b.step);
+  }
+  return { ...theme, light: apply(theme.light, doc.tokens.color.light), dark: apply(theme.dark, doc.tokens.color.dark), scales };
+}
+
+/** Where an exported token's value came from (`provenance.imports[].fields` that touch its pointer). */
+export interface DtcgProvenance {
+  sourceId: string;
+  fileName: string;
+  format: string;
+  locator: string;
+  confidence: Confidence;
+  method: string;
+  /** Semantic colors only: the mode of the value. */
+  mode?: "light" | "dark";
+}
+
+function provenanceAt(doc: DesignDoc, pointer: string, mode?: "light" | "dark"): DtcgProvenance[] {
+  const out: DtcgProvenance[] = [];
+  for (const record of doc.provenance.imports ?? []) {
+    for (const field of record.fields) {
+      if (!pointersOverlap(field.path, pointer)) continue;
+      const { sourceId, fileName, format } = record;
+      out.push({ sourceId, fileName, format, locator: field.locator, confidence: field.confidence, method: field.method, ...(mode && { mode }) });
+    }
+  }
+  return out;
+}
+
+type Annotated = { $extensions?: Record<string, unknown> };
+
+function annotate(token: Annotated | undefined, meta: Record<string, unknown>): void {
+  if (!token || Object.keys(meta).length === 0) return;
+  const current = (token.$extensions?.[DTCG_EXTENSION] as Record<string, unknown> | undefined) ?? {};
+  token.$extensions = { ...token.$extensions, [DTCG_EXTENSION]: { ...current, ...meta } };
+}
+
+/** `{ locked: true }` and the token's provenance, for a token that stands for one doc pointer. */
+function pointerMeta(doc: DesignDoc, pointer: string): Record<string, unknown> {
+  const provenance = provenanceAt(doc, pointer);
+  return { ...(isLocked(doc, pointer) && { locked: true }), ...(provenance.length > 0 && { provenance }) };
+}
+
+/** Semantic colors: `locked` lists the locked modes; provenance entries carry their mode. */
+function colorMeta(doc: DesignDoc, name: string): Record<string, unknown> {
+  const modes = (["light", "dark"] as const).filter((mode) => isLocked(doc, `/tokens/color/${mode}/${name}`));
+  const provenance = (["light", "dark"] as const).flatMap((mode) => provenanceAt(doc, `/tokens/color/${mode}/${name}`, mode));
+  return { ...(modes.length > 0 && { locked: modes }), ...(provenance.length > 0 && { provenance }) };
+}
+
+const asToken = (node: DtcgToken | DtcgGroup | undefined): DtcgToken | undefined =>
+  node && "$value" in node ? (node as DtcgToken) : undefined;
+
+/**
+ * Adds `$extensions["design.dialmade"]` `locked` and `provenance` to the tokens that come from the
+ * doc's stored values (`tokens.*`): colors, scales, fonts, type steps, sizes, radii, space, border
+ * width, shadows and motion.
+ */
+function annotateTokens(doc: DesignDoc, out: DtcgFullDocument): void {
+  for (const name of Object.keys(out.semantic)) annotate(out.semantic[name], colorMeta(doc, name));
+  for (const [group, scale] of [["brand", "brand"], ["cta", "accent"]] as const) {
+    for (const [step, token] of Object.entries(out.primitives[group] ?? {})) {
+      annotate(token, pointerMeta(doc, `/tokens/color/scales/${scale}/${step}`));
+    }
+  }
+  for (const role of ["heading", "body", "mono"] as const) annotate(asToken(out.font[role]), pointerMeta(doc, `/tokens/typography/${role}`));
+  const dimension = out.dimension as Record<string, DtcgGroup>;
+  for (const name of FONT_SIZE_NAMES) {
+    annotate(asToken(out.typography[name]), pointerMeta(doc, `/tokens/typography/scale/${name}`));
+    annotate(asToken(dimension["font-size"]?.[name]), pointerMeta(doc, `/tokens/fontSize/${name}`));
+  }
+  for (const name of RADIUS_NAMES) if (name !== "full") annotate(asToken(dimension.radius?.[name]), pointerMeta(doc, `/tokens/radius/${name}`));
+  for (const step of Object.keys(dimension.space ?? {})) annotate(asToken(dimension.space?.[step]), pointerMeta(doc, `/tokens/space/${step}`));
+  annotate(asToken(out.dimension["border-width"]), pointerMeta(doc, "/tokens/borderWidth"));
+  for (const name of SHADOW_NAMES) annotate(asToken(out.shadow[name]), pointerMeta(doc, `/tokens/elevation/${name}`));
+  for (const name of ["fast", "base", "slow"] as const) annotate(asToken(out.duration[name]), pointerMeta(doc, `/tokens/motion/${name}`));
+  annotate(asToken(out["cubic-bezier"].ease), pointerMeta(doc, "/tokens/motion/ease"));
 }
 
 const round = (value: number, digits: number) => Number(value.toFixed(digits));
@@ -82,19 +184,21 @@ function alias(ref: string): string {
 const dimensionRef = (value: DimensionRef): DtcgToken => ({ $type: "dimension", $value: value.ref ? alias(value.ref) : dim(value.px) });
 const shadowRef = (ref: ShadowRef): DtcgToken => ({ $type: "shadow", $value: ref === "none" ? noShadow() : `{shadow.${ref}}` });
 
-function typographyGroup(t: ResolvedTokens): DtcgGroup {
+function typographyGroup(doc: DesignDoc, t: ResolvedTokens): DtcgGroup {
   const group: DtcgGroup = {};
   for (const name of FONT_SIZE_NAMES) {
     const heading = name === "display" || name.startsWith("h");
     const size = t.fontSizes[name].px;
+    const own = doc.tokens.typography.scale[name];
+    const tracking = own?.letterSpacing ?? (heading ? t.heading.tracking : 0);
     group[name] = {
       $type: "typography",
       $value: {
         fontFamily: heading ? "{font.heading}" : "{font.body}",
         fontSize: `{dimension.font-size.${name}}`,
-        fontWeight: heading ? "{font-weight.heading}" : "{font-weight.body}",
-        letterSpacing: dim(heading ? round(t.heading.tracking * size, 2) : 0),
-        lineHeight: heading ? t.lineHeights.tight : t.lineHeights.body,
+        fontWeight: own?.weight ?? (heading ? "{font-weight.heading}" : "{font-weight.body}"),
+        letterSpacing: dim(round(tracking * size, 2)),
+        lineHeight: own?.lineHeight ?? (heading ? t.lineHeights.tight : t.lineHeights.body),
       },
     };
   }
@@ -117,6 +221,10 @@ function typographyGroup(t: ResolvedTokens): DtcgGroup {
  * (font sizes, radius, space, layout), `shadow`, `duration`, `cubic-bezier` and `component.*`, whose
  * tokens alias the global ones (`{dimension.radius.md}`). Mode-dependent shadows keep both modes in
  * `$extensions["design.dialmade"].modes`, like the semantic colors.
+ *
+ * Stored values carry `$extensions["design.dialmade"]` `locked` (`true`, or the locked modes of a
+ * semantic color) and `provenance` (file, locator, confidence, method). The root extension lists
+ * `locks` and the `imports` (file name, format, SHA-256, parser, ownership; never the file).
  */
 export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFullDocument {
   const { inputs, light, dark } = resolveExport(doc, options);
@@ -174,7 +282,9 @@ export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFul
   const motion: DtcgGroup = {};
   if (t.motion.bezier) motion.ease = { $type: "cubicBezier", $value: t.motion.bezier };
 
-  return {
+  const fontsUrl = fontsUrlFor(doc, inputs.pairing);
+  const imports = (doc.provenance.imports ?? []).map(({ fields: _fields, dismissed: _dismissed, ...record }) => record);
+  const out: DtcgFullDocument = {
     $description: `${doc.brand.name} · Dialmade design tokens (DesignDoc v${doc.version})`,
     $extensions: {
       [DTCG_EXTENSION]: {
@@ -187,7 +297,9 @@ export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFul
         pairingId: inputs.pairing.id,
         motionTier: inputs.motionTier.id,
         dials: t.dials,
-        googleFontsUrl: inputs.pairing.googleFontsUrl,
+        ...(fontsUrl && { googleFontsUrl: fontsUrl }),
+        ...(doc.brief.locks.length > 0 && { locks: doc.brief.locks }),
+        ...(imports.length > 0 && { imports }),
       },
     },
     primitives: color.primitives,
@@ -202,7 +314,7 @@ export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFul
       body: { $type: "fontWeight", $value: t.bodyWeight },
       button: { $type: "fontWeight", $value: button.weight },
     },
-    typography: typographyGroup(t),
+    typography: typographyGroup(doc, t),
     dimension: {
       "font-size": fontSize,
       radius,
@@ -220,4 +332,6 @@ export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFul
     "cubic-bezier": motion,
     component,
   };
+  annotateTokens(doc, out);
+  return out;
 }

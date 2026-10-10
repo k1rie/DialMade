@@ -5,7 +5,7 @@ export const commerce: ContentProfile = {
   id: "commerce",
   b2b: false,
   hero: {
-    eyebrows: [t("Envío gratis desde 50 €", "Free shipping over $50"), t("Nueva colección", "New collection")],
+    eyebrows: [t("Envío gratis desde $50", "Free shipping over $50"), t("Nueva colección", "New collection")],
     titles: [
       t("Lo que buscas, a un clic", "What you're looking for, one click away"),
       t("Hecho para durar, pensado para ti", "Made to last, made for you"),
@@ -122,7 +122,7 @@ export const commerce: ContentProfile = {
         ],
       },
     ],
-    note: t("IVA incluido. Envío gratis desde 50 €.", "Taxes included. Free shipping over $50."),
+    note: t("IVA incluido. Envío gratis desde $50.", "Taxes included. Free shipping over $50."),
   },
   cta: {
     titles: [t("Tu próximo favorito te espera", "Your next favorite is waiting"), t("Únete y llévate un 10 %", "Join and get 10% off")],

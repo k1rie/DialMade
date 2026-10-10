@@ -8,7 +8,8 @@ export type PackReadmeInfo = {
   pages: { kind: string; label: string }[];
   heading: string;
   body: string;
-  fontsUrl: string;
+  /** Google Fonts stylesheet; absent when the families load from elsewhere (system or local). */
+  fontsUrl?: string;
   hasLogo: boolean;
 };
 
@@ -100,7 +101,7 @@ export const exportDialog = defineDictionary({
           "2. Mapea los tokens con `@theme inline` (`--color-primary: var(--primary)`, `--radius-md: var(--dl-radius-md)`…).",
           "3. Pide a tu IA que construya las páginas con `prompts/claude.md` o `prompts/cursor.md`.",
           "",
-          `Tipografía: ${info.heading} para títulos y ${info.body} para texto (${info.fontsUrl}).`,
+          `Tipografía: ${info.heading} para títulos y ${info.body} para texto${info.fontsUrl ? ` (${info.fontsUrl})` : ""}.`,
           "",
         ].join("\n"),
       claudeDesignReadme: (info: PackReadmeInfo) =>
@@ -120,7 +121,7 @@ export const exportDialog = defineDictionary({
           "",
           list([
             "Respeta los hex y los roles exactos de `theme.css` (`:root` = claro, `.dark` = oscuro). No crees colores nuevos.",
-            `Tipografía: ${info.heading} para títulos y ${info.body} para texto (${info.fontsUrl}).`,
+            `Tipografía: ${info.heading} para títulos y ${info.body} para texto${info.fontsUrl ? ` (${info.fontsUrl})` : ""}.`,
             "Las formas, espacios, sombras y tiempos de animación están en `DESIGN.md` y `tokens.tokens.json`.",
           ]),
           "",
@@ -223,7 +224,7 @@ export const exportDialog = defineDictionary({
           "2. Map the tokens with `@theme inline` (`--color-primary: var(--primary)`, `--radius-md: var(--dl-radius-md)`…).",
           "3. Ask your AI to build the pages with `prompts/claude.md` or `prompts/cursor.md`.",
           "",
-          `Typography: ${info.heading} for headings and ${info.body} for text (${info.fontsUrl}).`,
+          `Typography: ${info.heading} for headings and ${info.body} for text${info.fontsUrl ? ` (${info.fontsUrl})` : ""}.`,
           "",
         ].join("\n"),
       claudeDesignReadme: (info: PackReadmeInfo) =>
@@ -243,7 +244,7 @@ export const exportDialog = defineDictionary({
           "",
           list([
             "Respect the exact hex values and roles in `theme.css` (`:root` = light, `.dark` = dark). Don't create new colors.",
-            `Typography: ${info.heading} for headings and ${info.body} for text (${info.fontsUrl}).`,
+            `Typography: ${info.heading} for headings and ${info.body} for text${info.fontsUrl ? ` (${info.fontsUrl})` : ""}.`,
             "Shapes, spacing, shadows and motion timings are in `DESIGN.md` and `tokens.tokens.json`.",
           ]),
           "",

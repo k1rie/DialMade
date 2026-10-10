@@ -32,7 +32,7 @@ describe("Chart", () => {
     const table = screen.getByRole("table", { name: "Usuarios — Datos de la gráfica" });
     expect(within(table).getAllByRole("columnheader").map((th) => th.textContent)).toEqual(["Mes", "Web", "App"]);
     expect(within(table).getByRole("rowheader", { name: "Mar" })).toBeTruthy();
-    expect(within(table).getByText("1800")).toBeTruthy();
+    expect(within(table).getByText("1,800")).toBeTruthy();
   });
 
   it("pinta una barra por valor y colorea por serie", () => {
