@@ -222,6 +222,83 @@ export const ai = defineDictionary({
         "payload-too-large": "Tus capturas pesan demasiado para enviarlas a la IA.",
       } satisfies VisionErrorTexts,
     },
+    /* «Diseño con IA» from the Layout (Track A): the «IA» control, «Generar con IA», the run bar and the islands. */
+    aiRender: {
+      control: "IA",
+      controlState: (mode: "off" | "copy" | "design"): string => (mode === "design" ? "diseño con IA" : mode === "copy" ? "textos con IA" : "sin IA"),
+      title: "IA al generar",
+      modesLabel: "Qué hace la IA al generar",
+      modes: { off: "Sin IA", copy: "Textos", design: "Diseño" },
+      offDescription: "Generar crea el diseño base con textos de ejemplo. Sin llamadas a la IA.",
+      designDescription:
+        "Claude diseña cada bloque de tu layout con tu marca: el layout sigue siendo tuyo (qué bloques, dónde y en qué orden), la IA decide cómo se ve. Incluye los textos.",
+      cta: "Generar con IA",
+      ctaHint: "Primero sale tu diseño base; después Claude diseña cada bloque en Ajustar.",
+      chips: {
+        label: "Dirección de arte",
+        hint: "Opcional. «Automática» deja que tu marca y una semilla elijan.",
+        options: { auto: "Automática", editorial: "Editorial", technical: "Técnica", warm: "Cálida", playful: "Juguetona", luxury: "Lujo" },
+      },
+      screens: {
+        label: "Pantallas",
+        hint: (max: number) => `Hasta ${max} por uso.`,
+        blocks: (n: number) => `${n} ${plural(n, "bloque", "bloques")}`,
+        designed: "ya con IA",
+        more: (total: number, uses: number, max: number) =>
+          `${total} pantallas = ${uses} usos. Elige ${max} ahora y genera las demás después.`,
+        none: "Elige al menos una pantalla.",
+      },
+      cost: {
+        line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
+          `≈ ${cost} · 1 uso de ${left} · ${screens} ${plural(screens, "pantalla", "pantallas")} · ≈ ${seconds} s`,
+        usesTotal: (total: number) => `Tienes ${total} ${plural(total, "uso gratis", "usos gratis")} al mes.`,
+        session: "El uso incluye 10 cambios por bloque («Otra versión», «Pedir cambio») durante 24 h.",
+        withKey: (cost: string, screens: number, seconds: number) =>
+          `≈ ${cost} con tu key · ${screens} ${plural(screens, "pantalla", "pantallas")} · ≈ ${seconds} s`,
+      },
+      run: {
+        label: "Diseño con IA",
+        opening: "Abriendo tu sesión de diseño…",
+        choosing: "Eligiendo dirección de arte…",
+        direction: (rationale: string) => `Dirección de arte: ${rationale}`,
+        designing: (screen: string, n: number, total: number) => `Diseñando ${screen} · bloque ${n} de ${total}`,
+        parallel: (n: number) => `y ${n} ${plural(n, "pantalla más", "pantallas más")} a la vez`,
+        cancel: "Cancelar",
+        cancelHint: "Se cobra lo generado hasta ahora.",
+        cancelled: "Cancelado. Lo terminado se queda; el resto sigue en tu diseño base.",
+        cancelledPaid: "Ya se pagó esta pantalla; no gasta otra de tu sesión.",
+        summary: (ai: number, base: number, warnings: number) =>
+          [
+            `${ai} ${plural(ai, "bloque con IA", "bloques con IA")}`,
+            ...(base > 0 ? [`${base} en base (${plural(base, "falló", "fallaron")})`] : []),
+            ...(warnings > 0 ? [`${warnings} ${plural(warnings, "aviso", "avisos")}`] : []),
+          ].join(" · "),
+        screenFailed: (screen: string) => `No pudimos diseñar ${screen}.`,
+        retryScreen: "Reintentar",
+        retryScreenLabel: (screen: string) => `Reintentar ${screen}: no gasta otra pantalla de tu sesión`,
+        close: "Cerrar",
+        announce: (screen: string, ai: number, base: number) =>
+          `${screen} lista: ${ai} ${plural(ai, "bloque con IA", "bloques con IA")}, ${base} en diseño base.`,
+        announceFailed: (screen: string) => `No pudimos diseñar ${screen}.`,
+      },
+      block: {
+        island: (label: string) => `Bloque ${label}, diseñado con IA`,
+        tag: "IA",
+        designing: "Diseñando…",
+        failed: "La IA falló aquí",
+        retry: "Reintentar",
+        retryLabel: (label: string) => `Reintentar ${label} con IA: gasta 1 cambio de tu sesión`,
+        toBase: "Volver al diseño base",
+        toBaseLabel: (label: string) => `Volver al diseño base en ${label}`,
+        useAi: "Usar IA otra vez",
+        useAiLabel: (label: string) => `Usar otra vez el diseño con IA en ${label}`,
+      },
+      errors: {
+        "session-not-found": "Tu sesión de diseño ya no existe. Vuelve a generar con IA.",
+        "session-expired": "Tu sesión de diseño caducó (dura 24 h). Vuelve a generar con IA.",
+        "session-exhausted": "Ya usaste lo que incluye esta sesión de diseño.",
+      },
+    },
   },
   en: {
     errors: {
@@ -413,6 +490,83 @@ export const ai = defineDictionary({
         "invalid-response": "The AI returned an analysis we couldn't use. Try again.",
         "invalid-request": "We couldn't send the screenshots. Try again.",
         "payload-too-large": "Your screenshots are too large to send to the AI.",
+      },
+    },
+    /* «Diseño con IA» from the Layout (Track A): the «IA» control, «Generar con IA», the run bar and the islands. */
+    aiRender: {
+      control: "AI",
+      controlState: (mode: "off" | "copy" | "design"): string => (mode === "design" ? "design with AI" : mode === "copy" ? "copy with AI" : "no AI"),
+      title: "AI when generating",
+      modesLabel: "What the AI does when generating",
+      modes: { off: "No AI", copy: "Copy", design: "Design" },
+      offDescription: "Generate builds the base design with sample copy. No AI calls.",
+      designDescription:
+        "Claude designs every block of your layout with your brand: the layout stays yours (which blocks, where and in what order), the AI decides how it looks. Copy included.",
+      cta: "Generate with AI",
+      ctaHint: "Your base design comes first; then Claude designs every block in Adjust.",
+      chips: {
+        label: "Art direction",
+        hint: "Optional. «Automatic» lets your brand and a seed choose.",
+        options: { auto: "Automatic", editorial: "Editorial", technical: "Technical", warm: "Warm", playful: "Playful", luxury: "Luxury" },
+      },
+      screens: {
+        label: "Screens",
+        hint: (max: number) => `Up to ${max} per use.`,
+        blocks: (n: number) => `${n} ${plural(n, "block", "blocks")}`,
+        designed: "already with AI",
+        more: (total: number, uses: number, max: number) =>
+          `${total} screens = ${uses} uses. Pick ${max} now and generate the rest later.`,
+        none: "Pick at least one screen.",
+      },
+      cost: {
+        line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
+          `≈ ${cost} · 1 use of ${left} · ${screens} ${plural(screens, "screen", "screens")} · ≈ ${seconds} s`,
+        usesTotal: (total: number) => `You get ${total} free ${plural(total, "use", "uses")} a month.`,
+        session: "The use includes 10 block changes («Another version», «Ask for a change») for 24 h.",
+        withKey: (cost: string, screens: number, seconds: number) =>
+          `≈ ${cost} with your key · ${screens} ${plural(screens, "screen", "screens")} · ≈ ${seconds} s`,
+      },
+      run: {
+        label: "Design with AI",
+        opening: "Opening your design session…",
+        choosing: "Choosing the art direction…",
+        direction: (rationale: string) => `Art direction: ${rationale}`,
+        designing: (screen: string, n: number, total: number) => `Designing ${screen} · block ${n} of ${total}`,
+        parallel: (n: number) => `and ${n} more ${plural(n, "screen", "screens")} at once`,
+        cancel: "Cancel",
+        cancelHint: "What was generated so far is billed.",
+        cancelled: "Cancelled. What is done stays; the rest keeps your base design.",
+        cancelledPaid: "This screen is already paid; it does not spend another one of your session.",
+        summary: (ai: number, base: number, warnings: number) =>
+          [
+            `${ai} ${plural(ai, "block with AI", "blocks with AI")}`,
+            ...(base > 0 ? [`${base} on base (failed)`] : []),
+            ...(warnings > 0 ? [`${warnings} ${plural(warnings, "warning", "warnings")}`] : []),
+          ].join(" · "),
+        screenFailed: (screen: string) => `We couldn't design ${screen}.`,
+        retryScreen: "Retry",
+        retryScreenLabel: (screen: string) => `Retry ${screen}: it does not spend another screen of your session`,
+        close: "Close",
+        announce: (screen: string, ai: number, base: number) =>
+          `${screen} ready: ${ai} ${plural(ai, "block with AI", "blocks with AI")}, ${base} on the base design.`,
+        announceFailed: (screen: string) => `We couldn't design ${screen}.`,
+      },
+      block: {
+        island: (label: string) => `Block ${label}, designed with AI`,
+        tag: "AI",
+        designing: "Designing…",
+        failed: "The AI failed here",
+        retry: "Retry",
+        retryLabel: (label: string) => `Retry ${label} with AI: spends 1 change of your session`,
+        toBase: "Back to the base design",
+        toBaseLabel: (label: string) => `Back to the base design in ${label}`,
+        useAi: "Use AI again",
+        useAiLabel: (label: string) => `Use the AI design again in ${label}`,
+      },
+      errors: {
+        "session-not-found": "Your design session no longer exists. Generate with AI again.",
+        "session-expired": "Your design session expired (it lasts 24 h). Generate with AI again.",
+        "session-exhausted": "You already used what this design session includes.",
       },
     },
   },

@@ -4,10 +4,10 @@ import { getScreenTemplate, instantiateTemplate, type ScreenTemplateId } from "@
 import { describe, expect, it, vi } from "vitest";
 import { createStore } from "zustand/vanilla";
 import { withGeneratedScreens, type GeneratedScreenInput } from "@/lib/design-engine";
-import type { RenderSessionCounters, RenderStreamEvent } from "../api";
+import type { RenderBlockBody, RenderBlockSuccess, RenderDirectionSuccess, RenderSessionCounters, RenderSessionSuccess, RenderStreamEvent } from "../api";
 import { IDLE_GENERATION, createGenerationEngine, type GenerationDeps } from "./engine";
 import type { PatchOp } from "./patches";
-import type { GenerationState, RenderTransport, ScreenBody } from "./types";
+import type { GenerationState, RenderTransport, ScreenBody, TransportResult } from "./types";
 
 const NOW = new Date("2026-10-10T12:00:00Z");
 const COUNTERS: RenderSessionCounters = { directionsUsed: 0, directionsMax: 2, screensUsed: 0, screensMax: 2, actionsUsed: 0, actionsMax: 10, expiresAt: "2026-10-11T12:00:00Z" };
@@ -54,8 +54,8 @@ function fakeTransport(script: ScreenScript = answerAll, options: { direction?: 
   const screens: ScreenBody[] = [];
   const transport = {
     path: "free" as const,
-    openSession: vi.fn(async () => ({ ok: true as const, value: { sessionId: SESSION, session: COUNTERS, freeUsesRemaining: 4, freeUsesTotal: 5, remainingBudgetUsd: 4.9 } })),
-    direction: vi.fn(async () =>
+    openSession: vi.fn(async (): Promise<TransportResult<RenderSessionSuccess>> => ({ ok: true as const, value: { sessionId: SESSION, session: COUNTERS, freeUsesRemaining: 4, freeUsesTotal: 5, remainingBudgetUsd: 4.9 } })),
+    direction: vi.fn(async (): Promise<TransportResult<RenderDirectionSuccess>> =>
       options.direction === "fail"
         ? { ok: false as const, error: { code: "upstream-error" as const, message: "boom" } }
         : {
@@ -75,7 +75,7 @@ function fakeTransport(script: ScreenScript = answerAll, options: { direction?: 
       screens.push(body);
       return script(body, signal);
     }),
-    block: vi.fn(async (body: { block: { id: string; type: string } }) => ({
+    block: vi.fn(async (body: RenderBlockBody): Promise<TransportResult<RenderBlockSuccess>> => ({
       ok: true as const,
       value: { html: blockHtml(body.block.id, body.block.type), usage: { model: "claude-haiku-5-5", inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, costUsd: 0.001 }, session: { ...COUNTERS, actionsUsed: 1 } },
     })),
@@ -236,7 +236,7 @@ describe("«Generar con IA» (engine)", () => {
 
   it("no session (free uses spent): nothing is asked and the doc is untouched", async () => {
     const { transport } = fakeTransport();
-    transport.openSession.mockResolvedValueOnce({ ok: false, error: { code: "free-tier-exhausted", message: "x" } } as never);
+    transport.openSession.mockResolvedValueOnce({ ok: false, error: { code: "free-tier-exhausted", message: "x" } });
     const { engine, store, doc } = setup(transport);
     const before = doc();
     await engine.start({ screenIds: ["s-home"], chip: "auto" });

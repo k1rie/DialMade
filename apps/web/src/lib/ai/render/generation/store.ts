@@ -33,7 +33,7 @@ export type GenerationActions = {
 export type GenerationStoreState = GenerationState & { prefs: GenerationPrefs; actions: GenerationActions };
 export type GenerationStore = StoreApi<GenerationStoreState>;
 
-export const DEFAULT_PREFS: GenerationPrefs = { design: false, chip: "auto", screens: null };
+export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null };
 
 let transportOverride: RenderTransport | null = null;
 const freeTier = createFreeTierTransport();

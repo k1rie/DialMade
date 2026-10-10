@@ -106,11 +106,13 @@ export type GenerationState = {
 
 /** What the «IA» control remembers for the next «Generar» (per document, survives Layout → Ajustar). */
 export type GenerationPrefs = {
-  /** «Diseño con IA» is the chosen AI mode. */
-  design: boolean;
+  /** The «IA» control of the Layout's bar: no AI, AI copy («Textos»), or «Diseño con IA». */
+  mode: AiGenerateMode;
   chip: AiDirectionChip;
   /** Screens picked in AiScreensPicker; `null` = the default pick (`defaultScreenPick`). */
   screens: string[] | null;
 };
+
+export type AiGenerateMode = "off" | "copy" | "design";
 
 export type GenerateRequest = { screenIds: readonly string[]; chip: AiDirectionChip };
