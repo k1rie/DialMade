@@ -3,6 +3,7 @@
 // LOOKS (sanitized HTML of @dialmade/ai-render), never where it is. `active: false` = «Usar diseño base» (the HTML is
 // kept for «Usar IA otra vez»).
 import { z } from "zod";
+import { utf8ByteLength } from "./utf8";
 
 const ELEMENT_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
@@ -108,7 +109,7 @@ export const AiGateWarningSchema = z.strictObject({
 
 export const AiBlockSchema = z.strictObject({
   /** Sanitized, canonical HTML (one root with `data-block-id`), or "" for a container's `surfaceClasses`. */
-  html: z.string().refine((html) => new TextEncoder().encode(html).length <= MAX_AI_BLOCK_BYTES, `At most ${MAX_AI_BLOCK_BYTES} bytes of HTML`),
+  html: z.string().refine((html) => utf8ByteLength(html) <= MAX_AI_BLOCK_BYTES, `At most ${MAX_AI_BLOCK_BYTES} bytes of HTML`),
   /** Containers (spec §1 [C15]): only the classes of their surface. */
   surfaceClasses: z.array(Text(64)).max(40).optional(),
   active: z.boolean(),
@@ -157,13 +158,12 @@ export type AiRenderKind = (typeof AI_RENDER_KINDS)[number];
  * (`screenStash`), so the 1 MB cap holds for all the AI HTML the document carries, wherever it sits.
  */
 export function aiRenderBytes(input: { aiRender?: unknown; screens?: unknown; screenStash?: unknown }): number {
-  const encoder = new TextEncoder();
-  let bytes = input.aiRender === undefined ? 0 : encoder.encode(JSON.stringify(input.aiRender)).length;
+  let bytes = input.aiRender === undefined ? 0 : utf8ByteLength(JSON.stringify(input.aiRender));
   for (const record of [input.screens, input.screenStash]) {
     if (!record || typeof record !== "object") continue;
     for (const screen of Object.values(record as Record<string, unknown>)) {
       const render = screen && typeof screen === "object" ? (screen as { aiRender?: unknown }).aiRender : undefined;
-      if (render !== undefined) bytes += encoder.encode(JSON.stringify(render)).length;
+      if (render !== undefined) bytes += utf8ByteLength(JSON.stringify(render));
     }
   }
   return bytes;

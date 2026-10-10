@@ -8,6 +8,7 @@ import type { DesignDoc, Screen } from "../schema";
 import { orderedScreens } from "../screens";
 import { plainText } from "./layoutBlock";
 import { mdTable } from "./shared";
+import { utf8ByteLength } from "../utf8";
 
 /** Spec §9: the HTML of the AI blocks in one prompt pack. */
 export const MAX_AI_HTML_PER_PACK = 60 * 1024;
@@ -148,12 +149,11 @@ export function aiReferenceLines(doc: DesignDoc, locale: Locale, maxBytes = MAX_
   if (blocks.length === 0) return [];
   const L = T[locale];
   const out = [`## ${L.referenceTitle}`, "", L.referenceIntro, ""];
-  const encoder = new TextEncoder();
   let used = 0;
   let left = 0;
   for (const entry of blocks) {
     const html = referenceHtml(entry.block!.html);
-    const bytes = encoder.encode(html).length;
+    const bytes = utf8ByteLength(html);
     if (left > 0 || used + bytes > maxBytes) {
       left++;
       continue;
