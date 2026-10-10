@@ -21,6 +21,7 @@ import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
 import { formatUsd } from "@/lib/money";
 import { linkedScreen } from "@/lib/screen-layout";
+import { AiRunBar } from "./AiRunBar";
 import { opensAiMenu } from "./aiWayOut";
 import { BriefPanel } from "./BriefPanel";
 import { Canvas } from "./Canvas";
@@ -329,6 +330,7 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
       style={{ "--composer-h": height ? `${height}px` : `max(${MIN_HEIGHT}px, calc(100dvh - 11rem))` } as CSSProperties}
     >
       <DeckFonts />
+      <AiRunBar />
       <p role="status" className="sr-only">
         {status.text}
         {status.n % 2 ? "\u200b" : ""}

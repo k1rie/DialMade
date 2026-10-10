@@ -2,11 +2,12 @@
 
 import type { DesignDoc } from "@dialmade/doc";
 import { PageRenderer } from "@dialmade/sections";
-import { memo, useCallback, useMemo, type FormEvent, type MouseEvent } from "react";
+import { memo, useCallback, useMemo, useRef, type FormEvent, type MouseEvent } from "react";
 import { ThemeScope } from "@/components/ThemeScope";
 import type { PreviewMode } from "@/hooks/usePaletteFlow";
 import { compileScreenLayout, linkedScreen, scopedScreenCss, screenLinks } from "@/lib/screen-layout";
 import type { PageTarget } from "../../pageOps";
+import { AiBlocks, useAiBlocks } from "./AiBlocks";
 
 export type PagePreviewProps = {
   doc: DesignDoc;
@@ -28,6 +29,7 @@ const keepInApp = (event: MouseEvent<HTMLElement>) => {
   if (event.target instanceof Element && event.target.closest("a[href]")) event.preventDefault();
 };
 const noSubmit = (event: FormEvent<HTMLElement>) => event.preventDefault();
+const noSelect = () => {};
 
 /**
  * The user's page, themed by ThemeScope (with that page's dials). A screen renders with its layout CSS, scoped to
@@ -52,6 +54,9 @@ export const PagePreview = memo(function PagePreview({ doc, target, mode, select
     },
     [doc, playing],
   );
+  // «Diseño con IA»: active AI blocks paint in their own islands, the live generation marks the base cells.
+  const pageRef = useRef<HTMLDivElement | null>(null);
+  const ai = useAiBlocks({ doc, screen: screen ?? null, mode, editable: !playing, selectedId, onSelect: playing ? noSelect : onSelect, onNavigate });
 
   return (
     // No color interpolation here: on a full page it re-styles thousands of nodes per frame. The minis keep it.
@@ -64,16 +69,21 @@ export const PagePreview = memo(function PagePreview({ doc, target, mode, select
       className="min-h-full"
       {...(playing && { onClickCapture: keepInApp, onSubmitCapture: noSubmit })}
     >
-      <PageRenderer
-        doc={doc}
-        kind={target.kind}
-        page={target.page}
-        mode={mode}
-        interactive={!playing}
-        {...(playing ? { onNavigate } : { onSelect, ...(selectedId && { selectedId }) })}
-        {...(logoUrl && { logoUrl })}
-        {...(screen && layoutCss !== undefined && { layoutCss, linkHref, ...(links && { links }) })}
-      />
+      <div ref={pageRef} className="contents">
+        <PageRenderer
+          doc={doc}
+          kind={target.kind}
+          page={target.page}
+          mode={mode}
+          interactive={!playing}
+          {...(playing ? { onNavigate } : { onSelect, ...(selectedId && { selectedId }) })}
+          {...(logoUrl && { logoUrl })}
+          {...(screen && layoutCss !== undefined && { layoutCss, linkHref, ...(links && { links }) })}
+          {...(ai.replace && { replace: ai.replace })}
+          {...(ai.underlay && { underlay: ai.underlay })}
+        />
+      </div>
+      <AiBlocks rootRef={pageRef} marks={ai.marks} />
     </ThemeScope>
   );
 });
