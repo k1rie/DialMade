@@ -29,6 +29,8 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
   const def = skipped ? undefined : registry.get(element.type);
   const children =
     element.children.length > 0 ? element.children.map((child) => <ElementView key={child} id={child} scope={scope} />) : null;
+  const replaced = isRoot ? undefined : scope.replace?.get(id);
+  const underlay = isRoot ? undefined : scope.underlay?.get(id);
   const strings = sectionStrings(ctx.locale);
   const label = def ? def.label[ctx.locale] : element.type;
   const structural = isStructuralElement(def, element);
@@ -45,6 +47,17 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
     );
   }
 
+  if (replaced !== undefined) {
+    // «Diseño con IA»: the AI block paints this element; the frame (selection, layout placement) stays. Not inert:
+    // the island takes its own clicks and sends the selection back.
+    const frameLabel = def ? def.label[ctx.locale] : element.type;
+    return (
+      <SectionFrame id={id} type={element.type} label={frameLabel} ctx={ctx} container structural={structural} selected={scope.selectedId === id} attributes={{ ...attributes, "data-dl-ai": "" }}>
+        {replaced}
+      </SectionFrame>
+    );
+  }
+
   return (
     <SectionFrame
       id={id}
@@ -56,6 +69,7 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
       selected={scope.selectedId === id}
       {...(attributes && { attributes })}
     >
+      {underlay}
       {def ? (
         <SectionBoundary
           resetKey={element.props}

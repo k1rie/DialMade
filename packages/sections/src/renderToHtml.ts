@@ -33,6 +33,13 @@ export interface RenderStaticPageOptions {
   linkHref?: (screenId: string) => string | null;
   /** Layout mode: element id → the screen its primary action links to (the blocks' `linkTo`). */
   links?: Readonly<Record<string, string>>;
+  /**
+   * «Diseño con IA»: element id → static HTML painting it instead of its section (already sanitized and with its
+   * assets inlined by @dialmade/ai-render). Its CSS goes in `css`.
+   */
+  aiBlocks?: Readonly<Record<string, string>>;
+  /** «Diseño con IA»: container id → the class list of the surface painted under its children. */
+  aiSurfaces?: Readonly<Record<string, string>>;
 }
 
 const escapeHtml = (value: string) =>
@@ -105,6 +112,12 @@ export function renderStaticPage(
   });
   const page = options.page ?? doc.pages[kind] ?? buildDefaultPage(kind, content, undefined, { registry });
 
+  const replace = options.aiBlocks
+    ? new Map(Object.entries(options.aiBlocks).map(([id, html]) => [id, createElement("div", { "data-dl-ai-block": "", dangerouslySetInnerHTML: { __html: html } })]))
+    : undefined;
+  const underlay = options.aiSurfaces
+    ? new Map(Object.entries(options.aiSurfaces).map(([id, classes]) => [id, createElement("div", { "data-dl-ai-surface": "", "aria-hidden": "true", className: classes })]))
+    : undefined;
   const base: PageRendererProps & { page: Page } = {
     doc,
     kind,
@@ -116,6 +129,8 @@ export function renderStaticPage(
     ...(options.seed !== undefined && { seed: options.seed }),
     ...(options.linkHref && { linkHref: options.linkHref }),
     ...(options.links && { links: options.links }),
+    ...(replace && { replace }),
+    ...(underlay && { underlay }),
   };
   const exclude = failingElements(base, options.onSectionError);
   const body = renderToStaticMarkup(

@@ -27,6 +27,7 @@ import {
 } from "@dialmade/layout";
 import { PALETTE_STYLE_IDS, ROLE_KEYS, SCALE_STEPS, cssVarName, type PaletteStyleId } from "@dialmade/palette";
 import { z } from "zod";
+import { AiScreenRenderSchema, DocAiRenderSchema, MAX_AI_RENDER_BYTES, aiRenderBytes } from "./aiRender";
 import { looksLikeBinding, isBinding } from "./bindings";
 import {
   APP_NAV_IDS,
@@ -738,6 +739,8 @@ export const ScreenSchema = z
     page: PageShapeSchema,
     /** Navigation frame: an object for app screens (`nav: "none"` for none), `null` for landing screens. */
     shell: AppShellSchema.nullable(),
+    /** «Diseño con IA»: how each block LOOKS, by block id (./aiRender). Optional and additive. */
+    aiRender: AiScreenRenderSchema.optional(),
   })
   .superRefine((screen, ctx) => {
     addIssues(ctx, screenPageIssues(screen.page, screen.kind), ["page"]);
@@ -871,6 +874,7 @@ export function documentSizeIssues(input: unknown): z.core.$ZodIssue[] {
       }
     }
   }
+  if (aiRenderBytes(input) > MAX_AI_RENDER_BYTES) issues.push(custom(["aiRender"], `At most ${MAX_AI_RENDER_BYTES} bytes of AI blocks`));
   if (isPlainObject(screens)) {
     const keys = Object.keys(screens);
     if (keys.length > MAX_SCREENS) issues.push(custom(["screens"], `At most ${MAX_SCREENS} screens`));
@@ -936,6 +940,8 @@ export const DesignDocSchema = z
      * Never rendered, exported or sent to the AI.
      */
     screenStash: z.record(ElementIdSchema, ScreenSchema).optional(),
+    /** «Diseño con IA»: the document's art direction (./aiRender). Optional and additive. */
+    aiRender: DocAiRenderSchema.optional(),
   })
   .superRefine((doc, ctx) => {
     checkImports(doc.provenance.imports ?? [], ctx);

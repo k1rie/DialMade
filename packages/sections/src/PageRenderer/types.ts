@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Page } from "@dialmade/doc";
 import type { SectionRegistry } from "../registry";
 import type { ContentContext, RenderContext } from "../types";
@@ -14,4 +15,8 @@ export interface RenderScope {
   selectedId?: string;
   exclude?: ReadonlySet<string>;
   onSectionError?: (id: string, error: unknown) => void;
+  /** «Diseño con IA»: elements whose section is replaced by this content (an AI island, or static AI HTML). */
+  replace?: ReadonlyMap<string, ReactNode>;
+  /** «Diseño con IA»: a surface painted under a container's children (its `surfaceClasses`). */
+  underlay?: ReadonlyMap<string, ReactNode>;
 }

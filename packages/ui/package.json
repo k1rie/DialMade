@@ -17,6 +17,10 @@
       "types": "./src/lib/contract.ts",
       "default": "./src/lib/contract.ts"
     },
+    "./icons": {
+      "types": "./src/Icon/icons.ts",
+      "default": "./src/Icon/icons.ts"
+    },
     "./styles.css": "./src/styles.css",
     "./dialmade-ui.css": "./dist/dialmade-ui.css"
   },

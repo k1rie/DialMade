@@ -269,3 +269,33 @@ export { normalizeTokenColor, opaqueRoles, tokenColorCss } from "./color";
 export { toFigmaNumberVars, type FigmaNumberGroup, type FigmaNumberToken, type FigmaScope } from "./exporters/figma";
 export { toDesignMd, type DesignMdOptions } from "./exporters/designMd";
 export { PROMPT_TARGETS, toPromptPack, type PromptTarget } from "./exporters/promptPack";
+export {
+  AI_AXES,
+  AI_AXIS_NAMES,
+  AI_DIRECTION_CHIPS,
+  AI_GATE_CODES,
+  AI_RENDER_KINDS,
+  AI_RENDER_PATHS,
+  AiBlockSchema,
+  AiDirectionSchema,
+  AiGateWarningSchema,
+  AiProvenanceSchema,
+  AiScreenRenderSchema,
+  DocAiRenderSchema,
+  MAX_AI_BLOCK_BYTES,
+  MAX_AI_RENDER_BYTES,
+  MAX_AI_REQUEST_LENGTH,
+  aiRenderBytes,
+  type AiAxes,
+  type AiAxis,
+  type AiBlock,
+  type AiDirection,
+  type AiDirectionChip,
+  type AiGateCode,
+  type AiGateWarning,
+  type AiProvenance,
+  type AiRenderKind,
+  type AiRenderPath,
+  type AiScreenRender,
+  type DocAiRender,
+} from "./aiRender";

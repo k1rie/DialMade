@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type MouseEvent } from "react";
+import { useMemo, type MouseEvent, type ReactNode } from "react";
 import type { Locale, OutputKind } from "@dialmade/catalog";
 import type { DesignDoc, Page } from "@dialmade/doc";
 import { UiProvider } from "@dialmade/ui";
@@ -44,6 +44,10 @@ export interface PageRendererProps {
   onNavigate?: (screenId: string) => void;
   /** Layout mode: the page's `toCss` output, rendered in a `<style data-dl-layout>` inside the page. */
   layoutCss?: string;
+  /** «Diseño con IA»: element id → what paints it instead of its section (the frame stays). */
+  replace?: ReadonlyMap<string, ReactNode>;
+  /** «Diseño con IA»: element id → a surface painted under a container's children. */
+  underlay?: ReadonlyMap<string, ReactNode>;
 }
 
 const preventNavigation = (event: MouseEvent<HTMLDivElement>) => {
@@ -75,6 +79,8 @@ export function PageRenderer({
   links,
   onNavigate,
   layoutCss,
+  replace,
+  underlay,
 }: PageRendererProps) {
   const content = useMemo(
     () => contentContextFromDoc(doc, { ...(locale && { locale }), ...(logoUrl && { logoUrl }), ...(seed !== undefined && { seed }) }),
@@ -121,6 +127,8 @@ export function PageRenderer({
     ...(selectedId !== undefined && { selectedId }),
     ...(exclude && { exclude }),
     ...(onSectionError && { onSectionError }),
+    ...(replace && { replace }),
+    ...(underlay && { underlay }),
   };
 
   const root = page.elements[page.root];
