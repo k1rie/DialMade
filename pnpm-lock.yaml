@@ -72,6 +72,9 @@ importers:
       '@dialmade/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@dialmade/handoff':
+        specifier: workspace:*
+        version: link:../../packages/handoff
       '@dialmade/import':
         specifier: workspace:*
         version: link:../../packages/import
@@ -212,6 +215,36 @@ importers:
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@types/node@24.19.2)(jsdom@29.1.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.1))
+
+  packages/figma-plugin:
+    devDependencies:
+      '@dialmade/handoff':
+        specifier: workspace:*
+        version: link:../handoff
+      '@figma/plugin-typings':
+        specifier: 1.139.0
+        version: 1.139.0
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      esbuild:
+        specifier: 0.27.7
+        version: 0.27.7
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.1)
+      vitest:
+        specifier: 5.0.3
+        version: 5.0.3(@types/node@24.19.2)(jsdom@29.1.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.1))
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
 
   packages/handoff:
     dependencies:
@@ -819,6 +852,9 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@figma/plugin-typings@1.139.0':
+    resolution: {integrity: sha512-O1lUNRXpBsnODokqnIJW0AawVVrx4FUkm2ShDsLGsInWrxDYX0MIoy0yVKa+MXOy7Wfs3JE+utR+YTcxp6Yihw==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3995,6 +4031,8 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.16.0': {}
+
+  '@figma/plugin-typings@1.139.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

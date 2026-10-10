@@ -41,8 +41,10 @@ export type FlexLayout = {
   kind: "flex";
   direction: "row" | "column";
   gap?: Space;
-  /** Rows: children move to a new line when they do not fit (`gap` between lines too). */
+  /** Rows: children move to a new line when they do not fit (`gap` between lines too, unless `crossGap`). */
   wrap?: boolean;
+  /** Between wrapped lines, when it differs from `gap`. */
+  crossGap?: Space;
   /** Cross axis. Default `stretch` in columns and `start` in rows. */
   align?: Align;
   /** Main axis. Default `start`. */
@@ -146,6 +148,15 @@ export type FrameNode = BoxBase & {
   linkTo?: string;
   /** Accessible name of a box without visible text (an image, a chart). */
   label?: string;
+  /**
+   * The color mode of this box and its subtree, when it differs from the page's (a dark specimen on a light
+   * board): an explicit variable mode in Figma, the `dark` / `light` class in code.
+   */
+  mode?: "light" | "dark";
+  /** Set by the walker on a section's root box: its element type (`landing.hero`). The TSX export makes it a component. */
+  section?: string;
+  /** Set by the walker on the child elements it hands to a container section (`{children}` in the TSX export). */
+  slot?: boolean;
   children: DesignNode[];
 };
 
@@ -165,7 +176,8 @@ export type TextStyleId =
   | "button"
   | "button-sm"
   | "button-lg"
-  | "mono";
+  | "mono"
+  | "mono-caption";
 
 export type TextTag = "h1" | "h2" | "h3" | "h4" | "p" | "span" | "label" | "strong" | "small" | "th" | "td" | "code";
 
@@ -183,6 +195,10 @@ export type TextNode = {
   maxWidth?: number;
   tag?: TextTag;
   strike?: boolean;
+  /** Multiplies the style's font size (the kit's `calc(var(--dl-fs-body) * 1.125)`, a 1.6× display specimen). */
+  scale?: number;
+  /** CSS weight instead of the style's (a 500 nav link, a 300 specimen). */
+  weight?: number;
   offsetTop?: Space;
   place?: GridPlace;
 };

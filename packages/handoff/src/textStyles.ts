@@ -37,6 +37,7 @@ export const TEXT_STYLES: readonly TextStyleSpec[] = [
   { id: "button-sm", label: "Button small", family: "body", size: "caption", weight: "button", lineHeight: 1.2, tracking: 0 },
   { id: "button-lg", label: "Button large", family: "body", size: "body", weight: "button", lineHeight: 1.2, tracking: 0 },
   { id: "mono", label: "Mono", family: "mono", size: "small", weight: 400, lineHeight: 1.5, tracking: 0 },
+  { id: "mono-caption", label: "Mono caption", family: "mono", size: "caption", weight: 400, lineHeight: 1.45, tracking: 0 },
 ];
 
 export const textStyle = (id: TextStyleId): TextStyleSpec => TEXT_STYLES.find((spec) => spec.id === id) ?? TEXT_STYLES[5]!;

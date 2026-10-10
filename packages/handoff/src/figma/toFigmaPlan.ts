@@ -186,6 +186,10 @@ type Emit = {
   mode: Mode;
   effects: ReadonlySet<string>;
   pages: ReadonlySet<string>;
+  /** Text style → family, to collect the weights the text overrides need. */
+  families: ReadonlyMap<string, string>;
+  /** Family → every weight the plan uses. */
+  fonts: Map<string, Set<number>>;
 };
 
 /** What a parent gives a child: its id, the parent's direction and the room it has for a `fill` child. */
@@ -350,6 +354,11 @@ const placeOf = (node: DesignNode): GridPlace | undefined => node.place;
 
 function emitText(e: Emit, node: TextNode, slot: Slot): PlanNode {
   const h = horizontal(node.width, slot, true);
+  const spec = textStyle(node.style);
+  if (node.weight !== undefined) {
+    const family = e.families.get(spec.id);
+    if (family) e.fonts.set(family, (e.fonts.get(family) ?? new Set()).add(node.weight));
+  }
   const maxWidth = node.maxWidth;
   return {
     type: "TEXT",
@@ -363,10 +372,12 @@ function emitText(e: Emit, node: TextNode, slot: Slot): PlanNode {
     },
     ...(slot.at && { absolute: slot.at }),
     characters: node.text,
-    textStyle: textStyle(node.style).id,
+    textStyle: spec.id,
     fill: solid(e, node.color ?? "foreground", node.opacity),
     textAlign: node.align === "center" ? "CENTER" : node.align === "end" ? "RIGHT" : "LEFT",
     ...(node.strike && { strikethrough: true }),
+    ...(node.scale !== undefined && node.scale !== 1 && { fontSize: round(resolveTextStyle(spec, e.tokens).fontSize * node.scale) }),
+    ...(node.weight !== undefined && { fontWeight: node.weight }),
   };
 }
 
@@ -448,7 +459,8 @@ function emitShape(e: Emit, node: ShapeNode, slot: Slot): PlanNode {
 
 const PRIMARY = { start: "MIN", center: "CENTER", end: "MAX", between: "SPACE_BETWEEN" } as const;
 
-function emitFrame(e: Emit, node: FrameNode, slot: Slot): PlanFrame {
+function emitFrame(outer: Emit, node: FrameNode, slot: Slot): PlanFrame {
+  const e: Emit = node.mode && node.mode !== outer.mode ? { ...outer, mode: node.mode } : outer;
   const { sizing, width } = boxSizing(e, node, slot);
   const pad = padding(e, node.padding);
   const inner = width === null ? null : Math.max(0, width - pad.left.value - pad.right.value);
@@ -469,6 +481,8 @@ function emitFrame(e: Emit, node: FrameNode, slot: Slot): PlanFrame {
     ...(fx && { effectStyle: fx }),
     clipsContent: node.clip === true || (corner !== undefined && node.fill !== undefined && layout.kind !== "flex"),
     ...(node.linkTo && e.pages.has(node.linkTo) && { navigateTo: pageFrameId(node.linkTo) }),
+    ...(node.key && { key: node.key }),
+    ...(e !== outer && { mode: MODES[e.mode] }),
   };
 
   const flow = node.children.filter((child) => !(child.type === "frame" && child.absolute));
@@ -497,7 +511,9 @@ function emitFrame(e: Emit, node: FrameNode, slot: Slot): PlanFrame {
     const fixed = isRow
       ? flow.reduce((sum, child) => sum + (typeof (child as { width?: Size }).width === "number" ? ((child as { width: number }).width) : 0), 0)
       : 0;
-    const others = isRow ? flow.length - fills : 0;
+    const others = isRow
+      ? flow.filter((child) => child.type !== "icon" && typeof (child as { width?: Size }).width !== "number" && (child as { width?: Size }).width !== "fill").length
+      : 0;
     const share =
       inner === null ? null : isRow ? (fills > 0 ? Math.max(0, (inner - fixed - gap.value * (flow.length - 1)) / (fills + others * 0.5)) : inner) : inner;
     flow.forEach((child, i) => {
@@ -522,7 +538,7 @@ function emitFrame(e: Emit, node: FrameNode, slot: Slot): PlanFrame {
         mode: isRow ? "HORIZONTAL" : "VERTICAL",
         wrap: isRow && layout.wrap === true,
         itemSpacing: gap,
-        ...(isRow && layout.wrap && { counterAxisSpacing: gap }),
+        ...(isRow && layout.wrap && { counterAxisSpacing: layout.crossGap !== undefined ? space(e, layout.crossGap) : gap }),
         padding: pad,
         primaryAxisAlign: PRIMARY[layout.justify ?? "start"],
         counterAxisAlign: align === "center" ? "CENTER" : align === "end" ? "MAX" : align === "baseline" && isRow ? "BASELINE" : "MIN",
@@ -612,7 +628,7 @@ function emitFrame(e: Emit, node: FrameNode, slot: Slot): PlanFrame {
       layout: {
         mode: "VERTICAL",
         wrap: false,
-        itemSpacing: placed ? { value: 0 } : rowGap,
+        itemSpacing: placed ? (layout.rowGap !== undefined ? rowGap : { value: 0 }) : rowGap,
         padding: pad,
         primaryAxisAlign: "MIN",
         counterAxisAlign: "MIN",
@@ -682,16 +698,25 @@ export const pageFrameId = (pageId: string) => `page:${pageId}`;
 export function planFromTree(doc: DesignDoc, tree: DesignTree, snapshot: ThemeSnapshot): FigmaPlan {
   const tokens = tree.mode === "dark" ? snapshot.dark : snapshot.light;
   const effects = effectStyles(tokens);
+  const styles = textStyles(tokens);
+  const fonts = new Map<string, Set<number>>();
+  for (const style of styles) fonts.set(style.fontFamily, (fonts.get(style.fontFamily) ?? new Set()).add(style.fontWeight));
   const e: Emit = {
     snapshot,
     tokens,
     mode: tree.mode,
     effects: new Set(effects.map((style) => style.id)),
     pages: new Set(tree.pages.map((page) => page.id)),
+    families: new Map(styles.map((style) => [style.id, style.fontFamily])),
+    fonts,
   };
-  const styles = textStyles(tokens);
-  const fonts = new Map<string, Set<number>>();
-  for (const style of styles) fonts.set(style.fontFamily, (fonts.get(style.fontFamily) ?? new Set()).add(style.fontWeight));
+  const pages = tree.pages.map((page) => ({
+    id: page.id,
+    name: page.name,
+    kind: page.kind,
+    ...(page.route !== undefined && { route: page.route }),
+    frame: emitFrame(e, page.root, { id: pageFrameId(page.id), parent: "ROOT", room: page.width }),
+  }));
   return {
     format: FIGMA_PLAN_FORMAT,
     version: FIGMA_PLAN_VERSION,
@@ -702,13 +727,7 @@ export function planFromTree(doc: DesignDoc, tree: DesignTree, snapshot: ThemeSn
     textStyles: styles,
     effectStyles: effects,
     fonts: [...fonts].map(([family, weights]) => ({ family, weights: [...weights].sort((a, b) => a - b) })),
-    pages: tree.pages.map((page) => ({
-      id: page.id,
-      name: page.name,
-      kind: page.kind,
-      ...(page.route !== undefined && { route: page.route }),
-      frame: emitFrame(e, page.root, { id: pageFrameId(page.id), parent: "ROOT", room: page.width }),
-    })),
+    pages,
   };
 }
 

@@ -5,18 +5,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/figma-plugin.mjs && next dev",
+    "build": "node scripts/figma-plugin.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "promo:capture": "node promo/capture.ts"
+    "promo:capture": "node promo/capture.ts",
+    "figma-plugin": "node scripts/figma-plugin.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.128.0",
     "@dialmade/catalog": "workspace:*",
     "@dialmade/doc": "workspace:*",
+    "@dialmade/handoff": "workspace:*",
     "@dialmade/import": "workspace:*",
     "@dialmade/layout": "workspace:*",
     "@dialmade/palette": "workspace:*",

@@ -24,11 +24,12 @@ export function frame(input: FrameInput): FrameNode {
 }
 
 type StackOptions = Omit<FrameInput, "layout" | "children"> &
-  Partial<Pick<FlexLayout, "gap" | "align" | "justify" | "wrap">>;
+  Partial<Pick<FlexLayout, "gap" | "align" | "justify" | "wrap" | "crossGap">>;
 
 function flex(direction: "row" | "column", options: StackOptions, children: FrameInput["children"]): FrameNode {
-  const { gap, align, justify, wrap, ...rest } = options;
+  const { gap, align, justify, wrap, crossGap, ...rest } = options;
   const layout: FlexLayout = { kind: "flex", direction };
+  if (crossGap !== undefined) layout.crossGap = crossGap;
   if (gap !== undefined) layout.gap = gap;
   if (align) layout.align = align;
   if (justify) layout.justify = justify;

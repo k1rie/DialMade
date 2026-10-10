@@ -14,6 +14,10 @@
     "./figma-plan": {
       "types": "./src/figma/schema.ts",
       "default": "./src/figma/schema.ts"
+    },
+    "./testing": {
+      "types": "./src/testing/fixtures.ts",
+      "default": "./src/testing/fixtures.ts"
     }
   },
   "scripts": {

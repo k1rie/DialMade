@@ -140,6 +140,9 @@ export type PlanText = {
   fill: PlanPaint;
   textAlign: "LEFT" | "CENTER" | "RIGHT";
   strikethrough?: boolean;
+  /** Overrides of the text style on this node. */
+  fontSize?: number;
+  fontWeight?: number;
 };
 
 export type PlanShape = {
@@ -184,6 +187,10 @@ export type PlanFrame = {
   clipsContent: boolean;
   /** Id of a top-level frame of the plan this frame opens on click (prototype). */
   navigateTo?: string;
+  /** Element id of the page (`hero-1`, a block id): the plugin keeps it as plugin data. */
+  key?: string;
+  /** Explicit mode of the color collection for this frame (`Dark` inside a light page). */
+  mode?: string;
   children: PlanNode[];
 };
 
@@ -197,6 +204,8 @@ export const TextNodeSchema: z.ZodType<PlanText> = z.strictObject({
   fill: PaintSchema,
   textAlign: z.enum(["LEFT", "CENTER", "RIGHT"]),
   strikethrough: z.boolean().optional(),
+  fontSize: z.number().positive().optional(),
+  fontWeight: z.number().int().min(1).max(1000).optional(),
 });
 
 export const ShapeNodeSchema: z.ZodType<PlanShape> = z.strictObject({
@@ -225,6 +234,8 @@ export const FrameNodeSchema: z.ZodType<PlanFrame> = z.strictObject({
   effectStyle: z.string().optional(),
   clipsContent: z.boolean(),
   navigateTo: z.string().optional(),
+  key: z.string().optional(),
+  mode: z.string().optional(),
   get children() {
     return z.array(NodeSchema);
   },

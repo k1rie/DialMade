@@ -101,3 +101,19 @@ export const PromptGlyph = (p: IconProps) => (
     <path d="m5 6.5 2 1.5-2 1.5M8.5 10H11" />
   </Icon>
 );
+
+/** Code (TSX): components (three blocks and a plus). */
+export const ComponentsGlyph = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1.2" />
+    <rect x="9" y="2.5" width="4.5" height="4.5" rx="1.2" />
+    <rect x="2.5" y="9" width="4.5" height="4.5" rx="1.2" />
+    <path d="M11.25 9v4.5M9 11.25h4.5" />
+  </Icon>
+);
+
+export const ChevronIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m4.5 6.5 3.5 3.5 3.5-3.5" />
+  </Icon>
+);

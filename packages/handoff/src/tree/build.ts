@@ -105,6 +105,7 @@ function buildElement(walk: Walk, id: string, children: DesignNode[]): FrameNode
   if (!element || walk.hidden.has(id)) return null;
   const def = sectionRegistry.get(element.type);
   const label = def ? def.label[walk.ctx.locale] : element.type;
+  const slotted = children.map((child) => (child.type === "frame" ? { ...child, slot: true } : child));
   let node: FrameNode;
   try {
     if (!def) throw new Error(`Unknown section ${element.type}`);
@@ -114,7 +115,7 @@ function buildElement(walk: Walk, id: string, children: DesignNode[]): FrameNode
       type: element.type,
       props: resolved.props,
       variant: resolved.variant,
-      children,
+      children: slotted,
       ctx: walk.ctx,
       build: walk.build,
     };
@@ -122,9 +123,9 @@ function buildElement(walk: Walk, id: string, children: DesignNode[]): FrameNode
     node = builder(input);
   } catch (error) {
     walk.options.onSectionError?.(id, element.type, error);
-    node = genericSection({ id, type: element.type, props: element.props, variant: "", children, ctx: walk.ctx, build: walk.build });
+    node = genericSection({ id, type: element.type, props: element.props, variant: "", children: slotted, ctx: walk.ctx, build: walk.build });
   }
-  return { ...node, key: id, name: node.name && node.name !== "Section" ? node.name : label };
+  return { ...node, key: id, section: element.type, name: node.name && node.name !== "Section" ? node.name : label };
 }
 
 /** Children of an element in order, built recursively (legacy pages and the style guide). */

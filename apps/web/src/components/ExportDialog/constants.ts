@@ -1,13 +1,13 @@
 import type { OutputKind } from "@dialmade/catalog";
 import type { CSSProperties } from "react";
 
-export type DestinationId = "code" | "figma" | "claudeDesign" | "framer" | "ai";
+export type DestinationId = "code" | "tsx" | "figma" | "claudeDesign" | "framer" | "ai";
 
 /** Best fit first, per page focus (output-type-step.md §4, «Handoff»). */
 export const DESTINATION_ORDER: Readonly<Record<OutputKind, readonly DestinationId[]>> = {
-  brand: ["claudeDesign", "figma", "code", "ai", "framer"],
-  landing: ["framer", "code", "claudeDesign", "figma", "ai"],
-  app: ["code", "claudeDesign", "figma", "ai", "framer"],
+  brand: ["claudeDesign", "figma", "code", "tsx", "ai", "framer"],
+  landing: ["framer", "code", "tsx", "figma", "claudeDesign", "ai"],
+  app: ["code", "tsx", "figma", "claudeDesign", "ai", "framer"],
 };
 
 /** Prompt packs of the «Tu IA» card. */

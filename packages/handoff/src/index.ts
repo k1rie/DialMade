@@ -15,3 +15,6 @@ export {
   type PlanNode,
   type PlanPage,
 } from "./figma/schema";
+export { pascal, filesFromTree, toTsx, type TsxFiles, type TsxOptions } from "./tsx/toTsx";
+export { tsxCss } from "./tsx/css";
+export { planPreviewHtml } from "./figma/preview";
