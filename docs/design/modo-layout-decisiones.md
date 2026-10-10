@@ -9,7 +9,7 @@ Lo que la documentación (`modo-layout.md`, spec, crítica y handoff) no definí
 1. **`apps/web/package.json` y `next.config.ts`.** El handoff no los lista, pero sin ellos la app no puede importar `@dialmade/layout`. Añadí una línea en cada uno: la dependencia `workspace:*` y la entrada en `transpilePackages`. En la Fase B, el conflicto con `main` es trivial y `pnpm-lock.yaml` se regenera igual.
 2. **Sin dependencias nuevas.** Los tests de propiedades usan un PRNG con semilla propio (`packages/layout/src/testing/random.ts`) en lugar de `fast-check`, para tocar el lockfile lo mínimo.
 3. **`crypto.getRandomValues` sin tipos DOM.** El paquete compila con `lib: ES2023`, como `@dialmade/palette`. Por eso `ids.ts` declara lo mínimo de `crypto` que usa y acepta una fuente de aleatoriedad inyectable para los tests.
-4. **`.claude/launch.json` del worktree** apunta al puerto 3500, como pide el handoff. Es un archivo local, ignorado por git.
+4. **`.claude/launch.json` del worktree** apunta al puerto 3500, como pide el handoff. El archivo está en git (con el puerto 3200), así que el cambio queda solo en local y no entra en ningún commit.
 5. **Documentos ajenos.** No hago commit de `INFORME.md` ni de `referencias-mobbin.md`, ni de los `modo-layout-*` que ya estaban sin seguimiento en el worktree. Solo de los documentos nuevos de esta fase.
 6. **Tests de UI.** `apps/web` no tiene jsdom ni Testing Library, y añadirlos tocaría `package.json` y el lockfile. Por eso solo llevan tests los módulos puros (store, geometría, búsqueda), y la UI se verifica en el navegador.
 
