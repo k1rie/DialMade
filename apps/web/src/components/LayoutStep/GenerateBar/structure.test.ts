@@ -27,7 +27,7 @@ describe("GenerateBar folder structure", () => {
 
   it("finds the bar and its subcomponents", () => {
     const names = files.map((file) => basename(file, ".tsx"));
-    for (const name of ["GenerateBar", "GenerateReport", "ReportBody", "ViewPanel", "WarningCount", "WarningList", "WarningRow", "AiCopyTrigger", "ConsentSwitch"]) {
+    for (const name of ["GenerateBar", "GenerateReport", "ReportBody", "ViewPanel", "WarningCount", "WarningList", "WarningRow", "AiCopyTrigger", "AiDirectionChips", "AiRenderCost", "AiScreensPicker", "CopyDetails", "DesignDetails"]) {
       expect(names).toContain(name);
     }
   });

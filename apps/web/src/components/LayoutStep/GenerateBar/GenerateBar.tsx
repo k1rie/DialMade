@@ -2,7 +2,7 @@
 
 import type { LayoutFix, ScreenId } from "@dialmade/layout";
 import { motion } from "motion/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Button } from "@/components/ui/Button";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -31,6 +31,7 @@ import { AiCopyControl } from "./AiCopyControl";
 import { countStats, ctaHint, ctaState, replaceWithTemplateSet } from "./barState";
 import { GenerateReport } from "./GenerateReport";
 import { ToolPicker } from "./ToolPicker";
+import { useAiRenderPlan } from "./useAiRenderPlan";
 import { WarningsMenu } from "./WarningsMenu";
 import { warningGroups } from "./warnings";
 
@@ -50,10 +51,18 @@ export type GenerateBarProps = { className?: string };
  */
 export function GenerateBar({ className }: GenerateBarProps) {
   const t = useDictionary(layout);
-  const aiT = useDictionary(aiText).layoutCopy;
+  const aiTexts = useDictionary(aiText);
+  const aiT = aiTexts.layoutCopy;
+  const renderT = aiTexts.aiRender;
   const announce = useDndAnnounce({ politeness: "polite" });
   const { narrow, onGenerateIntent, generate, doc } = useLayoutEnv();
-  const { supported: aiSupported, enabled: aiOn } = useGenerateAi();
+  const { supported: aiSupported, enabled: aiOn, setEnabled: setAiCopy } = useGenerateAi();
+  // «IA» control (Sin IA · Textos · Diseño): its mode survives the step; «Textos» drives the flow's copy switch.
+  const plan = useAiRenderPlan();
+  const designMode = plan.mode === "design";
+  useEffect(() => {
+    setAiCopy(plan.mode === "copy");
+  }, [plan.mode, setAiCopy]);
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
   const screens = useScreens();
@@ -97,9 +106,14 @@ export function GenerateBar({ className }: GenerateBarProps) {
       if (created.length > 0) announce(t.generate.templateApplied(t.sets[cta.set].name));
       return;
     }
+    // «Generar con IA» (spec §5.1): the deterministic «Generar» first, then the design session starts right after
+    // the write and keeps streaming while the flow moves to «Ajustar» (the generation store survives the step).
+    const withDesign = designMode && plan.ready;
     // Refused by the flow: its own message (a toast with the way out) says why. A moment (the reveal, the AI
     // copy) says the rest. Only the standalone step, without a moment, opens the report.
-    if (generate() !== "done") return;
+    const outcome = generate(withDesign ? { ai: null } : undefined);
+    if (withDesign && (outcome === "revealing" || outcome === "done")) plan.start();
+    if (outcome !== "done") return;
     const result = store.getState().generated;
     if (!result) return;
     const totals = countStats(result.screens);
@@ -107,16 +121,36 @@ export function GenerateBar({ className }: GenerateBarProps) {
     setReportOpen(true);
   };
 
+  const designCta = designMode && plan.ready && cta.kind !== "template";
   const ctaLabel =
     cta.kind === "template"
       ? t.generate.useTemplate(t.sets[cta.set].name)
-      : cta.kind === "generate"
+      : designCta
+        ? renderT.cta
+        : cta.kind === "generate"
         ? t.generate.button
         : cta.kind === "regenerate"
           ? t.generate.regenerate(cta.count)
           : t.generate.again;
   const hint = ctaHint(cta, { aiOn, pending });
-  const ctaHintText = hint === "empty" ? t.generate.emptyHint : hint === "ai" ? aiT.ctaHint : hint === "upToDate" ? t.generate.upToDateHint : t.generate.noAi;
+  // Before any call, the cost and the uses («≈ $0.013 · 1 uso de 5 · 3 pantallas · ≈ 30 s»), or why there is no AI.
+  const designHint = designMode
+    ? plan.blocked
+      ? aiT.blocked[plan.blocked]
+      : plan.cost
+        ? `${renderT.cost.line(plan.cost.cost, plan.cost.left, plan.cost.total, plan.cost.screens, plan.cost.seconds)}. ${renderT.ctaHint}`
+        : renderT.ctaHint
+    : null;
+  const ctaHintText =
+    cta.kind !== "template" && designHint
+      ? designHint
+      : hint === "empty"
+        ? t.generate.emptyHint
+        : hint === "ai"
+          ? aiT.ctaHint
+          : hint === "upToDate"
+            ? t.generate.upToDateHint
+            : t.generate.noAi;
   // «Usar plantilla» is not a Generar: no preload intent.
   const intent = cta.kind === "template" ? undefined : onGenerateIntent;
 
@@ -142,7 +176,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
           <WarningsMenu groups={groups} count={stats.warnings} activeScreenId={activeScreenId} onFix={fix} />
         </div>
 
-        {aiSupported && cta.kind !== "template" && <AiCopyControl onIntent={intent} />}
+        {aiSupported && cta.kind !== "template" && <AiCopyControl plan={plan} onIntent={intent} />}
 
         <Tooltip content={ctaHintText} side="top">
           <Button

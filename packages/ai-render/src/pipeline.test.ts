@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { acmeDoc, screensDoc } from "../../doc/src/testing/fixtures";
 import { themeColorsFromVars } from "./contrast";
 import { inlineAssets } from "./export";
-import { blockBasis, processBlock } from "./pipeline";
+import { blockBasis, processBlock, retargetBlock } from "./pipeline";
 import { draftTexts, screenInput } from "./input";
 import type { RenderBlockInput } from "./prompt";
 
@@ -39,6 +39,39 @@ describe("processBlock", () => {
     expect(blockBasis({ ...block, cols: 6 }, "es", "d1")).not.toBe(a);
     expect(blockBasis(block, "en", "d1")).not.toBe(a);
     expect(blockBasis(block, "es", "d2")).not.toBe(a);
+  });
+});
+
+describe("retargetBlock (the shared kit, spec §4.3)", () => {
+  const nav: RenderBlockInput = { id: "b-nav1", type: "navbar", label: "Nav", cols: 12, heightPx: 64, draft: [] };
+  const raw =
+    '<nav data-block-id="b-nav1" class="flex gap-4 p-4"><a href="#screen:s-a" class="text-foreground">A</a><a href="#screen:s-b" aria-current="page">B</a>' +
+    '<label for="q">Buscar</label><input id="q" type="search" aria-describedby="q-hint"><span id="q-hint">Pulsa /</span></nav>';
+  const source = processBlock(raw, { block: nav, screenIds: ["s-a", "s-b"], theme });
+
+  it("moves the root to the new block, prefixes the ids once and marks the link to its own screen as current", () => {
+    expect(source.ok).toBe(true);
+    if (!source.ok) return;
+    expect(source.html).toContain('id="ai-b-nav1-q"');
+    const retargeted = retargetBlock(source.html, "b-nav1", "b-nav2", "s-a");
+    const clone = processBlock(retargeted, { block: { ...nav, id: "b-nav2" }, screenIds: ["s-a", "s-b"], theme });
+    expect(clone.ok).toBe(true);
+    if (!clone.ok) return;
+    expect(clone.html).toMatch(/^<nav[^>]* data-block-id="b-nav2"/);
+    expect(clone.html).not.toContain("b-nav1");
+    expect(clone.html).toContain('id="ai-b-nav2-q"');
+    expect(clone.html).toContain('for="ai-b-nav2-q"');
+    expect(clone.html).toContain('aria-describedby="ai-b-nav2-q-hint"');
+    // Exactly one current link: the one to the clone's own screen.
+    expect(clone.html.match(/aria-current="page"/g)).toHaveLength(1);
+    expect(clone.html).toMatch(/<a [^>]*href="#screen:s-a"[^>]*aria-current="page"/);
+  });
+
+  it("the source itself gets its own screen's link as current", () => {
+    if (!source.ok) return;
+    const own = retargetBlock(source.html, "b-nav1", "b-nav1", "s-b");
+    expect(own).toMatch(/<a [^>]*href="#screen:s-b"[^>]*aria-current="page"/);
+    expect(own.match(/aria-current/g)).toHaveLength(1);
   });
 });
 
