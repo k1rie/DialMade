@@ -35,6 +35,11 @@ export type LibraryBlock = {
   /** One line: WHAT makes the pattern work, in design terms (it travels in the prompt). */
   pattern: string;
   fits: LibraryFits;
+  /**
+   * Reviewed and kept by the person who owns the taste of the library. An approved entry outranks drafts of the same
+   * type when the art direction fits about equally; drafts are still used when a type has nothing approved.
+   */
+  approved?: true;
   /** Surfaces: `landing` blocks breathe, `app` blocks are dense. */
   surface: "landing" | "app";
   /** Sample HTML with neutral, fictional copy. The root's `data-block-id` is rewritten to the target block's id. */

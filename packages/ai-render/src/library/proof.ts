@@ -4,6 +4,7 @@ import type { LibraryBlock } from "./types";
 export const PROOF: LibraryBlock[] = [
   {
     id: "testimonials-pull-quote",
+    approved: true,
     type: "testimonials",
     surface: "landing",
     pattern:
@@ -28,6 +29,7 @@ export const PROOF: LibraryBlock[] = [
   },
   {
     id: "testimonials-tinted-trio",
+    approved: true,
     type: "testimonials",
     surface: "landing",
     pattern:
@@ -55,6 +57,7 @@ export const PROOF: LibraryBlock[] = [
   },
   {
     id: "testimonials-score-and-quotes",
+    approved: true,
     type: "testimonials",
     surface: "landing",
     pattern:

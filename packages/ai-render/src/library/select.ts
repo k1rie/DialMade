@@ -8,6 +8,9 @@ import type { LibraryBlock } from "./types";
 /** `composition` decides most of what a block looks like; the rest refine. */
 const WEIGHTS: { [K in keyof AiAxes]: number } = { composition: 3, typeVoice: 2, decoration: 2, imagery: 2, colorStrategy: 1, rhythm: 1 };
 
+/** An approved entry is worth a bit more than one composition-axis match (3 × 1000 would outweigh it). */
+export const APPROVED_BONUS = 2500;
+
 export function fitScore(entry: LibraryBlock, axes: AiAxes): number {
   let score = 0;
   for (const axis of Object.keys(WEIGHTS) as (keyof AiAxes)[]) {
@@ -34,7 +37,11 @@ export function selectReferences(library: readonly LibraryBlock[], type: string,
     .map((entry) => ({
       entry,
       // Same score → seeded order; a reference another block of the screen already got is nudged down.
-      score: fitScore(entry, axes) * 1000 - (options.used?.has(entry.id) ? 500 : 0) + (hash32(`${options.seed}:${blockId}:${entry.id}`) % 100),
+      score:
+        fitScore(entry, axes) * 1000 +
+        (entry.approved ? APPROVED_BONUS : 0) -
+        (options.used?.has(entry.id) ? 500 : 0) +
+        (hash32(`${options.seed}:${blockId}:${entry.id}`) % 100),
     }))
     .sort((a, b) => b.score - a.score);
   const picked = ranked.slice(0, count).map((item) => item.entry);

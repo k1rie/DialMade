@@ -5,6 +5,7 @@ import type { LibraryBlock } from "./types";
 export const HEROES: LibraryBlock[] = [
   {
     id: "hero-product-window",
+    approved: true,
     type: "hero",
     surface: "landing",
     pattern:
@@ -52,6 +53,7 @@ export const HEROES: LibraryBlock[] = [
   },
   {
     id: "hero-split-metrics",
+    approved: true,
     type: "hero",
     surface: "landing",
     pattern:
@@ -97,6 +99,7 @@ export const HEROES: LibraryBlock[] = [
   },
   {
     id: "hero-centered-highlight",
+    approved: true,
     type: "hero",
     surface: "landing",
     pattern:
@@ -123,6 +126,7 @@ export const HEROES: LibraryBlock[] = [
   },
   {
     id: "hero-editorial-type",
+    approved: true,
     type: "hero",
     surface: "landing",
     pattern:
@@ -148,6 +152,7 @@ export const HEROES: LibraryBlock[] = [
   },
   {
     id: "hero-framed-media",
+    approved: true,
     type: "hero",
     surface: "landing",
     pattern:

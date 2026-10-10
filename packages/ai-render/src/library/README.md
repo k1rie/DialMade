@@ -29,6 +29,14 @@ inventar la composición desde cero: es lo que sube el piso del resultado (`docs
   de la marca;
 - una referencia ya usada por otro bloque de la pantalla baja de puntuación.
 
+## Aprobadas y borradores
+
+`approved: true` marca lo que el dueño del gusto revisó y quiere conservar. Al elegir, una aprobada suma
+`APPROVED_BONUS` (≈ un eje de composición): gana a un borrador cuando la dirección encaja parecido, pero no a una que
+encaje claramente mejor. Los tipos sin ninguna aprobada siguen usando borradores.
+
+Aprobadas el 2026-10-10: los 5 héroes, los 3 testimonios y los 3 pricing.
+
 ## Cómo se ve
 
 ```bash

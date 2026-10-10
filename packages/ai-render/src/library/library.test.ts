@@ -93,6 +93,17 @@ describe("selecting references", () => {
     expect(top[0]!.id).toBe("hero-editorial-type");
   });
 
+  it("an approved entry outranks a draft of the same type when the direction fits about equally", () => {
+    const draft = { ...LIBRARY.find((entry) => entry.id === "features-hairline-index")!, id: "draft-a" };
+    const kept = { ...draft, id: "kept-a", approved: true as const };
+    const picked = selectReferences([draft, kept], "features", "landing", axes, "b-1", { seed: 1, count: 1 });
+    expect(picked[0]!.id).toBe("kept-a");
+    // A clearly better fit still wins over an approved entry that does not fit at all.
+    const misfit = { ...kept, id: "kept-misfit", fits: {} };
+    const fit = { ...draft, id: "draft-fit", fits: { composition: [axes.composition], typeVoice: [axes.typeVoice], decoration: [axes.decoration] } };
+    expect(selectReferences([misfit, fit], "features", "landing", axes, "b-1", { seed: 1, count: 1 })[0]!.id).toBe("draft-fit");
+  });
+
   it("every axis value used by an entry exists", () => {
     for (const entry of LIBRARY) {
       for (const [axis, values] of Object.entries(entry.fits)) {

@@ -35,6 +35,7 @@ export const CONVERSION: LibraryBlock[] = [
   },
   {
     id: "pricing-highlight-checklist",
+    approved: true,
     type: "pricing",
     surface: "landing",
     pattern:
@@ -75,6 +76,7 @@ export const CONVERSION: LibraryBlock[] = [
   },
   {
     id: "pricing-inverted-pair",
+    approved: true,
     type: "pricing",
     surface: "landing",
     pattern:
@@ -105,6 +107,7 @@ export const CONVERSION: LibraryBlock[] = [
   },
   {
     id: "pricing-comparison-table",
+    approved: true,
     type: "pricing",
     surface: "landing",
     pattern:
