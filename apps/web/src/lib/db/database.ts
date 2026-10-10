@@ -21,6 +21,14 @@ export type DatabaseConfig = {
   max: number;
 };
 
+const logged = new Set<string>();
+/** Configuration problems are logged once per process (the layout reads the config on every render). */
+const logOnce = (message: string) => {
+  if (logged.has(message)) return;
+  logged.add(message);
+  console.error(message);
+};
+
 const DEFAULT_POOL_MAX = 5;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 const SERVERLESS_POOL_MAX = 2;
@@ -33,11 +41,11 @@ export function readDatabaseConfig(env: Env = process.env): DatabaseConfig | nul
   try {
     url = new URL(raw);
   } catch {
-    console.error("[db] DATABASE_URL is not a URL");
+    logOnce("[db] DATABASE_URL is not a URL");
     return null;
   }
   if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
-    console.error("[db] DATABASE_URL must be a postgres:// connection string (Supabase → Connect → pooler), not the project URL");
+    logOnce("[db] DATABASE_URL must be a postgres:// connection string (Supabase → Connect → pooler), not the project URL");
     return null;
   }
   const production = env.NODE_ENV === "production";
@@ -48,7 +56,7 @@ export function readDatabaseConfig(env: Env = process.env): DatabaseConfig | nul
   else if (local) tls = { mode: "off" };
   else if (!production || env.DATABASE_SSL?.trim() === "no-verify") tls = { mode: "no-verify" };
   else {
-    console.error("[db] production needs DATABASE_SSL_CA (Supabase: Database settings → SSL) or DATABASE_SSL=no-verify");
+    logOnce("[db] production needs DATABASE_SSL_CA (Supabase: Database settings → SSL) or DATABASE_SSL=no-verify");
     return null;
   }
   // pg lets `sslmode` in the URL override the `ssl` option: the option decides.
