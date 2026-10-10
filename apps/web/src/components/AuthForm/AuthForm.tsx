@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useIsClient } from "@/hooks/useIsClient";
 import { useDictionary, useI18n } from "@/i18n";
 import { authText } from "@/i18n/auth";
+import { legalText } from "@/i18n/legal";
 import type { AuthAvailability } from "@/lib/auth/availability";
 import { safeCallbackPath } from "@/lib/auth/callback";
 import { authClient } from "@/lib/auth/client";
@@ -51,6 +52,7 @@ export function AuthForm({
   className,
 }: AuthFormProps) {
   const t = useDictionary(authText).login;
+  const legal = useDictionary(legalText).links;
   const { locale } = useI18n();
   const emailId = useId();
   const errorId = useId();
@@ -244,7 +246,16 @@ export function AuthForm({
       </p>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-caption text-subtle">
-        <span>{t.noPasswords}</span>
+        <span>
+          {t.noPasswords}{" "}
+          <a href="/privacy" className="underline-offset-4 hover:text-fg hover:underline">
+            {legal.privacy}
+          </a>
+          {" · "}
+          <a href="/terms" className="underline-offset-4 hover:text-fg hover:underline">
+            {legal.terms}
+          </a>
+        </span>
         {onContinueWithout && (
           <button type="button" onClick={onContinueWithout} className="rounded-chip text-caption text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:underline">
             {t.continueWithout}
