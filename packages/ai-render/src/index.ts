@@ -38,6 +38,7 @@ export {
   directionMessage,
   directionSchema,
   jsonData,
+  manualBlockPrompt,
   manualPrompt,
   screenMessage,
   type BlockActionInput,

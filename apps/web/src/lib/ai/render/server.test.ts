@@ -171,6 +171,46 @@ describe("POST /api/ai/render (screen, SSE)", () => {
   });
 });
 
+describe("malformed answers (screen)", () => {
+  const run = async (text: string, final?: ReturnType<typeof message>) => {
+    const { client } = streamingClient(text, final);
+    const session = await open(1, client);
+    const result = await renderScreen({ task: "screen", sessionId: session.sessionId, brand, direction, screen }, { caller, config, ledger, now: NOW, client });
+    if (!result.ok) throw new Error("expected a stream");
+    return events(result.body);
+  };
+
+  it("the first event says the response began (the client then starts the other screens: cache priming)", async () => {
+    const all = await run(HTML);
+    expect(all[0]).toEqual({ type: "progress", received: 0 });
+  });
+
+  it("prose, fences, a root without its end tag and a repeated root are forwarded as roots; the client's gates decide", async () => {
+    const text = 'Claro:\n```html\n<section data-block-id="b-hero"><h1>Hola</h1></section>\n<section data-block-id="b-hero"><h1>Otra</h1></section>\n<section data-block-id="b-cta"><p>sin cerrar\n```';
+    const all = await run(text);
+    expect(all.filter((e) => e.type === "block").map((e) => [(e as { blockId: string }).blockId, (e as { forced: boolean }).forced])).toEqual([
+      ["b-hero", false],
+      ["b-hero", false],
+      ["b-cta", true],
+    ]);
+    expect(all.at(-1)).toMatchObject({ type: "done", session: { screensUsed: 1 } });
+  });
+
+  it("an answer over 120 KB is cut, settled at its worst case and the screen is given back", async () => {
+    const all = await run(`<section data-block-id="b-hero">${"<p>x</p>".repeat(16_000)}</section>`);
+    expect(all.find((e) => e.type === "error")).toMatchObject({ error: { code: "invalid-response" } });
+    expect(all.at(-1)).toMatchObject({ type: "done", session: { screensUsed: 0 } });
+    expect((await usage()).spentUsd).toBeGreaterThan(0);
+    expect((await usage()).reservedUsd).toBe(0);
+  });
+
+  it("a refusal without blocks is `refused`, billed, and the screen is given back", async () => {
+    const all = await run("No puedo.", message({ model: "claude-haiku-5-5", stop_reason: "refusal", output: "No puedo." }));
+    expect(all.find((e) => e.type === "error")).toMatchObject({ error: { code: "refused" } });
+    expect(all.at(-1)).toMatchObject({ session: { screensUsed: 0 } });
+  });
+});
+
 describe("direction and block actions", () => {
   it("the direction is drawn by the server from the seed and validated against its candidates", async () => {
     const { client, create } = streamingClient(HTML);
