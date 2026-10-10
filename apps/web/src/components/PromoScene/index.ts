@@ -1,0 +1,1 @@
+export { PromoScene } from "./PromoScene";
