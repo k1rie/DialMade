@@ -125,6 +125,14 @@ describe("withGeneratedScreens", () => {
     }
   });
 
+  it("writes «Describe tu producto» to provenance.layoutBrief in the same write, and keeps it when none is given", () => {
+    const brief = { description: "app de reservas para barberías", source: "ai" as const, variant: "Agenda primero", rationale: "La agenda manda." };
+    const doc = ok(withGeneratedScreens(freshDoc(), landingDraft(), { layoutBrief: brief }));
+    expect(doc.provenance.layoutBrief).toEqual(brief);
+    const again = ok(withGeneratedScreens(doc, landingDraft()));
+    expect(again.provenance.layoutBrief).toEqual(brief);
+  });
+
   it("converts a legacy document: landing and app pages go, the focus follows the first screen", () => {
     const legacy = addPage(freshDoc(), "landing", buildDefaultPage("landing", contentContextFromDoc(freshDoc())));
     const doc = ok(withGeneratedScreens(legacy, appDraft()));
