@@ -40,4 +40,10 @@ describe("landing.hero", () => {
     expect(container.querySelector(".dl-landing-hero__eyebrow")).toBeNull();
     expect(container.querySelector('[data-dl-prop="secondaryCta"]')).toBeNull();
   });
+
+  it("un solo color de acción: el botón principal usa primary, y cta solo con énfasis «bold»", () => {
+    const variantOf = (container: HTMLElement) => container.querySelector('[data-dl-prop="primaryCta"]')?.closest("a")?.getAttribute("data-variant");
+    expect(variantOf(renderSection(heroSection, { locale: "es" }).container)).toBe("primary");
+    expect(variantOf(renderSection(heroSection, { locale: "es", props: { emphasis: "bold" } }).container)).toBe("cta");
+  });
 });

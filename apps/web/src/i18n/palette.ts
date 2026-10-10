@@ -97,6 +97,8 @@ export const palette = defineDictionary({
       light: "Claro",
       dark: "Oscuro",
       loading: "Cargando la vista previa…",
+      sketch: "Esquema con tus colores. El diseño final se elige en Ajustar.",
+      sketchShort: "Esquema, no es el diseño final",
     },
     bar: {
       label: "Progreso",
@@ -221,6 +223,8 @@ export const palette = defineDictionary({
       light: "Light",
       dark: "Dark",
       loading: "Loading the preview…",
+      sketch: "Sketch in your colors. You pick the final design in Adjust.",
+      sketchShort: "Sketch, not the final design",
     },
     bar: {
       label: "Progress",

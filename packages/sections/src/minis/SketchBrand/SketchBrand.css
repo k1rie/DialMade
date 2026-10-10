@@ -1,0 +1,101 @@
+.dl-sketch-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.4cqi;
+  height: 100%;
+  /* The top padding leaves room for the «Esquema» tag above the logo tiles. */
+  padding: 8.6cqi 4cqi 3.4cqi;
+}
+
+.dl-sketch-brand__tiles {
+  flex: none;
+  height: 20cqi;
+}
+
+.dl-sketch-brand__tiles > .dl-sketch-brand__tile {
+  flex-direction: column;
+  gap: 1cqi;
+  border-style: solid;
+}
+
+.dl-sketch-brand__tiles > .dl-sketch-brand__tile[data-surface="light"] {
+  flex: 2;
+  border-color: color-mix(in oklab, var(--_line) 40%, transparent);
+  background: var(--color-neutral-50, #fafafa);
+  color: var(--color-neutral-700, #444);
+}
+
+.dl-sketch-brand__tile[data-surface="dark"] {
+  /* Outlined so it still reads on a dark preview. */
+  border-color: color-mix(in oklab, var(--_line) 40%, transparent);
+  background: var(--color-neutral-950, #111);
+  color: var(--color-neutral-300, #ccc);
+}
+
+.dl-sketch-brand__tile[data-surface="brand"] {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.dl-sketch-brand__logo {
+  width: auto;
+  max-width: 80%;
+  height: 8cqi;
+  object-fit: contain;
+}
+
+.dl-sketch-brand__name {
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 3.4cqi;
+  font-weight: var(--dl-heading-weight, 600);
+}
+
+.dl-sketch-brand__swatches {
+  flex: none;
+  height: 13cqi;
+}
+
+.dl-sketch-brand__swatch {
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 1.4cqi;
+  border-style: solid;
+  font-size: 2.1cqi;
+  font-weight: 600;
+}
+
+.dl-sketch-brand__swatch[data-swatch="primary"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.dl-sketch-brand__swatch[data-swatch="tint"] {
+  background: var(--color-brand-200, var(--accent));
+  color: var(--color-brand-900, var(--accent-foreground));
+}
+
+.dl-sketch-brand__swatch[data-swatch="ink"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.dl-sketch-brand__swatch[data-swatch="surface"] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.dl-sketch-brand__type {
+  flex: none;
+  height: 12cqi;
+}
+
+.dl-sketch-brand__aa {
+  font-family: var(--dl-font-heading, inherit);
+  font-size: 5.4cqi;
+}
+
+.dl-sketch-brand__type > .dl-sketch-brand__button {
+  flex: 0 0 26%;
+}

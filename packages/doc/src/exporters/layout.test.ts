@@ -238,6 +238,32 @@ describe("DESIGN.md with screens", () => {
   it("is deterministic", () => {
     expect(toDesignMd(screensDoc())).toBe(toDesignMd(cloneJson(screensDoc())));
   });
+
+  it("carries «Describe tu producto» (provenance.layoutBrief) in the flow, in DESIGN.md and the prompt packs", () => {
+    const brief = {
+      description: 'app de reservas para "barberías": agenda `semanal`',
+      source: "ai",
+      variant: "Agenda primero",
+      rationale: "La agenda es lo que más se usa.",
+      model: "claude-haiku-5-5",
+    };
+    const withBrief = patched(doc, [{ op: "add", path: "/provenance/layoutBrief", value: brief }]);
+    const flow = section(toDesignMd(withBrief, { locale: "es" }), "### Pantallas y flujo");
+    expect(flow).toContain("Descripción del producto: «app de reservas para 'barberías': agenda semanal»");
+    expect(flow).toContain("Estructura elegida: «Agenda primero» (propuesta por IA): La agenda es lo que más se usa.");
+    const en = section(toDesignMd(withBrief, { locale: "en" }), "### Screens and flow");
+    expect(en).toContain(`Product description: "app de reservas para 'barberías': agenda semanal"`);
+    for (const target of PROMPT_TARGETS) expect(toPromptPack(withBrief, target, "es")).toContain("Descripción del producto:");
+    // Without a brief nothing changes.
+    expect(toDesignMd(doc, { locale: "es" })).not.toContain("Descripción del producto");
+    // Only the description and the source are required; a bad source or a multi-line text is refused.
+    expect(patched(doc, [{ op: "add", path: "/provenance/layoutBrief", value: { description: "x", source: "fallback" } }]).provenance.layoutBrief).toEqual({
+      description: "x",
+      source: "fallback",
+    });
+    expect(applyPatch(doc, [{ op: "add", path: "/provenance/layoutBrief", value: { description: "a\nb", source: "ai" } }]).ok).toBe(false);
+    expect(applyPatch(doc, [{ op: "add", path: "/provenance/layoutBrief", value: { description: "a", source: "robot" } }]).ok).toBe(false);
+  });
 });
 
 describe("prompt packs with screens", () => {

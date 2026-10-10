@@ -1,7 +1,7 @@
 "use client";
 
 import type { Locale, OutputKind } from "@dialmade/catalog";
-import type { DesignDoc, Dials, PageKey, PatchResult } from "@dialmade/doc";
+import type { DesignDoc, Dials, LayoutBrief, PageKey, PatchResult } from "@dialmade/doc";
 import type { PaletteStyleId } from "@dialmade/palette";
 import { createContext, createElement, useContext, useMemo, useState, type ReactNode } from "react";
 import { temporal, type TemporalState } from "zundo";
@@ -21,7 +21,11 @@ export type DialScope = "global" | PageKey;
 export type { PageKey } from "@dialmade/doc";
 
 /** What «Generar» of the Layout step hands over (`GenerateResult` of LayoutStep fits it). */
-export type GenerateInput = { screens: readonly GeneratedScreenInput[] };
+export type GenerateInput = {
+  screens: readonly GeneratedScreenInput[];
+  /** «Describe tu producto» behind these screens: goes to `provenance.layoutBrief` in the same write. */
+  brief?: LayoutBrief | null;
+};
 
 export type ApplyGenerateOptions = {
   /** The user confirmed «¿Desbloquear y borrar?» after a `locked` result: retry with this. */
@@ -287,7 +291,8 @@ export function createDesignDocStore(
             actions.commitBatch();
             const current = get().activeKey;
             return editPages(
-              (e, doc) => e.withGeneratedScreens(doc, result.screens, { ...(options.allowLocked && { allowLocked: true }) }),
+              (e, doc) =>
+                e.withGeneratedScreens(doc, result.screens, { ...(options.allowLocked && { allowLocked: true }), ...(result.brief && { layoutBrief: result.brief }) }),
               (doc) => {
                 const wanted = [options.activeKey, current].find((key): key is PageKey => !!key && docHasPage(doc, key));
                 return { activeKey: wanted ?? doc.screenOrder[0] ?? null };

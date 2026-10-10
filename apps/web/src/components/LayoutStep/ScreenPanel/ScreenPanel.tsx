@@ -15,6 +15,7 @@ import { REGION_AUTOFOCUS_ATTR } from "../constants";
 import { StylePicker } from "../StylePicker";
 import { useActiveScreen, useLayoutActions } from "../useLayoutStore";
 import { RouteField } from "./RouteField";
+import { SuggestTypes } from "./SuggestTypes";
 import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from "../fieldStyles";
 import { useFieldDraft } from "../useFieldDraft";
 
@@ -27,7 +28,8 @@ const lowerFirst = (text: string) => text.charAt(0).toLocaleLowerCase() + text.s
 
 /**
  * Right panel while no block is selected: the active screen (name, route, kind and its conversion), its
- * navigation frame when it is an app screen (shared by every app screen) and the style picker. Lives
+ * navigation frame when it is an app screen (shared by every app screen), «Sugerir tipos con IA» while the project
+ * has free blocks, and the style picker. Lives
  * inside the inspector area of LayoutStep (which owns the landmark and F6).
  */
 export function ScreenPanel({ className }: ScreenPanelProps) {
@@ -137,6 +139,8 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
           </div>
         </PanelSection>
       )}
+
+      <SuggestTypes />
 
       <StylePicker />
     </div>
