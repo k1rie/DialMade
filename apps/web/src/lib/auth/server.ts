@@ -15,7 +15,15 @@ export function withClientIp(request: Request, env: Env = process.env): Request 
   headers.delete(CLIENT_IP_HEADER);
   const ip = clientIp(request.headers, env);
   if (ip && ip !== "unknown") headers.set(CLIENT_IP_HEADER, ip);
-  return new Request(request, { headers });
+  // Rebuilt by hand: `new Request(nextRequest, init)` throws on Next's request class.
+  const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  return new Request(request.url, {
+    method: request.method,
+    headers,
+    signal: request.signal,
+    redirect: "manual",
+    ...(hasBody && { body: request.body, duplex: "half" }),
+  } as RequestInit);
 }
 
 export type SessionUser = { id: string; isAnonymous: boolean; name: string; email: string; image: string | null };

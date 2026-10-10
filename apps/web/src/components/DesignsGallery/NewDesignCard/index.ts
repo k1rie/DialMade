@@ -1,0 +1,1 @@
+export { NewDesignCard } from "./NewDesignCard";

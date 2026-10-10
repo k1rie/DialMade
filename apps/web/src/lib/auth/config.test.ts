@@ -25,6 +25,9 @@ describe("readAuthConfig", () => {
     expect(config.baseURL).toBe("http://localhost:3700");
     expect(config.trustedOrigins).toContain("http://localhost:3700");
     expect(config.secret.length).toBeGreaterThanOrEqual(32);
+    // NEXT_PUBLIC_APP_URL may point at another local port: development follows BETTER_AUTH_URL or 3700.
+    expect(readAuthConfig({ DATABASE_URL: DB, NEXT_PUBLIC_APP_URL: "http://localhost:3000" })!.baseURL).toBe("http://localhost:3700");
+    expect(readAuthConfig({ DATABASE_URL: DB, BETTER_AUTH_URL: "http://localhost:4000" })!.baseURL).toBe("http://localhost:4000");
     expect(authAvailability({ DATABASE_URL: DB, NODE_ENV: "development" })).toMatchObject({ enabled: true, magicLink: true, devEmail: true, github: false, google: false });
   });
 

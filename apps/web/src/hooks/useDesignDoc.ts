@@ -100,6 +100,11 @@ export type DesignDocActions = {
   cancelBatch: () => void;
   /** Drops the doc and the history (keeps preview mode, device and logo). */
   reset: () => void;
+  /**
+   * «Abrir» from «Mis diseños»: replaces the doc with a stored one (already parsed) and clears the history,
+   * like creating it. Keeps preview mode, device and logo.
+   */
+  open: (doc: DesignDoc) => void;
 };
 
 export type DesignDocState = {
@@ -337,6 +342,13 @@ export function createDesignDocStore(
             batchBase = undefined;
             history().pause();
             set({ doc: null, activePage: null, activeKey: null });
+            history().resume();
+            history().clear();
+          },
+          open: (doc) => {
+            batchBase = undefined;
+            history().pause();
+            set({ doc, activePage: doc.brief.focus, activeKey: null });
             history().resume();
             history().clear();
           },

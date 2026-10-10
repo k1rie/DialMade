@@ -57,11 +57,17 @@ function oauth(env: Env, id: string, secret: string): OAuthCredentials | null {
 const DEV_SECRET_KEY = Symbol.for("dialmade.auth.devSecret");
 type SecretHost = typeof globalThis & { [DEV_SECRET_KEY]?: string };
 
-function secretFor(env: Env, production: boolean): string | null {
+/** The configured secret when it is long enough (logs why when it is not). */
+function configuredSecret(env: Env): string | null {
   const secret = trimmed(env, "BETTER_AUTH_SECRET");
   if (secret && secret.length >= MIN_AUTH_SECRET_LENGTH) return secret;
   if (secret) console.error(`[auth] BETTER_AUTH_SECRET is shorter than ${MIN_AUTH_SECRET_LENGTH} characters: ignored`);
-  if (production) return null;
+  return null;
+}
+
+function secretFor(env: Env, production: boolean): string | null {
+  const secret = configuredSecret(env);
+  if (secret || production) return secret;
   // Development without a secret: one per process (sessions end on restart).
   const host = globalThis as SecretHost;
   return (host[DEV_SECRET_KEY] ??= randomBytes(32).toString("base64"));
@@ -85,11 +91,18 @@ function emailFor(env: Env, production: boolean): EmailTransportConfig | null {
  * BETTER_AUTH_SECRET / an app URL. Without auth the app works the same, only without accounts.
  */
 export function readAuthConfig(env: Env = process.env): AuthServerConfig | null {
+  return buildAuthConfig(env, secretFor);
+}
+
+function buildAuthConfig(env: Env, resolveSecret: (env: Env, production: boolean) => string | null): AuthServerConfig | null {
   const production = env.NODE_ENV === "production";
   if (!isDatabaseConfigured(env)) return null;
-  const secret = secretFor(env, production);
+  const secret = resolveSecret(env, production);
   if (!secret) return null;
-  const baseURL = originOf(trimmed(env, "BETTER_AUTH_URL")) ?? originOf(trimmed(env, "NEXT_PUBLIC_APP_URL")) ?? (production ? null : DEV_BASE_URL);
+  // Development follows `pnpm dev` (port 3700) unless BETTER_AUTH_URL says otherwise: NEXT_PUBLIC_APP_URL often
+  // points at another local port, and the magic link and OAuth callbacks must come back to this server.
+  const explicit = originOf(trimmed(env, "BETTER_AUTH_URL"));
+  const baseURL = explicit ?? (production ? originOf(trimmed(env, "NEXT_PUBLIC_APP_URL")) : DEV_BASE_URL);
   if (!baseURL) {
     console.error("[auth] BETTER_AUTH_URL (or NEXT_PUBLIC_APP_URL) is missing or not an http(s) URL: auth is off");
     return null;
@@ -123,7 +136,8 @@ export function readAuthConfig(env: Env = process.env): AuthServerConfig | null 
 
 /** What the browser may know: which ways in exist. Never a secret. */
 export function authAvailability(env: Env = process.env): AuthAvailability {
-  const config = readAuthConfig(env);
+  // No dev secret is generated here: this runs while rendering the layout.
+  const config = buildAuthConfig(env, (source, production) => configuredSecret(source) ?? (production ? null : "development"));
   if (!config) return { enabled: false, magicLink: false, github: false, google: false, passkey: false, anonymous: false, devEmail: false };
   return {
     enabled: true,

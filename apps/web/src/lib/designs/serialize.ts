@@ -22,13 +22,13 @@ export function cleanDesignName(input: unknown): string | null {
   return name.length > 0 ? name : null;
 }
 
-/** Colors for the card: brand, accent, secondary and primary of the light theme (falls back to the seeds). */
+/** Colors for the card's gradient: the seeds, then the theme's CTA and dark-mode brand (falls back to the seeds). */
 export function summarizeDesign(doc: DesignDoc): DesignPreview {
   const { primary, secondary } = doc.brand.seeds;
   let swatches: string[] = [primary, ...(secondary ? [secondary] : [])];
   try {
-    const light = generateTheme(themeInputFor(doc)).light;
-    swatches = [...new Set([light.brand, light.accent, light.secondary, light.primary])];
+    const theme = generateTheme(themeInputFor(doc));
+    swatches = [...new Set([...swatches, theme.light.cta, theme.dark.brand].map((color) => color.toLowerCase()))];
   } catch {}
   return {
     primary,

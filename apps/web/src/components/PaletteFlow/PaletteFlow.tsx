@@ -37,6 +37,7 @@ import { useDesignDocSync } from "./useDesignDocSync";
 import { useFileDropGuard } from "./useFileDropGuard";
 import { useLogoExtraction } from "./useLogoExtraction";
 import { usePendingLayout } from "./usePendingLayout";
+import { useSavedDesign } from "./useSavedDesign";
 
 // «Layout», «Ajustar» and «Exportar» pull @dialmade/sections, @dialmade/ui, @dialmade/doc and @dialmade/layout:
 // they load on demand through one chunk boundary (./designHalf) so the Home stays light and their CSS ships once.
@@ -177,6 +178,8 @@ function FlowStage() {
     actions.showPalette();
   }, [t, actions]);
   useDesignDocSync(state, actions, onDocError);
+  // «Guardar» in the header, `?design=<id>` from «Mis diseños» and the save that waited for a sign-in.
+  useSavedDesign();
 
   const phase = flowPhaseOf(state.step);
   const logoUrl = useCroppedLogoUrl(state.logo, state.crop, state.step === "palette" || phase !== "brand");
