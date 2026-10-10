@@ -3,11 +3,11 @@
 import type { Locale } from "@dialmade/catalog";
 import type { KnobDef } from "@dialmade/sections";
 import { useEffect, useId, useRef, useState } from "react";
+import { Segmented } from "@/components/ui/Segmented";
 import { Slider } from "@/components/ui/Slider";
 import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/cn";
 import { LinkIcon } from "../../../../icons";
-import { Segmented } from "../../../../Segmented";
 
 export type KnobFieldProps = {
   knob: KnobDef;

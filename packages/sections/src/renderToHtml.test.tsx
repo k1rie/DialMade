@@ -90,6 +90,21 @@ describe("renderStaticPage", () => {
     expect(html).toContain('data-dl-type="app.shell"');
     expect(html).toContain('aria-label="kpis"');
   });
+
+  it("enlaces entre pantallas: linkHref + links dan hrefs reales; sin ellos la salida no cambia", () => {
+    const doc = acmeDoc();
+    const page = buildDefaultPage("landing", contentContextFromDoc(doc), "minimal");
+    const before = renderStaticPage(doc, "landing", vars, { page });
+    expect(before).not.toContain("data-dl-screen-link");
+    expect(renderStaticPage(doc, "landing", vars, { page, links: {}, linkHref: () => null })).toBe(before);
+    const linked = renderStaticPage(doc, "landing", vars, {
+      page,
+      links: { "hero-1": "s-precios" },
+      linkHref: (id) => (id === "s-precios" ? "precios/index.html" : null),
+    });
+    expect(linked).toContain('href="precios/index.html" data-dl-screen-link="s-precios"');
+    expect(linked.replace(' href="precios/index.html" data-dl-screen-link="s-precios"', ' href="#"')).toBe(before);
+  });
 });
 
 describe("readBundledCss", () => {

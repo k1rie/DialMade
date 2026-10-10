@@ -44,5 +44,10 @@ export const footerSection = defineSection<FooterProps>({
       spacing: "compact",
     };
   },
+  layout: {
+    owns: [],
+    // The chip says 3 columns from 8 grid columns and 1 below: link columns or a single row.
+    fit: ({ estimate }) => (estimate?.kind === "count" ? { variant: estimate.value >= 2 ? "columns" : "simple" } : {}),
+  },
   Component: Footer,
 });

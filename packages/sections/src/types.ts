@@ -2,6 +2,7 @@ import type { FC, ReactNode } from "react";
 import type { z } from "zod";
 import type { Locale, LocalizedText, OutputKind, ProductType } from "@dialmade/catalog";
 import type { BindablePath, DesignDoc } from "@dialmade/doc";
+import type { ContentEstimate, LibraryBlockType, MobileBehavior, ParsedNote, ScreenKind } from "@dialmade/layout";
 
 export type ColorMode = "light" | "dark";
 
@@ -33,6 +34,66 @@ export interface RenderContext extends ContentContext {
   selectedId?: string;
   /** The document being rendered, for sections that show the system itself (brand board). */
   doc?: DesignDoc;
+  /** Href of a screen (Layout mode); `null` when the screen has no URL in this render. */
+  screenHref?(screenId: string): string | null;
+  /** Href of the primary action of an element whose block links to a screen (`linkTo`); `null` when it links nowhere. */
+  blockLink?(elementId: string): string | null;
+  /** Screen the element's primary action links to, for `data-dl-screen-link`; `null` when it links nowhere. */
+  linkTarget?(elementId: string): string | null;
+}
+
+/* ------------------------------------------------------------------------------------------------ */
+/* Layout mode                                                                                      */
+/* ------------------------------------------------------------------------------------------------ */
+
+/**
+ * What `fit` receives for one block, all deterministic (never measured): the desktop rect in grid units
+ * (`w` columns, `h` rows of 8 px) and in px (`widthPx = w * 120`, `heightPx = h * 8`).
+ */
+export interface FitInput {
+  w: number;
+  h: number;
+  widthPx: number;
+  heightPx: number;
+  /** `block.count ?? note.count`, clamped to the library's repeatable range; absent when neither is set. */
+  count?: number;
+  note: ParsedNote;
+  /** `estimateContent(block, layout, id)`: what the canvas chip promises. `fit` maps it, never derives again. */
+  estimate: ContentEstimate | null;
+  /** Types of the accepted children merged into this block (a media inside a hero). */
+  absorbed: readonly LibraryBlockType[];
+  kind: ScreenKind;
+  blockId: string;
+  /** The mobile behavior picked in the canvas inspector (`block.responsive.mobile.behavior`), when set. */
+  mobile?: MobileBehavior;
+}
+
+export interface FitResult<P> {
+  variant?: string;
+  props?: Partial<P>;
+}
+
+export interface SectionLayout<P> {
+  /** Layout-owned keys (count, pageSize…): regenerating rewrites them; copy outside them is kept. */
+  owns: readonly (keyof P & string)[];
+  /** Variant and layout-owned props for a block of this size. Must return schema-valid values. */
+  fit(input: FitInput): FitResult<P>;
+  /**
+   * Optional: props merged over `defaultProps` when the page comes from a layout, e.g. repeatable lists at
+   * their maximum so `count` alone decides what shows. Template pages (`buildDefaultPage`) never use it.
+   */
+  defaults?(ctx: ContentContext): Partial<P>;
+}
+
+/** How the element wrapper of a section behaves. */
+export interface SectionFrameOptions {
+  /**
+   * Structural elements (inferred regions, the layout scope) render a plain wrapper: no tab stop, role,
+   * click selection or inert wrapper. Receives the stored props.
+   */
+  structural?(stored: Readonly<Record<string, unknown>>): boolean;
+  /** Extra `data-*` attributes on the wrapper (a region's layout kind, its surface). Receives the stored props. */
+  attributes?(stored: Readonly<Record<string, unknown>>): Readonly<Record<`data-${string}`, string>>;
 }
 
 export interface SectionVariant {
@@ -87,6 +148,17 @@ export interface SectionDefinition<P extends object = Record<string, unknown>> {
   container?: boolean;
   /** For containers: the child types `buildDefaultPage` puts inside, in order. */
   defaultChildren?: readonly string[];
+  /** Layout mode: how a block of the canvas becomes this section (`buildPageFromLayout`). */
+  layout?: SectionLayout<P>;
+  /** Wrapper behaviour (structural regions, extra data attributes). */
+  frame?: SectionFrameOptions;
+  /**
+   * The stored props as the section shows them: lists cut to what renders (`count`), copy a flag hides
+   * removed. Read by `visibleProps` for descriptions of the page (DESIGN.md, prompt packs, AI copy), never
+   * for rendering. Receives the stored props (bindings unresolved, possibly invalid) and only removes or
+   * shortens values, never adds them.
+   */
+  visible?(stored: Readonly<Record<string, unknown>>): Record<string, unknown>;
   Component: FC<SectionComponentProps<P>>;
 }
 

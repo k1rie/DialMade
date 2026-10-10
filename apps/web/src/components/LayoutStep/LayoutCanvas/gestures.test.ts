@@ -1,7 +1,6 @@
 import type { Adjustment, GridRect, LayoutBlock, LayoutDoc, LayoutWarning } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import type { GridMetrics } from "../../../lib/geometry/grid";
-import { HANDLES } from "../../../lib/geometry/rect";
+import { HANDLES, type GridMetrics } from "@/lib/geometry";
 import { HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
 import { FRAME_GUTTER_PX, FRAME_MIN_ROWS, FRAME_PAD_ROWS, MIN_BLOCK_SIZE, Z_ACTIVE, Z_BADGE, Z_OVERLAY } from "./constants";
 import {

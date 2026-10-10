@@ -5,13 +5,13 @@ import type { DesignDoc } from "@dialmade/doc";
 import { motion } from "motion/react";
 import { useRef, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";
+import { Popover } from "@/components/ui/Popover";
 import { useDesignDocActions, useDesignHistory } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { snappy } from "@/lib/motion";
 import { CloseIcon, PlusIcon } from "../../icons";
-import { Popover } from "../../Popover";
 
 export type PageTabsProps = {
   doc: DesignDoc;

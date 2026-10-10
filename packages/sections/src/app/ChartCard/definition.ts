@@ -38,5 +38,11 @@ export const chartCardSection = defineSection<ChartCardProps>({
       showLegend: true,
     };
   },
+  layout: {
+    owns: [],
+    // The chip: area when the block is wide (ratio ≥ 1.6), bars otherwise.
+    fit: ({ estimate }) =>
+      estimate?.kind === "variant" && (estimate.value === "area" || estimate.value === "bar") ? { variant: estimate.value } : {},
+  },
   Component: ChartCard,
 });

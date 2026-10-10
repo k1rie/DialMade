@@ -1,0 +1,120 @@
+.dl-ui-text {
+  container-name: dl-ui dl-ui-text;
+}
+
+.dl-ui-text > .dl-ui__inner {
+  justify-content: center;
+}
+
+.dl-ui-text__box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dl-space-4, 16px);
+  min-width: 0;
+}
+
+.dl-ui-text__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+}
+
+.dl-ui-text[data-align="center"] .dl-ui-text__copy {
+  align-items: center;
+  text-align: center;
+}
+
+.dl-ui-text__eyebrow {
+  margin: 0;
+  color: var(--primary-text);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dl-ui-text__title {
+  margin: 0;
+  max-width: 40ch;
+  color: inherit;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h2, 1.875rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: var(--dl-lh-tight, 1.2);
+  overflow-wrap: anywhere;
+}
+
+.dl-ui-text[data-level="h1"] .dl-ui-text__title {
+  font-size: var(--dl-fs-h1, 2.25rem);
+}
+
+.dl-ui-text[data-level="h3"] .dl-ui-text__title {
+  font-size: var(--dl-fs-h3, 1.375rem);
+}
+
+.dl-ui-text__paragraph {
+  margin: 0;
+  max-width: 65ch;
+  color: var(--muted-foreground);
+  line-height: var(--dl-lh-body, 1.6);
+  overflow-wrap: anywhere;
+}
+
+.dl-ui-text__action {
+  margin-top: var(--dl-space-2, 8px);
+}
+
+/* Prose: a quieter heading and body text in the main color, for longer reads. */
+.dl-ui-text[data-variant="prose"] .dl-ui-text__title {
+  font-size: var(--dl-fs-h3, 1.375rem);
+}
+
+.dl-ui-text[data-variant="prose"][data-level="h1"] .dl-ui-text__title {
+  font-size: var(--dl-fs-h2, 1.875rem);
+}
+
+.dl-ui-text[data-variant="prose"] .dl-ui-text__paragraph {
+  color: var(--foreground);
+}
+
+/* Callout: a tinted panel with an icon. */
+.dl-ui-text[data-variant="callout"] .dl-ui-text__box {
+  padding: var(--dl-space-5, 24px);
+  border: var(--dl-border-width, 1px) solid color-mix(in oklab, var(--primary) 24%, var(--border));
+  border-radius: var(--dl-radius-lg, 12px);
+  background: color-mix(in oklab, var(--primary) 8%, var(--card));
+  color: var(--card-foreground);
+}
+
+.dl-ui-text[data-variant="callout"] .dl-ui-text__title {
+  font-size: var(--dl-fs-h3, 1.375rem);
+}
+
+.dl-ui-text__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: color-mix(in oklab, var(--primary) 16%, var(--card));
+  color: var(--primary-text);
+  font-size: 1.1rem;
+}
+
+/* Narrow slots: one step smaller headings. */
+@container dl-ui-text (width < 28rem) {
+  .dl-ui-text__title,
+  .dl-ui-text[data-level="h1"] .dl-ui-text__title {
+    font-size: var(--dl-fs-h3, 1.375rem);
+  }
+
+  .dl-ui-text[data-variant="callout"] .dl-ui-text__box {
+    flex-direction: column;
+    padding: var(--dl-space-4, 16px);
+  }
+}

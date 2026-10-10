@@ -2,11 +2,11 @@
 
 import type { LayoutFix, ScreenId } from "@dialmade/layout";
 import { useState } from "react";
+import { Popover } from "@/components/ui/Popover";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { CheckIcon, WarningIcon } from "../../icons";
-import { Popover } from "../../Popover";
 import { WarningList } from "../WarningList";
 import type { WarningGroup } from "../warnings";
 

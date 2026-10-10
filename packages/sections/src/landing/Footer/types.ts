@@ -3,6 +3,8 @@ import type { SectionStyle } from "../lib/knobs";
 export interface FooterLink {
   label: string;
   href: string;
+  /** Screen this link opens (Layout mode). */
+  linkTo?: string;
 }
 
 export interface FooterColumnEntry {

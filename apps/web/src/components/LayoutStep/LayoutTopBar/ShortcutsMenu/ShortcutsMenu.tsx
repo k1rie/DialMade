@@ -4,12 +4,12 @@ import { Fragment, useId, useState } from "react";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
+import { Popover } from "@/components/ui/Popover";
 import { Switch } from "@/components/ui/Switch";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { KeyboardIcon } from "../../icons";
-import { Popover } from "../../Popover";
 import { useLayoutActions, useLayoutStore } from "../../useLayoutStore";
 
 /** Keys of a shortcut row are written «Tab · Shift+Tab»: each part is one key (or combo). */
@@ -22,7 +22,7 @@ const KEY_SEPARATOR = " · ";
 export function ShortcutsMenu() {
   const t = useDictionary(layout);
   const keys = usePlatformKeys();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const actions = useLayoutActions();
   const enabled = useLayoutStore((state) => state.shortcutsEnabled);
   const [open, setOpen] = useState(false);

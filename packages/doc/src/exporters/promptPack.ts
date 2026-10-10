@@ -1,9 +1,11 @@
-import type { Locale, OutputKind } from "@dialmade/catalog";
+import type { Locale } from "@dialmade/catalog";
 import { shadowCss } from "../compile";
 import { EXPORT_FILES } from "../constants";
 import { createPage } from "../doc";
 import type { DesignDoc, Page } from "../schema";
+import { hasScreens, renderTargets } from "../screens";
 import { FONT_SIZE_NAMES, RADIUS_NAMES, SHADOW_NAMES, fontsUrlFor, type ResolvedTokens } from "../tokens";
+import { plainText, screenNames, screensLayoutLines } from "./layoutBlock";
 import {
   kindLabel,
   mdTable,
@@ -73,7 +75,11 @@ type Copy = {
   motion: string;
   reducedMotion: string;
   pages: string;
+  customLayout: string;
   hidden: string;
+  /** Extra step for documents with screens (before the last step); `routesFigma` for the Figma target. */
+  routes: string;
+  routesFigma: string;
   rulesTitle: string;
   rules: string[];
   filesTitle: string;
@@ -206,7 +212,12 @@ const ES: Copy = {
   motion: "Motion",
   reducedMotion: "Respeta `prefers-reduced-motion`.",
   pages: "Páginas",
+  customLayout: "Layout propio",
   hidden: "oculta",
+  routes:
+    "Una ruta por pantalla, enlazadas como en el flujo («Pantallas y flujo»): cada bloque que «enlaza a» otra pantalla lleva a ella y la navegación de app enlaza sus pantallas. Respeta el wireframe, el orden de lectura y las reglas de tablet y móvil de cada pantalla.",
+  routesFigma:
+    "Una ruta por pantalla en el pack HTML: captura cada pantalla de «Pantallas y flujo» como un frame, en el orden del flujo, y enlázalas como prototipo según los enlaces.",
   rulesTitle: "Reglas",
   rules: [
     "Usa los hex y los roles exactos. No inventes colores, fuentes, radios ni sombras.",
@@ -352,7 +363,12 @@ const EN: Copy = {
   motion: "Motion",
   reducedMotion: "Respect `prefers-reduced-motion`.",
   pages: "Pages",
+  customLayout: "Custom layout",
   hidden: "hidden",
+  routes:
+    'One route per screen, linked as in the flow ("Screens and flow"): each block that "links to" another screen leads there, and the app navigation links its screens. Follow each screen\'s wireframe, reading order and tablet and phone rules.',
+  routesFigma:
+    'One route per screen in the HTML pack: capture each screen in "Screens and flow" as a frame, in flow order, and link them as a prototype following the links.',
   rulesTitle: "Rules",
   rules: [
     "Use the exact hex values and roles. Don't invent colors, fonts, radii or shadows.",
@@ -384,9 +400,9 @@ const shadowLine = (t: ResolvedTokens, copy: Copy) =>
     : SHADOW_NAMES.map((name) => `${name} \`${shadowCss(t.shadows[name])}\``).join(" · ");
 
 /** The visible sections in order (hidden ones are left out: the steps say «build them in order»). */
-function outlineLines(doc: DesignDoc, page: Page, locale: Locale, copy: Copy): string[] {
+function outlineLines(doc: DesignDoc, page: Page, locale: Locale, copy: Copy, visibleProps?: ExportOptions["visibleProps"]): string[] {
   let n = 0;
-  return pageOutline(doc, page)
+  return pageOutline(doc, page, visibleProps)
     .filter((item) => !item.hidden)
     .flatMap((item) => {
       const marker = item.depth === 0 ? `${++n}.` : "-";
@@ -394,16 +410,20 @@ function outlineLines(doc: DesignDoc, page: Page, locale: Locale, copy: Copy): s
     });
 }
 
-function pagesForPack(doc: DesignDoc): [OutputKind, Page][] {
+/** Pages to outline, as `[title, page, custom layout]`. Only legacy docs get a made-up focus page. */
+function pagesForPack(doc: DesignDoc, locale: Locale): [string, Page, boolean][] {
+  if (hasScreens(doc)) {
+    return renderTargets(doc).map((target) => [target.screen ? plainText(target.screen.name) : kindLabel(target.kind, locale), target.page, !!target.screen]);
+  }
   const kinds = pageKinds(doc);
-  const out: [OutputKind, Page][] = kinds.map((kind) => [kind, doc.pages[kind]!]);
+  const out: [string, Page, boolean][] = kinds.map((kind) => [kindLabel(kind, locale), doc.pages[kind]!, false]);
   if (!doc.pages[doc.brief.focus]) {
-    out.unshift([doc.brief.focus, createPage(doc.brief.focus, { productType: doc.brief.productType })]);
+    out.unshift([kindLabel(doc.brief.focus, locale), createPage(doc.brief.focus, { productType: doc.brief.productType }), false]);
   }
   return out;
 }
 
-function brief(doc: DesignDoc, t: ResolvedTokens, dark: ResolvedTokens, locale: Locale, copy: Copy, options: { fontsUrl: string; recipe: string; recipeDescription: string; paletteStyle: string; motionLabel: string }): string[] {
+function brief(doc: DesignDoc, t: ResolvedTokens, dark: ResolvedTokens, locale: Locale, copy: Copy, options: { fontsUrl: string; recipe: string; recipeDescription: string; paletteStyle: string; motionLabel: string; visibleProps?: ExportOptions["visibleProps"] }): string[] {
   const { button, card, input, badge, nav, table, sidebar } = t.components;
   const fs = (name: (typeof FONT_SIZE_NAMES)[number]) => {
     const size = t.fontSizes[name];
@@ -453,11 +473,12 @@ function brief(doc: DesignDoc, t: ResolvedTokens, dark: ResolvedTokens, locale: 
     `- ${options.motionLabel}: fast ${t.motion.fast}ms · base ${t.motion.base}ms · slow ${t.motion.slow}ms · ease \`${t.motion.ease}\``,
     `- ${copy.reducedMotion}`,
     "",
+    ...screensLayoutLines(doc, locale),
     `### ${copy.pages}`,
     "",
   ];
-  for (const [kind, page] of pagesForPack(doc)) {
-    lines.push(`**${kindLabel(kind, locale)}** (\`${page.layoutId}\`)`, "", ...outlineLines(doc, page, locale, copy), "");
+  for (const [title, page, custom] of pagesForPack(doc, locale)) {
+    lines.push(`**${title}** (${custom ? copy.customLayout : `\`${page.layoutId}\``})`, "", ...outlineLines(doc, page, locale, copy, options.visibleProps), "");
   }
   return lines;
 }
@@ -477,9 +498,10 @@ export function toPromptPack(
   const spec = copy.targets[target];
   const { inputs, light, dark } = resolveExport(doc, options);
   const fontsUrl = fontsUrlFor(doc, inputs.pairing) ?? inputs.pairing.googleFontsUrl;
+  const screens = hasScreens(doc);
   const ctx: Ctx = {
     name: doc.brand.name,
-    focus: kindLabel(doc.brief.focus, locale),
+    focus: screens ? screenNames(doc, locale) : kindLabel(doc.brief.focus, locale),
     fontsUrl,
     heading: light.fonts.heading.family ?? "system-ui",
     body: light.fonts.body.family ?? "system-ui",
@@ -489,6 +511,8 @@ export function toPromptPack(
     ease: light.motion.ease,
   };
 
+  const steps = spec.steps(ctx);
+  if (screens) steps.splice(Math.max(0, steps.length - 1), 0, target === "figma" ? copy.routesFigma : copy.routes);
   const out = [
     `# ${spec.title(ctx)}`,
     "",
@@ -500,7 +524,7 @@ export function toPromptPack(
     "",
     `## ${copy.stepsTitle}`,
     "",
-    ...spec.steps(ctx).map((line, i) => `${i + 1}. ${line}`),
+    ...steps.map((line, i) => `${i + 1}. ${line}`),
     "",
     ...brief(doc, light, dark, locale, copy, {
       fontsUrl,
@@ -508,6 +532,7 @@ export function toPromptPack(
       recipeDescription: inputs.recipe.description[locale],
       paletteStyle: inputs.theme.styleId,
       motionLabel: inputs.motionTier.label[locale],
+      ...(options.visibleProps && { visibleProps: options.visibleProps }),
     }),
     `## ${copy.rulesTitle}`,
     "",

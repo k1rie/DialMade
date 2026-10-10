@@ -28,7 +28,7 @@ function effectiveCount(block: LayoutBlock, bounds: CountFieldProps["repeatable"
 export function CountField({ blockId, block, repeatable, screenId }: CountFieldProps) {
   const t = useDictionary(layout);
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const value = effectiveCount(block, repeatable);
 
   const set = (count: number) => {

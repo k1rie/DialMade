@@ -1,0 +1,174 @@
+.dl-ui-cards {
+  container-name: dl-ui dl-ui-cards;
+}
+
+.dl-ui-cards__scroller {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: var(--dl-radius-md, 8px);
+}
+
+.dl-ui-cards__scroller:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.dl-ui-cards__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--dl-space-4, 16px);
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-ui-cards[data-columns="1"] .dl-ui-cards__grid { grid-template-columns: minmax(0, 1fr); }
+.dl-ui-cards[data-columns="2"] .dl-ui-cards__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dl-ui-cards[data-columns="3"] .dl-ui-cards__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dl-ui-cards[data-columns="4"] .dl-ui-cards__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dl-ui-cards[data-columns="5"] .dl-ui-cards__grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.dl-ui-cards[data-columns="6"] .dl-ui-cards__grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+/* The block's own width caps the columns, whatever was stored. */
+@container dl-ui-cards (width < 44rem) {
+  .dl-ui-cards:is([data-columns="4"], [data-columns="5"], [data-columns="6"]) .dl-ui-cards__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container dl-ui-cards (width < 32rem) {
+  .dl-ui-cards:not([data-columns="1"]) .dl-ui-cards__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container dl-ui-cards (width < 20rem) {
+  .dl-ui-cards .dl-ui-cards__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Mobile behavior of the layout: one column, or a horizontal carousel with snap points. */
+@container dl-layout (width < 40rem) {
+  .dl-ui-cards[data-mobile="one-column"] .dl-ui-cards__grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+  }
+
+  .dl-ui-cards[data-mobile="carousel"] .dl-ui-cards__scroller {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding-bottom: var(--dl-space-2, 8px);
+  }
+
+  .dl-ui-cards[data-mobile="carousel"] .dl-ui-cards__grid {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(16rem, 82%);
+    grid-auto-flow: column;
+  }
+
+  .dl-ui-cards[data-mobile="carousel"] .dl-ui-card {
+    scroll-snap-align: start;
+  }
+}
+
+.dl-ui-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+  height: 100%;
+}
+
+.dl-ui-card__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--dl-radius-md, 8px);
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
+  color: var(--primary-text);
+  font-size: 1.15rem;
+}
+
+.dl-ui-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--dl-space-1, 4px);
+  min-width: 0;
+}
+
+.dl-ui-card__title {
+  margin: 0;
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-body, 1rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, 0);
+  line-height: var(--dl-lh-tight, 1.3);
+  overflow-wrap: anywhere;
+}
+
+.dl-ui-card__text {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.5;
+}
+
+.dl-ui-card__meta {
+  align-self: flex-start;
+  padding: 2px var(--dl-space-2, 8px);
+  border-radius: var(--dl-badge-radius, var(--dl-radius-full, 9999px));
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.dl-ui-card__link {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* Compact: icon, title and figure on one line. */
+.dl-ui-card[data-variant="compact"] {
+  flex-direction: row;
+  align-items: center;
+}
+
+.dl-ui-card[data-variant="compact"] .dl-ui-card__icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1rem;
+}
+
+.dl-ui-card[data-variant="compact"] .dl-ui-card__meta {
+  align-self: center;
+}
+
+/* Stat: the figure leads. */
+.dl-ui-card__figure {
+  order: -1;
+  margin: 0;
+  color: var(--card-foreground);
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h2, 1.875rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: 1.1;
+}
+
+.dl-ui-card[data-variant="stat"] .dl-ui-card__title {
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+}

@@ -1,2 +1,3 @@
 export { DndAnnouncer } from "./DndAnnouncer";
-export { useDndAnnounce } from "./useDndAnnounce";
+export type { DndAnnounce, DndPoliteness } from "./context";
+export { useDndAnnounce, type DndAnnounceOptions } from "./useDndAnnounce";

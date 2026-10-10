@@ -2,7 +2,6 @@
 
 import { animate, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { smooth, snappy } from "@/lib/motion";
 import {
   centerOf,
   clamp,
@@ -20,7 +19,8 @@ import {
   type Point,
   type Rect,
   type Size,
-} from "./geometry";
+} from "@/lib/geometry";
+import { smooth, snappy } from "@/lib/motion";
 
 export const ZOOM_MIN = 1;
 export const ZOOM_MAX = 4;

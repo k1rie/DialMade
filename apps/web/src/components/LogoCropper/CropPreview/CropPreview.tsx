@@ -2,7 +2,7 @@
 
 import { motion, useTransform, type MotionValue } from "motion/react";
 import type { CSSProperties } from "react";
-import type { Size } from "../geometry";
+import type { Size } from "@/lib/geometry";
 
 export type CropPreviewProps = {
   src: string;

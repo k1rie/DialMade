@@ -5,13 +5,13 @@ import { useId, useMemo } from "react";
 import { toast } from "sonner";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Button } from "@/components/ui/Button";
+import { PanelSection } from "@/components/ui/PanelSection";
+import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import { Switch } from "@/components/ui/Switch";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { REGION_AUTOFOCUS_ATTR } from "../constants";
-import { PanelSection } from "../PanelSection";
-import { Segmented, type SegmentedOption } from "../Segmented";
 import { StylePicker } from "../StylePicker";
 import { useActiveScreen, useLayoutActions } from "../useLayoutStore";
 import { RouteField } from "./RouteField";
@@ -35,7 +35,7 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
   const id = useId();
   const screen = useActiveScreen();
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
 
   const name = useFieldDraft(`${screen?.id ?? ""}:name`, screen?.name ?? "", (text) => {
     if (screen && text.trim()) actions.renameScreen(screen.id, text);
@@ -70,7 +70,7 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      <PanelSection title={t.screenPanel.title} hint={t.screenPanel.blocks(blockCount)}>
+      <PanelSection semantics="group" title={t.screenPanel.title} hint={t.screenPanel.blocks(blockCount)}>
         <div className="flex flex-col gap-1.5">
           <label htmlFor={`${id}-name`} className={FIELD_LABEL}>
             {t.screenPanel.name}
@@ -107,11 +107,12 @@ export function ScreenPanel({ className }: ScreenPanelProps) {
       </PanelSection>
 
       {screen.kind === "app" && screen.shell && (
-        <PanelSection title={t.screenPanel.navigation} hint={t.screenPanel.navigationHint}>
+        <PanelSection semantics="group" title={t.screenPanel.navigation} hint={t.screenPanel.navigationHint}>
           <div className="flex flex-col gap-1.5">
             {/* Four Spanish labels nearly fill an 18rem panel: overflow scrolls here, never the whole inspector. */}
             <div className="-mx-1 overflow-x-auto px-1 py-1 scrollbar-none">
               <Segmented
+                accentBar
                 label={t.screenPanel.navigation}
                 layoutId={`${id}-nav`}
                 size="sm"

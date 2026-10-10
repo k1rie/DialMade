@@ -3,9 +3,9 @@
 import { defaultRecipe, styleRecipes } from "@dialmade/catalog";
 import { useCallback, useEffect, useMemo, useRef, type KeyboardEvent } from "react";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
+import { PanelSection } from "@/components/ui/PanelSection";
 import { useDictionary, useLocale } from "@/i18n";
 import { layout } from "@/i18n/layout";
-import { PanelSection } from "../PanelSection";
 import type { StyleChoice } from "../types";
 import { selectActiveScreen, useLayoutActions, useLayoutEnv, useLayoutStore, useLayoutStoreApi } from "../useLayoutStore";
 import { ANNOUNCE_DELAY_MS, GUIDE_STYLE, STYLE_PICKER_ATTR } from "./constants";
@@ -38,7 +38,7 @@ const ARROWS: Readonly<Record<string, number>> = { ArrowRight: 1, ArrowDown: 1, 
 export function StylePicker({ className }: StylePickerProps) {
   const t = useDictionary(layout);
   const locale = useLocale();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const { doc, hasImportedGuide } = useLayoutEnv();
   const actions = useLayoutActions();
   const storeApi = useLayoutStoreApi();
@@ -111,7 +111,7 @@ export function StylePicker({ className }: StylePickerProps) {
   };
 
   return (
-    <PanelSection title={t.style.title} hint={t.style.hint} className={className}>
+    <PanelSection semantics="group" title={t.style.title} hint={t.style.hint} className={className}>
       {isSampleLayout(layoutDoc) && <p className="-mt-1 text-caption text-muted">{t.style.emptyPreview}</p>}
       <div
         role="radiogroup"

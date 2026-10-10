@@ -8,12 +8,13 @@ import { temporal, type TemporalState } from "zundo";
 import { createStore, useStore, type StoreApi } from "zustand";
 import type { DesignDerived } from "@/lib/design-derived";
 import type { DesignEngine } from "@/lib/design-engine";
+import type { Device } from "@/lib/devices";
 import type { PaletteFlowView, PreviewMode } from "./usePaletteFlow";
 
 export type { DesignDerived, ThemeVars } from "@/lib/design-derived";
 
-/** Width of the preview frame in the Composer. */
-export type PreviewDevice = "desktop" | "tablet" | "mobile";
+/** Width of the preview frame in the Composer: the one device union of the app (`Device` in @/lib/devices). */
+export type PreviewDevice = Device;
 export type DialScope = "global" | OutputKind;
 
 /** What `initFromPalette` reads from the flow (pass `usePaletteFlow().state`). */
@@ -48,7 +49,7 @@ export type DesignDocActions = {
   /** Page shown in the Composer (ignored when the doc has no such page). Not part of the undo history. */
   setActivePage: (kind: OutputKind) => void;
   /**
-   * RFC 6902 patch validated against DesignDoc v1, as one undo step; an invalid patch leaves the doc
+   * RFC 6902 patch validated against the current DesignDoc (v2), as one undo step; an invalid patch leaves the doc
    * untouched. `allowLocked` only for explicit user actions («Desbloquear», editing a locked value).
    */
   applyPatch: (ops: unknown, options?: { allowLocked?: boolean }) => PatchResult;

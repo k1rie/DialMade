@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/Button";
+import { useToastClearance } from "@/hooks/useToastClearance";
 import { locales, useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
@@ -112,6 +113,9 @@ export function LayoutStep({
       rootRef.current = null;
     };
   }, []);
+
+  // Toasts («Ajustado · Deshacer») sit above the floating canvas bar instead of covering it.
+  const toastClearanceRef = useToastClearance();
 
   /* ---- F6 areas (the other shortcuts live in the canvas and the layers tree) ---- */
   const { focusRegion, rememberFocus } = useLayoutShortcuts(rootRef, store);
@@ -308,7 +312,7 @@ export function LayoutStep({
         </Button>
         {leftArea}
         {inspectorArea}
-        <div className="sticky bottom-3 z-20 flex justify-center">
+        <div ref={toastClearanceRef} className="sticky bottom-3 z-20 flex justify-center">
           {parts.generateBar}
         </div>
       </div>
@@ -331,7 +335,10 @@ export function LayoutStep({
           {parts.canvas}
         </section>
         {/* Floats over the canvas but stays outside its area: canvas-only shortcuts do not fire from the bar. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto">
+        <div
+          ref={toastClearanceRef}
+          className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 [&>*]:pointer-events-auto"
+        >
           {parts.generateBar}
         </div>
       </div>

@@ -5,11 +5,11 @@ import type { MotionValue } from "motion/react";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
+import { Popover } from "@/components/ui/Popover";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
-import { Popover } from "../Popover";
 import { ScreenTemplateList } from "../ScreenTemplateList";
 import { selectActiveScreenId, useActiveScreenId, useLayoutActions, useLayoutStore, useLayoutStoreApi, useScreens, type LayoutState } from "../useLayoutStore";
 import { stepIndex } from "./reorder";
@@ -40,7 +40,7 @@ const attr = (name: string, id: ScreenId) => `[${name}="${CSS.escape(id)}"]`;
 export function ScreensPanel({ className }: ScreensPanelProps) {
   const t = useDictionary(layout);
   const platform = usePlatformKeys();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const store = useLayoutStoreApi();
   const actions = useLayoutActions();
   const screens = useScreens();
@@ -138,7 +138,7 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
         const { screenOrder } = store.getState();
         const to = stepIndex(screenOrder.indexOf(id), delta, screenOrder.length);
         if (to === null) {
-          announce(delta < 0 ? t.screens.atTop(nameOf(id)) : t.screens.atBottom(nameOf(id)));
+          announce(delta < 0 ? t.screens.atTop(nameOf(id)) : t.screens.atBottom(nameOf(id)), "assertive");
           focusLater(id);
           return;
         }
@@ -152,7 +152,7 @@ export function ScreensPanel({ className }: ScreensPanelProps) {
         const wasActive = selectActiveScreenId(before) === id;
         const name = before.screens[id]?.name ?? "";
         if (!actions.removeScreen(id)) {
-          announce(t.screens.lastOne);
+          announce(t.screens.lastOne, "assertive");
           return;
         }
         // «Deshacer» undoes this removal only: after any other change it says so instead of undoing that change.

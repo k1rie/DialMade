@@ -21,3 +21,19 @@
 .dl-inert {
   display: contents;
 }
+
+/*
+ * Layout mode: inside the layout scope (`.dl-layout`, rendered by `ui.region`), each block fills the cell the
+ * layout CSS (`toCss`) gives its wrapper. Zero specificity, so the layout rules (and their `display: none`)
+ * always win. Regions lay out their own children.
+ */
+:where(.dl-layout) :where(.dl-el:not([data-dl-type="ui.region"])) {
+  display: flex;
+  flex-direction: column;
+}
+
+:where(.dl-layout) :where(.dl-el:not([data-dl-type="ui.region"])) > :where(:not(.dl-inert)),
+:where(.dl-layout) :where(.dl-el:not([data-dl-type="ui.region"])) > :where(.dl-inert) > :where(*) {
+  flex: 1 1 auto;
+  min-height: 0;
+}

@@ -1,0 +1,108 @@
+.dl-ui-list {
+  container-name: dl-ui dl-ui-list;
+}
+
+.dl-ui-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dl-ui-list__item {
+  --_ui-tone: var(--muted-foreground);
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+}
+
+.dl-ui-list__item[data-tone="success"] { --_ui-tone: var(--success); }
+.dl-ui-list__item[data-tone="warning"] { --_ui-tone: var(--warning); }
+.dl-ui-list__item[data-tone="info"] { --_ui-tone: var(--info); }
+.dl-ui-list__item[data-tone="destructive"] { --_ui-tone: var(--destructive); }
+
+.dl-ui-list__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--dl-radius-full, 9999px);
+  background: var(--_ui-tone);
+}
+
+.dl-ui-list__avatar {
+  display: inline-flex;
+}
+
+.dl-ui-list__text {
+  min-width: 0;
+}
+
+.dl-ui-list__primary {
+  margin: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-ui-list__secondary {
+  display: -webkit-box;
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.dl-ui-list__meta {
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-caption, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Simple: person and detail on one line when there is room. */
+.dl-ui-list[data-variant="simple"] .dl-ui-list__items {
+  gap: var(--dl-space-2, 8px);
+}
+
+/* Divided: rows separated by a rule. */
+.dl-ui-list[data-variant="divided"] .dl-ui-list__items {
+  gap: 0;
+}
+
+.dl-ui-list[data-variant="divided"] .dl-ui-list__item {
+  padding-block: var(--dl-space-3, 12px);
+  border-top: var(--dl-border-width, 1px) solid var(--border);
+}
+
+.dl-ui-list[data-variant="divided"] .dl-ui-list__item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Avatars: roomier rows. */
+.dl-ui-list[data-variant="avatars"] .dl-ui-list__items {
+  gap: var(--dl-space-4, 16px);
+}
+
+/* Narrow slots: the time goes under the text. */
+@container dl-ui-list (width < 18rem) {
+  .dl-ui-list__item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dl-ui-list__meta {
+    grid-column: 2;
+  }
+}

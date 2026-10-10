@@ -29,6 +29,10 @@ export interface RenderStaticPageOptions {
   registry?: SectionRegistry;
   /** A section that throws is left out of the HTML and reported here. */
   onSectionError?: (id: string, error: unknown) => void;
+  /** Layout mode: href of a screen, for real links between exported screens (`null` when it has none). */
+  linkHref?: (screenId: string) => string | null;
+  /** Layout mode: element id → the screen its primary action links to (the blocks' `linkTo`). */
+  links?: Readonly<Record<string, string>>;
 }
 
 const escapeHtml = (value: string) =>
@@ -110,6 +114,8 @@ export function renderStaticPage(
     registry,
     ...(options.logoUrl && { logoUrl: options.logoUrl }),
     ...(options.seed !== undefined && { seed: options.seed }),
+    ...(options.linkHref && { linkHref: options.linkHref }),
+    ...(options.links && { links: options.links }),
   };
   const exclude = failingElements(base, options.onSectionError);
   const body = renderToStaticMarkup(

@@ -1,6 +1,6 @@
 import type { LayoutWarning } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { layout as layoutText } from "../../../../i18n/layout";
+import { layout as layoutText } from "@/i18n/layout";
 import { blockFramePropsEqual, blockSurface, buildWarningViews, sameWarningViews } from "./blockFrameProps";
 import type { BlockWarningView } from "./BlockWarnings/BlockWarnings";
 

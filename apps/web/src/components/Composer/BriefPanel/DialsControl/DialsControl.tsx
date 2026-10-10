@@ -2,10 +2,10 @@
 
 import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc, DialKey } from "@dialmade/doc";
+import { PanelSection } from "@/components/ui/PanelSection";
 import { useDesignDocActions } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
-import { PanelSection } from "../../PanelSection";
 import { DialSlider } from "./DialSlider";
 
 export type DialsControlProps = {

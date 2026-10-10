@@ -12,6 +12,6 @@ export interface FeaturesProps extends SectionStyle {
   title: string;
   subtitle: string;
   items: FeatureEntry[];
-  /** How many of `items` are shown (3–6). */
+  /** How many of `items` are shown (1–6). */
   count: number;
 }

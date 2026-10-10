@@ -27,7 +27,7 @@ console.log(toAsciiWireframe(layout, { label: (b) => b.label }));
 - `LayoutDoc = { version: 1, columns: 12, rowUnit: 8, blocks: Record<BlockId, LayoutBlock> }`.
 - `rect` va en unidades de rejilla y siempre es absoluto en la pantalla, también para los bloques anidados: `col` (0–11) y `w` en columnas, `row` y `h` en filas de 8 px. Topes: `row` ≤ `MAX_ROW` = 4000 (32.000 px) y `h` ≤ `MAX_HEIGHT_ROWS` = 2000 (16.000 px). `validateLayout` rechaza lo que pase de ahí; el motor lo calcula recortado (con warning `out-of-bounds`) y `normalizeDrop` lo recorta (`clamp`). Así un alto escrito a mano como «999999999999 px» no llega al CSS ni al wireframe.
 - `parentId` es el anidado explícito. `inferStructure` nunca lo deduce.
-- Ids: `b-` + 6 caracteres base36 (`newBlockId`). Se aceptan ids existentes que cumplan `ElementIdSchema` (`hero-1`), salvo los que empiezan por `r-`, reservados para regiones inferidas (`r-` + hash de sus bloques, que no se pueden direccionar).
+- Ids: `b-` + 6 caracteres base36 (`newBlockId`). Se aceptan ids existentes que cumplan `ElementIdSchema` (`hero-1`), salvo los reservados (`isReservedBlockId`): los que empiezan por `r-`, para regiones inferidas (`r-` + hash de sus bloques, que no se pueden direccionar), y `root`, `shell` y `layout` (`RESERVED_BLOCK_IDS`), que son la raíz, el marco de app y el ámbito de la página compilada (`buildPageFromLayout`).
 - Máximo `MAX_BLOCKS` = 200 bloques. La nota (`note`) tiene una línea y ≤200 caracteres (`sanitizeNote`); el nombre (`label`), una línea y ≤60 (`sanitizeLabel`).
 - Saneado (`sanitizeLine`): normaliza a NFC, los controles pasan a espacio y se quitan los caracteres invisibles: todos los de formato (`Cf`: marcas bidi, BOM, espacios y unificadores de ancho cero, *word joiner*, operadores invisibles, guion suave, etiquetas Unicode U+E0000–E007F…), el *combining grapheme joiner* y los rellenos de Hangul. Excepciones, porque cambian lo que se dibuja: el ZWJ dentro de una secuencia de emoji (👩‍💻), ZWJ/ZWNJ entre letras de escrituras que los usan (persa, hindi…) y las tres banderas con etiquetas (Inglaterra, Escocia, Gales). El recorte nunca deja media secuencia.
 
@@ -44,6 +44,7 @@ console.log(toAsciiWireframe(layout, { label: (b) => b.label }));
 | `suggestBlocks(layout, kind)` | 5 tipos sugeridos según la pantalla y lo que ya hay (en landing vacía: navbar, hero, features, cta, footer; después de un navbar, hero…) |
 | `suggestTypesForShape(rect, layout, kind)` | 5 sugerencias para «¿Qué es esto?» según la forma del rectángulo dibujado |
 | `estimateContent(block, layout?)` | Lo que dirá el chip del bloque («Tabla · 8 filas»), o `null` |
+| `blockCount(block)` | El ×N de un bloque repetible tal como lo lee el chip: `count`, si no el número de la nota, limitado al rango de la librería; `undefined` si no hay ninguno o el bloque no es repetible |
 | `parseNote(note)` | Lee la nota sin IA: números («3», «tres», «×3») → `count`; palabras clave es/en («semanal», «buscador», «login»…) → `keywords`. «un/una/uno» no cuentan (casi siempre son artículo: «para una startup»), y «once» solo vale 11 si no va seguido de una palabra que lo haga el adverbio inglés («once a day») |
 
 Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layout.ts`), no aquí.
@@ -116,12 +117,13 @@ Los nombres y sinónimos de cada bloque viven en la app (`apps/web/src/i18n/layo
 | `sanitizeNote(raw)` / `sanitizeLabel(raw)` | Una línea en NFC, sin caracteres de control ni invisibles (ver «Modelo»), recortada a 200 / 60 |
 | `layoutBounds(layout)` | Fila final ocupada |
 | `toElementTree(structure)` | Árbol de elementos (bloques y regiones) que espera `toCss` |
+| `absorbChildren(layout)` | Antes de compilar a una página: un bloque que no es contenedor no puede colocar hijos (su sección tiene un solo elemento raíz). Sus hijos aceptados (`accepts`: media, texto o formulario dentro de un hero) se absorben y no tienen elemento; los no aceptados pasan al ámbito del padre con un warning `not-accepted`. Contenedores y modales conservan sus hijos. Devuelve `{ layout, absorbed, unparented, warnings }`, y el mismo objeto `layout` si no cambia nada (la estructura cacheada sigue valiendo) |
 
 ### Plantillas
 
 | Export | Qué es |
 |---|---|
-| `SCREEN_TEMPLATES` | Inicio, Precios, Login, Dashboard, Ajustes, Detalle, Lista, Checkout, Perfil y En blanco, con su `kind`, su marco de app (`shell`) y sus bloques |
+| `SCREEN_TEMPLATES` | Inicio, Precios, Login, Dashboard, Ajustes, Detalle, Lista, Checkout, Perfil y En blanco, con su `kind`, su marco de app (`shell`) y sus bloques. Un bloque puede traer nota inicial: el formulario de Login trae `Login`, para que salga un formulario de inicio de sesión |
 | `SET_TEMPLATES` | «SaaS app» = Dashboard + Ajustes + Login; «Landing» = Inicio + Precios |
 | `instantiateTemplate(template, { label, newId? })` | Crea el `LayoutDoc` de una plantilla con ids nuevos |
 

@@ -143,6 +143,15 @@
   .dl-landing-features[data-variant="bento"] .dl-landing-features__list[data-count="6"] > :nth-child(n + 5) {
     grid-column: span 3;
   }
+
+  /* One or two features (a narrow block in Layout mode) share the row, in both variants. */
+  .dl-landing-features .dl-landing-features__list[data-count="1"] > .dl-landing-feature:nth-child(n) {
+    grid-column: 1 / -1;
+  }
+
+  .dl-landing-features .dl-landing-features__list[data-count="2"] > .dl-landing-feature:nth-child(n) {
+    grid-column: span 3;
+  }
 }
 
 @container dl-landing (min-width: 72rem) {

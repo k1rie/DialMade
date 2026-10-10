@@ -27,7 +27,7 @@ export type TemplatePickerProps = {
  */
 export function TemplatePicker({ className }: TemplatePickerProps) {
   const t = useDictionary(layout);
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
   const { doc, narrow, focusRegion } = useLayoutEnv();

@@ -36,6 +36,13 @@ export type DraggableItemProps<T extends DndPayload = DndPayload> = {
   liftClassName?: string;
   style?: CSSProperties;
   "aria-label"?: string;
+  /**
+   * Id(s) of the element(s) that say how to use the item from the keyboard, read first in its description.
+   * Defaults to the shared drag instructions («Pulsa Espacio o Enter para coger…», `DND_INSTRUCTIONS_ID`).
+   * Pass your own when they do not fit what the item does (e.g. a library tile, which a click inserts).
+   */
+  instructionsId?: string;
+  /** More descriptions, read after the instructions. */
   "aria-describedby"?: string;
   title?: string;
   children: ReactNode;
@@ -55,6 +62,7 @@ export function DraggableItem<T extends DndPayload = DndPayload>({
   style,
   title,
   children,
+  instructionsId = DND_INSTRUCTIONS_ID,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
 }: DraggableItemProps<T>) {
@@ -72,7 +80,7 @@ export function DraggableItem<T extends DndPayload = DndPayload>({
       tabIndex={disabled ? -1 : 0}
       aria-roledescription={t.dnd.roleDescription}
       aria-label={ariaLabel ?? label}
-      aria-describedby={cn(DND_INSTRUCTIONS_ID, ariaDescribedBy)}
+      aria-describedby={cn(instructionsId, ariaDescribedBy) || undefined}
       aria-disabled={disabled || undefined}
       title={title}
       data-dragging={isDragging || undefined}

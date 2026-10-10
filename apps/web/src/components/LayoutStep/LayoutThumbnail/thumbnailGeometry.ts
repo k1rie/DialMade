@@ -1,6 +1,5 @@
 import { getBlockDef, isLibraryBlockType, layoutBounds, type AppShell, type BlockId, type LayoutDoc } from "@dialmade/layout";
-// Relative imports only: vitest runs this module without the `@/` alias.
-import { DEVICE_WIDTHS } from "../../../lib/devices";
+import { DEVICE_WIDTHS } from "@/lib/devices";
 import { HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
 
 /*

@@ -3,7 +3,8 @@
 import { isLibraryBlockType, type GridRect, type LibraryBlockType } from "@dialmade/layout";
 import { useDragDropMonitor, useDragOperation, useDroppable } from "@dnd-kit/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
-import type { GridMetrics, Point } from "@/lib/geometry";
+import type { DropRect, DropRectSource } from "@/components/dnd/DndProvider";
+import { gridToPx, type GridMetrics, type Point } from "@/lib/geometry";
 import { CANVAS_DROP_ID, LIBRARY_DRAG_TYPE } from "./constants";
 import { defaultSizeOf, dropRect, relativePoint, sameRect } from "./gestures";
 
@@ -40,18 +41,33 @@ const sameGhost = (current: DropGhost | null, next: DropGhost | null): DropGhost
  * also while the canvas scrolls under a still pointer (auto-scroll, wheel); on drop the block is inserted
  * there. Keyboard drags (Space/Enter on a tile, arrows to the canvas, Space/Enter again) have no meaningful
  * pointer, so they insert at the next free slot. A keyboard drop on no target is the library's (useLibraryInsert).
+ * The droppable's `dropRect` (DndProvider) makes the tile fly into the cell where a pointer drop lands, not
+ * into the centre of the canvas.
  */
 export function useLibraryDrop({ enabled, label, gridRef, metrics, onDrop }: LibraryDropOptions) {
-  const data = useMemo(() => ({ label }), [label]);
-  const { ref: droppableRef, isDropTarget } = useDroppable({ id: CANVAS_DROP_ID, accept: LIBRARY_DRAG_TYPE, data, disabled: !enabled });
-  const { source } = useDragOperation();
-  const compatible = enabled && source != null && String(source.type ?? "") === LIBRARY_DRAG_TYPE;
-  const [ghost, setGhost] = useState<DropGhost | null>(null);
-
   const latest = useRef({ metrics, onDrop, enabled });
   useLayoutEffect(() => {
     latest.current = { metrics, onDrop, enabled };
   });
+
+  /** Grid rect of the last pointer drop on the canvas (null for keyboard drops): where the tile flies to. */
+  const landing = useRef<GridRect | null>(null);
+  const data = useMemo<{ label: string } & DropRectSource>(
+    () => ({
+      label,
+      dropRect: (): DropRect | null => {
+        const box = gridRef.current?.getBoundingClientRect();
+        if (!landing.current || !box) return null;
+        const cell = gridToPx(landing.current, latest.current.metrics);
+        return { left: box.left + cell.left, top: box.top + cell.top, width: cell.width, height: cell.height };
+      },
+    }),
+    [label, gridRef],
+  );
+  const { ref: droppableRef, isDropTarget } = useDroppable({ id: CANVAS_DROP_ID, accept: LIBRARY_DRAG_TYPE, data, disabled: !enabled });
+  const { source } = useDragOperation();
+  const compatible = enabled && source != null && String(source.type ?? "") === LIBRARY_DRAG_TYPE;
+  const [ghost, setGhost] = useState<DropGhost | null>(null);
 
   // The droppable element (the scroller), kept for the scroll listener.
   const [element, setElement] = useState<HTMLElement | null>(null);
@@ -87,13 +103,17 @@ export function useLibraryDrop({ enabled, label, gridRef, metrics, onDrop }: Lib
     onDragEnd(event) {
       setGhost(null);
       pointer.current = null;
+      landing.current = null;
       const { source: dropped, target, activatorEvent, position } = event.operation;
       if (event.canceled || !latest.current.enabled || target?.id !== CANVAS_DROP_ID) return;
       if (String(dropped?.type ?? "") !== LIBRARY_DRAG_TYPE) return;
       const type = blockTypeOf(dropped?.data);
       if (!type) return;
       const keyboard = activatorEvent instanceof KeyboardEvent;
-      latest.current.onDrop(type, keyboard ? null : (ghostAt(position.current, type)?.rect ?? null));
+      const rect = keyboard ? null : (ghostAt(position.current, type)?.rect ?? null);
+      // Read by the drop animation, which starts after this handler (once React has rendered the insert).
+      landing.current = rect;
+      latest.current.onDrop(type, rect);
     },
   });
 

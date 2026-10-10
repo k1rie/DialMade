@@ -23,15 +23,18 @@ export {
   ELEMENT_ID_RE,
   hashString,
   isNewBlockId,
+  isReservedBlockId,
   isValidBlockId,
   NEW_BLOCK_ID_RE,
   newBlockId,
   regionId,
+  RESERVED_BLOCK_IDS,
   type RandomSource,
 } from "./ids";
 export { sanitizeLabel, sanitizeLine, sanitizeNote } from "./sanitize";
 export { parseNote } from "./note";
-export { estimateContent, MEDIA_RATIOS } from "./estimate";
+export { blockCount, estimateContent, MEDIA_RATIOS } from "./estimate";
+export { absorbChildren, type AbsorbResult } from "./absorb";
 export { suggestBlocks, suggestTypesForShape, type ShapeSuggestOptions } from "./suggest";
 export { areaName, CLIP_RATIO, CONTAINMENT_RATIO, inferStructure, type InferOptions } from "./infer";
 export { deriveResponsive, isMobileBehavior, mobileHeight } from "./responsive";

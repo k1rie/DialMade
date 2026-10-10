@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DND_INSTRUCTIONS_ID } from "../../../../../lib/dnd";
+import { DND_INSTRUCTIONS_ID } from "@/lib/dnd";
 import { tileDescription, tileKeyAction, type LibraryHints, type TileKeyInput } from "./tileKeyboard";
 
 const key = (value: string, extra: Partial<TileKeyInput> = {}): TileKeyInput => ({

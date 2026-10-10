@@ -4,10 +4,10 @@ import type { LayoutFix } from "@dialmade/layout";
 import { motion, type Transition } from "motion/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Popover } from "@/components/ui/Popover";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { WarningIcon } from "../../../icons";
-import { Popover } from "../../../Popover";
 import { Z_BADGE } from "../../constants";
 
 /** A warning of the block, ready to show: its message and its one-click fixes. */

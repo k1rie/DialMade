@@ -1,5 +1,4 @@
-// Type-only and relative: vitest runs this module without the `@/` alias.
-import type { Handle } from "../../../../lib/geometry/rect";
+import type { Handle } from "@/lib/geometry";
 
 /** Edges first, corners last: on a small block the corner hit areas win where they overlap. */
 const ORDER: readonly Handle[] = ["n", "e", "s", "w", "nw", "ne", "se", "sw"];

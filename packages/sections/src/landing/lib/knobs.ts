@@ -18,7 +18,8 @@ export const spacingSchema = z.enum(SPACINGS);
 export const alignSchema = z.enum(ALIGNS);
 export const emphasisSchema = z.enum(EMPHASES);
 export const iconSchema = z.custom<IconName>((value) => isIconName(value), { message: "Unknown icon" });
-export const linkSchema = z.strictObject({ label: z.string(), href: z.string() });
+/** A link; `linkTo` (Layout mode) names the screen it opens and wins over `href` when that screen has a URL. */
+export const linkSchema = z.strictObject({ label: z.string(), href: z.string(), linkTo: z.string().min(1).max(64).optional() });
 
 /** Section-wide look shared by every landing section. */
 export interface SectionStyle {

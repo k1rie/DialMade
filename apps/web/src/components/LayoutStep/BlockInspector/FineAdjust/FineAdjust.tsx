@@ -3,10 +3,10 @@
 import type { BlockId, GridRect, ScreenId } from "@dialmade/layout";
 import { useId, useState, type ReactNode } from "react";
 import { IconButton } from "@/components/ui/IconButton";
+import { Segmented } from "@/components/ui/Segmented";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, MoveIcon, ResizeIcon } from "../../icons";
-import { Segmented } from "../../Segmented";
 import { useLayoutStoreApi } from "../../useLayoutStore";
 import { nudgeRect, type NudgeDirection, type NudgeMode } from "../fields";
 import { FIELD_LABEL } from "../../fieldStyles";
@@ -59,6 +59,7 @@ export function FineAdjust({ blockId, rect, screenId }: FineAdjustProps) {
           {t.inspector.fineAdjust}
         </span>
         <Segmented
+          accentBar
           label={t.inspector.fineMode}
           layoutId={`${id}-mode`}
           size="sm"

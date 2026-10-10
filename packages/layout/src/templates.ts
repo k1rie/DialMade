@@ -1,6 +1,6 @@
 import { emptyLayout } from "./edit";
 import { newBlockId } from "./ids";
-import { sanitizeLabel } from "./sanitize";
+import { sanitizeLabel, sanitizeNote } from "./sanitize";
 import type {
   AppShell,
   BlockId,
@@ -50,7 +50,13 @@ export const SCREEN_TEMPLATES: readonly ScreenTemplate[] = [
       b("footer", 0, 109, 12, 25),
     ],
   },
-  { id: "login", kind: "app", shell: NO_NAV, blocks: [b("form", 0, 0, 6, 60), b("media", 6, 0, 6, 60)] },
+  {
+    id: "login",
+    kind: "app",
+    shell: NO_NAV,
+    // The note makes the form a sign-in form (`parseNote` keyword, the same in es and en).
+    blocks: [{ ...b("form", 0, 0, 6, 60), note: "Login" }, b("media", 6, 0, 6, 60)],
+  },
   {
     id: "dashboard",
     kind: "app",
@@ -117,6 +123,8 @@ export function instantiateTemplate(
   template.blocks.forEach((tb, i) => {
     const block: LayoutBlock = { type: tb.type, label: sanitizeLabel(options.label(tb.type)), rect: { ...tb.rect }, z: i + 1 };
     if (tb.count !== undefined) block.count = tb.count;
+    const note = tb.note === undefined ? "" : sanitizeNote(tb.note);
+    if (note) block.note = note;
     if (tb.parent !== undefined && ids[tb.parent] !== undefined && tb.parent !== i) block.parentId = ids[tb.parent];
     layout.blocks[ids[i]!] = block;
   });

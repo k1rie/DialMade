@@ -2,6 +2,7 @@ import { defaultLandingLayout, getLandingLayout, type OutputKind } from "@dialma
 import {
   DEFAULT_LAYOUT_IDS,
   DesignDocError,
+  LAYOUT_PAGE_ID,
   PAGE_DIAL_DEFAULTS,
   PageSchema,
   ROOT_ELEMENT_ID,
@@ -29,6 +30,7 @@ export interface BuildPageOptions {
 
 function landingLayoutId(ctx: ContentContext, layoutId?: string): string {
   if (layoutId === undefined) return defaultLandingLayout(ctx.productType.id).id;
+  if (layoutId === LAYOUT_PAGE_ID) throw new DesignDocError(`Pages with layoutId "${LAYOUT_PAGE_ID}" come from a layout: use buildPageFromLayout`);
   if (!getLandingLayout(layoutId)) throw new DesignDocError(`Unknown landing layout "${layoutId}"`);
   return layoutId;
 }
@@ -61,6 +63,7 @@ export function buildDefaultPage(
   options: BuildPageOptions = {},
 ): Page {
   const registry = options.registry ?? sectionRegistry;
+  if (layoutId === LAYOUT_PAGE_ID) throw new DesignDocError(`Pages with layoutId "${LAYOUT_PAGE_ID}" come from a layout: use buildPageFromLayout`);
   const resolvedLayoutId = kind === "landing" ? landingLayoutId(ctx, layoutId) : (layoutId ?? DEFAULT_LAYOUT_IDS[kind]);
   const elements: Record<string, PageElement> = {};
   const counts = new Map<string, number>();

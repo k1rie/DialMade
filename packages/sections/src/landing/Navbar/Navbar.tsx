@@ -6,6 +6,7 @@ import { BrandMark } from "../BrandMark";
 import { LandingSection } from "../LandingSection";
 import type { Emphasis } from "../lib/knobs";
 import { landingStrings } from "../lib/strings";
+import { linkProps, screenLinkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import type { NavbarProps } from "./types";
 import "./Navbar.css";
@@ -19,6 +20,7 @@ const closeMenu = (event: MouseEvent<HTMLElement>) => {
 export function Navbar({
   brandName,
   links,
+  linkCount,
   secondaryLabel,
   ctaLabel,
   align,
@@ -27,14 +29,21 @@ export function Navbar({
   spacing,
   variant,
   ctx,
+  elementId,
 }: SectionComponentProps<NavbarProps>) {
   const strings = landingStrings(ctx.locale);
   const cta = buttonStyleProps({ variant: CTA_VARIANT[emphasis], size: "sm" });
   // The menu repeats the links for small widths; only the bar's copy is an inline-editing target.
+  const visible = links.slice(0, Math.max(0, linkCount));
+  const primary = linkProps(ctx, elementId);
   const linkItems = (editable: boolean) =>
-    links.map((link, i) => (
+    visible.map((link, i) => (
       <li key={`${i}-${link.href}`}>
-        <a className="dl-landing-navbar__link" href={link.href} data-dl-prop={editable ? `links/${i}/label` : undefined}>
+        <a
+          className="dl-landing-navbar__link"
+          {...screenLinkProps(ctx, link.linkTo, link.href)}
+          data-dl-prop={editable ? `links/${i}/label` : undefined}
+        >
           {link.label}
         </a>
       </li>
@@ -68,7 +77,7 @@ export function Navbar({
               {secondaryLabel}
             </a>
           ) : null}
-          <a href="#" {...cta} data-dl-prop="ctaLabel">
+          <a {...primary} {...cta} data-dl-prop="ctaLabel">
             {ctaLabel}
           </a>
         </div>
@@ -90,7 +99,7 @@ export function Navbar({
                   {secondaryLabel}
                 </a>
               ) : null}
-              <a href="#" {...buttonStyleProps({ variant: CTA_VARIANT[emphasis], size: "md", fullWidth: true })}>
+              <a {...primary} {...buttonStyleProps({ variant: CTA_VARIANT[emphasis], size: "md", fullWidth: true })}>
                 {ctaLabel}
               </a>
             </div>

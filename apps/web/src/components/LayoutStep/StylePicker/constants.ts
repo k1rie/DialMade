@@ -1,5 +1,4 @@
-// Relative imports only: vitest runs the pure modules of this folder without the `@/` alias.
-import { DEVICE_WIDTHS } from "../../../lib/devices";
+import { DEVICE_WIDTHS } from "@/lib/devices";
 
 /** Value of «Tu guía de estilo» (an imported guide): the preview uses the doc's own theme inputs. */
 export const GUIDE_STYLE = "guide";

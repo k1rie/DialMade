@@ -3,6 +3,7 @@ import { appSections } from "./app";
 import { brandSections } from "./brand";
 import { landingSections } from "./landing";
 import type { AnySectionDefinition } from "./types";
+import { uiSections } from "./ui";
 
 const ELEMENT_TYPE = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+$/;
 
@@ -66,7 +67,12 @@ export function createRegistry(definitions: readonly AnySectionDefinition[]): Se
   };
 }
 
-export const sectionRegistry: SectionRegistry = createRegistry([...brandSections, ...landingSections, ...appSections]);
+export const sectionRegistry: SectionRegistry = createRegistry([
+  ...brandSections,
+  ...landingSections,
+  ...appSections,
+  ...uiSections,
+]);
 
 export const getSection = (type: string): AnySectionDefinition | undefined => sectionRegistry.get(type);
 

@@ -31,6 +31,11 @@ describe("buildDefaultPage", () => {
     expect(() => buildDefaultPage("landing", ctx, "nope")).toThrow(/Unknown landing layout/);
   });
 
+  it("las páginas de un layout (layoutId «custom») no salen de una plantilla", () => {
+    expect(() => buildDefaultPage("landing", ctx, "custom")).toThrow(/buildPageFromLayout/);
+    expect(() => buildDefaultPage("app", ctx, "custom")).toThrow(/buildPageFromLayout/);
+  });
+
   it("brand: el board completo en orden", () => {
     const page = buildDefaultPage("brand", ctx);
     expect(page.layoutId).toBe("brand-board");

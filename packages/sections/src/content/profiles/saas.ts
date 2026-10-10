@@ -197,7 +197,7 @@ export const saas: ContentProfile = {
     },
     {
       text: t("invitó a {target}", "invited {target}"),
-      targets: [t("3 personas al equipo", "3 people to the team"), t("al equipo de diseño", "the design team")],
+      targets: [t("3 personas al equipo", "3 people to the team"), t("todo el equipo de diseño", "the whole design team")],
       tone: "info",
       icon: "users",
     },

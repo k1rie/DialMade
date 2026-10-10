@@ -26,9 +26,17 @@ export const shellSchema = z.strictObject({
   tone: z.enum(SHELL_TONES),
   density: z.enum(SHELL_DENSITIES),
   showSearch: z.boolean(),
+  /** The page header (h1, Export and the primary action). Off: the content goes straight under the top bar. */
+  showPageHeader: z.boolean(),
 });
 
 export type ShellProps = z.infer<typeof shellSchema>;
 
 /** Nav items that live at the bottom of the sidebar instead of the main list. */
 export const FOOTER_NAV_IDS: ReadonlySet<string> = new Set(["settings"]);
+
+/** Href of a nav item and, when the item is a screen (Layout mode), its id for `data-dl-screen-link`. */
+export type ShellItemLink = (id: string) => { href: string; "data-dl-screen-link"?: string };
+
+/** Default nav links: in-page anchors. */
+export const anchorLink: ShellItemLink = (id) => ({ href: `#${id}` });

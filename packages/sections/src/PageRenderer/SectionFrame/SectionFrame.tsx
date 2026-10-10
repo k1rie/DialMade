@@ -14,6 +14,13 @@ export interface SectionFrameProps {
   ctx: RenderContext;
   /** Containers keep their children selectable and make their own chrome inert (see `EditInert`). */
   container?: boolean;
+  /**
+   * Structural elements (inferred regions, the layout scope) are a plain box in every mode: no tab stop,
+   * role or click selection, and their children stay selectable. Clicks fall through to the page.
+   */
+  structural?: boolean;
+  /** Extra `data-*` attributes of the wrapper (a region's layout kind…). */
+  attributes?: Readonly<Record<`data-${string}`, string>>;
   children: ReactNode;
 }
 
@@ -23,11 +30,11 @@ export interface SectionFrameProps {
  * In edit mode the content of a leaf section is `inert`: its buttons, links and fields are neither
  * clickable nor tabbable (one tab stop per section; a demo dialog cannot open over the app).
  */
-export function SectionFrame({ id, type, label, ctx, container = false, children }: SectionFrameProps) {
+export function SectionFrame({ id, type, label, ctx, container = false, structural = false, attributes, children }: SectionFrameProps) {
   const className = cx("dl-el", `dl-el--${typeClass(type)}`);
-  if (!ctx.interactive) {
+  if (!ctx.interactive || structural) {
     return (
-      <div className={className} data-dl-id={id} data-dl-type={type}>
+      <div className={className} data-dl-id={id} data-dl-type={type} {...attributes}>
         {children}
       </div>
     );
@@ -50,6 +57,7 @@ export function SectionFrame({ id, type, label, ctx, container = false, children
       className={className}
       data-dl-id={id}
       data-dl-type={type}
+      {...attributes}
       data-dl-selected={selected ? "" : undefined}
       tabIndex={0}
       role="group"

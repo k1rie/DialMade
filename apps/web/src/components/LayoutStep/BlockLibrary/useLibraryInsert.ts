@@ -29,7 +29,7 @@ export function useLibraryInsert(): LibraryInsert {
   const t = useDictionary(layout);
   const store = useLayoutStoreApi();
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
 
   const announceBlock = useCallback(
     (id: BlockId) => {
@@ -49,7 +49,7 @@ export function useLibraryInsert(): LibraryInsert {
       if (!screen) return;
       const mode = tileModeFor(type, screen.kind);
       if (mode === "appOnly") {
-        announce(t.library.appOnlyHint(t.blocks[type].name));
+        announce(t.library.appOnlyHint(t.blocks[type].name), "assertive");
         return;
       }
       const parentId = mode === "block" ? insertParentFor(screen.layout, selectSelectedId(state), type) : undefined;

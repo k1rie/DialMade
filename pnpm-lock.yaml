@@ -141,6 +141,9 @@ importers:
       '@dialmade/catalog':
         specifier: workspace:*
         version: link:../catalog
+      '@dialmade/layout':
+        specifier: workspace:*
+        version: link:../layout
       '@dialmade/palette':
         specifier: workspace:*
         version: link:../palette
@@ -258,6 +261,9 @@ importers:
       '@dialmade/doc':
         specifier: workspace:*
         version: link:../doc
+      '@dialmade/layout':
+        specifier: workspace:*
+        version: link:../layout
       '@dialmade/ui':
         specifier: workspace:*
         version: link:../ui

@@ -4,6 +4,7 @@ import type { DesignDoc, PatchOperation, TokenOverrides } from "@dialmade/doc";
 import { contrastRatio, type ScaleStep, type Theme } from "@dialmade/palette";
 import { motion } from "motion/react";
 import { useMemo, useRef, type KeyboardEvent } from "react";
+import { PanelSection } from "@/components/ui/PanelSection";
 import { useDesignDocActions } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
@@ -11,7 +12,6 @@ import { cn } from "@/lib/cn";
 import { snappy } from "@/lib/motion";
 import { BUTTON_COLOR_ROLES, BUTTON_COLOR_STEPS } from "../../constants";
 import { CheckIcon } from "../../icons";
-import { PanelSection } from "../../PanelSection";
 
 export type ButtonColorProps = {
   doc: DesignDoc;

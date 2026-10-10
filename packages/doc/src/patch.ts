@@ -73,7 +73,8 @@ function brokenLock(touched: readonly string[], original: DesignDoc, next: unkno
 }
 
 /**
- * Applies an RFC 6902 patch and validates the result against DesignDoc v1. Never mutates `doc`.
+ * Applies an RFC 6902 patch and validates the result against the current DesignDoc (v2, no migration:
+ * `replace /version 1` is invalid). Never mutates `doc`.
  * A failing patch (malformed op, unresolvable path, failed `test`, or a result the schema rejects —
  * including `pages[k].kind !== k`) returns `{ ok: false }` so the caller can discard it.
  *

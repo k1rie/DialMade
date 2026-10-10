@@ -5,7 +5,7 @@ import type { Locale, OutputKind } from "@dialmade/catalog";
 import type { DesignDoc, Page } from "@dialmade/doc";
 import { UiProvider } from "@dialmade/ui";
 import { buildDefaultPage } from "../buildPage";
-import { contentContextFromDoc } from "../context";
+import { contentContextFromDoc, linkContext } from "../context";
 import { cx } from "../lib/cx";
 import { sectionRegistry, type SectionRegistry } from "../registry";
 import type { ColorMode, RenderContext } from "../types";
@@ -33,11 +33,24 @@ export interface PageRendererProps {
   exclude?: ReadonlySet<string>;
   onSectionError?: (id: string, error: unknown) => void;
   className?: string;
+  /** Layout mode: href of a screen, for links between screens (`null` when it has none). */
+  linkHref?: (screenId: string) => string | null;
+  /** Layout mode: element id → the screen its primary action links to (the blocks' `linkTo`). */
+  links?: Readonly<Record<string, string>>;
+  /**
+   * Navigable preview: a click on an element carrying `data-dl-screen-link` calls this instead of following
+   * the link. Only outside edit mode.
+   */
+  onNavigate?: (screenId: string) => void;
+  /** Layout mode: the page's `toCss` output, rendered in a `<style data-dl-layout>` inside the page. */
+  layoutCss?: string;
 }
 
 const preventNavigation = (event: MouseEvent<HTMLDivElement>) => {
   if (event.target instanceof Element && event.target.closest("a[href]")) event.preventDefault();
 };
+
+const SCREEN_LINK = "[data-dl-screen-link]";
 
 /**
  * Renders a Page of the DesignDoc with the registered sections. It only paints the page: apply the
@@ -58,6 +71,10 @@ export function PageRenderer({
   exclude,
   onSectionError,
   className,
+  linkHref,
+  links,
+  onNavigate,
+  layoutCss,
 }: PageRendererProps) {
   const content = useMemo(
     () => contentContextFromDoc(doc, { ...(locale && { locale }), ...(logoUrl && { logoUrl }), ...(seed !== undefined && { seed }) }),
@@ -70,6 +87,7 @@ export function PageRenderer({
   );
   const page = (stored ?? fallbackPage) as Page;
 
+  const linkCtx = useMemo(() => linkContext({ ...(linkHref && { linkHref }), ...(links && { links }) }), [linkHref, links]);
   const ctx = useMemo<RenderContext>(
     () => ({
       ...content,
@@ -78,9 +96,20 @@ export function PageRenderer({
       ...(onSelect && { onSelect }),
       ...(selectedId !== undefined && { selectedId }),
       doc,
+      ...linkCtx,
     }),
-    [content, mode, interactive, onSelect, selectedId, doc],
+    [content, mode, interactive, onSelect, selectedId, doc, linkCtx],
   );
+  const navigate =
+    onNavigate && !interactive
+      ? (event: MouseEvent<HTMLDivElement>) => {
+          const link = event.target instanceof Element ? event.target.closest(SCREEN_LINK) : null;
+          const screenId = link?.getAttribute("data-dl-screen-link");
+          if (!screenId) return;
+          event.preventDefault();
+          onNavigate(screenId);
+        }
+      : undefined;
   const hidden = useMemo(() => new Set(page.hidden ?? []), [page.hidden]);
   const scope: RenderScope = {
     page,
@@ -104,8 +133,10 @@ export function PageRenderer({
         data-dl-interactive={interactive ? "" : undefined}
         lang={ctx.locale}
         onClickCapture={interactive ? preventNavigation : undefined}
+        onClick={navigate}
         onSubmitCapture={interactive ? (event) => event.preventDefault() : undefined}
       >
+        {layoutCss ? <style data-dl-layout="">{layoutCss}</style> : null}
         <ElementView id={page.root} scope={scope} isRoot />
       </div>
     </UiProvider>

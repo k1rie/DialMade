@@ -1,0 +1,125 @@
+/* Shared box of the ui.* blocks. Each block adds its own container name: `container-name: dl-ui dl-ui-<block>`. */
+.dl-ui {
+  --_ui-gutter: var(--dl-space-5, 20px);
+  --_ui-scale: 0.62;
+
+  container-type: inline-size;
+  container-name: dl-ui;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--dl-font-body, system-ui, sans-serif);
+  font-size: var(--dl-fs-body, 1rem);
+  line-height: var(--dl-lh-body, 1.5);
+}
+
+.dl-ui *,
+.dl-ui *::before,
+.dl-ui *::after {
+  box-sizing: border-box;
+}
+
+.dl-ui__inner {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--dl-space-4, 16px);
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dl-ui[data-frame="card"] {
+  border: var(--dl-card-border, var(--dl-border-width, 1px) solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  box-shadow: var(--dl-card-shadow, none);
+  color: var(--card-foreground);
+}
+
+.dl-ui[data-frame="card"] > .dl-ui__inner {
+  padding: var(--dl-card-padding, var(--dl-space-5, 24px));
+}
+
+.dl-ui[data-frame="section"] {
+  background: var(--background);
+}
+
+.dl-ui[data-frame="section"] > .dl-ui__inner {
+  max-width: calc(var(--dl-container, 1200px) + 2 * var(--_ui-gutter));
+  margin-inline: auto;
+  padding: calc(var(--dl-section-py, 96px) * var(--_ui-scale)) var(--_ui-gutter);
+}
+
+@container dl-ui (min-width: 45rem) {
+  .dl-ui[data-frame="section"] > .dl-ui__inner {
+    --_ui-gutter: var(--dl-space-6, 32px);
+    --_ui-scale: 0.82;
+  }
+}
+
+@container dl-ui (min-width: 64rem) {
+  .dl-ui[data-frame="section"] > .dl-ui__inner {
+    --_ui-gutter: var(--dl-space-7, 48px);
+    --_ui-scale: 1;
+  }
+}
+
+/* Shared pieces: the title row of the widget-like blocks and their trailing link. */
+.dl-ui__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dl-space-2, 8px) var(--dl-space-4, 16px);
+  min-width: 0;
+}
+
+.dl-ui__heading {
+  display: flex;
+  flex: 1 1 10rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dl-ui__title {
+  margin: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: calc(var(--dl-fs-body, 1rem) * 1.0625);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: var(--dl-lh-tight, 1.25);
+}
+
+.dl-ui__subtitle {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.4;
+}
+
+.dl-ui__link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--dl-space-1, 4px);
+  border-radius: var(--dl-radius-sm, 4px);
+  color: var(--primary-text);
+  font-size: var(--dl-fs-small, 0.875rem);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dl-ui__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.dl-ui__link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

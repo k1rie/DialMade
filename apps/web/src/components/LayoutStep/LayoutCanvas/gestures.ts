@@ -13,10 +13,8 @@ import {
   type LayoutWarning,
   type ResponsiveLayout,
 } from "@dialmade/layout";
-// Relative imports only: vitest runs this module without the `@/` alias.
-import { DEVICE_COLUMNS, DEVICE_WIDTHS } from "../../../lib/devices";
-import { nudgeGrid, ROW_UNIT_PX, snapDraw, snapMove, snapResize, type GridMetrics, type GridSize } from "../../../lib/geometry/grid";
-import type { Handle, Point } from "../../../lib/geometry/rect";
+import { DEVICE_COLUMNS, DEVICE_WIDTHS } from "@/lib/devices";
+import { nudgeGrid, ROW_UNIT_PX, snapDraw, snapMove, snapResize, type GridMetrics, type GridSize, type Handle, type Point } from "@/lib/geometry";
 import { HEADER_STRIP_PX, NAV_FRAME_PX } from "../constants";
 import {
   AUTO_SCROLL_EDGE_PX,

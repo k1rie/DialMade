@@ -3,8 +3,8 @@
 import { motion, type MotionValue } from "motion/react";
 import type { KeyboardEvent, RefObject } from "react";
 import { cn } from "@/lib/cn";
+import { HANDLES, type Handle } from "@/lib/geometry";
 import { CROP_DIM } from "../constants";
-import { HANDLES, type Handle } from "../geometry";
 
 type Box = { left: MotionValue<number>; top: MotionValue<number>; width: MotionValue<number>; height: MotionValue<number> };
 

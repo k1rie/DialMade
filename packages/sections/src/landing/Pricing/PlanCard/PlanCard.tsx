@@ -14,9 +14,11 @@ export interface PlanCardProps {
   emphasis: Emphasis;
   /** `card`: vertical column; `row`: details on the left, price and button on the right. */
   layout: "card" | "row";
+  /** Href (and screen link) of the plan's button; `#` by default. */
+  link?: { href: string; "data-dl-screen-link"?: string };
 }
 
-export function PlanCard({ plan, index, price, highlightLabel, emphasis, layout }: PlanCardProps) {
+export function PlanCard({ plan, index, price, highlightLabel, emphasis, layout, link = { href: "#" } }: PlanCardProps) {
   const prop = (key: string) => `plans/${index}/${key}`;
   const highlighted = plan.highlighted;
   const head = (
@@ -47,7 +49,7 @@ export function PlanCard({ plan, index, price, highlightLabel, emphasis, layout 
     </div>
   );
   const cta = (
-    <a href="#" {...buttonStyleProps({ variant: highlighted ? "cta" : "outline", fullWidth: layout === "card", className: "dl-landing-plan__cta" })}>
+    <a {...link} {...buttonStyleProps({ variant: highlighted ? "cta" : "outline", fullWidth: layout === "card", className: "dl-landing-plan__cta" })}>
       <span data-dl-prop={prop("cta")}>{plan.cta}</span>
     </a>
   );

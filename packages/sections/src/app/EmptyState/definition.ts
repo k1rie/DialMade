@@ -29,5 +29,10 @@ export const emptyStateSection = defineSection<EmptyStateProps>({
       secondaryAction: text(empty.secondary, ctx),
     };
   },
+  layout: {
+    owns: [],
+    // Tall blocks (≥ 320 px) have room for the illustration.
+    fit: ({ heightPx }) => ({ variant: heightPx >= 320 ? "illustrated" : "dashed" }),
+  },
   Component: EmptyState,
 });

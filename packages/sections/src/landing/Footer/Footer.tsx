@@ -3,6 +3,7 @@ import { CONTENT_TODAY } from "../../content";
 import { BrandMark } from "../BrandMark";
 import { LandingSection } from "../LandingSection";
 import { landingStrings } from "../lib/strings";
+import { screenLinkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import type { FooterLink, FooterProps } from "./types";
 import "./Footer.css";
@@ -48,7 +49,7 @@ export function Footer({
               <ul className="dl-landing-footer__inline" role="list">
                 {simpleLinks.map(({ link, path }) => (
                   <li key={path}>
-                    <a className="dl-landing-footer__link" href={link.href} data-dl-prop={path}>
+                    <a className="dl-landing-footer__link" {...screenLinkProps(ctx, link.linkTo, link.href)} data-dl-prop={path}>
                       {link.label}
                     </a>
                   </li>
@@ -81,7 +82,11 @@ export function Footer({
                       <ul className="dl-landing-footer__links" role="list" aria-labelledby={headingId}>
                         {column.links.map((link, i) => (
                           <li key={`${i}-${link.href}`}>
-                            <a className="dl-landing-footer__link" href={link.href} data-dl-prop={`columns/${c}/links/${i}/label`}>
+                            <a
+                              className="dl-landing-footer__link"
+                              {...screenLinkProps(ctx, link.linkTo, link.href)}
+                              data-dl-prop={`columns/${c}/links/${i}/label`}
+                            >
                               {link.label}
                             </a>
                           </li>

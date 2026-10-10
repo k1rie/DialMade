@@ -14,7 +14,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type FocusEvent } from "react";
 import { toast } from "sonner";
-import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
+import { useDndAnnounce, type DndPoliteness } from "@/components/dnd/DndAnnouncer";
 import { Button } from "@/components/ui/Button";
 import { useDictionary } from "@/i18n";
 import { layout as layoutText } from "@/i18n/layout";
@@ -108,9 +108,12 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
   const t = useDictionary(layoutText);
   const baseId = useId();
   const reduceMotion = useReducedMotion();
-  const announceNow = useDndAnnounce();
-  // A tick later: the DnD announcer speaks on the same drag end and must not cover the result.
-  const announce = useCallback((message: string) => void window.setTimeout(() => announceNow(message), 0), [announceNow]);
+  const announceNow = useDndAnnounce({ politeness: "polite" });
+  // A tick later: the DnD announcer speaks the drop on the same drag end (assertive); the result follows it.
+  const announce = useCallback(
+    (message: string, politeness?: DndPoliteness) => void window.setTimeout(() => announceNow(message, politeness), 0),
+    [announceNow],
+  );
 
   const store = useLayoutStoreApi();
   const actions = useLayoutActions();
@@ -644,7 +647,7 @@ export function LayoutCanvas({ className }: LayoutCanvasProps) {
     actions: {
       readOnly: (id) => {
         select(id);
-        announce(t.canvas.readOnly(deviceName));
+        announce(t.canvas.readOnly(deviceName), "assertive");
       },
       grab: (step) => {
         if (grabRef.current) return;

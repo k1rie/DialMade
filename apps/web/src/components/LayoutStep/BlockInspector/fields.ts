@@ -1,6 +1,5 @@
 import { MAX_HEIGHT_ROWS, MAX_ROW, type GridRect } from "@dialmade/layout";
-// Relative imports only: vitest runs this module without the `@/` alias.
-import { nudgeGrid, ROW_UNIT_PX, type GridSize } from "../../../lib/geometry/grid";
+import { nudgeGrid, ROW_UNIT_PX, type GridSize } from "@/lib/geometry";
 import { MIN_BLOCK_SIZE } from "./constants";
 
 /*

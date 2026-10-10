@@ -2,7 +2,7 @@
 
 import { Avatar, IconButton, Input, NavItem } from "@dialmade/ui";
 import type { AppStrings } from "../../content";
-import type { ShellProps, ShellVariant } from "../schema";
+import { anchorLink, type ShellItemLink, type ShellProps, type ShellVariant } from "../schema";
 import { ShellBrand } from "../ShellBrand";
 
 export interface ShellTopbarProps
@@ -10,6 +10,7 @@ export interface ShellTopbarProps
   variant: ShellVariant;
   logoUrl?: string;
   strings: AppStrings;
+  itemLink?: ShellItemLink;
 }
 
 const MENU_GLYPH = (
@@ -32,6 +33,7 @@ export function ShellTopbar({
   showSearch,
   logoUrl,
   strings,
+  itemLink = anchorLink,
 }: ShellTopbarProps) {
   const topnav = variant === "topnav";
   const search = showSearch ? (
@@ -57,17 +59,20 @@ export function ShellTopbar({
         {topnav ? (
           <nav className="dl-app-shell__nav dl-app-shell__topnav" aria-label={strings.mainNav}>
             <ul className="dl-app-shell__topnav-list" role="list">
-              {nav.map((item) => (
-                <li key={item.id}>
-                  <NavItem
-                    orientation="horizontal"
-                    label={item.label}
-                    href={`#${item.id}`}
-                    active={item.id === activeId}
-                    {...(item.count !== undefined && { count: item.count })}
-                  />
-                </li>
-              ))}
+              {nav.map((item) => {
+                const link = itemLink(item.id);
+                return (
+                  <li key={item.id} data-dl-screen-link={link["data-dl-screen-link"]}>
+                    <NavItem
+                      orientation="horizontal"
+                      label={item.label}
+                      href={link.href}
+                      active={item.id === activeId}
+                      {...(item.count !== undefined && { count: item.count })}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         ) : (

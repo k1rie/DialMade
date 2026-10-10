@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { Button, Input, buttonStyleProps } from "@dialmade/ui";
 import { LandingSection } from "../LandingSection";
 import { landingStrings } from "../lib/strings";
+import { linkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import type { CtaProps } from "./types";
 import "./Cta.css";
@@ -67,7 +68,7 @@ export function Cta({
             </form>
           ) : (
             <div className="dl-landing-cta__buttons">
-              <a href="#" {...buttonStyleProps({ variant: "cta", size: "lg" })}>
+              <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "cta", size: "lg" })}>
                 <span data-dl-prop="button">{button}</span>
               </a>
               {secondaryButton ? (

@@ -7,7 +7,9 @@ import {
 } from "@dialmade/catalog";
 import type { CssColorFormat } from "@dialmade/palette";
 import { resolveBindings } from "../bindings";
-import type { DesignDoc, Dials, Page } from "../schema";
+import { legacyPageKinds } from "../screens";
+import { LAYOUT_PAGE_ID } from "../constants";
+import type { DesignDoc, Dials, Page, PageElement } from "../schema";
 import { resolveThemeInputs, resolveTokens, type ResolvedTokens, type ThemeInputs } from "../tokens";
 
 /** Shared by every exporter. Missing inputs are resolved from the doc via @dialmade/catalog and @dialmade/palette. */
@@ -15,6 +17,11 @@ export interface ExportOptions extends Partial<ThemeInputs> {
   /** Page dials on top of `doc.brief.dials`. Exports default to the global dials. */
   pageDials?: Partial<Dials>;
   colorFormat?: CssColorFormat;
+  /**
+   * Screen pages only: an element's props as the page shows them (`visibleProps` of @dialmade/sections), so
+   * the page outline never lists the items a `count` hides. Without it the outline lists every stored item.
+   */
+  visibleProps?: (element: PageElement) => Record<string, unknown>;
 }
 
 export interface ResolvedExport {
@@ -68,6 +75,14 @@ const SECTION_LABELS: Record<string, { es: string; en: string }> = {
   "app.emptyState": { es: "Estado vacío", en: "Empty state" },
   "app.confirmDialog": { es: "Diálogo de confirmación", en: "Confirm dialog" },
   "app.componentGallery": { es: "Galería de componentes", en: "Component gallery" },
+  "ui.text": { es: "Texto", en: "Text" },
+  "ui.media": { es: "Media", en: "Media" },
+  "ui.cards": { es: "Tarjetas", en: "Cards" },
+  "ui.calendar": { es: "Calendario", en: "Calendar" },
+  "ui.list": { es: "Lista", en: "List" },
+  "ui.form": { es: "Formulario", en: "Form" },
+  "ui.placeholder": { es: "Bloque libre", en: "Free block" },
+  "ui.region": { es: "Contenedor", en: "Container" },
 };
 
 export const sectionLabel = (type: string, locale: Locale): string =>
@@ -88,7 +103,7 @@ const MAX_TEXT = 140;
 const MAX_ITEM_TEXT = 160;
 const MAX_LIST_ITEMS = 12;
 /** Keys of list items that are not copy (links, ids, icons, flags). */
-const NON_COPY_KEY = /^(id|key|href|url|src|icon|image|logo|avatar|variant|tone|color|kind|type|highlighted|featured|active)$/i;
+const NON_COPY_KEY = /^(id|key|href|url|src|icon|image|logo|avatar|variant|tone|color|kind|type|highlighted|featured|active|linkTo|route|screen)$/i;
 
 const clip = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
 
@@ -119,16 +134,29 @@ function listCopy(value: readonly unknown[]): string[] {
     .filter(Boolean);
 }
 
-/** Depth-first outline of a page below its root. */
-export function pageOutline(doc: DesignDoc, page: Page): OutlineItem[] {
+/**
+ * Structural elements of a screen page (the layout scope and the inferred regions, `ui.region` with
+ * `role: "scope" | "inferred"`): the outline skips them and lists their children at the same depth.
+ */
+const isStructural = (id: string, element: { type: string; props: Record<string, unknown> }) =>
+  element.type === "ui.region" &&
+  (element.props.role === "scope" || element.props.role === "inferred" || id === "layout" || id.startsWith("r-"));
+
+/**
+ * Depth-first outline of a page below its root (structural regions of a screen page are transparent). On a
+ * screen page, `visibleProps` (see `ExportOptions`) projects each element's props to what it shows first.
+ */
+export function pageOutline(doc: DesignDoc, page: Page, visibleProps?: ExportOptions["visibleProps"]): OutlineItem[] {
   const hidden = new Set(page.hidden ?? []);
+  const project = page.layoutId === LAYOUT_PAGE_ID ? visibleProps : undefined;
   const out: OutlineItem[] = [];
   const visit = (id: string, depth: number, parentHidden: boolean) => {
     const element = page.elements[id];
     if (!element) return;
     const isHidden = parentHidden || hidden.has(id);
-    if (id !== page.root) {
-      const props = resolveBindings(doc, element.props);
+    const transparent = id === page.root || isStructural(id, element);
+    if (!transparent) {
+      const props = resolveBindings(doc, project ? project(element) : element.props);
       const text: Record<string, string> = {};
       const lists: Record<string, string[]> = {};
       for (const [key, value] of Object.entries(props)) {
@@ -140,16 +168,14 @@ export function pageOutline(doc: DesignDoc, page: Page): OutlineItem[] {
       }
       out.push({ id, type: element.type, depth, hidden: isHidden, text, lists });
     }
-    for (const child of element.children) visit(child, id === page.root ? depth : depth + 1, isHidden);
+    for (const child of element.children) visit(child, transparent ? depth : depth + 1, isHidden);
   };
   visit(page.root, 0, false);
   return out;
 }
 
-export const pageKinds = (doc: DesignDoc): OutputKind[] => {
-  const kinds = (["brand", "landing", "app"] as const).filter((kind) => doc.pages[kind]);
-  return [...kinds].sort((a, b) => (a === doc.brief.focus ? -1 : b === doc.brief.focus ? 1 : 0));
-};
+/** Legacy pages in export order (focus first). Documents with screens export `renderTargets`. */
+export const pageKinds = (doc: DesignDoc): OutputKind[] => legacyPageKinds(doc);
 
 /** `"-apple-system, 'Segoe UI', sans-serif"` → `["-apple-system", "Segoe UI", "sans-serif"]`. */
 export function splitFontStack(stack: string): string[] {

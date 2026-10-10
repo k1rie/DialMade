@@ -1,6 +1,6 @@
 import type { Adjustment } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { layout } from "../../i18n/layout";
+import { layout } from "@/i18n/layout";
 import { describeAdjustments } from "./adjustments";
 
 const names: Record<string, string> = { a: "Hero", b: "Tarjetas", c: "Contenedor" };

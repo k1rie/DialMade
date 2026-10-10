@@ -1,6 +1,5 @@
 import type { Adjustment, BlockId } from "@dialmade/layout";
-// Relative imports only: vitest runs this module without the `@/` alias.
-import type { LayoutDictionary } from "../../i18n/layout";
+import type { LayoutDictionary } from "@/i18n/layout";
 
 /** Texts of «Ajustado · Deshacer» (`t.adjusted`). */
 export type AdjustedText = Pick<LayoutDictionary["adjusted"], "clamp" | "clip" | "nest" | "unnest" | "many">;

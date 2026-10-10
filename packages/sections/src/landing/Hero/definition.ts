@@ -59,5 +59,11 @@ export const heroSection = defineSection<HeroProps>({
       spacing: "normal",
     };
   },
+  layout: {
+    owns: [],
+    // The chip says «split» for narrow heroes, a split note or an absorbed media / form; «centered» otherwise.
+    fit: ({ estimate }) =>
+      estimate?.kind === "variant" && (estimate.value === "split" || estimate.value === "centered") ? { variant: estimate.value } : {},
+  },
   Component: Hero,
 });

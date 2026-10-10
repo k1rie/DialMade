@@ -16,7 +16,7 @@ import {
   PAGE_DIAL_DEFAULTS,
   ROOT_ELEMENT_ID,
 } from "./constants";
-import { cloneJson } from "./json";
+import { cloneJson, isPlainObject } from "./json";
 import {
   DesignDocSchema,
   PagesSchema,
@@ -28,7 +28,9 @@ import {
   type PageElement,
   type ProvenanceInput,
   type ReferenceInput,
+  type ScreenInput,
 } from "./schema";
+import { pageForKey, type PageKey, type RenderTarget } from "./screens";
 
 export class DesignDocError extends Error {
   override readonly name = "DesignDocError";
@@ -47,12 +49,24 @@ export function formatIssues(issues: readonly z.core.$ZodIssue[]): string {
 
 export type SafeParseResult = { success: true; data: DesignDoc } | { success: false; issues: z.core.$ZodIssue[] };
 
+/**
+ * Brings a stored document to the current version. v1 → v2 only bumps `version` (`screens` and
+ * `screenOrder` come from their defaults); a "v1" document that already carries v2 members is left as is,
+ * so it fails validation like it always did. Anything else is returned untouched. Never mutates `input`.
+ */
+export function migrateDesignDoc(input: unknown): unknown {
+  if (!isPlainObject(input) || input.version !== 1) return input;
+  if (Object.hasOwn(input, "screens") || Object.hasOwn(input, "screenOrder")) return input;
+  return { ...input, version: 2 };
+}
+
+/** Validates (and fills defaults of) a stored document, migrating older versions first. */
 export function safeParseDesignDoc(input: unknown): SafeParseResult {
-  const result = DesignDocSchema.safeParse(input);
+  const result = DesignDocSchema.safeParse(migrateDesignDoc(input));
   return result.success ? { success: true, data: result.data } : { success: false, issues: result.error.issues };
 }
 
-/** Validates (and fills defaults of) a stored document. Throws `DesignDocError`. */
+/** Validates (and fills defaults of) a stored document, migrating older versions first. Throws `DesignDocError`. */
 export function parseDesignDoc(input: unknown): DesignDoc {
   const result = safeParseDesignDoc(input);
   if (!result.success) throw new DesignDocError("Invalid DesignDoc", result.issues);
@@ -93,10 +107,12 @@ export interface CreateDesignDocInput {
   provenance?: Partial<ProvenanceInput>;
   /** Pages to start with. Each `pages[k].kind` must be `k`. */
   pages?: Partial<Record<OutputKind, Page>>;
+  /** Screens to start with, in order (`screenOrder`). With screens, `pages` may only hold `brand`. */
+  screens?: readonly ScreenInput[];
 }
 
 /**
- * Builds a valid DesignDoc v1. Missing choices come from `@dialmade/catalog` defaults for the product
+ * Builds a valid DesignDoc (current version). Missing choices come from `@dialmade/catalog` defaults for the product
  * type (`"generic"` when none): recipe, pairing and motion tier. Throws `DesignDocError`.
  */
 export function createDesignDoc(input: CreateDesignDocInput): DesignDoc {
@@ -131,6 +147,8 @@ export function createDesignDoc(input: CreateDesignDocInput): DesignDoc {
     references: input.references ?? [],
     provenance: { engineVersion: ENGINE_VERSION, ...input.provenance },
     pages: input.pages ?? {},
+    screens: Object.fromEntries((input.screens ?? []).map((screen) => [screen.id, screen])),
+    screenOrder: (input.screens ?? []).map((screen) => screen.id),
   };
   return parseDesignDoc(cloneJson(draft));
 }
@@ -220,7 +238,11 @@ export function addPage(doc: DesignDoc, kind: OutputKind, page?: Page, options: 
   return parseDesignDoc(next);
 }
 
-/** Global dials with the page's own overrides (e.g. the App page's density) on top. */
-export function effectiveDials(doc: DesignDoc, kind?: OutputKind): Dials {
-  return { ...doc.brief.dials, ...(kind ? doc.pages[kind]?.dials : undefined) };
+/**
+ * Global dials with the page's own overrides (e.g. the App page's density) on top. `target` is a page
+ * kind, a screen id (any `PageKey`) or a render target; without it, the global dials.
+ */
+export function effectiveDials(doc: DesignDoc, target?: PageKey | Pick<RenderTarget, "page">): Dials {
+  const page = target === undefined ? undefined : typeof target === "string" ? pageForKey(doc, target) : target.page;
+  return { ...doc.brief.dials, ...page?.dials };
 }

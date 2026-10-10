@@ -87,7 +87,7 @@ export function LayersList({ className }: LayersListProps) {
   const t = useDictionary(layout);
   const platformKeys = usePlatformKeys();
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const screen = useActiveScreen();
   const structure = useScreenStructure();
   const selectedId = useSelectedId();

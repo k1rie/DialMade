@@ -25,10 +25,12 @@ describe("validateLayout", () => {
     const layout = makeLayout([
       { id: "r-123", type: "text", rect: [0, 0, 6, 10] },
       { id: "bad id", type: "text", rect: [6, 0, 6, 10] },
+      { id: "shell", type: "text", rect: [0, 20, 6, 10] },
     ]);
     expect(validateLayout(layout)).toEqual([
       { code: "invalid-id", path: ["blocks", "bad id"], message: 'Invalid block id "bad id"' },
       { code: "reserved-id", path: ["blocks", "r-123"], message: 'Block ids cannot start with "r-"' },
+      { code: "reserved-id", path: ["blocks", "shell"], message: 'Block id "shell" is reserved' },
     ]);
   });
 

@@ -1,6 +1,6 @@
 import { LIBRARY, type LibraryBlockType } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { layout } from "../../i18n/layout";
+import { layout } from "@/i18n/layout";
 import { MAX_QUERY_LENGTH, normalizeSearchText, searchBlocks, type BlockSearchDict } from "./searchBlocks";
 
 const BOTH = [layout.es.blocks, layout.en.blocks] as const;

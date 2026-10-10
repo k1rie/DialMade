@@ -9,7 +9,7 @@ import {
   ROW_UNIT,
 } from "./constants";
 import { isIntegerRect } from "./geometry";
-import { compareStrings, ELEMENT_ID_RE, REGION_PREFIX } from "./ids";
+import { compareStrings, ELEMENT_ID_RE, REGION_PREFIX, RESERVED_BLOCK_IDS } from "./ids";
 import { getBlockDef, isLibraryBlockType } from "./library";
 import type { LayoutDoc } from "./types";
 
@@ -63,6 +63,7 @@ export function validateLayout(layout: LayoutDoc): LayoutIssue[] {
     const at = (...rest: (string | number)[]) => ["blocks", id, ...rest];
     if (!ELEMENT_ID_RE.test(id)) add("invalid-id", at(), `Invalid block id ${JSON.stringify(id)}`);
     else if (id.startsWith(REGION_PREFIX)) add("reserved-id", at(), `Block ids cannot start with "${REGION_PREFIX}"`);
+    else if (RESERVED_BLOCK_IDS.includes(id)) add("reserved-id", at(), `Block id ${JSON.stringify(id)} is reserved`);
     if (!block || typeof block !== "object") {
       add("unknown-type", at(), "Block must be an object");
       continue;

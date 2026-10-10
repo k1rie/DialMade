@@ -6,6 +6,7 @@ import { useId, useMemo, useState } from "react";
 import { AiKeyDialog, type AiKeyDialogView } from "@/components/AiKeyDialog";
 import { AiUsageMeter } from "@/components/AiUsageMeter";
 import { Button } from "@/components/ui/Button";
+import { Popover } from "@/components/ui/Popover";
 import type { AiCopyResult, UseAiCopy } from "@/hooks/useAiCopy";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useDictionary, useI18n } from "@/i18n";
@@ -14,7 +15,6 @@ import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { estimateCopyCost, formatUsd } from "../../aiEstimate";
 import { SparklesIcon } from "../../icons";
-import { Popover } from "../../Popover";
 
 export type AiCopyMenuProps = {
   open: boolean;

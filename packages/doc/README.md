@@ -1,6 +1,6 @@
 # @dialmade/doc
 
-El **DesignDoc v1**: la única fuente de verdad de un diseño en Dialmade. Incluye el esquema (Zod 4), la edición con parches RFC 6902, la compilación a variables CSS del tema y los exportadores (CSS, DTCG, Figma, DESIGN.md y prompt packs). Es TypeScript puro, sin React.
+El **DesignDoc v2**: la única fuente de verdad de un diseño en Dialmade. Incluye el esquema (Zod 4), la edición con parches RFC 6902, la compilación a variables CSS del tema y los exportadores (CSS, DTCG, Figma, DESIGN.md y prompt packs). Es TypeScript puro, sin React.
 
 ```ts
 import { createDesignDoc, addPage, applyPatch, resolveThemeInputs, compileThemeVars, toThemeCss } from "@dialmade/doc";
@@ -21,8 +21,8 @@ const css = toThemeCss(doc); // :root + .dark con todas las variables
 ## Modelo
 
 ```
-DesignDoc v1 {
-  version: 1,
+DesignDoc v2 {
+  version: 2,
   brand: { name, tagline?, logoRef?, seeds: { primary, secondary? }, achromatic },   // contenido compartido
   brief: { productType ("generic"), focus, locale, paletteStyleId, recipeId, pairingId, motionTier,
            dials: { variance, motion, density } (1–10),
@@ -36,9 +36,12 @@ DesignDoc v1 {
   provenance: { engineVersion, catalogSha?, model?, createdAt?,
                 imports?: [{ sourceId, kind, format, fileName, sha256, bytes, parser, ownership, rightsConfirmedAt?,
                              fields: [{ path, locator, confidence, method }], dismissed: string[] }] },   // nunca el archivo
-  pages: { brand?, landing?, app? },   // pages[k].kind === k (superRefine)
+  pages: { brand?, landing?, app? },   // pages[k].kind === k (superRefine); con pantallas, solo brand
+  screens: { [ScreenId]: Screen },     // Modo Layout (v2); {} por defecto
+  screenOrder: ScreenId[],             // permutación de las claves de screens, ≤ MAX_SCREENS (24)
 }
 Page { kind, layoutId, dials?: Partial<Dials>, root, elements: { [id]: { type, props, children } }, hidden? }
+Screen { id, name, kind: landing | app, route, layout: LayoutDoc, page: Page, shell: AppShell | null }
 ```
 
 - **Tokens derivados.** Solo se guardan las ediciones explícitas del usuario y los valores importados que aceptó (un valor, un sitio; `provenance.imports` dice de dónde salió). Todo lo demás se recalcula con `resolveTokens` a partir de `brand`, `brief`, la receta, el pairing y los diales: colores (de @dialmade/palette), escala tipográfica, radios, espacios, sombras, duraciones y tokens de componente. Así nunca queda desfasado. Un valor guardado gana siempre a la receta, al pairing y a los diales.
@@ -47,7 +50,27 @@ Page { kind, layoutId, dials?: Partial<Dials>, root, elements: { [id]: { type, p
 - **Árbol de página.** El `root` existe y cada elemento tiene un solo padre. No hay ciclos ni huérfanos, y `hidden` solo apunta a ids existentes. Los tipos llevan namespace: una página `landing` solo admite `landing.*` y `ui.*`.
 - **Props.** Tienen que ser JSON. Un texto compartido se guarda como `{ bind: "brand.name" | "brand.tagline" }` y se resuelve con `resolveBindings(doc, props)`.
 - **Catálogo cerrado.** `productType`, `recipeId`, `pairingId` y el `layoutId` de la landing se validan contra @dialmade/catalog.
-- **Página App.** Nace con `dials.density = 7`. `effectiveDials(doc, kind)` combina los diales globales con los de la página.
+- **Página App.** Nace con `dials.density = 7`. `effectiveDials(doc, key)` combina los diales globales con los de la página (`key` = tipo de página, id de pantalla o un `RenderTarget`).
+
+## Pantallas (DesignDoc v2, Modo Layout)
+
+Cada pantalla es lo que el usuario dibujó en el lienzo (`layout`, el `LayoutDoc` de @dialmade/layout) y la página que @dialmade/sections compila desde él al pulsar «Generar» (`page`). Se añaden al lado de `pages`, sin moverlas.
+
+- **Reglas de la pantalla.** `id` es un id de elemento que no puede ser `brand`, `landing` ni `app`. `name` es una línea limpia (lo que da `sanitizeLabel`) de ≤60. `route` es `/` o `/` + segmentos slug (`a-z`, `0-9`, `-`), ≤96 (`RouteSchema`). `shell` es un objeto en las de app (`nav: "none"` si no hay navegación) y `null` en las landing.
+- **Página de pantalla.** `page.kind === kind`, raíz `${kind}.page`, `page.layoutId === LAYOUT_PAGE_ID` (`"custom"`, sin buscarlo en el catálogo) y el árbol admite `landing.*`, `app.*` y `ui.*`, nunca `brand.*` (crítica #1). `hidden` solo apunta a ids que existen. `checkScreenPage(page, kind)` devuelve esos problemas como texto (para los tests de otros paquetes).
+- **Layout.** `LayoutDocSchema` comprueba tipos y formatos (bloques de la librería, etiquetas y notas en una línea limpia, `pinned` como JSON Pointers relativos a las props, huella `generated`, overrides `responsive`, `linkTo`) y su `superRefine` añade los errores de `validateLayout` (rects dentro de la rejilla, `MAX_ROW`, `MAX_HEIGHT_ROWS`, padres y ciclos, `count`, `LABEL_MAX`, `NOTE_MAX`, `MAX_BLOCKS`, ids `r-`), cada uno con su código en `params.layoutCode`. Los tipos de salida son los de @dialmade/layout: `screen.layout` va directo a `inferStructure`, `toCss` o `toAsciiWireframe`.
+- **Reglas del documento.** Las claves de `screens` son los ids; `screenOrder` es una permutación de ellas; las rutas no se repiten; cada `linkTo` apunta a una pantalla que existe; las pantallas de app con navegación comparten el mismo `nav`; y con pantallas, `pages.landing` y `pages.app` no existen (una sola fuente de verdad; `pages.brand` se queda).
+- **Candados.** `POINTER_ROOTS` incluye `screens`: un candado puede apuntar a `/screens/{id}/…` (nunca a `/screenOrder`).
+- **Migración.** `parseDesignDoc` y `safeParseDesignDoc` pasan antes por `migrateDesignDoc`: un documento v1 sube a v2 cambiando solo `version`. `applyPatch` valida contra v2 sin migrar. `createDesignDoc` escribe v2 (acepta `screens`, en orden).
+
+| Helper | Qué hace |
+|---|---|
+| `orderedScreens(doc)` | Las pantallas en el orden de `screenOrder` |
+| `renderTargets(doc)` | Lo que se pinta o exporta, en orden: `{ key, kind, page, screen? }[]`. Con pantallas: las pantallas y después la guía de estilo; sin ellas, el orden de siempre (foco primero) |
+| `pageForKey(doc, key)` | La página de una `PageKey` (`"brand"`, un id de pantalla o, en documentos antiguos, `"landing"`/`"app"`) |
+| `screenPointer(id, ...segs)` | `/screens/{id}/…` con los segmentos escapados |
+| `removeScreenOps(doc, id)` | El parche que borra una pantalla: quita los `linkTo` que la apuntan, sus candados y su sitio en `screenOrder`. Con un candado debajo, `applyPatch` devuelve `locked`: se aplica con `allowLocked` después de preguntar «¿Desbloquear y borrar?» |
+| `hasScreens(doc)` / `hasDesign(doc)` | Hay pantallas / hay pantallas o alguna página |
 
 ## Candados e importación
 
@@ -96,10 +119,17 @@ Todos son lineales por tramos: el valor 5 es neutro (la receta tal cual), y 1 y 
 | `toThemeCss(doc, opts?)` | `:root` y `.dark` con todas las variables. Opcionales: `selector`, `darkSelector`, `includeFontImport` y `colorFormat`. |
 | `toDTCGFull(doc, opts?)` | DTCG 2025.10 con `primitives`, `semantic` (modos en `$extensions`), `font`, `font-weight`, `typography`, `dimension`, `shadow`, `duration`, `cubic-bezier` y `component.*` con alias (`{dimension.radius.md}`). Los valores guardados llevan `$extensions["design.dialmade"]` `locked` (`true`, o los modos bloqueados de un color semántico) y `provenance` (archivo, localizador, confianza y método); la raíz lista `locks` e `imports` (sin campos ni contenido). |
 | `toFigmaNumberVars(doc, opts?)` | Variables `number` para Figma (`radius/*`, `space/*`, `component/button/radius`…) con `com.figma.scopes`. Los colores siguen saliendo de `toFigmaTokens` de @dialmade/palette. |
-| `toDesignMd(doc, opts?)` | DESIGN.md según la spec de Google: frontmatter `colors/typography/rounded/spacing/components` en kebab-case y luego las secciones de la spec en orden. |
-| `toPromptPack(doc, target, locale?)` | Texto listo para copiar para `claude`, `claude-design`, `framer` (`npx @framer/agent@latest setup` + `/framer`), `figma` (`use_figma` + `generate_figma_design` desde Claude Code), `v0` (lleva el CSS) y `cursor` (lleva la regla `.mdc`). |
+| `toDesignMd(doc, opts?)` | DESIGN.md según la spec de Google: frontmatter `colors/typography/rounded/spacing/components` en kebab-case y luego las secciones de la spec en orden. Con pantallas, dentro de «## Layout» van «### Pantallas y flujo» y un `### {nombre} (\`/ruta\`)` por pantalla (ver abajo); en «## Páginas» las pantallas dicen «Layout propio». |
+| `toPromptPack(doc, target, locale?)` | Texto listo para copiar para `claude`, `claude-design`, `framer` (`npx @framer/agent@latest setup` + `/framer`), `figma` (`use_figma` + `generate_figma_design` desde Claude Code), `v0` (lleva el CSS) y `cursor` (lleva la regla `.mdc`). Con pantallas lleva el mismo bloque de layout, un paso «una ruta por pantalla, enlazadas como en el flujo» y nunca se inventa una página. |
 
 `EXPORT_FILES` fija los nombres de archivo del pack a los que se refieren los prompts.
+
+**Bloque de pantallas** (DESIGN.md y prompt packs; sin títulos `##` ni claves de frontmatter nuevas):
+- «Pantallas y flujo»: las pantallas en orden con su ruta, su tipo y su navegación, y los enlaces (`linkTo` de los bloques visibles y la navegación compartida de app).
+- Por pantalla: el wireframe ASCII (`toAsciiWireframe`, 64 caracteres, numerado; sin acentos graves en etiquetas y notas), el orden de lectura con los mismos números (`1. Calendario → \`ui.calendar@week\` ×3 — nota: "…" → enlaza a «Precios»`; el tipo y la variante salen de `screen.page.elements[blockId]`, y un bloque sin elemento propio sale como «integrado en» su padre), los ocultos, las reglas de tablet y móvil (de `deriveResponsive`) y el `grid-template-areas` de las regiones sin corte limpio.
+- El esquema de la página: las regiones estructurales (`ui.region` con `role: "scope" | "inferred"`, id `layout` o `r-…`) no salen en el esquema de «Páginas»; sus hijos suben un nivel.
+- Las páginas de pantalla guardan las listas repetibles completas y `count` decide cuántas se ven. Con la opción `visibleProps` (`visibleProps` de `@dialmade/sections`), el esquema de «Páginas» lista solo lo que se ve. Sin ella lista todo lo guardado. Nunca se aplica a las páginas antiguas.
+- Los documentos sin pantallas exportan exactamente lo mismo que antes de v2, salvo `DesignDoc v2` (golden en `src/exporters/__golden__/legacy-*`).
 
 ## Scripts
 

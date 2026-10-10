@@ -19,7 +19,10 @@ function token(name: string): string {
 /** Backgrounds the right panel, its popovers and the report sit on. */
 const BACKGROUNDS = ["app-bg", "app-bg-elevated", "app-surface"];
 
-/** Every source file of Layout mode: all of LayoutStep (panels, canvas, library, lists) and the /dev/layout page. */
+/** Shared primitives that Layout mode's panels are built with (`src/components/ui`). */
+const SHARED_PRIMITIVES = ["Segmented", "Popover", "PanelSection"] as const;
+
+/** Every source file of Layout mode: all of LayoutStep (panels, canvas, library, lists), its shared primitives and the /dev/layout page. */
 function layoutSources(): { file: string; text: string }[] {
   const out: { file: string; text: string }[] = [];
   const walk = (dir: string, label: string) => {
@@ -30,6 +33,7 @@ function layoutSources(): { file: string; text: string }[] {
     }
   };
   walk(here, "LayoutStep/");
+  for (const name of SHARED_PRIMITIVES) walk(fileURLToPath(new URL(`../ui/${name}/`, import.meta.url)), `ui/${name}/`);
   walk(fileURLToPath(new URL("../../app/dev/layout/", import.meta.url)), "app/dev/layout/");
   // fieldStyles.ts explains the rule in its header comment: only its code counts.
   return out.map((source) => (source.file === "LayoutStep/fieldStyles.ts" ? { ...source, text: source.text.replace(/\/\*[\s\S]*?\*\//g, "") } : source));

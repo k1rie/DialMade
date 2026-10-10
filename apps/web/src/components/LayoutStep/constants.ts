@@ -1,6 +1,5 @@
 import type { AppShell } from "@dialmade/layout";
-// Relative and type-only: vitest runs the pure modules that read these constants without the `@/` alias.
-import type { GridSize } from "../../lib/geometry/grid";
+import type { GridSize } from "@/lib/geometry";
 import type { LayoutRegion } from "./types";
 
 /** Undo steps kept by the layout store (screens + screen order). */

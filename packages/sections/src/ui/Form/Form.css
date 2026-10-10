@@ -1,0 +1,107 @@
+.dl-ui-form {
+  container-name: dl-ui dl-ui-form;
+}
+
+.dl-ui-form > .dl-ui__inner {
+  justify-content: center;
+}
+
+.dl-ui-form__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-5, 24px);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Card: a centered panel of reading width (sign in, sign up). */
+.dl-ui-form[data-variant="card"] .dl-ui-form__panel {
+  max-width: 26rem;
+  margin-inline: auto;
+  padding: var(--dl-card-padding, var(--dl-space-6, 32px));
+  border: var(--dl-card-border, var(--dl-border-width, 1px) solid var(--border));
+  border-radius: var(--dl-card-radius, var(--dl-radius-lg, 12px));
+  background: var(--card);
+  box-shadow: var(--dl-card-shadow, none);
+  color: var(--card-foreground);
+}
+
+.dl-ui-form__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-1, 4px);
+}
+
+.dl-ui-form[data-variant="card"] .dl-ui-form__intro {
+  text-align: center;
+}
+
+.dl-ui-form__title {
+  margin: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-h3, 1.375rem);
+  font-weight: var(--dl-heading-weight, 600);
+  letter-spacing: var(--dl-heading-tracking, -0.01em);
+  line-height: var(--dl-lh-tight, 1.25);
+}
+
+.dl-ui-form__description {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.5;
+}
+
+.dl-ui-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-5, 24px);
+  min-width: 0;
+}
+
+.dl-ui-form__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dl-space-4, 16px);
+  min-width: 0;
+}
+
+.dl-ui-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dl-space-3, 12px);
+}
+
+.dl-ui-form[data-variant="card"] .dl-ui-form__actions {
+  flex-direction: column;
+  align-items: stretch;
+  text-align: center;
+}
+
+.dl-ui-form[data-variant="card"] .dl-ui-form__secondary {
+  align-self: center;
+}
+
+/* Wide plain forms: two columns of fields; long ones (message) take the whole row. */
+@container dl-ui-form (width >= 40rem) {
+  .dl-ui-form[data-variant="plain"] .dl-ui-form__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dl-ui-form[data-variant="plain"] .dl-ui-form__fields > :has(textarea),
+  .dl-ui-form[data-variant="plain"] .dl-ui-form__fields > :has(input[type="checkbox"]) {
+    grid-column: 1 / -1;
+  }
+
+  /* Search: query, filters and the button on one line. */
+  .dl-ui-form[data-variant="plain"][data-purpose="search"] .dl-ui-form__form {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .dl-ui-form[data-variant="plain"][data-purpose="search"] .dl-ui-form__fields {
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}

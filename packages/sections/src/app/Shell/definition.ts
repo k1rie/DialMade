@@ -48,6 +48,7 @@ export const shellSection = defineSection<ShellProps>({
       scope: "section",
     },
     { key: "showSearch", label: t("Búsqueda", "Search"), control: "toggle", scope: "section" },
+    { key: "showPageHeader", label: t("Cabecera de página", "Page header"), control: "toggle", scope: "section" },
     { key: "title", label: t("Título de la página", "Page title"), control: "text", scope: "section" },
     { key: "primaryAction", label: t("Acción principal", "Primary action"), control: "text", scope: "section" },
   ],
@@ -70,7 +71,13 @@ export const shellSection = defineSection<ShellProps>({
       user: { name: personName(rngFor(ctx.seed, "app-shell-user"), ctx.locale), role: strings.userRole },
       ...shellStyleFor(ctx.productType),
       showSearch: true,
+      showPageHeader: true,
     };
+  },
+  layout: {
+    owns: ["showPageHeader"],
+    // A «Sidebar» block placed as a block (not as the app frame): an icon rail when it is one or two columns wide.
+    fit: ({ w }) => ({ variant: w <= 2 ? "rail" : "sidebar", props: { showPageHeader: false } }),
   },
   Component: Shell,
 });

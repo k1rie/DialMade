@@ -24,7 +24,7 @@ export function InspectorHeader({ blockId, block, def, screenId, headingId }: In
   const t = useDictionary(layout);
   const actions = useLayoutActions();
   const { focusRegion } = useLayoutEnv();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const hidden = block.hidden === true;
 
   const duplicate = () => {

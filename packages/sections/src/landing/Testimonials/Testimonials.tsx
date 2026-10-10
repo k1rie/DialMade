@@ -14,6 +14,7 @@ export function Testimonials({
   title,
   subtitle,
   items,
+  count,
   showRating,
   align,
   emphasis,
@@ -27,9 +28,10 @@ export function Testimonials({
   const strings = landingStrings(ctx.locale);
   const marks = QUOTES[ctx.locale];
   const rating = showRating ? strings.rating(5) : undefined;
-  const [lead, ...rest] = items;
+  const visible = items.slice(0, Math.max(1, count));
+  const [lead, ...rest] = visible;
   const spotlight = variant === "spotlight" && lead;
-  const cards = spotlight ? rest : items;
+  const cards = spotlight ? rest : visible;
   const offset = spotlight ? 1 : 0;
 
   return (

@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import { inferStructure } from "./infer";
 import { mulberry32 } from "./testing/random";
 import { newBlockId } from "./ids";
+import { parseNote } from "./note";
+import { sanitizeNote } from "./sanitize";
 import { getScreenTemplate, getSetTemplate, instantiateTemplate, SCREEN_TEMPLATES, SET_TEMPLATES } from "./templates";
 import { validateLayout } from "./validate";
 import type { ScreenTemplateId } from "./types";
@@ -60,6 +62,16 @@ describe("templates", () => {
     // Frame blocks never appear in app templates (navigation is the shell there).
     if (kind === "app") for (const block of Object.values(layout.blocks)) expect(["navbar", "sidebar"]).not.toContain(block.type);
     Object.values(layout.blocks).forEach((block) => expect(block.label).toBe(`Label ${block.type}`));
+  });
+
+  test("the Login form starts with a note that makes it a sign-in form", () => {
+    const { layout } = instantiateTemplate(getScreenTemplate("login"), { label, newId: (() => { let i = 0; return () => `b-${i++}`; })() });
+    const form = Object.values(layout.blocks).find((block) => block.type === "form")!;
+    expect(form.note).toBe("Login");
+    expect(parseNote(form.note).keywords).toEqual(["login"]);
+    for (const template of SCREEN_TEMPLATES) {
+      for (const tb of template.blocks) if (tb.note !== undefined) expect(sanitizeNote(tb.note)).toBe(tb.note);
+    }
   });
 
   test("blocks keep the template rects, counts and z order", () => {

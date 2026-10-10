@@ -8,6 +8,7 @@ import "./SocialProof.css";
 export function SocialProof({
   title,
   logos,
+  count,
   stats,
   showStats,
   align,
@@ -22,10 +23,11 @@ export function SocialProof({
   const titleId = `${elementId}-title`;
   const metrics = variant === "metrics";
 
+  const visibleLogos = logos.slice(0, Math.max(1, count));
   const logoList =
-    logos.length > 0 ? (
+    visibleLogos.length > 0 ? (
       <ul className="dl-landing-proof__logos" role="list" aria-label={strings.logos}>
-        {logos.map((name, i) => (
+        {visibleLogos.map((name, i) => (
           <li key={`${i}-${name}`} className="dl-landing-proof__logo" data-dl-prop={`logos/${i}`}>
             <FictionalLogo name={name} />
           </li>

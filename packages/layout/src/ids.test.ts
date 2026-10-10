@@ -3,9 +3,11 @@ import {
   fnv1a32,
   hashString,
   isNewBlockId,
+  isReservedBlockId,
   isValidBlockId,
   newBlockId,
   regionId,
+  RESERVED_BLOCK_IDS,
 } from "./ids";
 import { mulberry32 } from "./testing/random";
 
@@ -65,6 +67,18 @@ describe("id validation", () => {
     expect(isValidBlockId("a".repeat(64))).toBe(true);
     expect(isValidBlockId("a".repeat(65))).toBe(false);
     expect(isValidBlockId(null)).toBe(false);
+  });
+
+  test("root, shell and layout are reserved for the compiled page", () => {
+    for (const id of RESERVED_BLOCK_IDS) {
+      expect(isValidBlockId(id)).toBe(false);
+      expect(isReservedBlockId(id)).toBe(true);
+    }
+    expect(RESERVED_BLOCK_IDS).toEqual(["root", "shell", "layout"]);
+    // Only the exact ids: similar ones stay valid.
+    for (const id of ["Root", "shell-1", "layouts", "my-layout"]) expect(isValidBlockId(id)).toBe(true);
+    expect(isReservedBlockId("r-abc")).toBe(true);
+    expect(isReservedBlockId("hero-1")).toBe(false);
   });
 });
 

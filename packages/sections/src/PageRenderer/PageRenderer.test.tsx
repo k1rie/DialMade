@@ -160,4 +160,46 @@ describe("PageRenderer", () => {
     const { container } = render(<PageRenderer doc={acmeDoc()} kind="brand" registry={testRegistry} />);
     expect([...container.querySelectorAll("[data-dl-type]")].map((el) => el.getAttribute("data-dl-type"))).toContain("brand.palette");
   });
+
+  it("layoutCss va en un <style data-dl-layout> dentro de la página; sin él no hay <style>", () => {
+    const { container, rerender } = renderLanding({ layoutCss: ".dl-layout{position:relative}" });
+    expect(container.querySelector(".dl-page > style[data-dl-layout]")?.textContent).toBe(".dl-layout{position:relative}");
+    rerender(<PageRenderer doc={acmeDoc()} kind="landing" page={landingPage()} registry={testRegistry} />);
+    expect(container.querySelector("style")).toBeNull();
+  });
+
+  it("onNavigate: un clic en data-dl-screen-link cambia de pantalla fuera del modo edición", () => {
+    const onNavigate = vi.fn();
+    const page = landingPage();
+    const { container } = render(
+      <PageRenderer doc={acmeDoc()} kind="landing" page={page} links={{ "hero-1": "s-signup" }} onNavigate={onNavigate} />,
+    );
+    const link = container.querySelector<HTMLAnchorElement>('a[data-dl-screen-link="s-signup"]');
+    expect(link?.getAttribute("href")).toBe("#");
+    fireEvent.click(link!);
+    expect(onNavigate).toHaveBeenCalledWith("s-signup");
+  });
+
+  it("un ui.region estructural es una caja sin foco ni rol también en modo edición", () => {
+    const page: Page = {
+      kind: "landing",
+      layoutId: "minimal",
+      root: "root",
+      elements: {
+        root: { type: "landing.page", props: {}, children: ["r-1"] },
+        "r-1": { type: "ui.region", props: { role: "inferred" }, children: ["hero-1"] },
+        "hero-1": { type: "landing.hero", props: {}, children: [] },
+      },
+    };
+    const onSelect = vi.fn();
+    const { container } = render(<PageRenderer doc={acmeDoc()} kind="landing" page={page} registry={testRegistry} interactive onSelect={onSelect} />);
+    const region = container.querySelector<HTMLElement>('[data-dl-id="r-1"]')!;
+    expect(region.hasAttribute("tabindex")).toBe(false);
+    expect(region.hasAttribute("role")).toBe(false);
+    expect(region.querySelector(".dl-section-notice")).toBeNull();
+    fireEvent.click(region);
+    expect(onSelect).not.toHaveBeenCalled();
+    fireEvent.click(region.querySelector('[data-dl-id="hero-1"]')!);
+    expect(onSelect).toHaveBeenCalledWith("hero-1");
+  });
 });

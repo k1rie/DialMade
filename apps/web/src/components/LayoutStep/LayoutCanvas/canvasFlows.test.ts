@@ -1,6 +1,6 @@
 import type { GridRect, LibraryBlockType } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
-import { layout as layoutText } from "../../../i18n/layout";
+import { layout as layoutText } from "@/i18n/layout";
 import { getStructure } from "../structureCache";
 import { createLayoutStore, selectActiveScreen, selectSelectedId } from "../useLayoutStore";
 import { buildWarningViews, sameWarningViews } from "./BlockFrame/blockFrameProps";

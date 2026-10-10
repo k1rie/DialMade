@@ -33,5 +33,10 @@ export const settingsFormSection = defineSection<SettingsFormProps>({
       notifications: strings.toggles.map((toggle, index) => ({ ...toggle, enabled: index < 2 })),
     };
   },
+  layout: {
+    owns: [],
+    // Labels beside the fields need room: two columns from 8 grid columns.
+    fit: ({ w }) => ({ variant: w >= 8 ? "split" : "stacked" }),
+  },
   Component: SettingsForm,
 });

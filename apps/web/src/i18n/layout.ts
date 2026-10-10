@@ -12,7 +12,7 @@ import type {
   ScreenTemplateId,
   SetTemplateId,
 } from "@dialmade/layout";
-import { rowsToPx } from "../lib/geometry/grid";
+import { rowsToPx } from "@/lib/geometry";
 import { defineDictionary } from "./config";
 
 /*

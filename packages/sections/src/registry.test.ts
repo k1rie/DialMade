@@ -5,11 +5,12 @@ import { landingSections } from "./landing";
 import { SectionRegistryError, createRegistry, getSection, listSections, sectionRegistry, validateSections } from "./registry";
 import { TEST_SECTIONS, heroSection, kpiSection, navbarSection, shellSection } from "./testing/fixtures";
 import type { AnySectionDefinition } from "./types";
+import { uiSections } from "./ui";
 
 describe("registro central", () => {
-  it("agrega las secciones de los tres kinds y es válido", () => {
-    expect(sectionRegistry.size).toBe(brandSections.length + landingSections.length + appSections.length);
-    expect(validateSections([...brandSections, ...landingSections, ...appSections])).toEqual([]);
+  it("agrega las secciones de los tres kinds y las ui.* y es válido", () => {
+    expect(sectionRegistry.size).toBe(brandSections.length + landingSections.length + appSections.length + uiSections.length);
+    expect(validateSections([...brandSections, ...landingSections, ...appSections, ...uiSections])).toEqual([]);
     for (const kind of ["brand", "landing", "app"] as const) {
       for (const def of listSections(kind)) {
         expect(def.kind).toBe(kind);

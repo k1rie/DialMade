@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { sectionHeading, testimonialList } from "../../content";
 import { defineSection } from "../../defineSection";
+import { countedList } from "../../lib/visible";
 import { sectionEyebrow } from "../lib/copy";
 import { sectionStyleShape, styleKnobs, textKnob, toggleKnob, variantKnob } from "../lib/knobs";
+import { testimonialEntries } from "./moreQuotes";
 import { Testimonials } from "./Testimonials";
 import type { TestimonialsProps } from "./types";
 
@@ -26,6 +28,8 @@ export const testimonialsSection = defineSection<TestimonialsProps>({
       .array(z.strictObject({ quote: z.string().min(1), name: z.string().min(1), role: z.string(), company: z.string() }))
       .min(1)
       .max(6),
+    /** How many of `items` are shown (1–6). */
+    count: z.number().int().min(1).max(6),
     showRating: z.boolean(),
     ...sectionStyleShape,
   }),
@@ -39,11 +43,13 @@ export const testimonialsSection = defineSection<TestimonialsProps>({
   ],
   defaultProps: (ctx) => {
     const heading = sectionHeading(ctx, "testimonials");
+    const items = testimonialList(ctx, 3).map(({ quote, name, role, company }) => ({ quote, name, role, company: company ?? "" }));
     return {
       eyebrow: sectionEyebrow(ctx, "testimonials"),
       title: heading.title,
       subtitle: heading.subtitle,
-      items: testimonialList(ctx, 3).map(({ quote, name, role, company }) => ({ quote, name, role, company: company ?? "" })),
+      items,
+      count: items.length,
       showRating: true,
       align: "center",
       emphasis: "default",
@@ -51,5 +57,12 @@ export const testimonialsSection = defineSection<TestimonialsProps>({
       spacing: "normal",
     };
   },
+  layout: {
+    owns: ["count"],
+    fit: ({ estimate }) => (estimate?.kind === "count" ? { props: { count: estimate.value } } : {}),
+    // Six quotes, so `count` alone decides how many show.
+    defaults: (ctx) => ({ items: testimonialEntries(ctx, 6) }),
+  },
+  visible: countedList("items"),
   Component: Testimonials,
 });

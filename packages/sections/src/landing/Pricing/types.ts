@@ -19,6 +19,8 @@ export interface PricingProps extends SectionStyle {
   subtitle: string;
   note: string;
   plans: PlanEntry[];
+  /** How many of `plans` are shown (1–4). */
+  count: number;
   /** Monthly subscription. Without it prices read «desde $1,200» and there is no toggle. */
   recurring: boolean;
   /** Billing period shown first. */

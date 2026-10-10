@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { contentProfileOf, pricingPlans } from "../../content";
 import { defineSection } from "../../defineSection";
+import { countedList } from "../../lib/visible";
 import { sectionEyebrow, yearlyDiscount } from "../lib/copy";
 import { sectionStyleShape, selectKnob, sliderKnob, styleKnobs, textKnob, toggleKnob, variantKnob } from "../lib/knobs";
 import { landingStrings } from "../lib/strings";
+import { extraPlan } from "./extraPlan";
 import { Pricing } from "./Pricing";
 import type { PricingProps } from "./types";
 
@@ -35,6 +37,8 @@ export const pricingSection = defineSection<PricingProps>({
     subtitle: z.string(),
     note: z.string(),
     plans: z.array(planSchema).min(1).max(4),
+    /** How many of `plans` are shown (1–4). */
+    count: z.number().int().min(1).max(4),
     recurring: z.boolean(),
     billing: z.enum(["monthly", "yearly"]),
     showToggle: z.boolean(),
@@ -60,20 +64,22 @@ export const pricingSection = defineSection<PricingProps>({
     const copy = pricingPlans(ctx);
     const recurring = contentProfileOf(ctx.productType).pricing.period === "month";
     const discount = recurring ? yearlyDiscount(ctx) : 0;
+    const plans = copy.plans.map(({ id, name, price, description, features, cta, highlighted }) => ({
+      id,
+      name,
+      price,
+      description,
+      features,
+      cta,
+      highlighted,
+    }));
     return {
       eyebrow: sectionEyebrow(ctx, "pricing"),
       title: copy.title,
       subtitle: copy.subtitle,
       note: copy.note,
-      plans: copy.plans.map(({ id, name, price, description, features, cta, highlighted }) => ({
-        id,
-        name,
-        price,
-        description,
-        features,
-        cta,
-        highlighted,
-      })),
+      plans,
+      count: plans.length,
       recurring,
       billing: "monthly",
       showToggle: discount > 0,
@@ -85,5 +91,23 @@ export const pricingSection = defineSection<PricingProps>({
       spacing: "normal",
     };
   },
+  layout: {
+    owns: ["count"],
+    fit: ({ estimate }) => (estimate?.kind === "count" ? { props: { count: estimate.value } } : {}),
+    // Four plans, so `count` alone decides how many show.
+    defaults: (ctx) => {
+      const plans = pricingPlans(ctx).plans.map(({ id, name, price, description, features, cta, highlighted }) => ({
+        id,
+        name,
+        price,
+        description,
+        features,
+        cta,
+        highlighted,
+      }));
+      return { plans: [...plans, extraPlan(ctx, plans)] };
+    },
+  },
+  visible: countedList("plans"),
   Component: Pricing,
 });

@@ -2,6 +2,7 @@
 
 import { Icon, buttonStyleProps } from "@dialmade/ui";
 import { LandingSection } from "../LandingSection";
+import { linkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import { HeroCollage } from "./HeroCollage";
 import { ProductMockup } from "./ProductMockup";
@@ -55,7 +56,7 @@ export function Hero({
             </p>
           ) : null}
           <div className="dl-landing-hero__actions">
-            <a href="#" {...buttonStyleProps({ variant: "cta", size })}>
+            <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "cta", size })}>
               <span data-dl-prop="primaryCta">{primaryCta}</span>
               <Icon name="arrow-right" className="dl-button__icon" />
             </a>

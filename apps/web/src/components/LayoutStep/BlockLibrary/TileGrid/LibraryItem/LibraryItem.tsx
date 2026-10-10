@@ -2,7 +2,7 @@
 
 import type { LibraryBlockType } from "@dialmade/layout";
 import { useDragDropManager } from "@dnd-kit/react";
-import { memo, useLayoutEffect, useMemo, useRef, type KeyboardEvent } from "react";
+import { memo, useMemo, type KeyboardEvent } from "react";
 import { DraggableItem } from "@/components/dnd/DraggableItem";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
@@ -40,21 +40,12 @@ const TILE_FOCUS = cn(CLEAR_STICKY_SEARCH, "rounded-card focus-visible:outline-2
 export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onInsert, hints }: LibraryItemProps) {
   const t = useDictionary(layout);
   const manager = useDragDropManager();
-  const faceRef = useRef<HTMLDivElement>(null);
   const text = t.blocks[type];
   const soon = isSoon(type);
   const data = useMemo<LibraryDragData>(() => ({ blockType: type }), [type]);
   const label = t.library.item(text.name, text.description, soon);
   const describedBy = tileDescription(hints, mode, soon);
   const draggable = mode !== "appOnly";
-
-  // DraggableItem always points at the generic drag instructions («Espacio o Enter para coger»), which do
-  // not say where a tile lands. The tile's own hint already says everything, so it replaces them.
-  // Fase B: DraggableItem takes the instructions by prop and this goes away (modo-layout-fase-b.md).
-  useLayoutEffect(() => {
-    if (!draggable) return;
-    faceRef.current?.closest<HTMLElement>('[role="button"]')?.setAttribute("aria-describedby", describedBy);
-  }, [draggable, describedBy]);
 
   const tooltip = (
     <>
@@ -66,7 +57,6 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
 
   const face = (
     <div
-      ref={faceRef}
       className={cn(
         "relative flex h-full min-h-[5.25rem] flex-col items-center gap-1.5 rounded-[inherit] border px-1.5 pt-5 pb-2 text-center",
         "border-app bg-surface shadow-surface transition-[background-color,border-color,color] duration-150",
@@ -125,7 +115,8 @@ export const LibraryItem = memo(function LibraryItem({ type, mode, dragId, onIns
         data={data}
         onActivate={() => onInsert(type)}
         aria-label={label}
-        aria-describedby={describedBy}
+        // The generic drag instructions do not say where a tile lands: the tile's own hint says everything.
+        instructionsId={describedBy}
         className={cn(TILE_FOCUS, "h-full")}
       >
         {face}

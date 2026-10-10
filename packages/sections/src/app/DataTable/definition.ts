@@ -36,5 +36,10 @@ export const dataTableSection = defineSection<DataTableProps>({
       showToolbar: true,
     };
   },
+  layout: {
+    owns: ["pageSize"],
+    // The chip's rows (3–10, from the height) are the rows per page.
+    fit: ({ estimate }) => (estimate?.kind === "count" ? { props: { pageSize: estimate.value } } : {}),
+  },
   Component: DataTable,
 });

@@ -120,7 +120,7 @@ describe("toThemeCss", () => {
 
   it("cannot be broken out of its comment by the brand name", () => {
     const doc = patched(acmeDoc(), [{ op: "replace", path: "/brand/name", value: "Evil */ body{}" }]);
-    expect(toThemeCss(doc).split("\n")[0]).toBe("/* Evil  body{} · Dialmade theme (DesignDoc v1) */");
+    expect(toThemeCss(doc).split("\n")[0]).toBe("/* Evil  body{} · Dialmade theme (DesignDoc v2) */");
   });
 });
 

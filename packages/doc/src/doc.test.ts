@@ -19,7 +19,10 @@ describe("createDesignDoc", () => {
   it("normalizes seeds and fills catalog defaults for the product type", () => {
     const doc = createDesignDoc(acmeInput);
     const defaults = defaultsFor("saas-general");
-    expect(doc.version).toBe(1);
+    // DesignDoc v2 (Modo Layout): createDesignDoc writes the current version, with no screens.
+    expect(doc.version).toBe(2);
+    expect(doc.screens).toEqual({});
+    expect(doc.screenOrder).toEqual([]);
     expect(doc.brand.seeds).toEqual({ primary: "#3a5bd9", secondary: "#f0a024" });
     expect(doc.brand.achromatic).toBe(false);
     expect(doc.brief).toEqual({

@@ -84,7 +84,7 @@ describe("DesignDocSchema: valid documents", () => {
 
 describe("DesignDocSchema: invalid documents", () => {
   it.each([
-    ["wrong version", (d: Mutable) => (d.version = 2), "version"],
+    ["wrong version", (d: Mutable) => (d.version = 3), "version"],
     ["unknown top-level key", (d: Mutable) => (d.extra = true), ""],
     ["blank name", (d: Mutable) => (d.brand.name = "   "), "brand/name"],
     ["multi-line name", (d: Mutable) => (d.brand.name = "A\nB"), "brand/name"],

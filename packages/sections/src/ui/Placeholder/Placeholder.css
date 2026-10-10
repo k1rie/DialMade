@@ -1,0 +1,74 @@
+.dl-ui-placeholder {
+  container-name: dl-ui dl-ui-placeholder;
+}
+
+.dl-ui-placeholder__box {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--dl-space-3, 12px);
+  min-width: 0;
+  min-height: 6rem;
+  padding: var(--dl-space-5, 24px);
+  border: max(1px, var(--dl-border-width, 1px)) dashed var(--border-strong);
+  border-radius: var(--dl-radius-lg, 12px);
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+  color: var(--foreground);
+}
+
+.dl-ui-placeholder__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dl-space-2, 8px);
+  min-width: 0;
+}
+
+.dl-ui-placeholder__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--dl-radius-md, 8px);
+  background: color-mix(in oklab, var(--primary) 12%, var(--card));
+  color: var(--primary-text);
+}
+
+.dl-ui-placeholder__label {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--dl-font-heading, inherit);
+  font-size: var(--dl-fs-body, 1rem);
+  font-weight: var(--dl-heading-weight, 600);
+  overflow-wrap: anywhere;
+}
+
+.dl-ui-placeholder__count {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-ui-placeholder__note {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted-foreground);
+  font-size: var(--dl-fs-small, 0.875rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.dl-ui-placeholder__skeleton {
+  max-width: 32rem;
+}
+
+.dl-ui-placeholder__vote {
+  align-self: flex-start;
+}
+
+.dl-ui-placeholder[data-variant="skeleton"] .dl-ui-placeholder__box {
+  border-style: solid;
+  border-color: var(--border);
+  background: var(--card);
+}

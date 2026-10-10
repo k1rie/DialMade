@@ -11,6 +11,11 @@ export const ELEMENT_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 export const NEW_BLOCK_ID_RE = /^b-[0-9a-z]{6}$/;
 /** Prefix of inferred region ids; block ids can never use it. */
 export const REGION_PREFIX = "r-";
+/**
+ * Element ids of the compiled page frame (`buildPageFromLayout` in `@dialmade/sections`): the page root, the
+ * app shell and the layout scope. Block ids can never use them.
+ */
+export const RESERVED_BLOCK_IDS: readonly string[] = ["root", "shell", "layout"];
 
 const BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz";
 const MAX_ATTEMPTS = 64;
@@ -52,9 +57,17 @@ export function isNewBlockId(value: unknown): value is BlockId {
   return typeof value === "string" && NEW_BLOCK_ID_RE.test(value);
 }
 
-/** Any id `ElementIdSchema` accepts (`hero-1` from existing pages), except the reserved `r-` prefix. */
+/** Is the id taken by the compiled page or its regions (`r-…`, `root`, `shell`, `layout`)? */
+export function isReservedBlockId(value: string): boolean {
+  return value.startsWith(REGION_PREFIX) || RESERVED_BLOCK_IDS.includes(value);
+}
+
+/**
+ * Any id `ElementIdSchema` accepts (`hero-1` from existing pages), except the reserved ones: the `r-` prefix
+ * and `root`, `shell` and `layout` (see `isReservedBlockId`).
+ */
 export function isValidBlockId(value: unknown): value is BlockId {
-  return typeof value === "string" && ELEMENT_ID_RE.test(value) && !value.startsWith(REGION_PREFIX);
+  return typeof value === "string" && ELEMENT_ID_RE.test(value) && !isReservedBlockId(value);
 }
 
 /** FNV-1a, 32 bits, over UTF-16 code units. */

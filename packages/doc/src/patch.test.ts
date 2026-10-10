@@ -93,7 +93,9 @@ describe("applyPatch", () => {
       [{ op: "add", path: "/pages/landing/elements/hero-1/props/title", value: { bind: "brand.logo" } }],
       [{ op: "remove", path: "/pages/landing/elements/cta-1" }],
       [{ op: "remove", path: "/pages/landing/elements/root/children/0" }],
-      [{ op: "replace", path: "/version", value: 2 }],
+      // applyPatch is v2-only: no migration, so going back to v1 is invalid.
+      [{ op: "replace", path: "/version", value: 1 }],
+      [{ op: "replace", path: "/version", value: 3 }],
       [{ op: "add", path: "/brand/admin", value: true }],
       [{ op: "remove", path: "/brand/name" }],
     ];

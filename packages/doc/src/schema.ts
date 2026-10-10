@@ -7,12 +7,32 @@ import {
   type OutputKind,
   type StyleRecipe,
 } from "@dialmade/catalog";
+import {
+  DESKTOP_COLUMNS,
+  LABEL_MAX,
+  LIBRARY,
+  MAX_BLOCKS,
+  MAX_HEIGHT_ROWS,
+  ROW_UNIT,
+  sanitizeLine,
+  validateLayout,
+  type AppNav,
+  type AppShell as EngineAppShell,
+  type LayoutBlock as EngineLayoutBlock,
+  type LayoutDoc as EngineLayoutDoc,
+  type LayoutIssueCode,
+  type LibraryBlockType,
+  type MobileBehavior,
+  type ScreenKind as EngineScreenKind,
+} from "@dialmade/layout";
 import { PALETTE_STYLE_IDS, ROLE_KEYS, SCALE_STEPS, cssVarName, type PaletteStyleId } from "@dialmade/palette";
 import { z } from "zod";
 import { looksLikeBinding, isBinding } from "./bindings";
 import {
+  APP_NAV_IDS,
   BINDABLE_PATHS,
   CONFIDENCE_LEVELS,
+  DESIGN_DOC_VERSION,
   DIAL_KEYS,
   FINGERPRINT_COLOR_ROLES,
   FINGERPRINT_DENSITIES,
@@ -23,8 +43,12 @@ import {
   FONT_SOURCES,
   IMPORT_METHODS,
   IMPORT_SOURCE_KINDS,
+  LAYOUT_PAGE_ID,
   LOCALE_IDS,
   LOCK_KEYS,
+  MAX_PINNED,
+  MAX_SCREENS,
+  MOBILE_BEHAVIORS,
   MOTION_TIER_IDS,
   OUTPUT_KIND_IDS,
   OWNERSHIP_IDS,
@@ -33,20 +57,29 @@ import {
   RECIPE_SURFACES,
   REFERENCE_KINDS,
   REFERENCE_ORIGINS,
+  RESERVED_SCREEN_IDS,
+  ROUTE_MAX,
+  SCREEN_KINDS,
   SHADOW_NAMES,
   THIRD_PARTY_FORBIDDEN_POINTERS,
   TYPE_CLASSES,
 } from "./constants";
 import { findNonJsonValue, isPlainObject } from "./json";
-import { coversPointer, isJsonPointer, pointerSegments } from "./pointer";
+import { JSON_POINTER, coversPointer, isJsonPointer, pointerSegments } from "./pointer";
 
 type Equals<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 const kindsMatchCatalog: Equals<(typeof OUTPUT_KIND_IDS)[number], OutputKind> = true;
 const shadowsMatchCatalog: Equals<(typeof RECIPE_SHADOWS)[number], StyleRecipe["shadow"]> = true;
 const surfacesMatchCatalog: Equals<(typeof RECIPE_SURFACES)[number], StyleRecipe["surface"]> = true;
+const screenKindsMatchEngine: Equals<(typeof SCREEN_KINDS)[number], EngineScreenKind> = true;
+const navsMatchEngine: Equals<(typeof APP_NAV_IDS)[number], AppNav> = true;
+const behaviorsMatchEngine: Equals<(typeof MOBILE_BEHAVIORS)[number], MobileBehavior> = true;
 void kindsMatchCatalog;
 void shadowsMatchCatalog;
 void surfacesMatchCatalog;
+void screenKindsMatchEngine;
+void navsMatchEngine;
+void behaviorsMatchEngine;
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ELEMENT_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
@@ -369,17 +402,23 @@ export const ElementSchema = z.strictObject({
   children: z.array(ElementIdSchema),
 });
 
-function checkProps(props: Record<string, unknown>, path: (string | number)[], ctx: z.RefinementCtx) {
+/** A validation problem with its path relative to the checked value. Zod refinements turn them into issues. */
+type Issue = { path: (string | number)[]; message: string };
+
+function addIssues(ctx: z.RefinementCtx, issues: readonly Issue[], prefix: readonly (string | number)[] = []) {
+  for (const issue of issues) ctx.addIssue({ code: "custom", message: issue.message, path: [...prefix, ...issue.path] });
+}
+
+function propsIssues(props: Record<string, unknown>, path: (string | number)[], issues: Issue[]) {
   const bad = findNonJsonValue(props);
   if (bad) {
-    ctx.addIssue({ code: "custom", message: "Props must be JSON-compatible", path: [...path, ...bad] });
+    issues.push({ message: "Props must be JSON-compatible", path: [...path, ...bad] });
     return;
   }
   const visit = (value: unknown, at: (string | number)[]) => {
     if (looksLikeBinding(value)) {
       if (!isBinding(value)) {
-        ctx.addIssue({
-          code: "custom",
+        issues.push({
           message: `Bindings must be exactly { bind: ${BINDABLE_PATHS.map((p) => `"${p}"`).join(" | ")} }`,
           path: at,
         });
@@ -399,28 +438,37 @@ type PageShape = {
   hidden?: string[] | undefined;
 };
 
-function checkTree(page: PageShape, ctx: z.RefinementCtx) {
+const quoteList = (items: readonly string[]) => {
+  const quoted = items.map((item) => `"${item}.*"`);
+  return quoted.length > 1 ? `${quoted.slice(0, -1).join(", ")} and ${quoted[quoted.length - 1]}` : (quoted[0] ?? "");
+};
+
+/**
+ * Tree rules of a page: element namespaces in `namespaces`, JSON props and valid bindings, one parent per
+ * element, everything reachable from the root (never a child), `hidden` ids unique, existing and not the root.
+ */
+function treeIssues(page: PageShape, namespaces: readonly string[], owner: string): Issue[] {
+  const issues: Issue[] = [];
   const { elements, root } = page;
   if (!(root in elements)) {
-    ctx.addIssue({ code: "custom", message: `Root "${root}" is not in elements`, path: ["root"] });
-    return;
+    issues.push({ message: `Root "${root}" is not in elements`, path: ["root"] });
+    return issues;
   }
   const parent = new Map<string, string>();
   for (const [id, element] of Object.entries(elements)) {
-    const namespace = element.type.split(".")[0];
-    if (namespace !== page.kind && namespace !== "ui") {
-      ctx.addIssue({
-        code: "custom",
-        message: `A ${page.kind} page only admits "${page.kind}.*" and "ui.*" elements, got "${element.type}"`,
+    const namespace = element.type.split(".")[0]!;
+    if (!namespaces.includes(namespace)) {
+      issues.push({
+        message: `A ${owner} only admits ${quoteList(namespaces)} elements, got "${element.type}"`,
         path: ["elements", id, "type"],
       });
     }
-    checkProps(element.props, ["elements", id, "props"], ctx);
+    propsIssues(element.props, ["elements", id, "props"], issues);
     element.children.forEach((child, i) => {
       const at = ["elements", id, "children", i];
-      if (!(child in elements)) ctx.addIssue({ code: "custom", message: `Unknown child "${child}"`, path: at });
-      else if (child === root) ctx.addIssue({ code: "custom", message: "The root cannot be a child", path: at });
-      else if (parent.has(child)) ctx.addIssue({ code: "custom", message: `"${child}" has more than one parent`, path: at });
+      if (!(child in elements)) issues.push({ message: `Unknown child "${child}"`, path: at });
+      else if (child === root) issues.push({ message: "The root cannot be a child", path: at });
+      else if (parent.has(child)) issues.push({ message: `"${child}" has more than one parent`, path: at });
       else parent.set(child, id);
     });
   }
@@ -433,33 +481,33 @@ function checkTree(page: PageShape, ctx: z.RefinementCtx) {
     for (const child of elements[id]?.children ?? []) if (child in elements) stack.push(child);
   }
   for (const id of Object.keys(elements)) {
-    if (!reachable.has(id)) {
-      ctx.addIssue({ code: "custom", message: `"${id}" is not reachable from the root`, path: ["elements", id] });
-    }
+    if (!reachable.has(id)) issues.push({ message: `"${id}" is not reachable from the root`, path: ["elements", id] });
   }
   const hidden = page.hidden ?? [];
-  if (new Set(hidden).size !== hidden.length) ctx.addIssue({ code: "custom", message: "Hidden ids must be unique", path: ["hidden"] });
+  if (new Set(hidden).size !== hidden.length) issues.push({ message: "Hidden ids must be unique", path: ["hidden"] });
   hidden.forEach((id, i) => {
-    if (!(id in elements)) ctx.addIssue({ code: "custom", message: `Unknown hidden id "${id}"`, path: ["hidden", i] });
-    else if (id === root) ctx.addIssue({ code: "custom", message: "The root cannot be hidden", path: ["hidden", i] });
+    if (!(id in elements)) issues.push({ message: `Unknown hidden id "${id}"`, path: ["hidden", i] });
+    else if (id === root) issues.push({ message: "The root cannot be hidden", path: ["hidden", i] });
   });
+  return issues;
 }
 
-export const PageSchema = z
-  .strictObject({
-    kind: OutputKindSchema,
-    layoutId: z.string().regex(SLUG),
-    dials: PartialDialsSchema.optional(),
-    root: ElementIdSchema,
-    elements: z.record(ElementIdSchema, ElementSchema),
-    hidden: z.array(ElementIdSchema).optional(),
-  })
-  .superRefine((page, ctx) => {
-    checkTree(page, ctx);
-    if (page.kind === "landing" && !getLandingLayout(page.layoutId)) {
-      ctx.addIssue({ code: "custom", message: `Unknown landing layout "${page.layoutId}"`, path: ["layoutId"] });
-    }
-  });
+/** The members of a page, without its rules: `PageSchema` adds the v1 rules, `ScreenSchema` the screen-page ones. */
+const PageShapeSchema = z.strictObject({
+  kind: OutputKindSchema,
+  layoutId: z.string().regex(SLUG),
+  dials: PartialDialsSchema.optional(),
+  root: ElementIdSchema,
+  elements: z.record(ElementIdSchema, ElementSchema),
+  hidden: z.array(ElementIdSchema).optional(),
+});
+
+export const PageSchema = PageShapeSchema.superRefine((page, ctx) => {
+  addIssues(ctx, treeIssues(page, [page.kind, "ui"], `${page.kind} page`));
+  if (page.kind === "landing" && !getLandingLayout(page.layoutId)) {
+    ctx.addIssue({ code: "custom", message: `Unknown landing layout "${page.layoutId}"`, path: ["layoutId"] });
+  }
+});
 
 export const PagesSchema = z
   .strictObject({
@@ -475,6 +523,225 @@ export const PagesSchema = z
       }
     }
   });
+
+// ── screens (v2, Modo Layout) ─────────────────────────────────────────────────────
+// A screen is a page the user drew: its `layout` (the boxes on the 12-column grid, owned by
+// @dialmade/layout) and the `page` compiled from it by @dialmade/sections («Generar»). The schema only
+// checks types and formats here; the layout's geometry and graph rules are `validateLayout`'s.
+
+/** Text the engine already cleaned (`sanitizeLabel`/`sanitizeNote`): NFC, one line, no invisible characters. */
+const isCleanLine = (value: string) => sanitizeLine(value, Number.MAX_SAFE_INTEGER) === value;
+const CLEAN_LINE_MESSAGE = "Must be one clean line (NFC, no control or invisible characters, no extra spaces)";
+
+/** `count` bound of blocks that are not repeatable (`LOOSE_COUNT_MAX` in @dialmade/layout). */
+const LOOSE_COUNT_MAX = 99;
+
+/** Every block type of the library (ready and soon), in library order. */
+export const LibraryBlockTypeSchema = z.enum(LIBRARY.map((def) => def.type) as [LibraryBlockType, ...LibraryBlockType[]]);
+
+/** Rect in grid units. Integers, bounds and the 12-column fit are checked by `validateLayout`. */
+const GridRectSchema = z.strictObject({ col: z.number(), row: z.number(), w: z.number(), h: z.number() });
+
+const BlockOverrideSchema = z.strictObject({
+  hidden: z.boolean().optional(),
+  behavior: z.enum(MOBILE_BEHAVIORS).optional(),
+  order: z.number().int().min(0).max(MAX_BLOCKS).optional(),
+});
+
+/** Fingerprint of the last «Generar» (critique #3): a regenerate only touches what changed. */
+const GeneratedFingerprintSchema = z.strictObject({
+  type: LibraryBlockTypeSchema,
+  w: z.number().int().min(1).max(DESKTOP_COLUMNS),
+  h: z.number().int().min(1).max(MAX_HEIGHT_ROWS),
+  count: z.number().int().min(1).max(LOOSE_COUNT_MAX).optional(),
+  /** `estimateContent` variant or the section variant `fit` chose (`split`, `week`, `default`…). */
+  variant: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$/, "Variants are short tokens"),
+  /** `hashString(note)` of @dialmade/layout (base36 FNV-1a). */
+  noteHash: z.string().regex(/^[0-9a-z]{1,13}$/, "Expected a base36 hash").optional(),
+});
+
+/** A prop the user edited, as a JSON Pointer relative to the element's props (`/title`, `/items/2/title`). */
+const PinnedPointerSchema = z
+  .string()
+  .max(256)
+  .refine((pointer) => pointer.length > 0 && JSON_POINTER.test(pointer), "Pinned props are JSON Pointers relative to props, e.g. /title");
+
+export const LayoutBlockSchema = z.strictObject({
+  type: LibraryBlockTypeSchema,
+  /** Max length (`LABEL_MAX`) is checked by `validateLayout`. */
+  label: z.string().min(1).refine(isCleanLine, CLEAN_LINE_MESSAGE),
+  /** Data for the copy, never instructions. Max length (`NOTE_MAX`) is checked by `validateLayout`. */
+  note: z.string().min(1).refine(isCleanLine, CLEAN_LINE_MESSAGE).optional(),
+  count: z.number().optional(),
+  rect: GridRectSchema,
+  parentId: z.string().optional(),
+  z: z.number(),
+  hidden: z.boolean().optional(),
+  pinned: z.array(PinnedPointerSchema).max(MAX_PINNED).refine(unique, "Pinned props must be unique").optional(),
+  generated: GeneratedFingerprintSchema.optional(),
+  responsive: z.strictObject({ tablet: BlockOverrideSchema.optional(), mobile: BlockOverrideSchema.optional() }).optional(),
+  /** Screen this block links to (preview navigation and export). Checked against `screens` by the document. */
+  linkTo: ElementIdSchema.optional(),
+});
+
+/** `validateLayout` codes the Zod types already report (they would repeat the same problem). */
+const ZOD_LAYOUT_CODES: ReadonlySet<LayoutIssueCode> = new Set(["version", "columns", "row-unit", "invalid-id", "unknown-type"]);
+
+/**
+ * The boxes of a screen (`LayoutDoc` of @dialmade/layout). Its rules are `validateLayout`'s: ids (no `r-`),
+ * rects inside the grid (`MAX_ROW`, `MAX_HEIGHT_ROWS`), parents and cycles, `count`, label/note length
+ * (`LABEL_MAX`, `NOTE_MAX`), `z` and `MAX_BLOCKS`. Each issue carries its engine code in `params.layoutCode`.
+ */
+export const LayoutDocSchema = z
+  .strictObject({
+    version: z.literal(1),
+    columns: z.literal(DESKTOP_COLUMNS),
+    rowUnit: z.literal(ROW_UNIT),
+    blocks: z.record(ElementIdSchema, LayoutBlockSchema),
+  })
+  .superRefine((layout, ctx) => {
+    for (const issue of validateLayout(layout)) {
+      if (ZOD_LAYOUT_CODES.has(issue.code)) continue;
+      ctx.addIssue({ code: "custom", message: issue.message, path: issue.path, params: { layoutCode: issue.code } });
+    }
+  });
+
+/** Navigation frame of an app screen (critique #4). `nav` is shared by every app screen with navigation. */
+export const AppShellSchema = z.strictObject({
+  nav: z.enum(APP_NAV_IDS),
+  /** Page header (title and primary action) above the content. */
+  header: z.boolean(),
+  activeItem: SingleLineText(64).optional(),
+});
+
+/** `/` or `/` + lowercase slug segments (`/precios`, `/app/ajustes-2`), at most `ROUTE_MAX` characters. */
+export const RouteSchema = z
+  .string()
+  .max(ROUTE_MAX)
+  .regex(/^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)?$/, "Routes are / or /slug segments (a-z, 0-9, -)");
+
+export const ScreenKindSchema = z.enum(SCREEN_KINDS);
+
+/** A screen id: an element id that is not a legacy page key (`brand`, `landing`, `app`). */
+export const ScreenIdSchema = ElementIdSchema.refine((id) => !(RESERVED_SCREEN_IDS as readonly string[]).includes(id), {
+  message: `Screen ids cannot be ${RESERVED_SCREEN_IDS.map((id) => `"${id}"`).join(", ")}`,
+});
+
+/** Namespaces a screen page admits (critique #1): landing and app sections mix freely; brand never. */
+const SCREEN_NAMESPACES = ["landing", "app", "ui"] as const;
+
+type ScreenPageShape = PageShape & { layoutId: string };
+
+/** Rules of a screen's page (on top of the page members): kind, root type, `layoutId` and tree. */
+function screenPageIssues(page: ScreenPageShape, kind: (typeof SCREEN_KINDS)[number]): Issue[] {
+  const issues: Issue[] = [];
+  if (page.kind !== kind) issues.push({ message: `A ${kind} screen needs a ${kind} page, got "${page.kind}"`, path: ["kind"] });
+  if (page.layoutId !== LAYOUT_PAGE_ID) {
+    issues.push({ message: `Screen pages use layoutId "${LAYOUT_PAGE_ID}", got "${page.layoutId}"`, path: ["layoutId"] });
+  }
+  const root = page.elements[page.root];
+  if (root && root.type !== `${kind}.page`) {
+    issues.push({ message: `The root of a ${kind} screen page is "${kind}.page", got "${root.type}"`, path: ["elements", page.root, "type"] });
+  }
+  issues.push(...treeIssues(page, SCREEN_NAMESPACES, "screen page"));
+  return issues;
+}
+
+/**
+ * Issues of `page` as the page of a `kind` screen (members and screen-page rules), formatted like
+ * `formatIssues` (`/elements/x/type message`). Empty when valid. For other packages' tests.
+ */
+export function checkScreenPage(page: unknown, kind: (typeof SCREEN_KINDS)[number]): string[] {
+  const format = (path: readonly PropertyKey[], message: string) =>
+    `${path.length > 0 ? `/${path.map(String).join("/")}` : "/"} ${message}`;
+  const shape = PageShapeSchema.safeParse(page);
+  if (!shape.success) return shape.error.issues.map((issue) => format(issue.path, issue.message));
+  return screenPageIssues(shape.data, kind).map((issue) => format(issue.path, issue.message));
+}
+
+export const ScreenSchema = z
+  .strictObject({
+    id: ScreenIdSchema,
+    name: z.string().min(1).max(LABEL_MAX).refine(isCleanLine, CLEAN_LINE_MESSAGE),
+    kind: ScreenKindSchema,
+    route: RouteSchema,
+    layout: LayoutDocSchema,
+    /** Compiled from `layout` by @dialmade/sections. Its own rules replace `PageSchema`'s (no catalog lookup). */
+    page: PageShapeSchema,
+    /** Navigation frame: an object for app screens (`nav: "none"` for none), `null` for landing screens. */
+    shell: AppShellSchema.nullable(),
+  })
+  .superRefine((screen, ctx) => {
+    addIssues(ctx, screenPageIssues(screen.page, screen.kind), ["page"]);
+    if (screen.kind === "app" && screen.shell === null) {
+      ctx.addIssue({ code: "custom", message: 'An app screen needs a shell (nav "none" for no navigation)', path: ["shell"] });
+    } else if (screen.kind === "landing" && screen.shell !== null) {
+      ctx.addIssue({ code: "custom", message: "Only app screens have a shell", path: ["shell"] });
+    }
+  });
+
+type ScreenShape = z.output<typeof ScreenSchema>;
+type ScreensDocShape = {
+  pages: { landing?: unknown; app?: unknown };
+  screens: Record<string, ScreenShape>;
+  screenOrder: string[];
+};
+
+/**
+ * Document rules of the screens: record keys are the ids, `screenOrder` is a permutation of them, routes
+ * are unique, links point to existing screens, app screens with navigation share it, and `pages.landing` /
+ * `pages.app` are absent once there are screens (one source of truth; `pages.brand` stays).
+ */
+function screensIssues(doc: ScreensDocShape): Issue[] {
+  const issues: Issue[] = [];
+  const keys = Object.keys(doc.screens);
+  if (keys.length > MAX_SCREENS) issues.push({ message: `At most ${MAX_SCREENS} screens`, path: ["screens"] });
+  for (const key of keys) {
+    const id = doc.screens[key]?.id;
+    if (id !== key) issues.push({ message: `Screen key "${key}" and id "${id}" differ`, path: ["screens", key, "id"] });
+  }
+  const listed = new Set<string>();
+  doc.screenOrder.forEach((id, i) => {
+    if (listed.has(id)) issues.push({ message: `"${id}" is twice in screenOrder`, path: ["screenOrder", i] });
+    else if (!Object.hasOwn(doc.screens, id)) issues.push({ message: `Unknown screen "${id}"`, path: ["screenOrder", i] });
+    listed.add(id);
+  });
+  for (const key of keys) {
+    if (!listed.has(key)) issues.push({ message: `Screen "${key}" is missing from screenOrder`, path: ["screens", key] });
+  }
+  // Checked in display order, so the later screen is the one reported.
+  const ordered = [...new Set([...doc.screenOrder.filter((id) => Object.hasOwn(doc.screens, id)), ...keys])];
+  const routes = new Map<string, string>();
+  let nav: { id: string; nav: string } | undefined;
+  for (const id of ordered) {
+    const screen = doc.screens[id]!;
+    const owner = routes.get(screen.route);
+    if (owner !== undefined) issues.push({ message: `Route "${screen.route}" is already used by "${owner}"`, path: ["screens", id, "route"] });
+    else routes.set(screen.route, id);
+    if (screen.kind === "app" && screen.shell && screen.shell.nav !== "none") {
+      if (!nav) nav = { id, nav: screen.shell.nav };
+      else if (screen.shell.nav !== nav.nav) {
+        issues.push({
+          message: `App screens share their navigation: "${nav.id}" uses "${nav.nav}", got "${screen.shell.nav}"`,
+          path: ["screens", id, "shell", "nav"],
+        });
+      }
+    }
+    for (const [blockId, block] of Object.entries(screen.layout?.blocks ?? {})) {
+      if (block.linkTo !== undefined && !Object.hasOwn(doc.screens, block.linkTo)) {
+        issues.push({ message: `Unknown screen "${block.linkTo}"`, path: ["screens", id, "layout", "blocks", blockId, "linkTo"] });
+      }
+    }
+  }
+  if (keys.length > 0 || doc.screenOrder.length > 0) {
+    for (const kind of ["landing", "app"] as const) {
+      if (doc.pages[kind] !== undefined) {
+        issues.push({ message: `pages.${kind} must be absent when the document has screens`, path: ["pages", kind] });
+      }
+    }
+  }
+  return issues;
+}
 
 // ── document ───────────────────────────────────────────────────────────────────
 
@@ -504,7 +771,7 @@ function checkImports(imports: readonly ImportShape[], ctx: z.RefinementCtx) {
 
 export const DesignDocSchema = z
   .strictObject({
-    version: z.literal(1),
+    version: z.literal(DESIGN_DOC_VERSION),
     brand: BrandSchema,
     brief: BriefSchema,
     tokens: TokenOverridesSchema.prefault({}),
@@ -516,9 +783,13 @@ export const DesignDocSchema = z
       .refine((refs) => new Set(refs.map((r) => r.id)).size === refs.length, "Reference ids must be unique"),
     provenance: ProvenanceSchema,
     pages: PagesSchema.prefault({}),
+    /** Screens of Modo Layout, by id. Their order is `screenOrder`. */
+    screens: z.record(ElementIdSchema, ScreenSchema).prefault({}),
+    screenOrder: z.array(ElementIdSchema).max(MAX_SCREENS).default([]),
   })
   .superRefine((doc, ctx) => {
     checkImports(doc.provenance.imports ?? [], ctx);
+    addIssues(ctx, screensIssues(doc));
     const { productType, recipeId, pairingId } = doc.brief;
     if (productType !== GENERIC_PRODUCT_ID && !getProductType(productType)) {
       ctx.addIssue({ code: "custom", message: `Unknown product type "${productType}"`, path: ["brief", "productType"] });
@@ -567,3 +838,24 @@ export type Pages = z.output<typeof PagesSchema>;
 export type DesignDoc = z.output<typeof DesignDocSchema>;
 export type DesignDocInput = z.input<typeof DesignDocSchema>;
 export type PageInput = z.input<typeof PageSchema>;
+export type ScreenId = string;
+export type ScreenKind = z.output<typeof ScreenKindSchema>;
+/** The boxes of a screen: the same type as `LayoutDoc` in @dialmade/layout. */
+export type ScreenLayout = z.output<typeof LayoutDocSchema>;
+/** One box of a screen layout: the same type as `LayoutBlock` in @dialmade/layout. */
+export type ScreenLayoutBlock = z.output<typeof LayoutBlockSchema>;
+/** Navigation frame of an app screen: the same type as `AppShell` in @dialmade/layout. */
+export type ScreenShell = z.output<typeof AppShellSchema>;
+export type Screen = z.output<typeof ScreenSchema>;
+export type ScreenInput = z.input<typeof ScreenSchema>;
+export type Route = z.output<typeof RouteSchema>;
+
+// The doc types are the engine types, member for member (screen.layout goes straight to toCss & co.): a
+// field added on one side and not on the other fails to compile.
+type Identical<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+const layoutMatchesEngine: Identical<ScreenLayout, EngineLayoutDoc> = true;
+const blockMatchesEngine: Identical<ScreenLayoutBlock, EngineLayoutBlock> = true;
+const shellMatchesEngine: Identical<ScreenShell, EngineAppShell> = true;
+void layoutMatchesEngine;
+void blockMatchesEngine;
+void shellMatchesEngine;

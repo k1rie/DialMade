@@ -5,6 +5,7 @@ import type { PageElement } from "@dialmade/doc";
 import { resolveSectionProps } from "../../props";
 import { sectionStrings } from "../../lib/strings";
 import type { AnySectionDefinition } from "../../types";
+import { isStructuralElement } from "./structural";
 import { SectionBoundary } from "../SectionBoundary";
 import { SectionFrame } from "../SectionFrame";
 import { SectionNotice } from "../SectionNotice";
@@ -30,6 +31,8 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
     element.children.length > 0 ? element.children.map((child) => <ElementView key={child} id={child} scope={scope} />) : null;
   const strings = sectionStrings(ctx.locale);
   const label = def ? def.label[ctx.locale] : element.type;
+  const structural = isStructuralElement(def, element);
+  const attributes = def?.frame?.attributes?.(element.props);
 
   if (isRoot) {
     if (!def) return <>{children}</>;
@@ -43,7 +46,15 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
   }
 
   return (
-    <SectionFrame id={id} type={element.type} label={label} ctx={ctx} container={def?.container === true || !def}>
+    <SectionFrame
+      id={id}
+      type={element.type}
+      label={label}
+      ctx={ctx}
+      container={def?.container === true || !def}
+      structural={structural}
+      {...(attributes && { attributes })}
+    >
       {def ? (
         <SectionBoundary
           resetKey={element.props}
@@ -56,7 +67,7 @@ export function ElementView({ id, scope, isRoot = false }: ElementViewProps) {
         </SectionBoundary>
       ) : (
         <>
-          {ctx.interactive && <SectionNotice tone="missing" title={strings.missingSection(element.type)} />}
+          {ctx.interactive && !structural && <SectionNotice tone="missing" title={strings.missingSection(element.type)} />}
           {children}
         </>
       )}

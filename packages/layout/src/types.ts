@@ -329,7 +329,14 @@ export type ScreenTemplateId =
 export type SetTemplateId = "saas-app" | "landing";
 
 /** `parent` is the index of another block of the same template. */
-export type TemplateBlock = { type: LibraryBlockType; rect: GridRect; count?: number; parent?: number };
+export type TemplateBlock = {
+  type: LibraryBlockType;
+  rect: GridRect;
+  count?: number;
+  parent?: number;
+  /** Starting note (data for the copy), when the template's purpose needs one: the Login form says `Login`. */
+  note?: string;
+};
 
 export type ScreenTemplate = {
   id: ScreenTemplateId;

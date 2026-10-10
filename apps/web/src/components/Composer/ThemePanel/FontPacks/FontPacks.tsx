@@ -3,11 +3,11 @@
 import { DEFAULT_PAIRING_ID, defaultPairing, getStyleRecipe, getTypographyPairing, typographyPairings, type TypographyPairing } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { useMemo } from "react";
+import { PanelSection } from "@/components/ui/PanelSection";
 import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { FONT_PACKS_VISIBLE } from "../../constants";
 import { PairingCard } from "../../PairingCard";
-import { PanelSection } from "../../PanelSection";
 import { useComposerActions } from "../../useComposerActions";
 
 export type FontPacksProps = {

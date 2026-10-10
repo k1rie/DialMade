@@ -24,6 +24,18 @@ export const MEDIA_RATIOS: readonly (readonly [string, number])[] = [
   ["9:16", 9 / 16],
 ];
 
+/**
+ * The ×N of a repeatable block as the chip reads it: `block.count`, else the note's number, clamped to the
+ * library's range; `undefined` when neither is set or the block is not repeatable.
+ */
+export function blockCount(block: LayoutBlock): number | undefined {
+  const def = blockDefOrFree(block.type);
+  if (!def.repeatable) return undefined;
+  const raw = block.count ?? parseNote(block.note).count;
+  if (raw === undefined || !Number.isFinite(raw)) return undefined;
+  return clamp(Math.round(raw), def.repeatable.min, def.repeatable.max);
+}
+
 function findId(block: LayoutBlock, layout: LayoutDoc): BlockId | undefined {
   for (const [id, candidate] of Object.entries(layout.blocks)) if (candidate === block) return id;
   return undefined;

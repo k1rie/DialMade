@@ -1,6 +1,16 @@
 .dl-app-confirm {
   box-sizing: border-box;
+  /* Spans its wrapper when the layout makes the wrapper a grid (a «Modal» block with content). */
+  grid-column: 1 / -1;
   height: 100%;
+  min-width: 0;
+}
+
+/* Child elements of a «Modal» block (Layout mode), stacked in the dialog body. */
+.dl-app-confirm__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-space-3, 12px);
   min-width: 0;
 }
 

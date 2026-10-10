@@ -22,7 +22,7 @@ export type RectChange = "moved" | "resized";
 export function useCommitRect(): (id: BlockId, rect: GridRect, screenId: ScreenId, change: RectChange) => void {
   const t = useDictionary(layout);
   const store = useLayoutStoreApi();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
 
   return useCallback(
     (id, rect, screenId, change) => {

@@ -3,15 +3,15 @@
 import type { OutputKind } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { useId } from "react";
+import { Segmented } from "@/components/ui/Segmented";
 import { useDesignDocActions, type PreviewDevice } from "@/hooks/useDesignDoc";
 import type { PreviewMode } from "@/hooks/usePaletteFlow";
 import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
+import { DEVICE_ORDER } from "@/lib/devices";
 import type { DroppedItem } from "@/lib/dnd";
-import { DEVICE_ORDER } from "../constants";
 import { MonitorIcon, MoonIcon, PhoneIcon, SunIcon, TabletIcon } from "../icons";
-import { Segmented } from "../Segmented";
 import { CanvasViewport, type CanvasViewportProps } from "./CanvasViewport";
 import { PageTabs } from "./PageTabs";
 

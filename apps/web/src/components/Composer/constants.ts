@@ -1,14 +1,4 @@
 import type { PaletteStyleId } from "@dialmade/palette";
-import type { PreviewDevice } from "@/hooks/useDesignDoc";
-
-/** Width of the preview frame per device; the frame is scaled down (transform) to fit the canvas. */
-export const DEVICE_WIDTHS: Readonly<Record<PreviewDevice, number>> = {
-  mobile: 390,
-  tablet: 768,
-  desktop: 1440,
-};
-
-export const DEVICE_ORDER: readonly PreviewDevice[] = ["mobile", "tablet", "desktop"];
 
 /** DnD types of the Composer cards (DraggableItem `type` / DropSlot `accept`). */
 export const DND = {

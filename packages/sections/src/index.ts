@@ -3,12 +3,16 @@ export type {
   BrandContent,
   ColorMode,
   ContentContext,
+  FitInput,
+  FitResult,
   KnobControl,
   KnobDef,
   KnobOption,
   RenderContext,
   SectionComponentProps,
   SectionDefinition,
+  SectionFrameOptions,
+  SectionLayout,
   SectionVariant,
 } from "./types";
 export { defineSection } from "./defineSection";
@@ -29,10 +33,15 @@ export {
   GENERIC_PRODUCT_TYPE,
   contentContextFromDoc,
   contentSeed,
+  linkContext,
+  linkProps,
   resolveProductType,
+  screenLinkProps,
   type ContentContextOptions,
+  type LinkOptions,
 } from "./context";
 export { resolveSectionProps, storedDefaultProps, type ResolvedSectionProps } from "./props";
+export { visibleProps } from "./visibleProps";
 export {
   addDefaultPage,
   buildDefaultPage,
@@ -41,7 +50,26 @@ export {
   type BuildPageOptions,
   type SectionSpec,
 } from "./buildPage";
-export { EditInert, PageRenderer, type EditInertProps, type PageRendererProps } from "./PageRenderer";
+export {
+  ABSORBED_VARIANT,
+  LAYOUT_SCOPE_ID,
+  REGION_TYPE,
+  SHELL_ELEMENT_ID,
+  buildPageFromLayout,
+  type BuildFromLayoutOptions,
+  type BuildFromLayoutResult,
+  type NavScreen,
+} from "./buildPageFromLayout";
+export {
+  UI_FRAMES,
+  regionFrame,
+  regionRoleOf,
+  uiSections,
+  type RegionProps,
+  type RegionRole,
+  type UiFrame,
+} from "./ui";
+export { EditInert, PageRenderer, isStructuralElement, type EditInertProps, type PageRendererProps } from "./PageRenderer";
 export { ThemeStyles, themeStyle, type ThemeStylesProps } from "./ThemeStyles";
 export { fontsUrlForDoc, pairingForDoc, safeThemeEntries, themeVarsCss } from "./lib/themeVars";
 export { MiniApp, MiniBrand, MiniLanding, miniLabel, type MiniProps } from "./minis";

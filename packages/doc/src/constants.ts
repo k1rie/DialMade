@@ -1,6 +1,10 @@
 import type { OutputKind } from "@dialmade/catalog";
 
-export const DESIGN_DOC_VERSION = 1;
+/**
+ * v2 adds `screens` + `screenOrder` (Modo Layout) beside `pages`. A v1 document migrates by bumping the
+ * version (`migrateDesignDoc`): no data moves.
+ */
+export const DESIGN_DOC_VERSION = 2;
 
 export const OUTPUT_KIND_IDS = ["brand", "landing", "app"] as const satisfies readonly OutputKind[];
 
@@ -38,7 +42,7 @@ export const LEGACY_LOCK_POINTERS = {
 } as const satisfies Record<(typeof LOCK_KEYS)[number], `/${string}`>;
 
 /** Top-level members of the DesignDoc a lock or an import field may point into. */
-export const POINTER_ROOTS = ["brand", "brief", "tokens", "system", "references", "pages"] as const;
+export const POINTER_ROOTS = ["brand", "brief", "tokens", "system", "references", "pages", "screens"] as const;
 
 /** Where a third-party import may not write: colors, font families and the brand itself (only attributes). */
 export const THIRD_PARTY_FORBIDDEN_POINTERS = [
@@ -153,3 +157,45 @@ export const EXPORT_FILES = {
   figmaNumbers: "figma-numbers.tokens.json",
   designMd: "DESIGN.md",
 } as const;
+
+// ── screens (DesignDoc v2, Modo Layout) ──────────────────────────────────────────
+
+/** Kinds of a screen. The template sets it; it is never inferred from the blocks. */
+export const SCREEN_KINDS = ["landing", "app"] as const satisfies readonly OutputKind[];
+
+/** Most screens per document (bounds validation cost and the AI copy request size). */
+export const MAX_SCREENS = 24;
+
+/** `page.layoutId` of every screen page: the page comes from the screen's own layout («Layout propio»). */
+export const LAYOUT_PAGE_ID = "custom";
+
+/** Screen ids that would be ambiguous next to the legacy page keys (`PageKey` = "brand" | ScreenId). */
+export const RESERVED_SCREEN_IDS = ["brand", "landing", "app"] as const;
+
+/** Longest screen route, in characters. */
+export const ROUTE_MAX = 96;
+
+/** Navigation frame of an app screen (`AppShell.nav`). */
+export const APP_NAV_IDS = ["sidebar", "rail", "topnav", "none"] as const;
+export type AppNavId = (typeof APP_NAV_IDS)[number];
+
+/** Mobile behaviors a block can take (`LayoutBlock.responsive.<bp>.behavior`), as in @dialmade/layout. */
+export const MOBILE_BEHAVIORS = [
+  "stack",
+  "hamburger",
+  "drawer",
+  "tabbar",
+  "grid-2x2",
+  "one-column",
+  "carousel",
+  "card-list",
+  "agenda",
+  "text-first",
+  "sheet",
+  "accordion",
+  "scroll-x",
+  "hide",
+] as const;
+
+/** Most pinned prop pointers per block (`LayoutBlock.pinned`). */
+export const MAX_PINNED = 128;

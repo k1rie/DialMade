@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LandingSection } from "../LandingSection";
 import { SectionHeading } from "../SectionHeading";
+import { linkProps } from "../../context";
 import type { SectionComponentProps } from "../../types";
 import { BillingToggle } from "./BillingToggle";
 import { PlanCard } from "./PlanCard";
@@ -16,6 +17,7 @@ export function Pricing({
   subtitle,
   note,
   plans,
+  count,
   recurring,
   billing,
   showToggle,
@@ -46,6 +48,8 @@ export function Pricing({
     </p>
   ) : null;
   const priceOptions = { recurring, billing: current, yearlyDiscount, locale: ctx.locale };
+  const visible = plans.slice(0, Math.max(1, count));
+  const link = linkProps(ctx, elementId);
 
   return (
     <LandingSection
@@ -63,8 +67,8 @@ export function Pricing({
           {toggle}
           {split ? noteText : null}
         </div>
-        <ul className="dl-landing-pricing__plans" role="list" data-count={plans.length}>
-          {plans.map((plan, i) => (
+        <ul className="dl-landing-pricing__plans" role="list" data-count={visible.length}>
+          {visible.map((plan, i) => (
             <PlanCard
               key={plan.id || i}
               plan={plan}
@@ -73,6 +77,7 @@ export function Pricing({
               highlightLabel={highlightLabel}
               emphasis={emphasis}
               layout={split ? "row" : "card"}
+              link={link}
             />
           ))}
         </ul>

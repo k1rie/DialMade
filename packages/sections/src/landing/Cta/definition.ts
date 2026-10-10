@@ -52,5 +52,10 @@ export const ctaSection = defineSection<CtaProps>({
       spacing: "normal",
     };
   },
+  layout: {
+    owns: [],
+    // A short, wide strip reads as text and action side by side; anything taller, as a centered panel.
+    fit: ({ w, heightPx }) => ({ variant: w >= 9 && heightPx <= 160 ? "split" : "banner" }),
+  },
   Component: Cta,
 });

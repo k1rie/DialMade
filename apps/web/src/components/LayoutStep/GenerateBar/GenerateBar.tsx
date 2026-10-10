@@ -44,7 +44,7 @@ export type GenerateBarProps = { className?: string };
  */
 export function GenerateBar({ className }: GenerateBarProps) {
   const t = useDictionary(layout);
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const { narrow, onGenerateIntent } = useLayoutEnv();
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();

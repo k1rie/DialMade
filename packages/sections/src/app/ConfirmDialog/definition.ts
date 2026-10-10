@@ -48,5 +48,11 @@ export const confirmDialogSection = defineSection<ConfirmDialogProps>({
       destructive: true,
     };
   },
+  container: true,
+  layout: {
+    owns: [],
+    // The layout already places the block over the page: draw the bare panel, not a second dimmed page.
+    fit: () => ({ variant: "panel" }),
+  },
   Component: ConfirmDialog,
 });

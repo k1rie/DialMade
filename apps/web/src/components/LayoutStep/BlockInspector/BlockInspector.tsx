@@ -3,11 +3,11 @@
 import { estimateContent, getBlockDef, isLibraryBlockType } from "@dialmade/layout";
 import { useId } from "react";
 import { Button } from "@/components/ui/Button";
+import { PanelSection } from "@/components/ui/PanelSection";
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { ExternalLinkIcon, MonitorIcon } from "../icons";
-import { PanelSection } from "../PanelSection";
 import { useActiveScreen, useLayoutActions, useLayoutStore, useSelectedBlock } from "../useLayoutStore";
 import { BlockWarnings } from "./BlockWarnings";
 import { VOTE_URL } from "./constants";
@@ -96,7 +96,7 @@ export function BlockInspector({ className }: BlockInspectorProps) {
         )}
       </div>
 
-      <PanelSection title={t.inspector.position} actions={desktop ? <MoveToMenu blockId={id} screenId={screen.id} /> : undefined}>
+      <PanelSection semantics="group" title={t.inspector.position} actions={desktop ? <MoveToMenu blockId={id} screenId={screen.id} /> : undefined}>
         {desktop ? (
           <>
             <PositionFields blockId={id} rect={block.rect} screenId={screen.id} />
@@ -112,11 +112,11 @@ export function BlockInspector({ className }: BlockInspectorProps) {
         )}
       </PanelSection>
 
-      <PanelSection title={t.inspector.devices}>
+      <PanelSection semantics="group" title={t.inspector.devices}>
         <DeviceFields blockId={id} block={block} def={def} screenId={screen.id} />
       </PanelSection>
 
-      <PanelSection title={t.inspector.linkTo}>
+      <PanelSection semantics="group" title={t.inspector.linkTo}>
         <LinkField blockId={id} linkTo={block.linkTo} screenId={screen.id} label={t.inspector.linkTo} />
       </PanelSection>
     </div>

@@ -2,6 +2,7 @@ import type { DropAnimationFunction } from "@dnd-kit/dom";
 import { animate } from "motion/react";
 import { DND_LANDED_EVENT, prefersReducedMotion } from "@/lib/dnd";
 import { snappy } from "@/lib/motion";
+import { dropRectOf } from "./dropTarget";
 
 const MAX_FLIGHT_MS = 700;
 
@@ -14,7 +15,8 @@ function landed(target: Element | undefined, sourceId: string | number) {
 /**
  * Replaces dnd-kit's CSS drop animation: a Motion `snappy` spring that flies the dragged element
  * into the drop target (shrinking to fit and fading), or back home when there is no target / the
- * drag was canceled. Under reduced motion it resolves immediately.
+ * drag was canceled. The target is the droppable's own box, or the landing rect its `data` provides
+ * (`DropRectSource`, e.g. the canvas cell). Under reduced motion it resolves immediately.
  */
 export const motionDropAnimation: DropAnimationFunction = ({ source, element, feedbackElement, placeholder, translate, moved }) => {
   const operation = source.manager?.dragOperation;
@@ -34,7 +36,7 @@ export const motionDropAnimation: DropAnimationFunction = ({ source, element, fe
   const flyingIn = !!targetElement;
 
   if (targetElement) {
-    const slot = targetElement.getBoundingClientRect();
+    const slot = dropRectOf(target?.data) ?? targetElement.getBoundingClientRect();
     dx = slot.left + slot.width / 2 - (current.left + current.width / 2);
     dy = slot.top + slot.height / 2 - (current.top + current.height / 2);
     endScale = clamp(Math.min(slot.width / current.width, slot.height / current.height), 0.35, 1);

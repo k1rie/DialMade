@@ -6,6 +6,7 @@ import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Kbd } from "@/components/ui/Kbd";
+import { Segmented, type SegmentedOption } from "@/components/ui/Segmented";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { usePlatformKeys } from "@/hooks/usePlatformKeys";
 import { useDictionary, useLocale } from "@/i18n";
@@ -14,7 +15,6 @@ import { cn } from "@/lib/cn";
 import { DEVICE_WIDTHS } from "@/lib/devices";
 import { MonitorIcon, PhoneIcon, RedoIcon, StructureIcon, TabletIcon, UndoIcon } from "../icons";
 import { regionSelector } from "../constants";
-import { Segmented, type SegmentedOption } from "../Segmented";
 import { focusStylePicker } from "../StylePicker";
 import { selectActiveScreen, useLayoutActions, useLayoutEnv, useLayoutHistory, useLayoutStore } from "../useLayoutStore";
 import { ShortcutsMenu } from "./ShortcutsMenu";
@@ -39,7 +39,7 @@ export function LayoutTopBar({ className }: LayoutTopBarProps) {
   const t = useDictionary(layout);
   const locale = useLocale();
   const keys = usePlatformKeys();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const deviceLayoutId = useId();
   const { doc, narrow, focusRegion } = useLayoutEnv();
   const actions = useLayoutActions();
@@ -121,6 +121,7 @@ export function LayoutTopBar({ className }: LayoutTopBarProps) {
       <div className="flex justify-center">
         {!narrow && (
           <Segmented
+            accentBar
             label={t.topBar.device}
             value={device}
             options={deviceOptions}

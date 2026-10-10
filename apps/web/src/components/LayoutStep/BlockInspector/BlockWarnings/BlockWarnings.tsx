@@ -21,7 +21,7 @@ export type BlockWarningsProps = {
 export function BlockWarnings({ blockId, layout, screenId, fallbackFocusId }: BlockWarningsProps) {
   const t = useDictionary(layoutText);
   const actions = useLayoutActions();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
   const structure = useScreenStructure(screenId);
   const titleId = useId();
   const listRef = useRef<HTMLUListElement>(null);

@@ -1,6 +1,6 @@
 /**
- * Copied from LogoCropper/geometry.ts in Fase A; Fase B deletes the original and points LogoCropper here.
- * Kept verbatim (pixel geometry for the cropper); the grid canvas of the Layout Mode uses `./grid`.
+ * Pixel geometry of the logo cropper (rects in natural image pixels, handles, zoom view). The grid canvas of
+ * Layout mode uses `./grid`, which shares `Handle`, `Point` and `clamp` from here.
  */
 import type { CropRect } from "@/lib/image";
 
@@ -109,18 +109,19 @@ export function squareOf(rect: Rect, image: Size): Rect {
   return { x: clamp(cx - side / 2, 0, image.w - side), y: clamp(cy - side / 2, 0, image.h - side), w: side, h: side };
 }
 
-const ARROWS: Record<string, Point> = {
-  ArrowLeft: { x: -1, y: 0 },
-  ArrowRight: { x: 1, y: 0 },
-  ArrowUp: { x: 0, y: -1 },
-  ArrowDown: { x: 0, y: 1 },
-};
+/** A Map, not an object: `"toString" in {…}` is true, and `KeyboardEvent.key` is any string. */
+const ARROWS: ReadonlyMap<string, Point> = new Map([
+  ["ArrowLeft", { x: -1, y: 0 }],
+  ["ArrowRight", { x: 1, y: 0 }],
+  ["ArrowUp", { x: 0, y: -1 }],
+  ["ArrowDown", { x: 0, y: 1 }],
+]);
 
-export const isArrowKey = (key: string) => key in ARROWS;
+export const isArrowKey = (key: string) => ARROWS.has(key);
 
 /** Arrow keys: move by `step`; with `resize`, Right/Down grow and Left/Up shrink (from the top-left corner). */
 export function nudgeRect(rect: Rect, key: string, step: number, resize: boolean, square: boolean, image: Size, min: number): Rect {
-  const dir = ARROWS[key];
+  const dir = ARROWS.get(key);
   if (!dir) return rect;
   if (!resize) return moveRect(rect, dir.x * step, dir.y * step, image);
   if (square) {

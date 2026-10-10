@@ -52,7 +52,7 @@ export function TypeField({ blockId, block, screenId, kind }: TypeFieldProps) {
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
   const { focusRegion } = useLayoutEnv();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
 
   const onChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const type = event.target.value;

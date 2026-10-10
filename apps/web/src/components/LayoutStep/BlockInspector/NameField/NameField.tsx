@@ -24,7 +24,7 @@ export function NameField({ blockId, label, screenId }: NameFieldProps) {
   const t = useDictionary(layout);
   const actions = useLayoutActions();
   const store = useLayoutStoreApi();
-  const announce = useDndAnnounce();
+  const announce = useDndAnnounce({ politeness: "polite" });
 
   const field = useFieldDraft(`${screenId}:${blockId}:label`, label, (text) => {
     if (!text.trim()) return;
