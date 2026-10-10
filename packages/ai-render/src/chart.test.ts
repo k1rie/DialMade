@@ -91,6 +91,30 @@ describe("<img data-chart> through the pipeline", () => {
   });
 });
 
+describe("data-highlight", () => {
+  it("dims the other bars and marks a point of a line", () => {
+    const bars = chartSvg("bar", [[3, 5, 2, 8]], "x", 3);
+    expect(bars.match(/opacity="\.32"/g)).toHaveLength(3);
+    const line = chartSvg("line", [[3, 5, 2, 8]], "x", 1);
+    expect(line).toContain("stroke-dasharray");
+    expect(chartSvg("bar", [[3, 5]], "x")).not.toContain("opacity");
+  });
+
+  it("is kept only on a chart image and only when the index exists in the data", () => {
+    expect(sanitized('<img data-chart="bar" data-values="1,2,3" data-highlight="2" alt="x">')).toContain('data-highlight="2"');
+    expect(sanitized('<img data-chart="bar" data-values="1,2,3" data-highlight="3" alt="x">')).not.toContain("data-highlight");
+    expect(sanitized('<img data-chart="bar" data-values="1,2,3" data-highlight="-1" alt="x">')).not.toContain("data-highlight");
+    expect(sanitized('<img data-highlight="1" alt="x">')).not.toContain("data-highlight");
+    expect(sanitized('<div data-highlight="1"></div>')).not.toContain("data-highlight");
+  });
+
+  it("reaches the HTML and TSX exports", () => {
+    const html = sanitized('<img data-chart="bar" data-values="3,5,2,8" data-highlight="3" alt="Ventas" class="h-32 w-full">');
+    expect(inlineAssets(html)).toContain('opacity=".32"');
+    expect(blockToTsx(html, "b-chart", { label: "Ventas" })).toContain("opacity");
+  });
+});
+
 describe("single-side borders (dividers)", () => {
   it("are part of the vocabulary", () => {
     for (const token of ["border-b", "border-t", "border-l", "border-r", "border-x", "border-y", "border-b-2", "border-t border-border", "last:border-b-0", "@3xl:border-l"]) {

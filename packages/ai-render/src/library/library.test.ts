@@ -94,7 +94,7 @@ describe("selecting references", () => {
   });
 
   it("an approved entry outranks a draft of the same type when the direction fits about equally", () => {
-    const draft = { ...LIBRARY.find((entry) => entry.id === "features-hairline-index")!, id: "draft-a" };
+    const draft = { ...LIBRARY.find((entry) => entry.id === "features-statement-two-tone")!, id: "draft-a" };
     const kept = { ...draft, id: "kept-a", approved: true as const };
     const picked = selectReferences([draft, kept], "features", "landing", axes, "b-1", { seed: 1, count: 1 });
     expect(picked[0]!.id).toBe("kept-a");

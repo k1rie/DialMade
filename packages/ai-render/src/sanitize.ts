@@ -4,7 +4,7 @@
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
 import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
-import { canonicalChartValues, isChartKind, parseChartValues } from "./chart";
+import { canonicalChartValues, isChartKind, parseChartHighlight, parseChartValues } from "./chart";
 import { checkClass, type ClassRejection } from "./vocabulary";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
@@ -157,6 +157,12 @@ class Walker {
         else drop(name);
         continue;
       }
+      if (name === "data-highlight") {
+        const index = tag === "img" ? parseChartHighlight(value) : null;
+        if (index !== null) out.push([name, String(index)]);
+        else drop(name);
+        continue;
+      }
       if (name === "data-asset") {
         if (tag === "img" && value.trim() === "logo") out.push([name, "logo"]);
         else drop(name);
@@ -249,12 +255,17 @@ class Walker {
     }
     if (tag === "button" && !out.some(([name]) => name === "type")) out.push(["type", "button"]);
     if (tag === "img") {
-      // A chart needs both its kind and its numbers; one without the other is dropped, and a chart is a «chart» image.
-      const kind = out.findIndex(([name]) => name === "data-chart");
-      const values = out.findIndex(([name]) => name === "data-values");
-      if (kind >= 0 && values < 0) out.splice(kind, 1);
-      else if (values >= 0 && kind < 0) out.splice(values, 1);
-      else if (kind >= 0) {
+      // A chart needs both its kind and its numbers; one without the other is dropped, the stressed index must exist in
+      // the data, and a chart is a «chart» image.
+      const at = (attr: string) => out.findIndex(([name]) => name === attr);
+      if (at("data-chart") >= 0 && at("data-values") < 0) out.splice(at("data-chart"), 1);
+      if (at("data-values") >= 0 && at("data-chart") < 0) out.splice(at("data-values"), 1);
+      if (at("data-highlight") >= 0) {
+        const series = at("data-values") >= 0 ? parseChartValues(out[at("data-values")]![1]) : null;
+        const longest = series ? Math.max(...series.map((s) => s.length)) : 0;
+        if (Number(out[at("data-highlight")]![1]) >= longest) out.splice(at("data-highlight"), 1);
+      }
+      if (at("data-chart") >= 0) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i]![0] === "data-placeholder" || out[i]![0] === "data-asset") out.splice(i, 1);
         out.push(["data-placeholder", "chart"]);
       }

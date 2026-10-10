@@ -13,7 +13,8 @@ export const SCALE_COLORS: readonly string[] = SCALE_GROUPS.flatMap((group) => S
 const KEYWORD_COLORS = ["transparent", "current", "inherit"] as const;
 const COLOR_SET: ReadonlySet<string> = new Set([...ROLE_COLORS, ...SCALE_COLORS, ...KEYWORD_COLORS]);
 
-export const TYPE_SIZES = ["display", "h1", "h2", "h3", "body", "small", "caption"] as const;
+/** `giant` is twice `display`: a wordmark or one number per page, never body text. */
+export const TYPE_SIZES = ["giant", "display", "h1", "h2", "h3", "body", "small", "caption"] as const;
 export const FONT_FAMILIES = ["heading", "body", "mono", "sans"] as const;
 export const RADII = ["none", "sm", "md", "lg", "xl", "full", "card", "button", "input", "badge"] as const;
 export const SHADOWS = ["none", "sm", "md", "lg", "card", "button"] as const;

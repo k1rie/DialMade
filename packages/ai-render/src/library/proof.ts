@@ -85,40 +85,40 @@ export const PROOF: LibraryBlock[] = [
 </section>`,
   },
   {
-    id: "logos-wordmark-row",
+    id: "logos-ruled-grid",
     type: "logos",
     surface: "landing",
-    pattern:
-      "A quiet row: one small caption line and five fictional wordmarks set in the heading font in muted text, evenly spaced and separated by vertical hairlines. Never colored logos, never a wall of badges.",
-    fits: { composition: ["editorial", "centered-stage", "asymmetric"], typeVoice: ["quiet", "humanist", "technical-mono"], decoration: ["rules-and-grids", "none", "outlined"], rhythm: ["airy", "balanced", "compact"] },
-    html: `<section data-block-id="b-logos" class="@container bg-background py-10">
+    pattern: "Wordmarks as a ruled grid: a heavy rule above and below, hairlines between cells, each name set large in a different weight or case so it reads as a typographic specimen rather than a row of badges.",
+    fits: { composition: ["editorial", "asymmetric", "data-dense"], typeVoice: ["bold-display", "condensed-caps", "quiet"], decoration: ["rules-and-grids", "outlined", "none"], rhythm: ["airy", "balanced", "compact"] },
+    html: `<section data-block-id="b-logos" class="@container bg-background py-12">
 <div class="mx-auto max-w-container px-6">
-<p class="text-center text-caption uppercase tracking-widest text-muted-foreground">Trusted by</p>
-<ul class="mt-6 grid grid-cols-2 gap-y-6 @3xl:grid-cols-5 @3xl:divide-x @3xl:divide-border">
-<li class="text-center font-heading text-h3 font-semibold tracking-tight text-muted-foreground">Alderline</li>
-<li class="text-center font-heading text-h3 font-semibold tracking-tight text-muted-foreground">Fenwick</li>
-<li class="text-center font-heading text-h3 font-semibold tracking-tight text-muted-foreground">Marlow &amp; Co</li>
-<li class="text-center font-heading text-h3 font-semibold tracking-tight text-muted-foreground">Tidewater</li>
-<li class="col-span-2 text-center font-heading text-h3 font-semibold tracking-tight text-muted-foreground @3xl:col-span-1">Hollin</li>
+<p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">In good company</p>
+<ul class="mt-5 grid grid-cols-2 divide-x divide-y divide-border border-y-2 border-foreground @3xl:grid-cols-4 @3xl:divide-y-0">
+<li class="px-6 py-8 font-heading text-h2 font-bold uppercase tracking-tight text-foreground">Alderline</li>
+<li class="px-6 py-8 font-heading text-h2 font-light italic tracking-tight text-foreground">Fenwick &amp; Co</li>
+<li class="px-6 py-8 font-heading text-h2 font-semibold tracking-tighter text-foreground">marlow</li>
+<li class="px-6 py-8 font-heading text-h2 font-medium uppercase tracking-widest text-foreground">Hollin</li>
 </ul>
 </div>
 </section>`,
   },
   {
-    id: "stats-numeral-band",
+    id: "stats-single-giant",
     // A landing «stats» strip is a `kpis` block on a landing screen.
     type: "kpis",
     surface: "landing",
-    pattern:
-      "A full-width tonal band with four huge numerals separated by vertical hairlines, each with a small caption above it. The numbers are the content; no icons, no cards.",
-    fits: { composition: ["data-dense", "editorial", "asymmetric", "centered-stage"], typeVoice: ["bold-display", "technical-mono", "condensed-caps"], decoration: ["tinted-panels", "rules-and-grids", "gradient-wash"], colorStrategy: ["tonal-monochrome", "brand-forward", "high-contrast-cta"], rhythm: ["airy", "balanced", "compact"] },
-    html: `<section data-block-id="b-stats" class="@container bg-primary py-14 text-primary-foreground @3xl:py-20">
-<div class="mx-auto max-w-container px-6">
-<dl class="grid grid-cols-2 gap-y-10 @3xl:grid-cols-4 @3xl:divide-x @3xl:divide-primary-foreground/20">
-<div class="@3xl:px-8 @3xl:first:pl-0"><dt class="text-caption uppercase tracking-widest text-primary-foreground">Meals served a week</dt><dd class="mt-3 font-heading text-display font-bold tabular-nums tracking-tight">48k</dd></div>
-<div class="@3xl:px-8"><dt class="text-caption uppercase tracking-widest text-primary-foreground">Kitchens</dt><dd class="mt-3 font-heading text-display font-bold tabular-nums tracking-tight">620</dd></div>
-<div class="@3xl:px-8"><dt class="text-caption uppercase tracking-widest text-primary-foreground">Waste avoided</dt><dd class="mt-3 font-heading text-display font-bold tabular-nums tracking-tight">31%</dd></div>
-<div class="@3xl:px-8"><dt class="text-caption uppercase tracking-widest text-primary-foreground">Cities</dt><dd class="mt-3 font-heading text-display font-bold tabular-nums tracking-tight">14</dd></div>
+    pattern: "One giant number at display size on a primary-colored field, with its caption, and three small supporting figures stacked on the right under hairlines. One figure to remember and three to back it up, instead of four equal numbers.",
+    fits: { composition: ["asymmetric", "split", "editorial", "data-dense"], typeVoice: ["bold-display", "technical-mono"], colorStrategy: ["brand-forward", "high-contrast-cta"], decoration: ["tinted-panels", "none", "rules-and-grids"], rhythm: ["balanced", "airy"] },
+    html: `<section data-block-id="b-stats" class="@container bg-primary py-16 text-primary-foreground @3xl:py-24">
+<div class="mx-auto grid max-w-container items-end gap-12 px-6 @3xl:grid-cols-12">
+<div class="@3xl:col-span-7">
+<p class="font-heading text-giant font-bold tabular-nums leading-none tracking-tighter text-primary-foreground">3 in 4</p>
+<p class="mt-4 max-w-md text-body text-primary-foreground">people who try a first session come back within the month.</p>
+</div>
+<dl class="divide-y divide-primary-foreground/30 border-y border-primary-foreground/30 @3xl:col-span-5">
+<div class="flex items-baseline justify-between py-4"><dt class="text-body text-primary-foreground">Sessions a week</dt><dd class="font-heading text-h2 font-semibold tabular-nums text-primary-foreground">140</dd></div>
+<div class="flex items-baseline justify-between py-4"><dt class="text-body text-primary-foreground">Instructors</dt><dd class="font-heading text-h2 font-semibold tabular-nums text-primary-foreground">18</dd></div>
+<div class="flex items-baseline justify-between py-4"><dt class="text-body text-primary-foreground">Years open</dt><dd class="font-heading text-h2 font-semibold tabular-nums text-primary-foreground">11</dd></div>
 </dl>
 </div>
 </section>`,

@@ -35,6 +35,13 @@ export function parseChartValues(raw: string): number[][] | null {
   return out;
 }
 
+/** `data-highlight="7"`: the index (0…23) of the bar or point to stress. `null` when it is not a plain small integer. */
+export function parseChartHighlight(raw: string): number | null {
+  if (!/^\d{1,2}$/.test(raw.trim())) return null;
+  const index = Number(raw);
+  return index < CHART_LIMITS.points ? index : null;
+}
+
 /** Canonical text of parsed series (what the sanitizer stores). */
 export const canonicalChartValues = (series: readonly (readonly number[])[]): string => series.map((s) => s.join(",")).join(";");
 
@@ -60,9 +67,10 @@ const PAD = { left: 6, right: 6, top: 10, bottom: 6 };
 /**
  * The chart as SVG markup. `bar`, `line`, `area` and `spark` stretch to the box of the `<img>` (`preserveAspectRatio`
  * none, strokes with `vector-effect`), so the model sets the size with classes (`h-40 w-full`); `donut` keeps its
- * proportions. `label` becomes the accessible name.
+ * proportions. `label` becomes the accessible name. `highlight` (an index) stresses one bar or segment (the others
+ * dim) or marks one point of a line with a dashed vertical rule: the «this is the number» of an annotated chart.
  */
-export function chartSvg(kind: ChartKind, series: readonly (readonly number[])[], label = ""): string {
+export function chartSvg(kind: ChartKind, series: readonly (readonly number[])[], label = "", highlight: number | null = null): string {
   const title = label ? `<title>${escape(label)}</title>` : "";
   const open = (viewBox: string, aspect: string) =>
     `<svg xmlns="http://www.w3.org/2000/svg" role="img" viewBox="${viewBox}" preserveAspectRatio="${aspect}">${title}`;
@@ -75,7 +83,8 @@ export function chartSvg(kind: ChartKind, series: readonly (readonly number[])[]
     let offset = 0;
     const segments = values.map((value, i) => {
       const len = Math.max((value / total) * c - 1.5, 0.5);
-      const segment = `<circle cx="60" cy="60" r="${r}" fill="none" stroke-width="16" stroke-dasharray="${n(len)} ${n(c - len)}" stroke-dashoffset="${n(-offset)}" transform="rotate(-90 60 60)" style="stroke:${color(i)}"/>`;
+      const dim = highlight !== null && highlight !== i ? ' opacity=".3"' : "";
+      const segment = `<circle cx="60" cy="60" r="${r}" fill="none" stroke-width="16" stroke-dasharray="${n(len)} ${n(c - len)}" stroke-dashoffset="${n(-offset)}" transform="rotate(-90 60 60)"${dim} style="stroke:${color(i)}"/>`;
       offset += (value / total) * c;
       return segment;
     });
@@ -104,7 +113,8 @@ export function chartSvg(kind: ChartKind, series: readonly (readonly number[])[]
       values.map((value, i) => {
         const height = Math.max(PAD.top + plotH - y(value), value > 0 ? 2 : 0);
         const x = PAD.left + i * slot + (slot - group) / 2 + s * barW;
-        return `<rect x="${n(x)}" y="${n(PAD.top + plotH - height)}" width="${n(Math.max(barW - (series.length > 1 ? 2 : 0), 1))}" height="${n(height)}" rx="3" style="fill:${color(s)}"/>`;
+        const dim = highlight !== null && highlight !== i ? ' opacity=".32"' : "";
+        return `<rect x="${n(x)}" y="${n(PAD.top + plotH - height)}" width="${n(Math.max(barW - (series.length > 1 ? 2 : 0), 1))}" height="${n(height)}" rx="3"${dim} style="fill:${color(s)}"/>`;
       }),
     );
     return `${head}${grid}${baseline}${bars.join("")}</svg>`;
@@ -131,5 +141,10 @@ export function chartSvg(kind: ChartKind, series: readonly (readonly number[])[]
     const area = `<polygon points="${first},${n(PAD.top + plotH)} ${points.join(" ")} ${last},${n(PAD.top + plotH)}" style="fill:url(#${id}-${i})"/>`;
     return `${area}${line}`;
   });
-  return `${head}${defs}${grid}${kind === "spark" ? "" : baseline}${shapes.join("")}</svg>`;
+  const longest = Math.max(...series.map((s) => s.length));
+  const marker =
+    highlight !== null && highlight < longest
+      ? `<line x1="${n(PAD.left + highlight * (plotW / (longest - 1)))}" x2="${n(PAD.left + highlight * (plotW / (longest - 1)))}" y1="${PAD.top}" y2="${n(PAD.top + plotH)}" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke" style="stroke:var(--foreground, #333)"/>`
+      : "";
+  return `${head}${defs}${grid}${kind === "spark" ? "" : baseline}${shapes.join("")}${marker}</svg>`;
 }

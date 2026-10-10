@@ -22,7 +22,7 @@ const CONTAINER_REM: Readonly<Record<(typeof CONTAINER_SIZES)[number], number>> 
   "7xl": 80,
 };
 
-const TIGHT_SIZES = new Set(["display", "h1", "h2", "h3"]);
+const TIGHT_SIZES = new Set(["giant", "display", "h1", "h2", "h3"]);
 
 function themeLines(): string[] {
   const lines: string[] = ["--spacing: 0.25rem;"];
@@ -31,7 +31,7 @@ function themeLines(): string[] {
   for (const color of ROLE_COLORS) lines.push(`--color-${color}: var(--${color});`);
   for (const color of SCALE_COLORS) lines.push(`--color-${color}: var(--color-${color});`);
   for (const size of TYPE_SIZES) {
-    lines.push(`--text-${size}: var(--dl-fs-${size});`);
+    lines.push(size === "giant" ? "--text-giant: calc(var(--dl-fs-display) * 2);" : `--text-${size}: var(--dl-fs-${size});`);
     lines.push(`--text-${size}--line-height: var(--dl-lh-${TIGHT_SIZES.has(size) ? "tight" : "body"});`);
   }
   lines.push(

@@ -11,7 +11,7 @@
 // One component per block (`HeroB7k`), plus `exportThemeCss()` (./theme) for a Tailwind v4 project.
 import { ICONS } from "@dialmade/ui/icons";
 import { placeholderSvg } from "./assets";
-import { chartSvg, isChartKind, parseChartValues } from "./chart";
+import { chartSvg, isChartKind, parseChartHighlight, parseChartValues } from "./chart";
 import { hash32 } from "./direction";
 import { PLACEHOLDER_KINDS } from "./sanitize";
 import { HTML_NS, VOID_TAGS, parseRaw, parseSanitized, type AiElement, type AiNode, type RawNode } from "./tree";
@@ -124,10 +124,10 @@ function nodeLines(node: AiElement, depth: number, context: Context): string[] {
     const series = chartKind && isChartKind(chartKind) ? parseChartValues(attrOf("data-values") ?? "") : null;
     if (chartKind && isChartKind(chartKind) && series) {
       // A chart is the SVG itself, inline (no component to import): the numbers are in the markup.
-      const skip = new Set(["data-placeholder", "data-asset", "data-chart", "data-values", "alt"]);
+      const skip = new Set(["data-placeholder", "data-asset", "data-chart", "data-values", "data-highlight", "alt"]);
       const attrs = jsxAttrs(node, context, skip);
       const alt = attrOf("alt");
-      return svgJsx(chartSvg(chartKind, series, alt ?? ""), depth, [...attrs, ...(alt ? [`aria-label=${attrValue(alt)}`] : ['aria-hidden="true"'])].join(" "));
+      return svgJsx(chartSvg(chartKind, series, alt ?? "", parseChartHighlight(attrOf("data-highlight") ?? "")), depth, [...attrs, ...(alt ? [`aria-label=${attrValue(alt)}`] : ['aria-hidden="true"'])].join(" "));
     }
     context.uses.add("Placeholder");
     const kind = attrOf("data-asset") === "logo" ? "logo" : (attrOf("data-placeholder") ?? "photo");

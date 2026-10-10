@@ -125,7 +125,7 @@ export function styleFingerprint(root: AiElement): { radii: Set<string>; shadows
       if (variants.length > 0) continue;
       if (utility.startsWith("rounded")) radii.add(utility);
       if (utility.startsWith("shadow")) shadows.add(utility);
-      if (/^h[12]$/.test(element.tag) && /^text-(?:display|h1|h2|h3|body|small|caption)$/.test(utility)) headingSizes.add(utility);
+      if (/^h[12]$/.test(element.tag) && /^text-(?:giant|display|h1|h2|h3|body|small|caption)$/.test(utility)) headingSizes.add(utility);
     }
   }
   return { radii, shadows, headingSizes };
