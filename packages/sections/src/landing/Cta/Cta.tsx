@@ -28,6 +28,8 @@ export function Cta({
 }: SectionComponentProps<CtaProps>) {
   const strings = landingStrings(ctx.locale);
   const titleId = `${elementId}-title`;
+  // One action color per page, as in the hero: the CTA color only with «bold» (where it turns light on the primary panel).
+  const actionVariant = emphasis === "bold" ? "cta" : "primary";
   // With the email form, a linked block submits to its screen like `ui.form` (export: `action`; preview: the
   // button's `data-dl-screen-link`).
   const href = ctx.blockLink?.(elementId) ?? null;
@@ -66,13 +68,13 @@ export function Cta({
                 placeholder={strings.emailPlaceholder}
                 fieldClassName="dl-landing-cta__field"
               />
-              <Button type="submit" variant="cta" data-dl-screen-link={target ?? undefined}>
+              <Button type="submit" variant={actionVariant} data-dl-screen-link={target ?? undefined}>
                 <span data-dl-prop="button">{button}</span>
               </Button>
             </form>
           ) : (
             <div className="dl-landing-cta__buttons">
-              <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: "cta", size: "lg" })}>
+              <a {...linkProps(ctx, elementId)} {...buttonStyleProps({ variant: actionVariant, size: "lg" })}>
                 <span data-dl-prop="button">{button}</span>
               </a>
               {secondaryButton ? (
