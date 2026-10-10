@@ -44,7 +44,7 @@ export {
 export { DropdownMenu, type DropdownMenuEntry, type DropdownMenuItem, type DropdownMenuProps } from "./DropdownMenu";
 export { Field, type FieldProps } from "./Field";
 export { GALLERY_SECTIONS, Gallery, type GalleryProps, type GallerySectionId } from "./Gallery";
-export { ICON_NAMES, Icon, isIconName, type IconName, type IconProps, type IconSlot } from "./Icon";
+export { ICON_NAMES, ICONS, Icon, isIconName, type IconName, type IconProps, type IconSlot } from "./Icon";
 export { IconButton, type IconButtonProps } from "./IconButton";
 export { Input, type InputProps } from "./Input";
 export { NavItem, type NavItemProps } from "./NavItem";
