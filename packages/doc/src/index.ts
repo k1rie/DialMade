@@ -285,6 +285,7 @@ export {
   MAX_AI_BLOCK_BYTES,
   MAX_AI_RENDER_BYTES,
   MAX_AI_REQUEST_LENGTH,
+  MAX_AI_STASHED_BLOCKS,
   aiRenderBytes,
   type AiAxes,
   type AiAxis,
