@@ -12,6 +12,9 @@ type VisionErrorTexts = Record<
   string
 >;
 
+/** Wire codes whose text for the layout AI talks about «propuesta» instead of «textos». */
+type LayoutAiErrorTexts = Record<"refused" | "invalid-response" | "invalid-request" | "payload-too-large", string>;
+
 type ReasonTexts = Record<AiFallbackReason, (freeUsesTotal: number) => string>;
 type ManualErrorTexts = Record<ManualParseError, string>;
 
@@ -159,6 +162,26 @@ export const ai = defineDictionary({
       manualWaiting: "Pega la respuesta de Claude para aplicar los textos.",
       retryAll: (n: number) => `Reintentar ${plural(n, "el bloque con error", `los ${n} bloques con error`)}`,
       chipsLabel: "Textos con IA por bloque",
+    },
+    layoutAi: {
+      /* «Describe tu producto» and «Sugerir con IA» (Modo Layout v1.1). */
+      estimate: (cost: string) => `≈ ${cost}`,
+      oneUsePropose: "Cuenta como 1 uso, para todas las variantes.",
+      oneUseMap: "Cuenta como 1 uso, para todos los bloques.",
+      usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      withKey: "con tu key",
+      blocked: {
+        "free-tier-exhausted": "sin usos gratis este mes",
+        "budget-exceeded": "la IA gratis se agotó este mes",
+        "daily-limit": "límite diario de IA gratis alcanzado",
+        "not-configured": "IA gratis no disponible en este servidor",
+      } satisfies Record<AiFallbackReason, string>,
+      errors: {
+        refused: "La IA no quiso proponer esa estructura. Prueba a describirlo de otra forma.",
+        "invalid-response": "La IA devolvió una propuesta que no pudimos usar. Inténtalo de nuevo o usa «Sin IA».",
+        "invalid-request": "No pudimos enviar la petición. Revisa la descripción e inténtalo de nuevo.",
+        "payload-too-large": "La petición es demasiado grande para la IA.",
+      } satisfies LayoutAiErrorTexts,
     },
     vision: {
       label: "Analizar estilo con IA",
@@ -330,6 +353,25 @@ export const ai = defineDictionary({
       manualWaiting: "Paste Claude's answer to apply the copy.",
       retryAll: (n: number) => `Retry ${plural(n, "the failed block", `the ${n} failed blocks`)}`,
       chipsLabel: "AI copy per block",
+    },
+    layoutAi: {
+      estimate: (cost: string) => `≈ ${cost}`,
+      oneUsePropose: "Counts as 1 use, for every variant.",
+      oneUseMap: "Counts as 1 use, for every block.",
+      usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      withKey: "with your key",
+      blocked: {
+        "free-tier-exhausted": "no free uses left this month",
+        "budget-exceeded": "the free AI ran out this month",
+        "daily-limit": "daily free AI limit reached",
+        "not-configured": "free AI not available on this server",
+      } satisfies Record<AiFallbackReason, string>,
+      errors: {
+        refused: "The AI declined to propose that structure. Try describing it another way.",
+        "invalid-response": "The AI returned a proposal we couldn't use. Try again or use «Without AI».",
+        "invalid-request": "We couldn't send the request. Check the description and try again.",
+        "payload-too-large": "The request is too large for the AI.",
+      } satisfies LayoutAiErrorTexts,
     },
     vision: {
       label: "Analyze style with AI",

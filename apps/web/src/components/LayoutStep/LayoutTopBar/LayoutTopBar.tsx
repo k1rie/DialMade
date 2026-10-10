@@ -1,7 +1,7 @@
 "use client";
 
 import type { Breakpoint } from "@dialmade/layout";
-import { useId, useMemo, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
@@ -13,10 +13,11 @@ import { useDictionary, useLocale } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { DEVICE_WIDTHS } from "@/lib/devices";
-import { MonitorIcon, PhoneIcon, RedoIcon, StructureIcon, TabletIcon, UndoIcon } from "../icons";
+import { MonitorIcon, PhoneIcon, RedoIcon, SparkleIcon, StructureIcon, TabletIcon, UndoIcon } from "../icons";
 import { regionSelector } from "../constants";
 import { focusStylePicker } from "../StylePicker";
 import { selectActiveScreen, useLayoutActions, useLayoutEnv, useLayoutHistory, useLayoutStore } from "../useLayoutStore";
+import { DescribeDialog } from "./DescribeDialog";
 import { ShortcutsMenu } from "./ShortcutsMenu";
 import { styleName } from "./styleName";
 
@@ -31,8 +32,8 @@ const STYLE_FOCUS_ATTEMPTS = 3;
 
 /**
  * Bar above the Layout areas: the active screen (name + kind), the device of the canvas (Escritorio /
- * Tablet / Móvil), «Ver estructura», undo/redo with their platform shortcuts, the keyboard settings and
- * the «Estilo: …» chip, which selects nothing and takes focus to the StylePicker in the screen panel.
+ * Tablet / Móvil), «Ver estructura», undo/redo with their platform shortcuts, the keyboard settings,
+ * «Describir» («Describe tu producto» to add or replace screens) and the «Estilo: …» chip, which selects nothing and takes focus to the StylePicker in the screen panel.
  * Under 640 px (no canvas) the canvas-only controls are hidden.
  */
 export function LayoutTopBar({ className }: LayoutTopBarProps) {
@@ -50,6 +51,7 @@ export function LayoutTopBar({ className }: LayoutTopBarProps) {
   const showStructure = useLayoutStore((state) => state.showStructure);
   const style = useLayoutStore((state) => state.style);
   const currentStyle = styleName(style, locale, t.style.guide, doc.brief.recipeId);
+  const [describing, setDescribing] = useState(false);
 
   const deviceOptions = useMemo<SegmentedOption<Breakpoint>[]>(
     () =>
@@ -165,12 +167,18 @@ export function LayoutTopBar({ className }: LayoutTopBarProps) {
         />
         <ShortcutsMenu />
         <span aria-hidden className="mx-0.5 h-5 w-px bg-white/10" />
+        <Tooltip content={t.topBar.describeHint} side="bottom">
+          <Chip aria-haspopup="dialog" onClick={() => setDescribing(true)} leading={<SparkleIcon className="size-3.5 text-accent" />}>
+            {t.topBar.describe}
+          </Chip>
+        </Tooltip>
         <Tooltip content={t.topBar.styleHint} side="bottom">
           <Chip onClick={goToStyle} className="max-w-[16rem] min-w-0">
             <span className="min-w-0 truncate">{t.topBar.styleChip(currentStyle)}</span>
           </Chip>
         </Tooltip>
       </div>
+      <DescribeDialog open={describing} onOpenChange={setDescribing} />
     </div>
   );
 }

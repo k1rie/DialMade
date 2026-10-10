@@ -10,6 +10,7 @@ import { createDesignDocStore, docHasDesign, useOptionalDesignDocStore } from "@
 import { useDictionary } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
+import { DescribeScreens } from "../DescribeScreens";
 import { ScreenTemplateList } from "../ScreenTemplateList";
 import { useLayoutActions, useLayoutEnv, useLayoutStoreApi } from "../useLayoutStore";
 import { BlankCard } from "./BlankCard";
@@ -31,8 +32,9 @@ export type TemplatePickerProps = {
 /**
  * Empty state of the Layout step (no screens yet): «¿Qué vas a diseñar?» with the starting sets as large cards
  * with their live branded mini («SaaS app» = Dashboard + Ajustes + Login, «Landing» = Inicio + Precios),
- * «En blanco» (asks web or app), «¿No sabes cuál?» (one deterministic question), the single screen templates
- * and the optional brand details. The set matching the Palette Lab tab (or the answer) is «Recomendada».
+ * «En blanco» (asks web or app), «¿No sabes cuál?» (one deterministic question), «Describe tu producto» (2–3
+ * proposed structures, with or without AI), the single screen templates and the optional brand details. The set
+ * matching the Palette Lab tab (or the answer) is «Recomendada».
  * Every choice is a button (click, Enter, Space) and one undo step; afterwards focus moves to the canvas
  * (screens on a phone).
  */
@@ -113,6 +115,11 @@ export function TemplatePicker({ className }: TemplatePickerProps) {
           <BlankCard onChoose={(kind) => addScreen("blank", kind)} />
         </div>
         <RecommendQuestion answer={answer} onAnswer={answerQuestion} result={result} />
+      </div>
+
+      {/* «Describe tu producto»: 2–3 structures from a sentence, with AI or from keywords without it. */}
+      <div className="rounded-panel border border-app bg-app-elevated/70 p-4 shadow-surface sm:p-5">
+        <DescribeScreens mode="start" />
       </div>
 
       <div className="flex flex-col gap-3">
