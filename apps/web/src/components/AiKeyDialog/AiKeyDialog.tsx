@@ -23,6 +23,7 @@ import type { ManualJob } from "@/lib/ai/manual";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { cn } from "@/lib/cn";
 import { smooth, tween } from "@/lib/motion";
+import { ByokModelPicker, type ByokModelPickerProps } from "./ByokModelPicker";
 
 export type AiKeyDialogView = "key" | "manual";
 
@@ -40,6 +41,11 @@ export type AiKeyDialogProps<T = unknown> = {
   onKeySaved?: () => void;
   /** Tab shown when it opens. Default: the key. */
   initialView?: AiKeyDialogView;
+  /**
+   * «Diseño con IA»: also pick the model the key runs (Opus 5.5 by default, «Más barato: Sonnet 5.5»), with the cost
+   * of the pending generate per model when known.
+   */
+  renderModels?: { estimates?: ByokModelPickerProps["estimates"] };
 };
 
 const CONSOLE_KEYS_URL = "https://console.anthropic.com/settings/keys";
@@ -57,7 +63,7 @@ const CloseIcon = () => (
   </svg>
 );
 
-export function AiKeyDialog<T = unknown>({ open, onOpenChange, reason, manual, onManualResult, onKeySaved, initialView = "key" }: AiKeyDialogProps<T>) {
+export function AiKeyDialog<T = unknown>({ open, onOpenChange, reason, manual, onManualResult, onKeySaved, initialView = "key", renderModels }: AiKeyDialogProps<T>) {
   const dictionary = useDictionary(ai);
   const t = dictionary.key;
   const { t: common } = useI18n();
@@ -171,6 +177,8 @@ export function AiKeyDialog<T = unknown>({ open, onOpenChange, reason, manual, o
           {t.formatHint}
         </p>
       </div>
+
+      {renderModels && <ByokModelPicker {...(renderModels.estimates && { estimates: renderModels.estimates })} />}
 
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-small text-muted">
         {t.privacy.map((line) => (
