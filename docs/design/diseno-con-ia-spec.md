@@ -4,7 +4,7 @@
 
 **Origen:** decisión del usuario: Claude genera también el resultado visual, estilo v0, «para resultados super buenos y más impacto en la comunidad». El 2026-10-10 aclaró el alcance: **el layout es siempre suyo**; la IA decide **cómo se ve** cada bloque, y la **variedad** entre usuarios es un objetivo.
 
-**Estado:** spec revisada. La crítica adversarial está en `diseno-con-ia-critique.md`. Sus arreglos ya están aplicados aquí y llevan la marca **[Cn]**. La tabla del final («Cambios tras la crítica») los resume.
+**Estado:** spec revisada, con las decisiones del usuario del 2026-10-10 aplicadas (§14). Quedan 2 pendientes. La crítica adversarial está en `diseno-con-ia-critique.md`. Sus arreglos ya están aplicados aquí y llevan la marca **[Cn]**. La tabla del final («Cambios tras la crítica») los resume.
 
 **Lee antes:** `modo-layout.md`, `modo-layout-decisiones.md` (contrato del DOM, n.º 15), la «Política de acceso a la IA» de `importar-guia.md` y la nota `modo-layout-ia.md` de `feat/ai-layout`.
 
@@ -21,7 +21,7 @@
 | ¿Cómo se edita? | Texto inline, paleta, receta, claro/oscuro y candados siguen funcionando. Los knobs de sección pasan a «Pedir cambio» y a chips rápidos. «Usar diseño base» funciona por bloque. |
 | ¿Qué tiene de distinto? | Una «dirección de arte» por documento, con semilla y ejes, comparte el lenguaje visual entre pantallas y lo hace distinto entre usuarios. |
 
-**Cambio de una decisión anterior.** INFORME §15.2 decía «No hay HTML libre» para la IA del Modo edición. Esta spec lo revierte **solo** para el interior de los bloques, y con un HTML acotado: lista blanca, tokens y sandbox. Sigue sin haber HTML libre fuera del bloque, ni scripts **[C1]**. El usuario debe confirmarlo (decisión 1).
+**Cambio de una decisión anterior.** INFORME §15.2 decía «No hay HTML libre» para la IA del Modo edición. Esta spec lo revierte **solo** para el interior de los bloques, y con un HTML acotado: lista blanca, tokens y sandbox. Sigue sin haber HTML libre fuera del bloque, ni scripts **[C1]**. **Confirmado por el usuario (§14, decisión 5):** §15.2 queda **sustituido solo para los bloques de IA**. El resto del Modo edición sigue con parches JSON.
 
 ## 1. Qué decide el usuario y qué decide la IA
 
@@ -177,7 +177,7 @@ Haiku 5.5 y Opus 5.5 **no admiten** `temperature` distinta de la de por defecto 
    - 2–3 «movimientos» de un catálogo propio de unos 40: «numerales enormes en KPIs», «títulos alineados a la izquierda con regla fina», «cards con borde y sin sombra», «etiquetas en píldora sobre las imágenes», «cuadrícula de fondo con `border` al 40 %»…
 
    La IA elige entre los candidatos y justifica en `rationale`. Esto empuja contra la moda del modelo («el look IA») sin depender de él.
-3. **«Dirección de arte» opcional (chips):** Automática · Editorial · Técnica · Cálida · Juguetona · Lujo. Cada chip fija 2–3 ejes antes del sorteo.
+3. **«Dirección de arte» opcional (chips):** Automática · Editorial · Técnica · Cálida · Juguetona · Lujo. Cada chip fija 2–3 ejes antes del sorteo. **Entran en el MVP y son opcionales** (§14, decisión 4): sin chip, «Automática» deja todos los ejes a la semilla.
 4. **Lista anti-clichés en el `system`:**
    - hero centrado con blob morado;
    - tres cards iguales con icono en círculo;
@@ -238,7 +238,7 @@ Es una **eval de variedad** (script en `packages/ai-render/eval/`), que se lanza
 
 Hoy un uso es una petición, y hay 5 al mes. Con render, eso se queda corto, porque «Pedir cambio» gastaría un uso cada vez.
 
-**Propuesta (decisión 2 del usuario):** **1 uso = 1 «Generar con IA» de hasta 3 pantallas, más hasta 10 acciones de bloque (Otra versión o Pedir cambio) en las siguientes 24 h.**
+**Decidido (§14, decisión 2):** **1 uso = 1 «Generar con IA» de hasta 3 pantallas, más hasta 10 acciones de bloque (Otra versión o Pedir cambio) en las siguientes 24 h.**
 
 - **Servidor:** `POST /api/ai/render/session` hace una sola reserva del ledger (un uso, más el peor caso de la dirección y de 3 pantallas) y devuelve un `sessionId` firmado con el secreto del dispositivo. El token lleva `deviceId`, la caducidad, el máximo en USD y los contadores.
 - Cada `POST /api/ai/render` (una pantalla, SSE) y cada `POST /api/ai/render/block` presenta el `sessionId`.
@@ -298,7 +298,11 @@ Precios por MTok:
 | Latencia de 1 pantalla | ≈ 25 s (extrapolado del probe) | **sin medir**; previsiblemente más lenta | sin medir | lo que tarde su Claude |
 
 **Lectura:**
-- Con Haiku, el coste por usuario es insignificante: el límite real es el **presupuesto global**. $5 al mes dan para unas 215 sesiones completas o unas 380 generaciones, compartidas con copy y visión. Un pico de LinkedIn lo agota en horas (decisión 3).
+- Con Haiku, el coste por usuario es insignificante: el límite real es el **presupuesto global**. Va compartido con copy y visión:
+  - el **mes del lanzamiento**, $20 (§14, decisión 1): unas 870 sesiones completas o unas 1500 generaciones;
+  - después, $5: unas 215 sesiones o unas 380 generaciones.
+
+  Cuando se agota, la app sigue funcionando con BYOK, «Copiar prompt» o sin IA.
 - Con Opus, una sesión cuesta ~$1 al usuario. Hay que **enseñarlo antes**, con `count_tokens` (gratis) y el rango.
 
 **Antes de llamar**, en la línea de coste: «≈ $0,013 · 1 uso de 5 · 3 pantallas, ≈ 30 s» o, con BYOK, «≈ $0,55–0,75 con tu key».
@@ -476,7 +480,7 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 - Con «Diseño con IA», el popover muestra:
   - los chips de dirección (§4.2);
   - qué pantallas entran (por defecto las 3 primeras sin IA);
-  - la **línea de coste**: «≈ $0,013 · 1 uso de 5 (te quedan 4) · 3 pantallas · ≈ 30 s». Con BYOK: «≈ $0,55–0,75 con tu key (Opus 5.5)».
+  - la **línea de coste**: «≈ $0,013 · 1 uso de 5 (te quedan 4) · 3 pantallas · ≈ 30 s». Con BYOK: «≈ $0,55–0,75 con tu key (Opus 5.5)», más un enlace «Más barato: Sonnet 5.5 (≈ $0,28–0,37)» (§14, decisión 3).
 - El CTA principal pasa a **«Generar con IA»**. «Generar diseño» sin IA sigue a un clic en el mismo segmentado.
 
 ### 10.2 El momento de streaming
@@ -531,11 +535,15 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 
 **Requisitos previos:**
 1. **`feat/ai-layout` fusionada en `main`.** Las dos tocan `LayoutStep` (`GenerateBar`, el diálogo de IA, `useGenerateFlow`) y `lib/ai` (rutas, `estimate`, la política). Se empieza esta rama sobre `main` con esa fusión hecha, para no resolver el conflicto dos veces.
-2. El **origen de preview** desplegado (`apps/preview`, segundo proyecto de Vercel).
+   **La construcción empieza solo después de esa fusión** (decisión del usuario).
+2. El **origen de preview** desplegado (`apps/preview`, segundo proyecto de Vercel). **Pendiente** (§14): hay que decidirlo en el chat de despliegue.
+3. **Antes del lanzamiento:** subir `DIALMADE_AI_MONTHLY_BUDGET_USD` a 20 en el entorno de producción, y volver a 5 al mes siguiente (§14, decisión 1). No se toca ningún env ahora.
+
+**La variedad entre marcas no está medida.** Es la **primera tarea del spike** (§4.4): el probe no llegó a cubrirla.
 
 | Fase | Contenido |
 |---|---|
-| **Spike (~1 semana)** | `compile()` de Tailwind en un worker; runtime de preview con CSP; sanitizador parse5 con el corpus de XSS; una pantalla por streaming; **eval de variedad** (10 marcas, ≈ $0,08); la puerta de contraste con 5 casos. Sale si la eval y el contraste pasan |
+| **Spike (~1 semana)** | **1.º, la eval de variedad entre marcas (§4.4).** Después: `compile()` de Tailwind en un worker; runtime de preview con CSP; sanitizador parse5 con el corpus de XSS; una pantalla por streaming; **eval de variedad** (10 marcas, ≈ $0,08); la puerta de contraste con 5 casos. Sale si la eval y el contraste pasan |
 | **MVP (lanzamiento en LinkedIn)** | Origen de preview con islas por bloque [C21]; contrato v1 y `@dialmade/ai-render`; dirección de arte con semilla, chips y kit compartido; `/api/ai/render/session`, `/api/ai/render` (SSE) y `/api/ai/render/block`; BYOK en streaming; «Copiar prompt para mi Claude»; puertas 1–8 (contraste con el motor de paleta, responsive limitado a desbordes y objetivos táctiles); Ajustar con Base/IA, «Usar diseño base», «Otra versión», «Pedir cambio» por bloque, chips, texto inline y desactualizado; export HTML/ZIP, «Copiar HTML/TSX» por bloque, DESIGN.md y prompt packs. Contenedores solo con `surfaceClasses` |
 | **v1.1** | `figma-plan` por DOM walk (con `feat/figma-tsx`); TSX de página completa; axe-core; imágenes de referencia propias (visión); contenedores con HTML completo y hueco para los hijos; 2 versiones lado a lado; panel para editar la dirección de arte; ampliar el set de iconos |
 | **v2** | «Pedir cambio» sobre un subárbol; camino MCP; que la dirección aprenda de los bloques aceptados |
@@ -546,7 +554,7 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| **El presupuesto global se agota en el pico de LinkedIn** | La IA gratis se apaga para todos en horas | Decisión 3 (subir el presupuesto del mes de lanzamiento); salidas BYOK y manual claras; el diseño base siempre funciona |
+| **El presupuesto global se agota en el pico de LinkedIn** | La IA gratis se apaga para todos en horas | $20 el mes del lanzamiento y luego $5 (§14, decisión 1); salidas BYOK y manual claras; el diseño base siempre funciona |
 | **Calidad variable con Haiku** (look genérico, contraste) | La demo decepciona | Dirección de arte, movimientos sembrados, puertas, «Otra versión»; para la demo de LinkedIn, grabar con BYOK Opus **y decirlo** |
 | **Latencia** (≈ 25 s por pantalla con Haiku; Opus sin medir, más lento) | Se siente lento | Streaming bloque a bloque y diseño base al instante; 3 pantallas en paralelo |
 | **No determinismo** | La misma entrada da otro resultado | El HTML se guarda; nunca se regenera en silencio; «Otra versión» es explícito |
@@ -554,18 +562,26 @@ Usa el lenguaje visual actual de la app: `--app-*`, `.app-chrome` dentro de `The
 | **Editabilidad menor** (knobs) | Menos control fino que el diseño base | Chips, «Pedir cambio», «Usar diseño base» por bloque |
 | **Tamaño del documento** | Links y Supabase más pesados | Topes de 16 KB por bloque y 1 MB de `aiRender` |
 | **`compile()` de Tailwind en un worker** | Sin él, no hay CSS | Spike; plan B con CSS precompilado |
-| **Se revierte INFORME §15.2** | Contradice una decisión previa | HTML acotado y sandbox; decisión 1 del usuario |
+| **Se revierte INFORME §15.2** | Contradice una decisión previa | HTML acotado y sandbox; confirmado por el usuario (§14, decisión 5) |
 | **Varias promesas «v0-like» en LinkedIn** | Expectativa de app completa | Contarlo como «la IA diseña cada bloque de tu layout, con tu marca», sin «primero» ni «revolucionario» (modo-layout.md) |
 
-## 14. Decisiones que tiene que tomar el usuario
+## 14. Decisiones del usuario (2026-10-10)
 
-1. **Revertir «No hay HTML libre»** (INFORME §15.2) para el interior de los bloques, con las condiciones de §2 y §6. Recomendado: **sí**.
-2. **Qué es un uso gratis.** Recomendado: **una sesión = 1 «Generar con IA» de hasta 3 pantallas + 10 acciones de bloque en 24 h.** Alternativa: 1 uso por petición, que es más simple pero agota los 5 usos en un par de cambios.
-3. **Presupuesto del mes del lanzamiento.** $5 da para unas 215 sesiones completas. Recomendado: subirlo a $15–20 ese mes (sigue siendo la única partida de pago) o aceptar que se agote.
-4. **Modelo BYOK para el render.** Opus 5.5 (≈ $0,16–0,21 por pantalla) u ofrecer Sonnet 5.5 (≈ la mitad). Recomendado: Opus por defecto y Sonnet como opción visible en el modal de la key.
-5. **Chips de dirección de arte en el MVP**, o solo «Automática». Recomendado: chips, porque son baratos y empujan la variedad.
-6. **El origen de preview** como segundo proyecto de Vercel (es requisito del MVP).
-7. **axe-core (MPL-2.0)** como dependencia en v1.1. La licencia es compatible con el uso sin modificar, pero no es MIT.
+| # | Decisión | Qué cambia |
+|---|---|---|
+| 1 | **Presupuesto:** $20 el mes del lanzamiento y después $5 al mes. Al agotarse, la app sigue funcionando con BYOK, «Copiar prompt para mi Claude» o sin IA | §5.5, §13. **Recordatorio:** subir `DIALMADE_AI_MONTHLY_BUDGET_USD` a 20 antes del lanzamiento y volver a 5 después. Hoy no se cambia ningún env |
+| 2 | **Uso gratis = sesión de diseño:** 1 «Generar con IA» (≤3 pantallas) + 10 acciones de bloque en 24 h | §5.2 |
+| 3 | **BYOK:** Opus 5.5 por defecto; Sonnet 5.5 se ofrece como la opción más barata | §5.5, §10.1 (línea de coste y modal de la key) |
+| 4 | **Chips de dirección de arte en el MVP.** Son opcionales: sin chip, la dirección sale de la semilla | §4.2, §12 |
+| 5 | **HTML libre dentro de los bloques: sí.** El usuario eligió «Diseño con IA» a propósito. INFORME §15.2 («No hay HTML libre») queda **sustituido solo para los bloques de IA** | Resumen, §13 |
+
+**Pendientes** (siguen abiertas):
+- **El origen de preview como segundo proyecto de Vercel.** Necesita el chat de despliegue. Es requisito del MVP (§6.1, §12).
+- **axe-core (MPL-2.0) en v1.1.** La licencia es compatible con el uso sin modificar, pero no es MIT.
+
+**Del plan:**
+- la variedad entre marcas no está medida, y es la primera tarea del spike (§4.4, §12);
+- la construcción empieza solo después de fusionar `feat/ai-layout` en `main`.
 
 ## Cambios tras la crítica
 
