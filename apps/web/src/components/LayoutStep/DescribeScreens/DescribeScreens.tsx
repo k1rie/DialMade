@@ -1,38 +1,37 @@
 "use client";
 
-import { productChips } from "@dialmade/catalog";
 import type { ScreenKind } from "@dialmade/layout";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
 import { Button, Spinner } from "@/components/ui/Button";
 import { docHasDesign, useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
-import { useDictionary, useI18n } from "@/i18n";
+import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
 import { layout, type DescribeKind } from "@/i18n/layout";
 import type { LayoutProposal } from "@/lib/ai/layout/normalize";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
 import { SparkleIcon } from "../icons";
-import { KindQuestion } from "../KindQuestion";
 import { useLayoutActions, useLayoutEnv, useLayoutStore, type ProposalMode } from "../useLayoutStore";
 import { ChooseVariant } from "./ChooseVariant";
 import { DescribeForm } from "./DescribeForm";
 import { DetailsPanel } from "./DetailsPanel";
+import { DrawYourself } from "./DrawYourself";
 import { useDescribe, type DescribePhase } from "./useDescribe";
 
 export type DescribeScreensProps = {
   /**
-   * `start`: the empty state, as two screens: «¿Qué vas a construir?» (with «Detalles», «o usa una plantilla» and
-   * «empieza vacío») and «Elige una». `add`: inside the «Describir» dialog, the form with the variants under it.
+   * `start`: the empty state, as two screens: «¿Qué vas a construir?» (the two paths «Descríbelo» and «Dibújalo tú»,
+   * and «o usa una plantilla») and «Elige una» (with «Detalles» to correct). `add`: inside the «Describir» dialog, the form with the variants under it.
    */
   mode: "start" | "add";
   /** After a variant was applied (the dialog closes). */
   onApplied?: () => void;
   /** Start only: «o usa una plantilla». */
   onTemplates?: () => void;
-  /** Start only: «empieza vacío», once web or app is answered. */
+  /** Start only: «Dibújalo tú», once web or app is answered. */
   onBlank?: (kind: ScreenKind) => void;
   /** Start only: the screen replaced another one (focus its heading). */
   focusHeading?: boolean;
@@ -62,8 +61,6 @@ export function DescribeScreens({ mode, onApplied, onTemplates, onBlank, focusHe
   const t = useDictionary(layout);
   const a = useDictionary(aiText).layoutAi;
   const d = t.describe;
-  const { locale } = useI18n();
-  const id = useId();
   const reduce = useReducedMotion();
   const announce = useDndAnnounce({ politeness: "polite" });
   const actions = useLayoutActions();
@@ -79,7 +76,6 @@ export function DescribeScreens({ mode, onApplied, onTemplates, onBlank, focusHe
   // An imported guide is the user's own style: a proposal does not replace it unless they say so.
   const [withStyle, setWithStyle] = useState(style !== "guide");
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [blankOpen, setBlankOpen] = useState(false);
 
   // The variants stay on «Elige una» while «Proponer otras» runs; new ones open it (state adjusted while rendering).
   const [results, setResults] = useState<Results | null>(null);
@@ -101,6 +97,8 @@ export function DescribeScreens({ mode, onApplied, onTemplates, onBlank, focusHe
   const ready = body !== null;
   const proposing = phase.kind === "proposing";
   const costLine = [ai.costLine(body), ai.source === "hosted" ? a.oneUsePropose : ""].filter(Boolean).join(" · ");
+  // The first view says only the cost and the free uses left.
+  const shortCost = ai.costLine(body, { compact: true });
 
   const choose = (proposal: LayoutProposal) => {
     const applied = apply(proposal, { mode: start ? "append" : proposalMode, withStyle, from: start ? results : null });
@@ -216,43 +214,19 @@ export function DescribeScreens({ mode, onApplied, onTemplates, onBlank, focusHe
 
   /* ---- The empty state: «¿Qué vas a construir?» → «Elige una» ---- */
   const filled = results?.filled ?? null;
-  const productLabel = (productType: string) => productChips.find((chip) => chip.id === productType)?.label[locale];
-  const detailsSummary =
-    filled && designStore ? [doc.brand.name, doc.brand.tagline, productLabel(doc.brief.productType)].filter(Boolean).join(" · ") : null;
 
-  const footer = (onTemplates || onBlank || results) && (
-    <div className="flex flex-col items-center gap-2">
+  const footer = (onTemplates || results) && (
+    <div className="flex flex-wrap items-center justify-center gap-2">
       {results && (
         <Button variant="secondary" size="sm" onClick={() => go("choose")}>
           {d.showProposals(results.proposals.length)}
         </Button>
       )}
-      <p className="m-0 flex flex-wrap items-center justify-center gap-1 text-small text-muted">
-        {onTemplates && (
-          <Button variant="ghost" size="sm" onClick={onTemplates}>
-            {d.orTemplate}
-          </Button>
-        )}
-        {onTemplates && onBlank && <span aria-hidden>·</span>}
-        {onBlank && (
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-expanded={blankOpen}
-            aria-controls={blankOpen ? `${id}-blank` : undefined}
-            onClick={() => setBlankOpen((open) => !open)}
-          >
-            {d.startBlank}
-          </Button>
-        )}
-      </p>
-      <AnimatePresence initial={false}>
-        {blankOpen && onBlank && (
-          <motion.div key="blank" initial={{ opacity: 0, y: reduce ? 0 : -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween(0.16)}>
-            <KindQuestion id={`${id}-blank`} autoFocus onChoose={onBlank} onCancel={() => setBlankOpen(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {onTemplates && (
+        <Button variant="ghost" size="sm" onClick={onTemplates}>
+          {d.orTemplate}
+        </Button>
+      )}
     </div>
   );
 
@@ -274,26 +248,23 @@ export function DescribeScreens({ mode, onApplied, onTemplates, onBlank, focusHe
               onProposeAgain={() => void propose(description, kind)}
               proposing={proposing}
               costLine={costLine}
-              detailsSummary={detailsSummary}
-              onFixDetails={() => {
-                setDetailsOpen(true);
-                go("describe");
-              }}
-              focusHeading={moved}
-            />
-          </motion.div>
-        ) : (
-          <motion.div key="describe" {...screenMotion(reduce, -1)} className="mx-auto w-full max-w-2xl">
-            <DescribeForm
-              variant="page"
-              {...formProps}
-              status={status}
-              focusHeading={moved || focusHeading}
               details={
                 designStore ? (
                   <DetailsPanel doc={doc} hasPages={docHasDesign(doc)} open={detailsOpen} onOpenChange={setDetailsOpen} inferred={filled !== null} />
                 ) : undefined
               }
+              focusHeading={moved}
+            />
+          </motion.div>
+        ) : (
+          <motion.div key="describe" {...screenMotion(reduce, -1)} className="mx-auto w-full max-w-4xl">
+            <DescribeForm
+              variant="page"
+              {...formProps}
+              costLine={shortCost}
+              status={status}
+              focusHeading={moved || focusHeading}
+              aside={onBlank ? <DrawYourself onStart={onBlank} /> : undefined}
               footer={footer}
             />
           </motion.div>

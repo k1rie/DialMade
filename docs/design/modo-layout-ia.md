@@ -5,14 +5,15 @@ Nota de diseño corta. Contexto: `modo-layout.md` (fase v1.1) y la «Política d
 ## Qué hace
 
 1. **«Describe tu producto»**, en dos pantallas cuando el proyecto está vacío (decisión del usuario, 2026-10-10):
-   - **«¿Qué vas a construir?»** es lo único que se ve al abrir Layout sin pantallas. Trae:
-     - un textarea grande y 4 ejemplos es/en que lo rellenan;
-     - «Proponer con IA» y «Sin IA», con la línea de coste («≈ $0,002 · te quedan 4 usos gratis · 1 uso = 3 variantes»);
-     - «Usar mi propia key» y «Copiar prompt para mi Claude», más discretos;
-     - el bloque «Detalles» plegado: nombre, tagline y tipo de producto.
-     Debajo están «o usa una plantilla» (los sets y «Una pantalla» en su propia vista; Volver o Esc regresa) y «empieza vacío».
+   - **«¿Qué vas a construir?»** es lo único que se ve al abrir Layout sin pantallas. Muestra poco de entrada (divulgación progresiva):
+     - el título y una línea;
+     - **dos caminos con el mismo peso**:
+       - «Descríbelo»: un textarea cuyo placeholder rota entre ejemplos, 3 chips pequeños mientras está vacío, «Proponer con IA», una sola línea de coste («≈ $0,002 · 4 usos gratis»), un «Sin IA» discreto (su explicación sale al pasar el ratón o al enfocarlo) y «Opciones», que despliega «Qué pantallas», «Usar mi propia key» y «Copiar prompt para mi Claude»;
+       - «Dibújalo tú»: el lienzo vacío con la librería de bloques, el modo original. Lleva un glifo, una línea de explicación y «Abrir lienzo vacío», que pregunta web o app;
+     - abajo, discreto, «o usa una plantilla», que abre los sets y «Una pantalla» en su propia vista (Volver o Esc regresa).
    - **«Elige una»** muestra 2–3 tarjetas grandes con miniaturas por pantalla, nombre y motivo, estilo, ajustes y «Usar esta». Además trae:
      - el interruptor «Aplicar también el estilo recomendado»;
+     - «Detalles» plegado en una línea («Brisa · tagline · tipo · Corregir»), relleno a partir de la descripción;
      - «Volver a describir» (o Esc), que conserva el texto;
      - «Proponer otras», que vuelve a mostrar el coste.
    - Las transiciones usan `motion` (200 ms; con movimiento reducido, solo fundido). Cada pantalla lleva el foco a su título.
@@ -23,7 +24,7 @@ Nota de diseño corta. Contexto: `modo-layout.md` (fase v1.1) y la «Política d
      - la respuesta trae `details` (`brandName`, `tagline`, `productType` de los chips). El cambio es aditivo: el esquema laxo acepta respuestas sin `details`;
      - «Sin IA» deduce el tipo de producto por palabras clave;
      - solo se rellenan los campos que el usuario no ha tocado (nombre por defecto, tagline vacía, tipo «Otro»), en un paso de deshacer del documento;
-     - se corrigen en «Detalles», y «Elige una» los resume con «Corregir».
+     - se corrigen en «Detalles», dentro de «Elige una».
 2. **«Sugerir con IA» para bloques libres**
    - En el popover «¿Qué es esto?» (una caja). Lo escrito en el buscador viaja como nota.
    - En el panel de pantalla, «Sugerir tipos con IA» lanza un lote con todos los bloques libres del proyecto (máximo 24).

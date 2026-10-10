@@ -136,6 +136,7 @@ export const ai = defineDictionary({
         "Después de generar, la IA reescribe los textos de tus pantallas en una sola petición. Las notas de tus bloques le dicen qué contar. Sin IA, los textos de ejemplo ya quedan listos.",
       switchLabel: "Escribir los textos con IA al generar",
       usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      usesShort: (n: number) => `${n} ${plural(n, "uso gratis", "usos gratis")}`,
       withKey: "con tu key",
       blocked: {
         "free-tier-exhausted": "sin usos gratis este mes",
@@ -169,6 +170,7 @@ export const ai = defineDictionary({
       oneUsePropose: "1 uso = 3 variantes",
       oneUseMap: "Cuenta como 1 uso, para todos los bloques.",
       usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      usesShort: (n: number) => `${n} ${plural(n, "uso gratis", "usos gratis")}`,
       withKey: "con tu key",
       blocked: {
         "free-tier-exhausted": "sin usos gratis este mes",
@@ -188,6 +190,7 @@ export const ai = defineDictionary({
       description: "Lee densidad, radios, sombras y tipografía de tus capturas. No inventa colores: solo dice qué papel cumple cada uno.",
       estimate: (cost: string) => `≈ ${cost}`,
       usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
+      usesShort: (n: number) => `${n} ${plural(n, "uso gratis", "usos gratis")}`,
       blocked: {
         "free-tier-exhausted": "sin usos gratis este mes",
         "budget-exceeded": "la IA gratis se agotó este mes",
@@ -328,6 +331,7 @@ export const ai = defineDictionary({
         "After generating, AI rewrites the copy of your screens in a single request. Your blocks' notes tell it what to say. Without AI, the sample copy is ready anyway.",
       switchLabel: "Write the copy with AI when generating",
       usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      usesShort: (n: number) => `${n} free ${plural(n, "use", "uses")}`,
       withKey: "with your key",
       blocked: {
         "free-tier-exhausted": "no free uses left this month",
@@ -359,6 +363,7 @@ export const ai = defineDictionary({
       oneUsePropose: "1 use = 3 variants",
       oneUseMap: "Counts as 1 use, for every block.",
       usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      usesShort: (n: number) => `${n} free ${plural(n, "use", "uses")}`,
       withKey: "with your key",
       blocked: {
         "free-tier-exhausted": "no free uses left this month",
@@ -378,6 +383,7 @@ export const ai = defineDictionary({
       description: "Reads density, corners, shadows and type from your screenshots. It never invents colors: it only says what role each one plays.",
       estimate: (cost: string) => `≈ ${cost}`,
       usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
+      usesShort: (n: number) => `${n} free ${plural(n, "use", "uses")}`,
       blocked: {
         "free-tier-exhausted": "no free uses left this month",
         "budget-exceeded": "free AI is used up this month",

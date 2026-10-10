@@ -29,9 +29,8 @@ export type ChooseVariantProps = {
   proposing?: boolean;
   /** The cost of «Proponer otras», shown before calling again. */
   costLine?: string;
-  /** «Detalles: Navaja Club · Restaurante o local», with «Corregir» (back to «Detalles»). */
-  detailsSummary?: string | null;
-  onFixDetails?: () => void;
+  /** «Detalles» inferred from the description, collapsed, to correct here (page only). */
+  details?: ReactNode;
   focusHeading?: boolean;
 };
 
@@ -53,8 +52,7 @@ export function ChooseVariant({
   onProposeAgain,
   proposing = false,
   costLine,
-  detailsSummary,
-  onFixDetails,
+  details,
   focusHeading = false,
 }: ChooseVariantProps) {
   const t = useDictionary(layout);
@@ -107,20 +105,11 @@ export function ChooseVariant({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        {detailsSummary ? (
-          <p className="m-0 flex min-w-0 flex-wrap items-center gap-1.5 text-caption text-muted">
-            <span className="min-w-0">{d.details.summary(detailsSummary)}</span>
-            {onFixDetails && (
-              <button type="button" onClick={onFixDetails} className="rounded-[6px] text-accent underline-offset-4 hover:underline focus-visible:underline">
-                {d.details.fix}
-              </button>
-            )}
-          </p>
-        ) : (
-          <span />
-        )}
+        <span />
         {recommendsStyle && <Switch size="sm" checked={withStyle} onCheckedChange={onWithStyleChange} label={d.applyStyle} />}
       </div>
+
+      {details}
 
       {status}
 

@@ -1,10 +1,11 @@
 "use client";
 
+import { productChips } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId } from "react";
 import { useDesignDocActions } from "@/hooks/useDesignDoc";
-import { useDictionary } from "@/i18n";
+import { useDictionary, useI18n } from "@/i18n";
 import { layout } from "@/i18n/layout";
 import { cn } from "@/lib/cn";
 import { tween } from "@/lib/motion";
@@ -19,7 +20,7 @@ export type DetailsPanelProps = {
   doc: DesignDoc;
   /** The doc already shows something (screens or pages): the product type no longer resets the style. */
   hasPages: boolean;
-  /** Collapsed by default inside «Describe». */
+  /** Collapsed by default. */
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Some fields were filled from the description: say so, so the user checks them. */
@@ -28,8 +29,8 @@ export type DetailsPanelProps = {
 };
 
 /**
- * «Detalles» inside «Describe tu producto», collapsed: brand name, tagline and product type, which feed the sample
- * content. The description fills the ones the user has not set (the AI all three, «Sin IA» the product type); the
+ * «Detalles» on «Elige una», collapsed to one line («Brisa · Reserva tu corte · Restaurante o local · Corregir»):
+ * brand name, tagline and product type, which feed the sample content. The description fills the ones the user has not set (the AI all three, «Sin IA» the product type); the
  * user corrects them here. They write to the DesignDoc live, never block a choice, and each field edit is one undo
  * step. Before the first «Generar» the product type also brings its recipe, pairing and motion (unless locked).
  */
@@ -38,7 +39,10 @@ export function DetailsPanel({ doc, hasPages, open, onOpenChange, inferred = fal
   const c = t.templatePicker;
   const d = t.describe.details;
   const actions = useDesignDocActions();
+  const { locale } = useI18n();
   const id = useId();
+  const product = productChips.find((chip) => chip.id === doc.brief.productType)?.label[locale];
+  const summary = [doc.brand.name, doc.brand.tagline, product].filter(Boolean).join(" · ");
   const productLabelId = `${id}-product`;
   const productHintId = `${id}-product-hint`;
 
@@ -58,9 +62,8 @@ export function DetailsPanel({ doc, hasPages, open, onOpenChange, inferred = fal
           <ChevronDownIcon className={cn("size-3.5 shrink-0 text-muted transition-transform duration-200", !open && "-rotate-90")} />
           <span className="text-small font-semibold text-fg">{d.title}</span>
           <span className="rounded-[6px] border border-app-strong px-1.5 text-caption leading-5 font-normal text-muted">{d.optional}</span>
-          <span className="min-w-0 truncate text-caption font-normal text-muted">
-            {inferred ? d.inferred : `${doc.brand.name}${doc.brand.tagline ? ` · ${doc.brand.tagline}` : ""}`}
-          </span>
+          <span className="min-w-0 flex-1 truncate text-caption font-normal text-muted">{summary}</span>
+          {!open && <span className="shrink-0 text-caption font-medium text-accent">{d.fix}</span>}
         </button>
       </h3>
       <AnimatePresence initial={false}>
@@ -75,7 +78,7 @@ export function DetailsPanel({ doc, hasPages, open, onOpenChange, inferred = fal
             className="overflow-hidden"
           >
             <div className="flex flex-col gap-4 px-3 pt-1 pb-4">
-              <p className="m-0 text-caption text-muted">{d.hint}</p>
+              <p className="m-0 text-caption text-muted">{inferred ? d.inferred : d.hint}</p>
               <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
                 <BrandTextField
                   label={c.details.name}

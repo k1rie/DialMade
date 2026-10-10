@@ -75,7 +75,7 @@ export type UseLayoutAi = {
   /** «Copiar prompt para mi Claude» for `body`: `parse` validates the pasted JSON with the same Zod. */
   manualJob: (body: LayoutRequestBody) => ManualJob<LayoutAiResult>;
   /** The line shown before calling: «≈ $0,002 · te quedan 4 usos gratis», «con tu key» or why the free tier is off. */
-  costLine: (body: LayoutRequestBody | null) => string;
+  costLine: (body: LayoutRequestBody | null, options?: { compact?: boolean }) => string;
   /** Where the next request goes; `null` = neither the free tier nor a key can take it now. */
   source: AiSource | null;
   model: string;
@@ -164,11 +164,11 @@ export function useLayoutAi(): UseLayoutAi {
   }, []);
 
   const costLine = useCallback(
-    (body: LayoutRequestBody | null) => {
+    (body: LayoutRequestBody | null, options: { compact?: boolean } = {}) => {
       const l = t.layoutAi;
       if (source === null) return fallbackReason ? l.blocked[fallbackReason] : "";
       const cost = body ? l.estimate(formatUsd(estimateLayoutCostUsd(model, body), locale)) : null;
-      const tail = source === "byok" ? l.withKey : hosted?.configured ? l.usesLeft(hosted.freeUsesRemaining) : "";
+      const tail = source === "byok" ? l.withKey : hosted?.configured ? (options.compact ? l.usesShort : l.usesLeft)(hosted.freeUsesRemaining) : "";
       return [cost, tail].filter(Boolean).join(" · ");
     },
     [t, source, fallbackReason, model, locale, hosted],
