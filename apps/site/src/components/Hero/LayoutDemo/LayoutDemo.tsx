@@ -142,7 +142,7 @@ export function LayoutDemo({ t, blockNames }: LayoutDemoProps) {
         <BlockLibrary t={t} blockNames={blockNames} full={full} fullText={fullText} onAdd={add} firstButtonRef={firstLibraryButton} />
 
         <div className="relative min-w-0 flex-1 dot-grid">
-          <div ref={frameRef} className="h-[460px] overflow-y-auto scrollbar-none px-4 pt-6 pb-24 sm:h-[520px] sm:px-8">
+          <div ref={frameRef} className="h-[460px] overflow-y-auto scrollbar-none px-4 pt-6 pb-24 sm:h-[480px] sm:px-8">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={device}

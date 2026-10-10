@@ -1,1 +1,0 @@
-export { CanvasStrip } from "./CanvasStrip";

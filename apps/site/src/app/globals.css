@@ -269,30 +269,6 @@
   }
 }
 
-/* One-off entrance of the hero canvas nodes (≤900 ms with the stagger). `translate`, not `transform`,
-   so it doesn't fight each node's `rotate`. Reduced motion keeps a 150 ms fade. */
-@keyframes tile-in {
-  from {
-    opacity: 0;
-    translate: 0 18px;
-    filter: blur(6px);
-  }
-}
-
-@keyframes tile-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-@utility tile-in {
-  animation: tile-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) var(--tile-delay, 0s) both;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: tile-fade 150ms linear both;
-  }
-}
-
 @utility dot-grid {
   background-image: radial-gradient(circle at center, oklch(1 0 0 / 0.07) 1px, transparent 1px);
   background-size: 16px 16px;
