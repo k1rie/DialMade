@@ -138,7 +138,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
     ? plan.blocked
       ? aiT.blocked[plan.blocked]
       : plan.cost
-        ? `${renderT.cost.line(plan.cost.cost, plan.cost.left, plan.cost.total, plan.cost.screens, plan.cost.seconds)}. ${renderT.ctaHint}`
+        ? `${plan.cost.byok ? renderT.cost.withKey(plan.cost.cost, plan.cost.screens, plan.cost.seconds) : renderT.cost.line(plan.cost.cost, plan.cost.left, plan.cost.total, plan.cost.screens, plan.cost.seconds)}. ${renderT.ctaHint}`
         : renderT.ctaHint
     : null;
   const ctaHintText =

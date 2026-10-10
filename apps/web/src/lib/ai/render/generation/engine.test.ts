@@ -275,6 +275,6 @@ describe("«Generar con IA» (engine)", () => {
     expect(transport.block).toHaveBeenCalledWith(expect.objectContaining({ sessionId: SESSION, action: { kind: "reroll", seed: 42 }, block: expect.objectContaining({ id: first }) }));
     expect(store.getState().screens["s-pricing"]!.blocks[first]!.phase).toBe("done");
     expect(doc().screens["s-pricing"]!.aiRender!.blocks[first]!.provenance.kind).toBe("reroll");
-    expect(store.getState().session?.counters.actionsUsed).toBe(1);
+    expect(store.getState().session?.counters?.actionsUsed).toBe(1);
   });
 });

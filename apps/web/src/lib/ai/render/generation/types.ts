@@ -12,6 +12,7 @@ import type {
   RenderSessionCounters,
   RenderSessionSuccess,
   RenderStreamEvent,
+  RenderUsage,
 } from "../api";
 
 export type TransportResult<T> = { ok: true; value: T } | { ok: false; error: RenderApiError };
@@ -28,11 +29,22 @@ export type ScreenBody = Extract<RenderRequestBody, { task: "screen" }>;
  */
 export type RenderTransport = {
   readonly path: AiRenderPath;
-  openSession(body: RenderSessionBody, signal?: AbortSignal): Promise<TransportResult<RenderSessionSuccess>>;
-  direction(body: DirectionBody, signal?: AbortSignal): Promise<TransportResult<RenderDirectionSuccess>>;
+  /** Model named in the provenance (Track C's transports know it; `claude.ai` for «mi Claude»). */
+  readonly model?: string;
+  /** `true` when «Cancelar» stops the call and its billing (BYOK); the free tier finishes and bills the screen. */
+  readonly cancelStopsBilling?: boolean;
+  openSession(body: RenderSessionBody, signal?: AbortSignal): Promise<TransportResult<OpenedSession>>;
+  direction(body: DirectionBody, signal?: AbortSignal): Promise<TransportResult<DirectionAnswer>>;
   screen(body: ScreenBody, signal: AbortSignal): AsyncIterable<RenderStreamEvent>;
-  block(body: RenderBlockBody, signal?: AbortSignal): Promise<TransportResult<RenderBlockSuccess>>;
+  block(body: RenderBlockBody, signal?: AbortSignal): Promise<TransportResult<BlockAnswer>>;
 };
+
+/** A session: the free tier's counters, or none (BYOK and «mi Claude» are not limited by Dialmade). */
+export type OpenedSession = Pick<RenderSessionSuccess, "sessionId"> &
+  Partial<Omit<RenderSessionSuccess, "sessionId" | "session">> & { session: RenderSessionCounters | null };
+/** «mi Claude» has no usage (the user's own account paid). */
+export type DirectionAnswer = Omit<RenderDirectionSuccess, "usage" | "session"> & { usage: RenderUsage | null; session: RenderSessionCounters | null };
+export type BlockAnswer = Omit<RenderBlockSuccess, "usage" | "session"> & { usage: RenderUsage | null; session: RenderSessionCounters | null };
 
 /** One block of a screen in this generation. */
 export type BlockPhase =
@@ -95,7 +107,8 @@ export type GenerationState = {
   phase: GenerationPhase;
   screenOrder: string[];
   screens: Record<string, ScreenRun>;
-  session: { id: string; counters: RenderSessionCounters } | null;
+  /** `counters` only in the free tier. */
+  session: { id: string; counters: RenderSessionCounters | null } | null;
   /** The art direction of this run: the model's rationale, or the code's pick when the call failed. */
   direction: { rationale: string; fromModel: boolean } | null;
   /** What stopped the run before any screen (or the last error of a block action). */

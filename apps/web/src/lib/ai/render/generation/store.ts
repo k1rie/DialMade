@@ -10,7 +10,8 @@ import { useOptionalDesignDocStore, type DesignDocStore } from "@/hooks/useDesig
 import { countersFrom } from "../../policy";
 import { processBlockOffThread } from "../worker";
 import type { GenerationDeps, GenerationEngine } from "./engine";
-import { createFreeTierTransport } from "./freeTier";
+import { setLiveSession, updateLiveSessionCounters } from "../liveSession";
+import { currentGenerationTransport } from "./accessTransport";
 import { aiBlockActiveOps } from "./patches";
 import type { GenerateRequest, GenerationPrefs, GenerationState, RenderTransport } from "./types";
 
@@ -36,10 +37,10 @@ export type GenerationStore = StoreApi<GenerationStoreState>;
 export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null };
 
 let transportOverride: RenderTransport | null = null;
-const freeTier = createFreeTierTransport();
 
 /**
- * The transport every new run uses (Track C plugs BYOK and «mi Claude» in here). `null` goes back to the free tier.
+ * A transport for the next runs instead of the current paid path (e.g. «mi Claude»: `fromAccessTransport(
+ * manualTransport(…))`). `null` goes back to the paid path of `currentGenerationTransport` (BYOK, else free tier).
  */
 export function setRenderTransport(transport: RenderTransport | null): void {
   transportOverride = transport;
@@ -53,12 +54,16 @@ export type GenerationStoreOptions = Partial<Omit<GenerationDeps, "getDoc" | "ap
 /** A generation store bound to one DesignDoc store. */
 export function createGenerationStore(docStore: Pick<DesignDocStore, "getState">, options: GenerationStoreOptions = {}): GenerationStore {
   const deps: GenerationDeps = {
-    transport: options.transport ?? (() => transportOverride ?? freeTier),
+    transport: options.transport ?? (() => transportOverride ?? currentGenerationTransport()),
     process: options.process ?? processBlockOffThread,
     getDoc: () => docStore.getState().doc,
     applyPatch: (ops) => docStore.getState().actions.applyPatch(ops).ok,
     model: options.model ?? (async () => (await loadAiStatus()).freeModel),
     onCounters: options.onCounters ?? ((body) => updateAiCounters(countersFrom(body))),
+    // The free tier's design session is the one Track B's block actions spend from.
+    onSession:
+      options.onSession ??
+      ((sessionId, counters, opened) => (opened ? setLiveSession({ sessionId, counters }) : updateLiveSessionCounters(sessionId, counters))),
     ...(options.now && { now: options.now }),
     ...(options.seed && { seed: options.seed }),
   };

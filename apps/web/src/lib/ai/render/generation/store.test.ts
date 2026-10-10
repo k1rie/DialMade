@@ -73,3 +73,22 @@ describe("generation store", () => {
     expect(factory).toHaveBeenCalledOnce();
   });
 });
+
+describe("gate 5 into the doc (Track D's verdict)", () => {
+  it("replaces only the responsive warnings and writes nothing when the verdict repeats", async () => {
+    const { responsiveGateOps } = await import("./patches");
+    const { doc, hero } = docWithAiHero();
+    const withContrast = applyPatch(doc, [{ op: "replace", path: `/screens/s-home/aiRender/blocks/${hero}/gates/warnings`, value: [{ code: "contrast-fixed", detail: "2" }, { code: "overflow", detail: "old" }] }]);
+    if (!withContrast.ok) throw new Error(withContrast.error.message);
+    const verdict = { responsive: "warn" as const, warnings: [{ code: "small-target" as const, detail: "mobile · 2" }] };
+    const ops = responsiveGateOps(withContrast.doc, "s-home", hero, verdict)!;
+    const next = applyPatch(withContrast.doc, ops);
+    if (!next.ok) throw new Error(next.error.message);
+    expect(next.doc.screens["s-home"]!.aiRender!.blocks[hero]!.gates).toMatchObject({
+      responsive: "warn",
+      warnings: [{ code: "contrast-fixed", detail: "2" }, { code: "small-target", detail: "mobile · 2" }],
+    });
+    expect(responsiveGateOps(next.doc, "s-home", hero, verdict)).toBeNull();
+    expect(responsiveGateOps(next.doc, "s-home", "nope", verdict)).toBeNull();
+  });
+});

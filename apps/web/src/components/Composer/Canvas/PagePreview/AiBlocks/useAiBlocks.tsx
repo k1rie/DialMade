@@ -1,10 +1,14 @@
 "use client";
 
 import type { DesignDoc, Screen } from "@dialmade/doc";
-import { useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
+import { useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
+import { useAiIslandHandlers } from "@/hooks/useAiBlockEdit";
 import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
-import { useAiGeneration } from "@/lib/ai/render/generation";
+import { responsiveGateOps, useAiGeneration } from "@/lib/ai/render/generation";
+import { cellWidths, type ResponsiveVerdict } from "@/lib/ai/render/responsive";
+import { isAiBusy, showsAi, useAiView } from "@/lib/ai/render/view";
 import { aiRenderAvailable } from "@/lib/ai/render/preview";
 import { deriveDesign } from "@/lib/design-derived";
 import { AiBlockIsland } from "./AiBlockIsland";
@@ -52,6 +56,29 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
   const running = useAiGeneration((state) => RUNNING.has(state.phase));
   const actions = useAiGeneration((state) => state.actions);
 
+  // Track B: «Base | IA», the selected text, inline edits and the shimmer of a block action in flight.
+  const view = useAiView((state) => state);
+  const handlers = useAiIslandHandlers(screenId);
+  const textEdit = onTextEdit ?? handlers.onTextEdit;
+  // Track D's gate 5: the verdict of the island's measurements into the block's gates (not an undo step).
+  const docStore = useOptionalDesignDocStore();
+  const writeVerdict = useCallback(
+    (blockId: string, verdict: ResponsiveVerdict) => {
+      if (!docStore) return;
+      const current = docStore.getState().doc;
+      const ops = current && screenId ? responsiveGateOps(current, screenId, blockId, verdict) : null;
+      if (!ops) return;
+      const history = docStore.temporal.getState();
+      history.pause();
+      try {
+        docStore.getState().actions.applyPatch(ops);
+      } finally {
+        history.resume();
+      }
+    },
+    [docStore, screenId],
+  );
+
   const blocks = screen?.aiRender?.blocks;
   // The screen's theme (its dials included), as ThemeScope paints the base sections around the islands.
   const derived = useMemo(() => (available && screenId && blocks ? deriveDesign(doc, screenId) : null), [available, doc, screenId, blocks]);
@@ -79,7 +106,9 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
         if (editable) marks.push({ id, kind: "inactive", label: labelOf(id), onAction: () => actions.setBlockActive(screenId, id, true) });
         continue;
       }
-      const pending = running && (run?.blocks[id]?.phase === "waiting" || run?.blocks[id]?.phase === "processing");
+      // «Base» in the comparator: the base section paints, nothing else changes.
+      if (!showsAi(view, screenId, id)) continue;
+      const pending = (running && (run?.blocks[id]?.phase === "waiting" || run?.blocks[id]?.phase === "processing")) || isAiBusy(view, screenId, id);
       if (block.surfaceClasses) {
         if (!css?.covers(classTokens(surfaceHtml(id, block.surfaceClasses)))) continue;
         underlay.set(
@@ -105,8 +134,11 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
           selected={selectedId === id}
           pending={pending}
           onSelect={onSelect}
+          onSelectText={editable ? (t, text) => handlers.onSelect(id, t, text) : undefined}
+          widths={editable ? cellWidths(screen, id) : undefined}
+          onVerdict={editable ? (verdict) => writeVerdict(id, verdict) : undefined}
           onNavigate={onNavigate}
-          onTextEdit={editable && onTextEdit ? (t, text) => onTextEdit(id, t, text) : undefined}
+          onTextEdit={editable ? (t, text) => textEdit(id, t, text) : undefined}
           onUseBase={() => actions.setBlockActive(screenId, id, false)}
         />,
       );
@@ -121,5 +153,5 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
     }
 
     return { replace: replace.size > 0 ? replace : undefined, underlay: underlay.size > 0 ? underlay : undefined, marks };
-  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, actions, onSelect, onNavigate, onTextEdit, t]);
+  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, actions, onSelect, onNavigate, textEdit, handlers, view, writeVerdict, t]);
 }

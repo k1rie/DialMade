@@ -1,9 +1,9 @@
 // What one «Generar con IA» asks for, built from the DesignDoc (spec §3.1, §4.3, §5.2): which screens (≤ 3 per
 // session), what each screen request carries, and which kit pieces (navbar, footer) are generated once and cloned.
 // Pure: the store, the cost line and the tests share it.
-import { KIT_TYPES, brandInput, draftTexts, renderableBlocks, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
+import { aiDraftOf } from "../edit";
+import { KIT_TYPES, brandInput, renderableBlocks, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
 import type { DesignDoc } from "@dialmade/doc";
-import { visibleProps } from "@dialmade/sections";
 import { AI_SESSION_SCREENS } from "../../config";
 import { MAX_RENDER_BLOCKS } from "../api";
 
@@ -36,13 +36,13 @@ export function requestBrand(doc: DesignDoc): RenderBrandInput {
   };
 }
 
-/** Visible copy of an element of the screen's page (the deterministic draft the model starts from). */
+/**
+ * Visible copy of an element of the screen's page (the deterministic draft the model starts from). Track B's
+ * `aiDraftOf` is the one definition, so a block written here is not «Desactualizado» at once.
+ */
 export function draftOf(doc: DesignDoc, screenId: string): (blockId: string) => string[] {
-  const page = doc.screens[screenId]?.page;
-  return (blockId) => {
-    const element = page?.elements[blockId];
-    return element ? draftTexts(visibleProps(element)) : [];
-  };
+  const screen = doc.screens[screenId];
+  return screen ? aiDraftOf(screen) : () => [];
 }
 
 /** Every renderable block of a screen as the prompt describes it (also the ones a request skips). */

@@ -5,14 +5,17 @@ import { useCallback, useMemo } from "react";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useI18n } from "@/i18n";
 import { AI_SESSION_SCREENS } from "@/lib/ai/config";
-import { hostedBlocker, type AiFallbackReason } from "@/lib/ai/policy";
+import { useByokKey } from "@/lib/ai/byokKey";
+import type { AiFallbackReason } from "@/lib/ai/policy";
+import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { renderPathFor } from "@/lib/ai/render/transport";
 import { estimateGenerate, formatRenderCost, useAiGeneration, useGenerationStore, type AiGenerateMode, type RenderEstimate } from "@/lib/ai/render/generation";
 import { aiRenderAvailable } from "@/lib/ai/render/preview";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { useGenerateAi } from "../useGenerateFlow";
 import { useLayoutEnv, useLayoutStore } from "../useLayoutStore";
 
-export type RenderCostFacts = { cost: string; left: number; total: number; screens: number; seconds: number };
+export type RenderCostFacts = { cost: string; left: number; total: number; screens: number; seconds: number; byok?: boolean };
 
 export type AiRenderScreenOption = { id: string; name: string; blocks: number; designed: boolean };
 
@@ -28,7 +31,7 @@ export type AiRenderPlan = {
   /** The screens «Generar con IA» designs (the pick, or the first ones without AI). */
   selected: string[];
   toggleScreen: (id: string) => void;
-  /** Why the free tier cannot answer now (`null`: it can). */
+  /** Why no paid path can answer now (`null`: the user's key or the free tier can). */
   blocked: AiFallbackReason | null;
   estimate: RenderEstimate | null;
   /** What the cost line says («≈ $0.013 · 1 uso de 5 · 3 pantallas · ≈ 30 s»); `null` while loading or blocked. */
@@ -102,21 +105,32 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [selected, store],
   );
 
-  const blocked = hostedBlocker(status);
+  // The paid path of «Generar con IA» (Track C): the tab's key wins, else the free tier while it can open a session.
+  const byok = useByokKey();
+  const byokModel = useByokRenderModel();
+  const path = renderPathFor(status, byok.active);
+  const blocked = path.reason;
   const existing = doc.aiRender?.direction;
   const needsDirection = !(existing && (prefs.chip === "auto" || prefs.chip === existing.chip));
   const estimate = useMemo(() => {
     if (!wantsList || selected.length === 0 || !status) return null;
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
-    return estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel });
-  }, [wantsList, selected, screens, status, needsDirection]);
+    return estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: path.path === "byok" ? byokModel : status.freeModel });
+  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel]);
 
   const cost = useMemo(
     () =>
       estimate && status && !blocked
-        ? { cost: formatRenderCost(estimate.costUsd, locale), left: status.freeUsesRemaining, total: status.freeUsesTotal, screens: estimate.screens, seconds: estimate.seconds }
+        ? {
+            cost: formatRenderCost(estimate.costUsd, locale),
+            left: status.freeUsesRemaining,
+            total: status.freeUsesTotal,
+            screens: estimate.screens,
+            seconds: estimate.seconds,
+            ...(path.path === "byok" && { byok: true }),
+          }
         : null,
-    [estimate, status, blocked, locale],
+    [estimate, status, blocked, locale, path.path],
   );
 
   const ready = mode === "design" && selected.length > 0 && blocked === null && !busy;

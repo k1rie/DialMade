@@ -2,7 +2,8 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import type { MouseEvent } from "react";
-import { AiIsland } from "@/components/AiIsland";
+import { AiIsland, useResponsiveGate } from "@/components/AiIsland";
+import type { CellWidths, ResponsiveVerdict } from "@/lib/ai/render/responsive";
 import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
 import { cn } from "@/lib/cn";
@@ -28,6 +29,11 @@ export type AiBlockIslandProps = {
   /** A new version of this block is on its way (a running generation asked for it again). */
   pending: boolean;
   onSelect: (blockId: string) => void;
+  /** The text the user clicked inside the island (Track B's «Pedir cambio» target). */
+  onSelectText?: ((t: number | null, text: string | null) => void) | undefined;
+  /** Gate 5 (Track D): the block's cell width on each device; the island measures at each one after a render. */
+  widths?: CellWidths | undefined;
+  onVerdict?: ((verdict: ResponsiveVerdict) => void) | undefined;
   onNavigate?: ((screenId: string) => void) | undefined;
   /** Inline text edit inside the island (Track B turns it into one `replace` patch). */
   onTextEdit?: ((t: number, text: string) => void) | undefined;
@@ -41,8 +47,13 @@ export type AiBlockIslandProps = {
  * on hover, focus or selection. The chip is a real button of the app (Tab reaches it after the block). A click in the
  * island selects the block like a click on a base section.
  */
-export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onNavigate, onTextEdit, onUseBase }: AiBlockIslandProps) {
+const NO_WIDTHS: CellWidths = {};
+const ignore = () => {};
+
+export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onSelectText, widths, onVerdict, onNavigate, onTextEdit, onUseBase }: AiBlockIslandProps) {
   const t = useDictionary(aiText).aiRender.block;
+  const onMeasure = useResponsiveGate(widths ?? NO_WIDTHS, undefined, onVerdict ?? ignore);
+  const measureWidths = widths && onVerdict ? [...new Set(Object.values(widths))].sort((a, b) => b - a) : undefined;
   const reduce = useReducedMotion();
   const stop = (event: MouseEvent) => event.stopPropagation();
   return (
@@ -66,7 +77,11 @@ export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref
         // The 24 px bleed overlaps the neighbours: the frame must stay transparent there. Chrome paints an opaque
         // backdrop when the frame's color-scheme («normal» → the app's dark) differs from its document's (`mode`).
         className={islandScheme(mode)}
-        onSelect={() => onSelect(blockId)}
+        onSelect={(index, text) => {
+          onSelect(blockId);
+          onSelectText?.(index, text);
+        }}
+        {...(measureWidths && measureWidths.length > 0 && { measureWidths, onMeasure })}
         {...(onNavigate && { onNavigate })}
         {...(onTextEdit && { onTextEdit })}
       />

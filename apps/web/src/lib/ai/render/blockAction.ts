@@ -15,7 +15,9 @@ import {
   type RenderErrorCode,
   type RenderSessionCounters,
   type RenderSessionSuccess,
+  type RenderUsage,
 } from "./api";
+import { RenderTransportError, type RenderTransport as AccessTransport } from "./transport";
 import { aiBlockInputs, aiBlockOf, aiDraftOf, currentBasis } from "./edit";
 
 /** What the user asked for: a new take with the same direction, or a change (≤ 500 characters, data for the model). */
@@ -36,13 +38,36 @@ export class BlockActionError extends Error {
   }
 }
 
-/** One path to Claude for block actions (spec §5.3): the free tier here; BYOK and manual from track C. */
+/** What a block action answers: «mi Claude» has no usage, BYOK and manual no session counters. */
+export type BlockActionAnswer = { html: string | null; usage: RenderUsage | null; session: RenderSessionCounters | null };
+
+/** One path to Claude for block actions (spec §5.3): Track C's transports through `blockTransportFrom`. */
 export type BlockActionTransport = {
   path: AiRenderPath;
   /** The free tier spends a session's action: `run` needs `body.sessionId` of a live session. */
   usesSession: boolean;
-  run: (body: RenderBlockBody, signal?: AbortSignal) => Promise<RenderBlockSuccess>;
+  /** Model of the provenance when the answer has no usage. */
+  model?: string;
+  run: (body: RenderBlockBody, signal?: AbortSignal) => Promise<BlockActionAnswer>;
 };
+
+/** Track C's transport (free tier, BYOK or «mi Claude») as a block-action transport: its errors as `BlockActionError`. */
+export function blockTransportFrom(access: AccessTransport): BlockActionTransport {
+  return {
+    path: access.path,
+    usesSession: access.path === "free",
+    model: access.model,
+    run: async (body, signal) => {
+      try {
+        return await access.block(body, signal ? { signal } : {});
+      } catch (error) {
+        if (error instanceof RenderTransportError) throw new BlockActionError(error.code, error.message, error.body.session);
+        if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw new BlockActionError("aborted", "Aborted");
+        throw new BlockActionError("network", error instanceof Error ? error.message : "Network error");
+      }
+    },
+  };
+}
 
 async function postJson<T>(url: string, body: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
@@ -139,9 +164,9 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
   const seed = request.kind === "reroll" ? newSeed() : current.provenance.seed;
   const body = blockActionBody(doc, screenId, blockId, request, { sessionId: deps.sessionId ?? crypto.randomUUID(), seed });
   const answer = await deps.transport.run(body, deps.signal);
-  if (answer.html === null) throw new BlockActionError("invalid-response", "The answer had no block", answer.session);
+  if (answer.html === null) throw new BlockActionError("invalid-response", "The answer had no block", answer.session ?? undefined);
   const processed = await deps.process(answer.html, { block: body.block, screenIds: doc.screenOrder, theme: docThemeColors(doc) });
-  if (!processed.ok) throw new BlockActionError("gates-failed", processed.failure, answer.session);
+  if (!processed.ok) throw new BlockActionError("gates-failed", processed.failure, answer.session ?? undefined);
   const direction = doc.aiRender!.direction!;
   const block: AiBlock = {
     html: processed.html,
@@ -152,11 +177,9 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
     provenance: {
       kind: request.kind,
       path: deps.transport.path,
-      model: answer.usage.model,
+      model: (answer.usage?.model ?? deps.transport.model ?? "unknown").slice(0, 80),
       createdAt: (deps.now?.() ?? new Date()).toISOString(),
-      costUsd: answer.usage.costUsd,
-      inputTokens: answer.usage.inputTokens,
-      outputTokens: answer.usage.outputTokens,
+      ...(answer.usage && { costUsd: answer.usage.costUsd, inputTokens: answer.usage.inputTokens, outputTokens: answer.usage.outputTokens }),
       promptVersion: AI_RENDER_PROMPT_VERSION,
       directionId: direction.id,
       seed,
@@ -164,5 +187,5 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
       recipeId: doc.brief.recipeId,
     },
   };
-  return { block, session: answer.session, costUsd: answer.usage.costUsd };
+  return { block, session: answer.session, costUsd: answer.usage?.costUsd ?? 0 };
 }

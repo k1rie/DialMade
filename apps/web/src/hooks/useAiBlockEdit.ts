@@ -7,20 +7,24 @@
 import type { DesignDoc, PatchResult } from "@dialmade/doc";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
+import { useDesignDocActions, useDesignDocStore, useOptionalDesignDocStore } from "@/hooks/useDesignDoc";
 import { useDictionary } from "@/i18n";
 import { ai as aiTexts } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { isAiApiErrorCode } from "@/lib/ai/api";
+import { useAiStatus } from "@/hooks/useAiStatus";
+import { getByokKey, useByokKey } from "@/lib/ai/byokKey";
 import {
   BlockActionError,
-  freeTierBlockTransport,
+  blockTransportFrom,
   openFreeSession,
   runBlockAction,
   type BlockActionRequest,
   type BlockActionTransport,
 } from "@/lib/ai/render/blockAction";
 import { setAiBlockActiveOps, setAiBlockOps, textEditOps } from "@/lib/ai/render/edit";
+import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { createRenderTransport } from "@/lib/ai/render/transport";
 import { getLiveSession, setLiveSession, updateLiveSessionCounters } from "@/lib/ai/render/liveSession";
 import { aiViewStore, setAiBusy, setAiTarget } from "@/lib/ai/render/view";
 import { processBlockOffThread } from "@/lib/ai/render/worker";
@@ -44,7 +48,23 @@ export type UseAiBlockActions = {
   setActive: (screenId: string, blockId: string, label: string, active: boolean) => void;
 };
 
-export function useAiBlockActions(transport: BlockActionTransport = freeTierBlockTransport): UseAiBlockActions {
+/**
+ * The block actions' transport right now (Track C): the tab's key (with the model chosen in the key dialog), else the
+ * free tier and its live session.
+ */
+function useBlockTransport(): BlockActionTransport {
+  const byok = useByokKey();
+  const byokModel = useByokRenderModel();
+  const { status } = useAiStatus();
+  return useMemo(
+    () => blockTransportFrom(createRenderTransport(byok.active ? "byok" : "free", { status, byokModel, getKey: getByokKey })),
+    [byok.active, byokModel, status],
+  );
+}
+
+export function useAiBlockActions(override?: BlockActionTransport): UseAiBlockActions {
+  const current = useBlockTransport();
+  const transport = override ?? current;
   const store = useDesignDocStore();
   const actions = useDesignDocActions();
   const t = useDictionary(composer);
@@ -156,8 +176,8 @@ export type AiIslandHandlers = {
  * the inline text edit. The text is replaced in the sanitized tree and escaped (never parsed as HTML).
  */
 export function useAiIslandHandlers(screenId: string | null): AiIslandHandlers {
-  const store = useDesignDocStore();
-  const actions = useDesignDocActions();
+  // Optional: the canvas also renders without a provider (tests, previews); then edits have nowhere to go.
+  const store = useOptionalDesignDocStore();
   const t = useDictionary(composer);
   return useMemo(
     () => ({
@@ -165,8 +185,9 @@ export function useAiIslandHandlers(screenId: string | null): AiIslandHandlers {
         if (screenId) setAiTarget({ screenId, blockId, t: index, text });
       },
       onTextEdit: (blockId, index, text) => {
-        const doc = store.getState().doc;
-        if (!doc || !screenId) return;
+        const doc = store?.getState().doc;
+        if (!store || !doc || !screenId) return;
+        const actions = store.getState().actions;
         const ops = textEditOps(doc, screenId, blockId, index, text);
         if (ops === null) {
           toast.error(t.aiBlock.errors.text);
@@ -181,6 +202,6 @@ export function useAiIslandHandlers(screenId: string | null): AiIslandHandlers {
         if (target?.screenId === screenId && target.blockId === blockId && target.t === index) setAiTarget({ ...target, text: text.slice(0, 200) });
       },
     }),
-    [store, actions, screenId, t],
+    [store, screenId, t],
   );
 }

@@ -25,11 +25,12 @@ export function AiRenderCost({ cost, blocked, empty = false, id, className }: Ai
   let line: string | null = null;
   if (empty) line = t.screens.none;
   else if (blocked) line = texts.layoutCopy.blocked[blocked];
+  else if (cost?.byok) line = t.cost.withKey(cost.cost, cost.screens, cost.seconds);
   else if (cost) line = t.cost.line(cost.cost, cost.left, cost.total, cost.screens, cost.seconds);
   return (
     <div id={id} className={cn("flex flex-col gap-1", className)}>
       {line && <p className={cn("m-0 font-mono text-caption tabular-nums", blocked || empty ? "text-fg" : "text-muted")}>{line}</p>}
-      {!blocked && !empty && <p className="m-0 text-caption text-muted">{t.cost.session}</p>}
+      {!blocked && !empty && !cost?.byok && <p className="m-0 text-caption text-muted">{t.cost.session}</p>}
     </div>
   );
 }

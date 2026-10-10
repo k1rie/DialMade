@@ -239,6 +239,8 @@ export const composer = defineDictionary({
         "classes-dropped": (detail: string) => `${detail} clases fuera de tus tokens, quitadas`,
         "unknown-icon": (detail: string) => `Icono desconocido «${detail}», sustituido por un punto`,
         "off-direction": () => "Se aleja de la dirección de arte",
+        "focus-ring": (detail: string) => `Anillo de foco poco visible${detail ? `: ${detail}` : ""}`,
+        "foreign-script": (detail: string) => `Caracteres de otro alfabeto que no escribiste: ${detail}`,
       },
       provenance: {
         title: "Origen",
@@ -512,6 +514,8 @@ export const composer = defineDictionary({
         "classes-dropped": (detail: string) => `${detail} classes outside your tokens, removed`,
         "unknown-icon": (detail: string) => `Unknown icon “${detail}”, replaced with a dot`,
         "off-direction": () => "Drifts from the art direction",
+        "focus-ring": (detail: string) => `Focus ring hard to see${detail ? `: ${detail}` : ""}`,
+        "foreign-script": (detail: string) => `Characters from another script you did not write: ${detail}`,
       },
       provenance: {
         title: "Origin",

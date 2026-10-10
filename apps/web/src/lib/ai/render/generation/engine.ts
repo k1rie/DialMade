@@ -36,16 +36,19 @@ import { pickedScreens, planKit, requestBrand, requestScreen, screenBlocks, type
 import type { BlockFailure, BlockRun, GenerateRequest, GenerationState, RenderTransport, ScreenRun } from "./types";
 
 export type GenerationDeps = {
-  transport: () => RenderTransport;
+  /** The path of a new run (Track C's transports through ./accessTransport): resolved when the run starts. */
+  transport: () => RenderTransport | Promise<RenderTransport>;
   /** Sanitizer + gates (the worker: `processBlockOffThread`). */
   process: (raw: string, context: BlockContext) => Promise<ProcessedBlock>;
   getDoc: () => DesignDoc | null;
   /** One validated patch = one undo step. `false` when the doc refused it (the block or screen is gone). */
   applyPatch: (ops: PatchOp[]) => boolean;
-  /** Model named in the provenance of the blocks (the free tier's). */
+  /** Model named in the provenance when the transport does not say it (the free tier's). */
   model: () => Promise<string> | string;
   /** Counters of a hosted answer (success or error): «3 de 5 usos» stays in sync. */
   onCounters?: (body: unknown) => void;
+  /** The design session's counters (free tier), published for Track B's block actions (`liveSession`). */
+  onSession?: (sessionId: string, counters: RenderSessionCounters, opened: boolean) => void;
   now?: () => Date;
   seed?: () => number;
 };
@@ -119,6 +122,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     }));
   const setCounters = (id: number, counters: RenderSessionCounters | null | undefined) => {
     if (!counters) return;
+    const session = store.getState().session;
+    if (current(id) && session) deps.onSession?.(session.id, counters, false);
     update(id, (state) => (state.session ? { session: { ...state.session, counters } } : {}));
   };
 
@@ -153,6 +158,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         promptVersion: AI_RENDER_PROMPT_VERSION,
         directionId: target.direction.id,
         seed: hash32(`${target.direction.seed}:${screenId}:${blockId}`),
+        recipeId: doc.brief.recipeId,
       },
     };
     const ops = aiBlockOps(doc, screenId, blockId, block);
@@ -307,7 +313,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     let made: AiDirection;
     if (answer.ok) {
       setCounters(target.id, answer.value.session);
-      addCost(target.id, null, answer.value.usage.costUsd);
+      const usage = answer.value.usage;
+      if (usage) addCost(target.id, null, usage.costUsd);
       made = {
         id: `d-${drawn.toString(36)}`,
         version: 1,
@@ -316,10 +323,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         ...answer.value.direction,
         provenance: {
           ...provenance,
-          model: answer.value.usage.model.slice(0, 80),
-          costUsd: answer.value.usage.costUsd,
-          inputTokens: answer.value.usage.inputTokens,
-          outputTokens: answer.value.usage.outputTokens,
+          model: (usage?.model ?? target.model).slice(0, 80),
+          ...(usage && { costUsd: usage.costUsd, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens }),
         },
       };
     } else {
@@ -354,7 +359,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     store.setState({ ...IDLE_GENERATION, runId: id, phase: screenIds.length > 0 ? "session" : "failed", screenOrder: screenIds, screens, ...(screenIds.length === 0 && { error: "invalid-request" }) });
     if (screenIds.length === 0) return;
 
-    const transport = deps.transport();
+    const transport = await deps.transport();
+    if (!current(id) || controller.signal.aborted) return;
     const opened = await transport.openSession({ screens: screenIds.length }, controller.signal);
     deps.onCounters?.(opened.ok ? opened.value : opened.error);
     if (!current(id) || controller.signal.aborted) return;
@@ -362,7 +368,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       update(id, () => ({ phase: opened.error.code === "aborted" ? "cancelled" : "failed", error: opened.error.code }));
       return;
     }
-    const model = await deps.model();
+    const model = transport.model ?? (await deps.model());
     const base = {
       id,
       controller,
@@ -376,6 +382,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       themes: new Map<string, ThemeColors>(),
       active: new Set<string>(),
     };
+    if (opened.value.session) deps.onSession?.(opened.value.sessionId, opened.value.session, true);
     update(id, () => ({ phase: "direction", session: { id: opened.value.sessionId, counters: opened.value.session } }));
 
     const made = await direction(base, doc, screenIds, request.chip);
@@ -463,7 +470,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       return failBlock(target.id, screenId, blockId, "request");
     }
     setCounters(target.id, answer.value.session);
-    addCost(target.id, screenId, answer.value.usage.costUsd);
+    if (answer.value.usage) addCost(target.id, screenId, answer.value.usage.costUsd);
     if (!answer.value.html) return failBlock(target.id, screenId, blockId, "missing");
     await handleRoot(target, screenId, blockId, answer.value.html, "reroll");
   }

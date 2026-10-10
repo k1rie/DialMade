@@ -94,7 +94,7 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
       referrerPolicy="no-referrer"
       loading="lazy"
       className={className}
-      style={{ display: "block", width: `calc(100% + ${ISLAND_BLEED * 2}px)`, height: height || 1, margin: -ISLAND_BLEED, border: 0, background: "transparent", colorScheme: "normal" }}
+      style={{ display: "block", width: `calc(100% + ${ISLAND_BLEED * 2}px)`, height: height || 1, margin: -ISLAND_BLEED, border: 0, background: "transparent", colorScheme: mode }}
     />
   );
 }
