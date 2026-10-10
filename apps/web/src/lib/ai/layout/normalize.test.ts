@@ -214,3 +214,19 @@ describe("normalizeMapAnswer", () => {
     expect(parseMapAnswer({ variants: [] })).toMatchObject({ ok: false, problem: "invalid-schema" });
   });
 });
+
+describe("a real answer of Claude Haiku 5.5 (recorded once, «app de reservas para barberías»)", () => {
+  it("validates and normalizes into layouts the engine accepts", async () => {
+    const recorded = (await import("./__fixtures__/haiku-barber.json")).default as unknown;
+    const proposals = normalizeProposals(parse(recorded));
+    expect(proposals).toHaveLength(3);
+    for (const proposal of proposals) {
+      expect(proposal.recipeId).not.toBeNull();
+      expect(proposal.screens.length).toBeGreaterThanOrEqual(2);
+      for (const proposed of proposal.screens) {
+        expect(validateLayout(proposed.layout)).toEqual([]);
+        expect(inferStructure(proposed.layout).warnings.filter((w) => w.code === "overlap")).toEqual([]);
+      }
+    }
+  });
+});

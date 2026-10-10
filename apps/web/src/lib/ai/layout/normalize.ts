@@ -135,7 +135,8 @@ const overlaps = (a: GridRect, b: GridRect) => a.col < b.col + b.w && b.col < a.
 /** Type of a proposed block: a proposal type as is; anything else through `mapType`, else «Bloque libre». */
 function resolveType(raw: string, mapType: NormalizeOptions["mapType"]): { type: LibraryBlockType; mapped: boolean } {
   const type = raw.trim().toLowerCase();
-  if (PROPOSAL_TYPES.has(type) || type === "sidebar") return { type: type as LibraryBlockType, mapped: false };
+  // «Bloque libre» is a library block too: the fallback uses it for a need nothing matched.
+  if (PROPOSAL_TYPES.has(type) || type === "sidebar" || type === KEEP_FREE) return { type: type as LibraryBlockType, mapped: false };
   const mapped = mapType?.(raw.slice(0, 60)) ?? null;
   return { type: mapped && PROPOSAL_TYPES.has(mapped) ? mapped : KEEP_FREE, mapped: true };
 }

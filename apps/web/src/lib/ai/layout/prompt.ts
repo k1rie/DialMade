@@ -70,7 +70,7 @@ The grid:
 
 Screens:
 - "landing" is a public web page (home, pricing, about). It starts with a navbar block and ends with a footer block, and its sections usually take the full 12 columns.
-- "app" is a screen inside the product (dashboard, agenda, clients, payments, settings, login). Its navigation is the frame given by "nav": "sidebar" (a vertical menu, the usual choice), "rail" (narrow icons), "topnav" (a bar on top) or "none" (sign in, onboarding, checkout). All app screens with navigation share the same nav value. Never put navbar or sidebar blocks on app screens. Landing screens use "none".
+- "app" is a screen inside the product (dashboard, agenda, clients, payments, settings, login). Its navigation is the frame given by "nav": "sidebar" (a vertical menu, the usual choice), "rail" (narrow icons), "topnav" (a bar on top) or "none" (sign in, onboarding, checkout). All app screens with navigation share the same nav value. The frame sits outside the grid: the 12 columns are only the content area, so never leave columns empty for the navigation. Never put navbar or sidebar blocks on app screens. Landing screens use "none".
 - Give each screen a short name (one to three words) in the request's language and a route: "/" for the main landing page, otherwise "/" plus a lowercase slug of the name without accents (for example "/agenda" or "/clientes").
 - "linkTo" is the index (0-based) of another screen of the same variant that the block's main action opens, or -1. Use it for buttons that lead somewhere: a hero or CTA that opens sign up, a list or table row that opens a detail screen, a form that leads to the next step. Only navbar, hero, pricing, cta, text, cards, list, settings, form, empty and activity blocks have an action.
 
