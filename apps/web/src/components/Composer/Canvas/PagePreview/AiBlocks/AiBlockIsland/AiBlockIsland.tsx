@@ -29,6 +29,8 @@ export type AiBlockIslandProps = {
   pending: boolean;
   onSelect: (blockId: string) => void;
   onNavigate?: ((screenId: string) => void) | undefined;
+  /** Inline text edit inside the island (Track B turns it into one `replace` patch). */
+  onTextEdit?: ((t: number, text: string) => void) | undefined;
   /** «Volver al diseño base». */
   onUseBase: () => void;
 };
@@ -39,7 +41,7 @@ export type AiBlockIslandProps = {
  * on hover, focus or selection. The chip is a real button of the app (Tab reaches it after the block). A click in the
  * island selects the block like a click on a base section.
  */
-export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onNavigate, onUseBase }: AiBlockIslandProps) {
+export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onNavigate, onTextEdit, onUseBase }: AiBlockIslandProps) {
   const t = useDictionary(aiText).aiRender.block;
   const reduce = useReducedMotion();
   const stop = (event: MouseEvent) => event.stopPropagation();
@@ -66,6 +68,7 @@ export function AiBlockIsland({ blockId, label, html, css, vars, mode, fontsHref
         className={islandScheme(mode)}
         onSelect={() => onSelect(blockId)}
         {...(onNavigate && { onNavigate })}
+        {...(onTextEdit && { onTextEdit })}
       />
       {pending && <AiCellBadge kind="designing" label={label} />}
       {editable && (

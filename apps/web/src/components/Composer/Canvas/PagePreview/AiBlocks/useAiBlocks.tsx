@@ -21,6 +21,8 @@ export type UseAiBlocksOptions = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNavigate?: ((screenId: string) => void) | undefined;
+  /** Inline text edits of an island (Track B: `src/lib/ai/render/edit.ts`). */
+  onTextEdit?: ((blockId: string, t: number, text: string) => void) | undefined;
 };
 
 export type AiBlockLayers = {
@@ -42,7 +44,7 @@ const RUNNING = new Set(["session", "direction", "screens"]);
  * Reintentar», and «Usar IA otra vez» on a block sent back to the base design. Without a preview origin nothing of
  * this exists (the feature is not offered).
  */
-export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect, onNavigate }: UseAiBlocksOptions): AiBlockLayers {
+export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect, onNavigate, onTextEdit }: UseAiBlocksOptions): AiBlockLayers {
   const t = useDictionary(aiText).aiRender.block;
   const available = aiRenderAvailable();
   const screenId = screen?.id ?? null;
@@ -104,6 +106,7 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
           pending={pending}
           onSelect={onSelect}
           onNavigate={onNavigate}
+          onTextEdit={editable && onTextEdit ? (t, text) => onTextEdit(id, t, text) : undefined}
           onUseBase={() => actions.setBlockActive(screenId, id, false)}
         />,
       );
@@ -118,5 +121,5 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
     }
 
     return { replace: replace.size > 0 ? replace : undefined, underlay: underlay.size > 0 ? underlay : undefined, marks };
-  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, actions, onSelect, onNavigate, t]);
+  }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, actions, onSelect, onNavigate, onTextEdit, t]);
 }
