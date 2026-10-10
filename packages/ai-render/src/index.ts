@@ -85,3 +85,4 @@ export { attr, elements, parseSanitized, serialize, textOf, type AiElement, type
 export { checkClass, colorOfClass, splitClass, type ClassCheck, type ClassRejection } from "./vocabulary";
 export { exportBlockHtml, inlineAssets, provenanceComment, type ExportBlockOptions, type InlineAssetsOptions } from "./export";
 export { blockToTsx, componentName, tsxAssetsModule, type TsxOptions } from "./tsx";
+export { pinViewportUnits } from "./viewport";

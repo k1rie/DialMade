@@ -6,86 +6,29 @@
 //
 // Three local origins: the app (a test page that frames the island), the preview origin (the built runtime) and an
 // «attacker» that counts every request it gets. Skipped when Chromium is not installed (`npx playwright install`).
-import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
-import type { AddressInfo } from "node:net";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { responsiveGate, sanitizeBlock, type DeviceMeasure } from "@dialmade/ai-render";
 import { compileAiCss } from "@dialmade/ai-render/css";
-import { chromium, type Browser, type Frame, type Page } from "playwright";
-import { build } from "vite";
+import type { Frame, Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createPreviewServer } from "../scripts/server.ts";
+import { hasChromium, startHarness, type Harness } from "./browserHarness";
 
-const hasChromium = (() => {
-  try {
-    return existsSync(chromium.executablePath());
-  } catch {
-    return false;
-  }
-})();
-
-const listen = (server: Server) =>
-  new Promise<string>((resolve) => server.listen(0, "127.0.0.1", () => resolve(`http://127.0.0.1:${(server.address() as AddressInfo).port}`)));
-const close = (server: Server) => new Promise<void>((resolve) => server.close(() => resolve()));
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** The app page: a secret, one island, and the island's messages in `window.messages`. */
-const appPage = (islandSrc: string) => `<!doctype html><html><head><meta charset="utf-8"><title>app</title></head><body>
-<div id="secret">top secret</div>
-<iframe id="island" sandbox="allow-scripts" src="${islandSrc}" style="width:1000px;height:600px;border:0"></iframe>
-<script>
-  window.messages = [];
-  window.addEventListener("message", (event) => {
-    if (event.source === document.getElementById("island").contentWindow) window.messages.push(event.data);
-  });
-  window.post = (message) => document.getElementById("island").contentWindow.postMessage(message, "*");
-</script></body></html>`;
-
 describe.skipIf(!hasChromium)("the island in a real browser (CSP + sandbox)", () => {
-  let dist = "";
-  const servers: Server[] = [];
-  let attackerUrl = "";
-  const attackerHits: string[] = [];
-  let browser: Browser;
+  let harness: Harness;
   let page: Page;
   let island: Frame;
+  let attackerUrl = "";
+  let attackerHits: string[] = [];
   let appUrl = "";
 
   beforeAll(async () => {
-    dist = await mkdtemp(join(tmpdir(), "dl-preview-"));
-    await build({ root: join(import.meta.dirname, ".."), logLevel: "silent", build: { outDir: dist, emptyOutDir: true } });
-
-    const attacker = createServer((request, response) => {
-      attackerHits.push(`${request.method} ${request.url}`);
-      response.writeHead(200, { "Access-Control-Allow-Origin": "*", "Content-Type": "text/plain" }).end("pwned");
-    });
-    servers.push(attacker);
-    attackerUrl = await listen(attacker);
-
-    // The app's origin must be known before the preview server (frame-ancestors): reserve its port first.
-    let islandSrc = "";
-    const app = createServer((_request, response) => response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(appPage(islandSrc)));
-    servers.push(app);
-    appUrl = await listen(app);
-    const preview = createPreviewServer(dist, appUrl);
-    servers.push(preview);
-    const previewUrl = await listen(preview);
-    islandSrc = `${previewUrl}/island.html?parent=${encodeURIComponent(appUrl)}`;
-
-    browser = await chromium.launch();
-    page = await browser.newPage();
-    await page.goto(appUrl);
-    await page.waitForFunction(() => (window as unknown as { messages: { type: string }[] }).messages.some((m) => m.type === "ready"));
-    island = page.frames().find((frame) => frame.url().includes("/island.html"))!;
+    harness = await startHarness();
+    ({ page, island, attackerUrl, attackerHits, appUrl } = harness);
   }, 120_000);
 
   afterAll(async () => {
-    await browser?.close();
-    await Promise.all(servers.map(close));
-    if (dist) await rm(dist, { recursive: true, force: true });
+    await harness?.close();
   });
 
   /** Runs `attack` inside the island, waits for stray requests, and returns its result. */

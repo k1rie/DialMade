@@ -19,6 +19,8 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@dialmade/doc": "workspace:*",
+    "@dialmade/sections": "workspace:*",
     "@types/node": "24.19.2",
     "jsdom": "29.1.1",
     "playwright": "1.63.0",

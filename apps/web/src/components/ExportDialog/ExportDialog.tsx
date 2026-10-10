@@ -16,6 +16,7 @@ import { useActiveKey, useDesignDerived, useDesignDoc } from "@/hooks/useDesignD
 import { useDictionary, useI18n } from "@/i18n";
 import { exportDialog } from "@/i18n/export";
 import { smooth, tween } from "@/lib/motion";
+import { AiBlocksCard, hasAiBlocks } from "./AiBlocksCard";
 import { AI_TARGETS, DESTINATION_ORDER, EXPORT_TOASTER_ID, TOASTER_STYLE, type AiTargetId, type DestinationId } from "./constants";
 import { DestinationCard } from "./DestinationCard";
 import { slugify } from "./files";
@@ -274,6 +275,7 @@ export function ExportDialog({ open, onOpenChange, page, notice }: ExportDialogP
               className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2"
             >
               {DESTINATION_ORDER[focus].map((id, index) => destination(id, index === 0))}
+              {hasAiBlocks(doc) && <AiBlocksCard doc={doc} texts={t.aiExport} recommendedLabel={d.recommended} dialog={ref} />}
             </motion.ul>
           </section>
         </motion.div>

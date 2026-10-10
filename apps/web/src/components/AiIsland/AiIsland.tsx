@@ -1,9 +1,11 @@
 "use client";
 
+import { pinViewportUnits } from "@dialmade/ai-render";
 import { ISLAND_BLEED, ParentMessageSchema, type IslandMessage, type ParentMessage } from "@dialmade/ai-render/protocol";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { islandUrl, previewOrigin } from "@/lib/ai/render/preview";
 import { useIslandMessages } from "./useIslandMessages";
+import { useViewportWidth } from "./useViewportWidth";
 
 export type AiIslandProps = {
   blockId: string;
@@ -62,11 +64,15 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
     else if (message.type === "measure") onMeasure?.(message);
   });
 
+  // Fluid type (`vw`) sized like the page around the island, not like the iframe (the cell): see pinViewportUnits.
+  const viewportWidth = useViewportWidth();
+  const pinned = useMemo(() => pinViewportUnits(vars, viewportWidth), [vars, viewportWidth]);
+
   // Content: on ready and whenever the block changes (then gate 5's measurement, when asked for).
   const widthsKey = measureWidths?.join(",") ?? "";
   useEffect(() => {
     if (!ready) return;
-    post({ type: "render", v: 1, blockId, html, css, vars: { ...vars }, mode, fontsHref, editable, lang });
+    post({ type: "render", v: 1, blockId, html, css, vars: pinned, mode, fontsHref, editable, lang });
     if (widthsKey) post({ type: "measure", v: 1, widths: widthsKey.split(",").map(Number) });
     // `vars`/`mode`/`fontsHref` are sent by the theme effect below without re-inserting the HTML.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,9 +80,9 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
 
   // Theme: palette, recipe tokens and light/dark repaint live.
   useEffect(() => {
-    if (ready) post({ type: "theme", v: 1, vars: { ...vars }, mode, fontsHref });
+    if (ready) post({ type: "theme", v: 1, vars: pinned, mode, fontsHref });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, vars, mode, fontsHref]);
+  }, [ready, pinned, mode, fontsHref]);
 
   if (!src) return null;
   return (
