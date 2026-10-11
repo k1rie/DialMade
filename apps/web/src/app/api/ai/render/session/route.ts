@@ -9,6 +9,6 @@ import { openRenderSession, renderJsonResponse } from "@/lib/ai/render/server";
 export async function POST(request: Request): Promise<Response> {
   const parsed = await parseRenderRequest(request, RenderSessionBodySchema, "{ screens: 1–3 }");
   if (!parsed.ok) return parsed.response;
-  const result = await openRenderSession(parsed.body, { caller: parsed.caller, config: parsed.config, signal: request.signal });
+  const result = await openRenderSession(parsed.body, { caller: parsed.caller, config: parsed.config, tier: parsed.tier, signal: request.signal });
   return renderJsonResponse(result, parsed.caller);
 }

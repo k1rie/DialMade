@@ -45,6 +45,16 @@ export function AiUsageMeter({ showWhenUnavailable = false, className }: AiUsage
     return showWhenUnavailable ? <p className={cn(base, "m-0 text-muted")}>{t.unavailable}</p> : null;
   }
 
+  // «Acceso completo»: no segments for a thousand uses, one line.
+  if (status.fullAccess) {
+    return (
+      <p className={cn(base, "m-0 text-fg")}>
+        <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-accent" />
+        {t.fullAccess(Math.max(0, status.freeUsesRemaining))}
+      </p>
+    );
+  }
+
   const total = Math.max(0, status.freeUsesTotal);
   const left = Math.min(total, Math.max(0, status.freeUsesRemaining));
   const label = t.freeUses(left, total);

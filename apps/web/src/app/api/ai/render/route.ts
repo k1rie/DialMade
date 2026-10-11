@@ -3,8 +3,9 @@ import { parseRenderRequest } from "@/lib/ai/render/route";
 import { renderDirection, renderJsonResponse, renderScreen, renderStreamResponse } from "@/lib/ai/render/server";
 
 // Node.js runtime (the SDK, node:crypto and the ledger need it). A screen streams for ≈ 25 s with Haiku 5.5; the
-// upstream call has 45 s (AI_GENERATE_TIMEOUT_MS) plus count_tokens.
-export const maxDuration = 60;
+// upstream call has 45 s (AI_GENERATE_TIMEOUT_MS) plus count_tokens. A full-access account at «Producto final» with
+// Opus 5.5 takes ≈ 140 s: up to 280 s (RENDER_TIER_TIMEOUT_MS), so the route gets 300.
+export const maxDuration = 300;
 
 /**
  * «Diseño con IA» inside a design session: `task: "direction"` (JSON) or `task: "screen"` (SSE: `block` events with
@@ -13,7 +14,7 @@ export const maxDuration = 60;
 export async function POST(request: Request): Promise<Response> {
   const parsed = await parseRenderRequest(request, RenderRequestBodySchema, '{ task: "direction" | "screen", sessionId, brand, … }');
   if (!parsed.ok) return parsed.response;
-  const context = { caller: parsed.caller, config: parsed.config, signal: request.signal };
+  const context = { caller: parsed.caller, config: parsed.config, tier: parsed.tier, signal: request.signal };
   if (parsed.body.task === "direction") return renderJsonResponse(await renderDirection(parsed.body, context), parsed.caller);
   const result = await renderScreen(parsed.body, context);
   return result.ok ? renderStreamResponse(result.body, parsed.caller) : renderJsonResponse(result, parsed.caller);

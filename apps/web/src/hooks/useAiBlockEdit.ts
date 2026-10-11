@@ -12,7 +12,7 @@ import { useDictionary } from "@/i18n";
 import { ai as aiTexts } from "@/i18n/ai";
 import { composer } from "@/i18n/composer";
 import { isAiApiErrorCode } from "@/lib/ai/api";
-import { useAiStatus } from "@/hooks/useAiStatus";
+import { loadAiStatus, useAiStatus } from "@/hooks/useAiStatus";
 import { getByokKey, useByokKey } from "@/lib/ai/byokKey";
 import {
   BlockActionError,
@@ -24,7 +24,9 @@ import {
 } from "@/lib/ai/render/blockAction";
 import { setAiBlockActiveOps, setAiBlockOps, textEditOps } from "@/lib/ai/render/edit";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
-import { createRenderTransport } from "@/lib/ai/render/transport";
+import { useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
+import { useRenderTier } from "@/lib/ai/render/renderTier";
+import { createRenderTransport, fullAccessChoice } from "@/lib/ai/render/transport";
 import { getLiveSession, setLiveSession, updateLiveSessionCounters } from "@/lib/ai/render/liveSession";
 import { aiViewStore, setAiBusy, setAiTarget } from "@/lib/ai/render/view";
 import { processBlockOffThread } from "@/lib/ai/render/worker";
@@ -58,9 +60,13 @@ function useBlockTransport(): BlockActionTransport {
   const byok = useByokKey();
   const byokModel = useByokRenderModel();
   const { status } = useAiStatus();
+  // A full-access account's model and finish travel with each call (read when the transport is made).
+  const fullAccessModel = useFullAccessRenderModel();
+  const tier = useRenderTier();
   return useMemo(
     () => blockTransportFrom(createRenderTransport(byok.active ? "byok" : "free", { status, byokModel, getKey: getByokKey })),
-    [byok.active, byokModel, status],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the choice is read inside createRenderTransport
+    [byok.active, byokModel, status, fullAccessModel, tier],
   );
 }
 
@@ -91,7 +97,7 @@ export function useAiBlockActions(override?: BlockActionTransport): UseAiBlockAc
     const openSession = async () => {
       setOpening(true);
       try {
-        const opened = await openFreeSession();
+        const opened = await openFreeSession(undefined, fullAccessChoice(await loadAiStatus()));
         setLiveSession({ sessionId: opened.sessionId, counters: opened.session });
         return true;
       } catch (error) {

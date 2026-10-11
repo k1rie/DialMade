@@ -1,10 +1,9 @@
-import { aiJsonResponse, resolveAiCaller } from "@/lib/ai/access";
+import { aiJsonResponse, resolveAiAccess } from "@/lib/ai/access";
 import type { AiApiError } from "@/lib/ai/api";
 import { LayoutRequestBodySchema } from "@/lib/ai/layout/api";
 import { MAX_LAYOUT_BODY_BYTES } from "@/lib/ai/layout/constants";
 import { generateHostedLayout } from "@/lib/ai/layout/server";
 import { rejectForeignRequest } from "@/lib/ai/requestGuard";
-import { readAiServerConfig } from "@/lib/ai/serverConfig";
 import { readBodyLimited } from "@/lib/ai/vision/server";
 
 // Node.js runtime (the default; `runtime` cannot be set with cacheComponents): the SDK, node:crypto and
@@ -45,8 +44,7 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  const config = readAiServerConfig();
-  const caller = resolveAiCaller(request, config);
+  const { caller, config } = await resolveAiAccess(request);
   const result = await generateHostedLayout(body.data, { caller, config, signal: request.signal });
   return aiJsonResponse(result, caller);
 }

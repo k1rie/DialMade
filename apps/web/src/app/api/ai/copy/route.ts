@@ -1,8 +1,7 @@
-import { aiJsonResponse, resolveAiCaller } from "@/lib/ai/access";
+import { aiJsonResponse, resolveAiAccess } from "@/lib/ai/access";
 import { CopyRequestBodySchema, MAX_COPY_BODY_BYTES, type AiApiError } from "@/lib/ai/api";
 import { rejectForeignRequest } from "@/lib/ai/requestGuard";
 import { generateHostedCopy } from "@/lib/ai/server";
-import { readAiServerConfig } from "@/lib/ai/serverConfig";
 
 // Node.js runtime (the default; `runtime` cannot be set with cacheComponents): the SDK, node:crypto and
 // the ledger need it.
@@ -60,8 +59,7 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  const config = readAiServerConfig();
-  const caller = resolveAiCaller(request, config);
+  const { caller, config } = await resolveAiAccess(request);
   const result = await generateHostedCopy(body.data, { caller, config, signal: request.signal });
   return aiJsonResponse(result, caller);
 }

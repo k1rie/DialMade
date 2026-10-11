@@ -6,6 +6,7 @@ import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiRenderPlan } from "../../useAiRenderPlan";
 import { AiAccessActions } from "../AiAccessActions";
 import { AiDirectionChips } from "../AiDirectionChips";
+import { AiModelPicker } from "../AiModelPicker";
 import { AiRenderCost } from "../AiRenderCost";
 import { AiScreensPicker } from "../AiScreensPicker";
 import { AiTierPicker } from "../AiTierPicker";
@@ -31,6 +32,7 @@ export function DesignDetails({ plan, onUseKey, onUseClaude }: DesignDetailsProp
     <>
       <p className="m-0 text-caption text-muted">{t.designDescription}</p>
       <AiTierPicker value={plan.tier} onChange={plan.setTier} needsKey={plan.tierNeedsKey} />
+      {plan.fullAccess && <AiModelPicker value={plan.fullAccess.model} onChange={plan.fullAccess.setModel} />}
       <AiDirectionChips value={plan.chip} onChange={plan.setChip} />
       <AiScreensPicker screens={plan.screens} selected={plan.selected} onToggle={plan.toggleScreen} />
       <AiRenderCost blocked={plan.blocked} empty={empty} />

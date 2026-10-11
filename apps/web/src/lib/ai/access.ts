@@ -44,6 +44,7 @@ import {
   type AiLimitReason,
   type AiReserveOutcome,
 } from "./ledger";
+import { fullAccessConfig, hasFullAccess } from "./fullAccess";
 import { maxRequestCostUsd, roundUsd } from "./pricing";
 import { clientIp, readAiServerConfig, type AiServerConfig, type Env } from "./serverConfig";
 
@@ -59,6 +60,8 @@ export type AiCaller = {
   ipHash: string;
   /** `Set-Cookie` for a new or rotated device cookie; `aiJsonResponse` sends it. */
   setCookie: string | null;
+  /** The signed-in account has «Acceso completo» (./fullAccess): its own limits, every tier and model of «Diseño con IA». */
+  fullAccess?: boolean;
 };
 
 /** `null` when no secret can sign the cookie (production without DIALMADE_DEVICE_ID_SECRET). */
@@ -67,6 +70,16 @@ export function resolveAiCaller(request: Request, config: AiServerConfig = readA
   if (!secret) return null;
   const device = resolveDevice(request.headers.get("cookie"), secret, { secure: config.production });
   return { ...device, ipHash: hashIp(clientIp(request.headers, env), secret, now) };
+}
+
+/**
+ * `resolveAiCaller` plus the account: a full-access account gets its flag and the config with its limits. Every hosted
+ * route resolves the caller through this one.
+ */
+export async function resolveAiAccess(request: Request, config: AiServerConfig = readAiServerConfig(), env: Env = process.env, now = new Date()): Promise<{ caller: AiCaller | null; config: AiServerConfig }> {
+  const caller = resolveAiCaller(request, config, env, now);
+  if (!caller || !(await hasFullAccess(request))) return { caller, config };
+  return { caller: { ...caller, fullAccess: true }, config: fullAccessConfig(config) };
 }
 
 /** Pass as the SDK's per-request options: no retries, a timeout, and (estimate only) the client's abort signal. */
@@ -293,8 +306,7 @@ export function aiJsonResponse(result: { status: number; body: unknown; headers?
 
 /** Route helper: resolves the device and the IP, runs `task` under the policy and answers. */
 export async function withAiBudget<T extends object>(request: Request, task: AiBudgetTask<T>, deps: AiBudgetDeps = {}): Promise<Response> {
-  const config = deps.config ?? readAiServerConfig();
-  const caller = resolveAiCaller(request, config, deps.env, deps.now);
+  const { caller, config } = await resolveAiAccess(request, deps.config ?? readAiServerConfig(), deps.env, deps.now);
   const result = await runWithAiBudget(caller, task, { ...deps, config, signal: deps.signal ?? request.signal });
   return aiJsonResponse(result, caller);
 }
@@ -313,7 +325,7 @@ export async function aiStatus(caller: AiCaller | null, deps: Pick<AiBudgetDeps,
     freeUsesTotal: config.freeUsesPerMonth,
     minRequestUsd: typicalRequestCostUsd(config.freeModel),
   };
-  const off: AiStatusResponse = { ...base, configured: false, remainingBudgetUsd: null, freeUsesRemaining: 0 };
+  const off: AiStatusResponse = { ...base, configured: false, remainingBudgetUsd: null, freeUsesRemaining: 0, fullAccess: false };
   if (!config.apiKey || !ledger || !caller) return off;
   try {
     const usage = await ledger.usage({ deviceId: caller.deviceId, ipHash: caller.ipHash, now: deps.now ?? new Date() });
@@ -322,6 +334,7 @@ export async function aiStatus(caller: AiCaller | null, deps: Pick<AiBudgetDeps,
       configured: true,
       remainingBudgetUsd: roundUsd(remainingUsd(usage, config.monthlyBudgetUsd)),
       freeUsesRemaining: freeUsesLeft(usage, config.freeUsesPerMonth),
+      fullAccess: caller.fullAccess === true,
     };
   } catch (error) {
     console.error("[ai] status: ledger unavailable:", error instanceof Error ? error.message : error);
@@ -330,7 +343,6 @@ export async function aiStatus(caller: AiCaller | null, deps: Pick<AiBudgetDeps,
 }
 
 export async function aiStatusResponse(request: Request, deps: Pick<AiBudgetDeps, "config" | "ledger" | "now" | "env"> = {}): Promise<Response> {
-  const config = deps.config ?? readAiServerConfig();
-  const caller = resolveAiCaller(request, config, deps.env, deps.now);
+  const { caller, config } = await resolveAiAccess(request, deps.config ?? readAiServerConfig(), deps.env, deps.now);
   return aiJsonResponse({ status: 200, body: await aiStatus(caller, { ...deps, config }) }, caller);
 }

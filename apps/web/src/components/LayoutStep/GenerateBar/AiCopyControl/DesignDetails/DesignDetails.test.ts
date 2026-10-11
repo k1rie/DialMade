@@ -14,6 +14,7 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
   tier: "mockup",
   setTier: () => {},
   tierNeedsKey: false,
+  fullAccess: null,
   screens: [{ id: "s-home", name: "Inicio", blocks: 5, designed: false }],
   selected: ["s-home"],
   toggleScreen: () => {},

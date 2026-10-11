@@ -8,6 +8,7 @@ import { AI_SESSION_SCREENS } from "@/lib/ai/config";
 import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { isFullAccessRenderModel, setFullAccessRenderModel, useFullAccessRenderModel, type FullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
 import { FREE_RENDER_TIERS, setRenderTier, useRenderTier } from "@/lib/ai/render/renderTier";
 import { renderPathFor } from "@/lib/ai/render/transport";
 import {
@@ -44,6 +45,11 @@ export type AiRenderPlan = {
    * key or «Copiar prompt para mi Claude» is the way to generate it.
    */
   tierNeedsKey: boolean;
+  /**
+   * «Acceso completo» (the signed-in account, ../../../lib/ai/fullAccess): the hosted path runs every tier and lets
+   * the account pick the model. `null` without it, or when the tab's key takes the call.
+   */
+  fullAccess: { model: FullAccessRenderModel; setModel: (model: FullAccessRenderModel) => void } | null;
   /** Every screen of the draft, in order. */
   screens: AiRenderScreenOption[];
   /** The screens «Generar con IA» designs (the pick, or the first ones without AI). */
@@ -133,7 +139,12 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const byokModel = useByokRenderModel();
   const tier = useRenderTier();
   const path = renderPathFor(status, byok.active);
-  const tierNeedsKey = path.path !== "byok" && !FREE_RENDER_TIERS.includes(tier);
+  const fullAccessPicked = useFullAccessRenderModel();
+  const hostedFull = path.path === "free" && status?.fullAccess === true;
+  // Until the account picks, the server's free model (when it is one of the list).
+  const fullAccessModel: FullAccessRenderModel = fullAccessPicked ?? (isFullAccessRenderModel(status?.freeModel) ? status.freeModel : "claude-haiku-5-5");
+  const fullAccess = useMemo(() => (hostedFull ? { model: fullAccessModel, setModel: setFullAccessRenderModel } : null), [hostedFull, fullAccessModel]);
+  const tierNeedsKey = path.path !== "byok" && !hostedFull && !FREE_RENDER_TIERS.includes(tier);
   const blocked = path.reason;
   const existing = doc.aiRender?.direction;
   const needsDirection = !(existing && (prefs.chip === "auto" || prefs.chip === existing.chip));
@@ -142,8 +153,10 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
     return path.path === "byok"
       ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: byokModel, tier })
-      : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel });
-  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier]);
+      : hostedFull
+        ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: fullAccessModel, tier })
+        : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel });
+  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier, hostedFull, fullAccessModel]);
 
   const cost = useMemo(
     () =>
@@ -175,5 +188,5 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [store, mode, selected, busy, prefs.chip],
   );
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, tier, setTier: setRenderTier, tierNeedsKey, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }

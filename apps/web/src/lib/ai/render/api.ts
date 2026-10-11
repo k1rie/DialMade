@@ -1,10 +1,11 @@
 // Wire format of «Diseño con IA» (/api/ai/render/*), shared by the route handlers and the client. Client-safe (no SDK,
 // no env). Everything the user wrote (names, labels, notes, copy, the brief, a request) travels in these bodies as
 // DATA: the prompt builder of @dialmade/ai-render escapes it, and the answer is only HTML that the client sanitizes.
-import { AI_DIRECTION_CHIPS, AI_AXES, MAX_AI_REQUEST_LENGTH } from "@dialmade/doc";
+import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, MAX_AI_REQUEST_LENGTH, type AiRenderTier } from "@dialmade/doc";
 import { z } from "zod";
 import type { AiApiError, AiApiErrorCode } from "../api";
 import { AI_SESSION_SCREENS } from "../config";
+import { FULL_ACCESS_RENDER_MODELS, type FullAccessRenderModel } from "./fullAccessModel";
 
 export const RENDER_SESSION_ENDPOINT = "/api/ai/render/session";
 export const RENDER_ENDPOINT = "/api/ai/render";
@@ -70,10 +71,21 @@ export const RenderDirectionSchema = z.strictObject({
   rationale: Line(280),
 });
 
+/**
+ * «Acceso completo» only (../fullAccess): the model and the finish of the call. A free-tier caller that sends them gets
+ * 400; without them the call runs the free model at `mockup`.
+ */
+const FullAccessChoice = {
+  model: z.enum(FULL_ACCESS_RENDER_MODELS).optional(),
+  tier: z.enum(AI_RENDER_TIERS).optional(),
+};
+export type RenderChoice = { model?: FullAccessRenderModel | undefined; tier?: AiRenderTier | undefined };
+
 /** POST /api/ai/render/session: one free use opens a design session. */
 export const RenderSessionBodySchema = z.strictObject({
   /** Screens the «Generar con IA» will design (≤ 3; more screens = more sessions, the UI says so before calling). */
   screens: z.number().int().min(1).max(AI_SESSION_SCREENS),
+  ...FullAccessChoice,
 });
 export type RenderSessionBody = z.infer<typeof RenderSessionBodySchema>;
 
@@ -89,6 +101,7 @@ export const RenderRequestBodySchema = z.discriminatedUnion("task", [
     recipeId: Line(48),
     chip: z.enum(AI_DIRECTION_CHIPS),
     screens: z.array(z.strictObject({ name: Line(80), kind: z.enum(["landing", "app"]), blocks: z.array(Line(32)).max(MAX_RENDER_BLOCKS) })).max(AI_SESSION_SCREENS),
+    ...FullAccessChoice,
   }),
   z.strictObject({
     task: z.literal("screen"),
@@ -96,6 +109,7 @@ export const RenderRequestBodySchema = z.discriminatedUnion("task", [
     brand: RenderBrandSchema,
     direction: RenderDirectionSchema,
     screen: RenderScreenSchema,
+    ...FullAccessChoice,
   }),
 ]);
 export type RenderRequestBody = z.infer<typeof RenderRequestBodySchema>;
@@ -113,6 +127,7 @@ export const RenderBlockBodySchema = z.strictObject({
     z.strictObject({ kind: z.literal("reroll"), seed: z.number().int().min(0).max(0xffffffff) }),
     z.strictObject({ kind: z.literal("change"), request: z.string().min(1).max(MAX_AI_REQUEST_LENGTH), target: z.strictObject({ text: Line(200) }).optional() }),
   ]),
+  ...FullAccessChoice,
 });
 export type RenderBlockBody = z.infer<typeof RenderBlockBodySchema>;
 

@@ -10,6 +10,7 @@ const ON: AiStatusResponse = {
   freeUsesRemaining: 3,
   remainingBudgetUsd: 4.98,
   minRequestUsd: 0.005,
+  fullAccess: false,
 };
 
 describe("normalizeAiStatus", () => {
@@ -26,8 +27,12 @@ describe("normalizeAiStatus", () => {
       freeUsesRemaining: 0,
       remainingBudgetUsd: 2,
       minRequestUsd: 0.01,
+      fullAccess: false,
     });
     expect(normalizeAiStatus(null)).toEqual(OFFLINE_AI_STATUS);
+    // Only an explicit `true` is full access.
+    expect(normalizeAiStatus({ ...ON, fullAccess: "yes" }).fullAccess).toBe(false);
+    expect(normalizeAiStatus({ ...ON, fullAccess: true }).fullAccess).toBe(true);
     expect(normalizeAiStatus({ configured: "yes", freeUsesRemaining: -1, remainingBudgetUsd: "5" })).toMatchObject({
       configured: false,
       freeUsesRemaining: 0,

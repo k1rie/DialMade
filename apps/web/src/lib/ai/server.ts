@@ -7,7 +7,7 @@ import { missingScreens } from "./fields";
 import { countCopyTokens, generateCopy, prepareCopyJob, type CopyJob } from "./generate";
 import { maxRequestCostUsd } from "./pricing";
 
-export { aiStatus, aiStatusResponse, resolveAiCaller, typicalRequestCostUsd } from "./access";
+export { aiStatus, aiStatusResponse, resolveAiAccess, resolveAiCaller, typicalRequestCostUsd } from "./access";
 export { clientIp, readAiServerConfig, type AiServerConfig } from "./serverConfig";
 
 export type HostedCopyData = Pick<CopyApiSuccess, "patches" | "usage" | "rejected" | "rejectedIds">;

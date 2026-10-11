@@ -118,10 +118,12 @@ export type AiStatus = {
   freeUsesTotal?: number;
   /** Free uses this device has left this month (0 when the hosted AI is off). */
   freeUsesRemaining?: number;
+  /** The signed-in account has «Acceso completo»: every finish and model of «Diseño con IA» on the server's key. */
+  fullAccess?: boolean;
 };
 
 /** What GET /api/ai/status answers (the optional fields of `AiStatus` are always there). */
-export type AiStatusResponse = AiStatus & { freeModel: string; freeUsesTotal: number; freeUsesRemaining: number };
+export type AiStatusResponse = AiStatus & { freeModel: string; freeUsesTotal: number; freeUsesRemaining: number; fullAccess: boolean };
 
 export const isCopyApiErrorCode = (value: unknown): value is CopyApiErrorCode =>
   typeof value === "string" && (COPY_API_ERROR_CODES as readonly string[]).includes(value);

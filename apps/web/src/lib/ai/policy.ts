@@ -12,6 +12,7 @@ export const OFFLINE_AI_STATUS: AiStatusResponse = {
   freeUsesRemaining: 0,
   remainingBudgetUsd: null,
   minRequestUsd: 0,
+  fullAccess: false,
 };
 
 const isCount = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -30,6 +31,7 @@ export function normalizeAiStatus(raw: unknown): AiStatusResponse {
     freeUsesRemaining: isCount(value.freeUsesRemaining) ? Math.floor(value.freeUsesRemaining) : 0,
     remainingBudgetUsd: isCount(value.remainingBudgetUsd) ? value.remainingBudgetUsd : null,
     minRequestUsd: isCount(value.minRequestUsd) ? value.minRequestUsd : 0,
+    fullAccess: value.fullAccess === true,
   };
 }
 

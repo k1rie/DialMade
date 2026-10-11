@@ -1,15 +1,20 @@
 // Server only. The common front of the /api/ai/render/* routes: same guards as every hosted AI route (no cross-site
 // requests, JSON only, a body cap, strict Zod) before any ledger or model work.
+import type { AiRenderTier } from "@dialmade/doc";
 import type { z } from "zod";
-import { resolveAiCaller, type AiCaller } from "../access";
+import { resolveAiAccess, type AiCaller } from "../access";
 import { rejectForeignRequest } from "../requestGuard";
 import { readAiServerConfig, type AiServerConfig } from "../serverConfig";
 import { readBodyLimited } from "../vision/server";
-import { MAX_RENDER_BODY_BYTES } from "./api";
+import { MAX_RENDER_BODY_BYTES, type RenderChoice } from "./api";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-export type ParsedRenderRequest<T> = { ok: true; body: T; caller: AiCaller | null; config: AiServerConfig } | { ok: false; response: Response };
+/**
+ * `config.freeModel` is the model of THIS call: the free tier's, or the one a full-access account picked. `tier` is its
+ * finish (`mockup` unless a full-access account picked another).
+ */
+export type ParsedRenderRequest<T> = { ok: true; body: T; caller: AiCaller | null; config: AiServerConfig; tier: AiRenderTier } | { ok: false; response: Response };
 
 export async function parseRenderRequest<S extends z.ZodType>(request: Request, schema: S, expected: string): Promise<ParsedRenderRequest<z.output<S>>> {
   const rejected = rejectForeignRequest(request);
@@ -26,6 +31,11 @@ export async function parseRenderRequest<S extends z.ZodType>(request: Request, 
   }
   const parsed = schema.safeParse(json);
   if (!parsed.success) return { ok: false, response: Response.json({ code: "invalid-request", message: `Expected ${expected}` }, { status: 400, headers: NO_STORE }) };
-  const config = readAiServerConfig();
-  return { ok: true, body: parsed.data, caller: resolveAiCaller(request, config), config };
+  const { caller, config } = await resolveAiAccess(request, readAiServerConfig());
+  // The model and the finish are «Acceso completo» only (../fullAccess): the free tier never picks them.
+  const choice = parsed.data as RenderChoice;
+  if ((choice.model !== undefined || choice.tier !== undefined) && !caller?.fullAccess) {
+    return { ok: false, response: Response.json({ code: "invalid-request", message: "Only accounts with full access pick the model or the finish" }, { status: 400, headers: NO_STORE }) };
+  }
+  return { ok: true, body: parsed.data, caller, config: choice.model ? { ...config, freeModel: choice.model } : config, tier: choice.tier ?? "mockup" };
 }

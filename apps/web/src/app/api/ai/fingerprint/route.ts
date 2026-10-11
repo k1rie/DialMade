@@ -1,8 +1,7 @@
 import { connection } from "next/server";
-import { aiJsonResponse, resolveAiCaller } from "@/lib/ai/access";
+import { aiJsonResponse, resolveAiAccess } from "@/lib/ai/access";
 import type { AiApiError } from "@/lib/ai/api";
 import { rejectForeignRequest } from "@/lib/ai/requestGuard";
-import { readAiServerConfig } from "@/lib/ai/serverConfig";
 import { FingerprintRequestBodySchema, type FingerprintConfigResponse } from "@/lib/ai/vision/api";
 import { MAX_FINGERPRINT_BODY_BYTES } from "@/lib/ai/vision/constants";
 import { VISION_PROMPT_ID } from "@/lib/ai/vision/prompt";
@@ -47,8 +46,7 @@ export async function POST(request: Request): Promise<Response> {
   const body = FingerprintRequestBodySchema.safeParse(json);
   if (!body.success) return error(400, { code: "invalid-request", message: "Expected { images: [{ mediaType, data, swatches }] }" });
 
-  const config = readAiServerConfig();
-  const caller = resolveAiCaller(request, config);
+  const { caller, config } = await resolveAiAccess(request);
   const result = await generateHostedFingerprint(body.data, { caller, config, signal: request.signal });
   return aiJsonResponse(result, caller);
 }

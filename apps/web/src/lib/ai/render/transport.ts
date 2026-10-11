@@ -13,6 +13,8 @@ import { updateAiCounters } from "@/hooks/useAiStatus";
 import { isAiApiErrorCode, type AiStatusResponse } from "../api";
 import { OFFLINE_AI_STATUS, countersFrom, hostedBlocker, type AiFallbackReason } from "../policy";
 import { DEFAULT_BYOK_RENDER_MODEL } from "./byokModel";
+import { getFullAccessRenderModel } from "./fullAccessModel";
+import { getRenderTier } from "./renderTier";
 import {
   RENDER_BLOCK_ENDPOINT,
   RENDER_ENDPOINT,
@@ -22,6 +24,7 @@ import {
   type RenderApiError,
   type RenderBlockBody,
   type RenderBlockSuccess,
+  type RenderChoice,
   type RenderDirectionSchema,
   type RenderDirectionSuccess,
   type RenderErrorCode,
@@ -189,7 +192,7 @@ async function postJson<T>(url: string, body: unknown, options: TransportCallOpt
 
 const isEventStream = (response: Response) => (response.headers.get("content-type") ?? "").includes("text/event-stream");
 
-async function* freeScreen(body: ScreenBody, options: TransportCallOptions): AsyncGenerator<RenderStreamEvent> {
+async function* freeScreen(body: ScreenBody & RenderChoice, options: TransportCallOptions): AsyncGenerator<RenderStreamEvent> {
   const started = await enterScreen(body.sessionId, options.signal);
   try {
     let response: Response;
@@ -239,24 +242,34 @@ async function* freeScreen(body: ScreenBody, options: TransportCallOptions): Asy
   }
 }
 
-/** The hosted free tier (`model` = the status' `freeModel`). */
-export function freeTransport(model: string): RenderTransport {
+/**
+ * «Acceso completo» (../fullAccess): the model and finish a full-access account picked, sent with every hosted call.
+ * Empty for everyone else (the server refuses them from the free tier).
+ */
+export function fullAccessChoice(status: AiStatusResponse | null): RenderChoice {
+  if (!status?.fullAccess) return {};
+  const model = getFullAccessRenderModel();
+  return { ...(model && { model }), tier: getRenderTier() };
+}
+
+/** The hosted free tier (`model` = the status' `freeModel`), or a full-access account's `choice`. */
+export function freeTransport(model: string, choice: RenderChoice = {}): RenderTransport {
   return {
     path: "free",
-    model,
-    tier: "mockup",
+    model: choice.model ?? model,
+    tier: choice.tier ?? "mockup",
     cancelStopsBilling: false,
     async openSession(body, options = {}) {
-      const answer = await postJson<RenderSessionSuccess>(RENDER_SESSION_ENDPOINT, body, options);
+      const answer = await postJson<RenderSessionSuccess>(RENDER_SESSION_ENDPOINT, { ...body, ...choice }, options);
       updateAiCounters(countersFrom(answer));
       return answer;
     },
     async direction(body, options = {}) {
-      return postJson<RenderDirectionSuccess>(RENDER_ENDPOINT, { task: "direction", ...body }, options);
+      return postJson<RenderDirectionSuccess>(RENDER_ENDPOINT, { task: "direction", ...body, ...choice }, options);
     },
-    screen: (body, options = {}) => freeScreen(body, options),
+    screen: (body, options = {}) => freeScreen({ ...body, ...choice }, options),
     async block(body, options = {}) {
-      return postJson<RenderBlockSuccess>(RENDER_BLOCK_ENDPOINT, body, options);
+      return postJson<RenderBlockSuccess>(RENDER_BLOCK_ENDPOINT, { ...body, ...choice }, options);
     },
   };
 }
@@ -325,7 +338,7 @@ export function renderPathFor(status: AiStatusResponse | null, byokActive: boole
 
 /** The transport of a paid path: the free tier with the status' model, or BYOK with the chosen model and the tab's key. */
 export function createRenderTransport(path: "free" | "byok", context: { status: AiStatusResponse | null; byokModel?: string; getKey?: () => string | null; tier?: AiRenderTier }): RenderTransport {
-  if (path === "free") return freeTransport(context.status?.freeModel ?? OFFLINE_AI_STATUS.freeModel);
+  if (path === "free") return freeTransport(context.status?.freeModel ?? OFFLINE_AI_STATUS.freeModel, fullAccessChoice(context.status));
   return byokTransport({ getKey: context.getKey ?? (() => null), model: context.byokModel ?? DEFAULT_BYOK_RENDER_MODEL, ...(context.tier && { tier: context.tier }) });
 }
 

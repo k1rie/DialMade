@@ -5,10 +5,11 @@
 // ../pricing. A failed screen or action (API error, refusal, no root at all) gives its slot back, up to the kind's max
 // per session.
 import type Anthropic from "@anthropic-ai/sdk";
+import type { AiRenderTier } from "@dialmade/doc";
 import {
   DIRECTION_MAX_TOKENS,
-  SCREEN_MAX_TOKENS,
   directionCandidates,
+  tierSettings,
   type RenderScreenInput,
 } from "@dialmade/ai-render";
 import { RenderOutputError, blockParams, createDirection, directionParams, screenParams, streamBlocks } from "@dialmade/ai-render/anthropic";
@@ -56,7 +57,21 @@ import {
 /** Input tokens assumed when checking that a whole session fits the budget (before any count_tokens): the contract, the art direction and the screen with its ≈ 12k tokens of reference blocks. */
 const TYPICAL_SESSION_INPUT_TOKENS = 24_000;
 
-export type RenderContext = AiBudgetDeps & { caller: AiCaller | null };
+/**
+ * `config.freeModel` is the model of the call (a full-access account may pick another, ./route); `tier` its finish,
+ * `mockup` by default (the only one the free tier runs).
+ */
+export type RenderContext = AiBudgetDeps & { caller: AiCaller | null; tier?: AiRenderTier };
+
+/**
+ * Upstream time of one call per finish. The free tier keeps 45 s (Haiku at «Maqueta»); a full-access account gets more
+ * because it may pick Opus 5.5, measured at ≈ 90 s (Presentable) and ≈ 140 s (Producto final) for a 7-block landing.
+ * They stay under the routes' `maxDuration` (300 s).
+ */
+export const RENDER_TIER_TIMEOUT_MS: Readonly<Record<AiRenderTier, number>> = { mockup: 120_000, presentable: 240_000, final: 280_000 };
+
+const generateTimeout = (context: RenderContext): number =>
+  context.caller?.fullAccess ? RENDER_TIER_TIMEOUT_MS[context.tier ?? "mockup"] : AI_GENERATE_TIMEOUT_MS;
 export type RenderFailure = { ok: false; status: number; body: RenderApiError; headers?: Record<string, string> };
 export type RenderResult<T> = { ok: true; status: 200; body: T } | RenderFailure;
 
@@ -72,18 +87,20 @@ function prepare(context: RenderContext): Ready | AiFailure {
   return { config, ledger: ledger as Ready["ledger"], caller: context.caller, client, now: context.now ?? new Date() };
 }
 
-const callOptions = (config: AiServerConfig) => ({
+/** Like BYOK (./byok `callOptions`): above `mockup` the tier sets the effort, the output room and the quality brief. */
+const callOptions = (config: AiServerConfig, tier: AiRenderTier = "mockup") => ({
   model: config.freeModel,
-  effort: config.effort,
+  effort: tier === "mockup" ? config.effort : tierSettings(tier).effort,
   fallbacks: supportsDefaultFallbacks(config.freeModel),
   effortSupported: supportsEffort(config.freeModel),
+  ...(tier !== "mockup" && { tier }),
 });
 
 /** Worst case of a whole generate (direction + `screens`), checked against the budget when the session opens. */
-export function sessionWorstCaseUsd(model: string, screens: number): number {
+export function sessionWorstCaseUsd(model: string, screens: number, tier: AiRenderTier = "mockup"): number {
   const fallbacks = supportsDefaultFallbacks(model);
   const one = (maxOutputTokens: number) => maxRequestCostUsd({ model, inputTokens: TYPICAL_SESSION_INPUT_TOKENS, maxOutputTokens, fallbacks });
-  return roundUsd(one(DIRECTION_MAX_TOKENS) + screens * one(SCREEN_MAX_TOKENS));
+  return roundUsd(one(DIRECTION_MAX_TOKENS) + screens * one(tierSettings(tier).screenMaxTokens));
 }
 
 /** POST /api/ai/render/session. */
@@ -100,7 +117,7 @@ export async function openRenderSession(body: RenderSessionBody, context: Render
       freeUsesPerMonth: config.freeUsesPerMonth,
       maxRequestsPerIpPerDay: config.maxRequestsPerIpPerDay,
       model: config.freeModel,
-      amountUsd: sessionWorstCaseUsd(config.freeModel, body.screens),
+      amountUsd: sessionWorstCaseUsd(config.freeModel, body.screens, context.tier),
       ttlSeconds: AI_SESSION_TTL_SECONDS,
       directions: AI_SESSION_DIRECTIONS,
       screens: body.screens,
@@ -228,11 +245,12 @@ function renderFailureFromError(error: unknown): RenderFailure {
 export async function renderDirection(body: Extract<RenderRequestBody, { task: "direction" }>, context: RenderContext): Promise<RenderResult<RenderDirectionSuccess>> {
   const config = context.config ?? readAiServerConfig();
   const candidates = directionCandidates(body.seed, body.recipeId, body.chip);
+  // The art direction stays at `mockup`, whatever the finish (as in BYOK).
   const params = directionParams(callOptions(config), body.brand, candidates, body.locale, body.screens);
   const call = await reserveCall({ ...context, config }, body.sessionId, "direction", params);
   if ("ok" in call) return call;
   try {
-    const { answer, message } = await createDirection(call.ready.client, params, candidates, { timeout: AI_GENERATE_TIMEOUT_MS, maxRetries: 0 });
+    const { answer, message } = await createDirection(call.ready.client, params, candidates, { timeout: generateTimeout(context), maxRetries: 0 });
     const usage = usageOf(message, config.freeModel);
     const session = await closeCall(call, "direction", body.sessionId, { costUsd: usage.costUsd });
     return { ok: true, status: 200, body: { direction: answer, usage, session } };
@@ -250,7 +268,7 @@ export async function renderDirection(body: Extract<RenderRequestBody, { task: "
 export async function renderScreen(body: Extract<RenderRequestBody, { task: "screen" }>, context: RenderContext): Promise<RenderResult<ReadableStream<Uint8Array>>> {
   const config = context.config ?? readAiServerConfig();
   const screen: RenderScreenInput = body.screen;
-  const params = screenParams(callOptions(config), body.brand, body.direction, screen);
+  const params = screenParams(callOptions(config, context.tier), body.brand, body.direction, screen);
   const call = await reserveCall({ ...context, config }, body.sessionId, "screen", params);
   if ("ok" in call) return call;
   const encoder = new TextEncoder();
@@ -282,7 +300,7 @@ export async function renderScreen(body: Extract<RenderRequestBody, { task: "scr
               send({ type: "progress", received });
             },
           },
-          { timeout: AI_GENERATE_TIMEOUT_MS, maxRetries: 0 },
+          { timeout: generateTimeout(context), maxRetries: 0 },
         );
         const usage = usageOf(result.message, config.freeModel);
         const known = result.blocks.some((block) => block.blockId !== null && expected.includes(block.blockId));
@@ -307,7 +325,7 @@ export async function renderScreen(body: Extract<RenderRequestBody, { task: "scr
 /** POST /api/ai/render/block: «Otra versión» / «Pedir cambio» (one session action), JSON answer with the raw root. */
 export async function renderBlock(body: RenderBlockBody, context: RenderContext): Promise<RenderResult<RenderBlockSuccess>> {
   const config = context.config ?? readAiServerConfig();
-  const params = blockParams(callOptions(config), body.brand, body.direction, {
+  const params = blockParams(callOptions(config, context.tier), body.brand, body.direction, {
     screen: body.screen,
     block: body.block,
     html: body.html,
@@ -316,7 +334,7 @@ export async function renderBlock(body: RenderBlockBody, context: RenderContext)
   const call = await reserveCall({ ...context, config }, body.sessionId, "action", params);
   if ("ok" in call) return call;
   try {
-    const result = await streamBlocks(call.ready.client, params, [body.block.id], {}, { timeout: AI_GENERATE_TIMEOUT_MS, maxRetries: 0 });
+    const result = await streamBlocks(call.ready.client, params, [body.block.id], {}, { timeout: generateTimeout(context), maxRetries: 0 });
     const usage = usageOf(result.message, config.freeModel);
     const root = result.blocks.find((block) => block.blockId === body.block.id) ?? result.blocks[0] ?? null;
     if (!root) {

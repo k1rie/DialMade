@@ -111,6 +111,7 @@ export const ai = defineDictionary({
       label: "Usos de IA",
       freeUses: (left: number, total: number) => `${left} de ${total} ${plural(total, "uso gratis", "usos gratis")} este mes`,
       byok: "Con tu propia key: no gasta usos gratis",
+      fullAccess: (left: number) => `Acceso completo · ${left} ${plural(left, "uso", "usos")} este mes`,
       unavailable: "IA gratis no disponible en este servidor",
       loading: "Cargando usos de IA…",
       exhausted: "Sigue con tu key o con tu Claude.",
@@ -237,6 +238,7 @@ export const ai = defineDictionary({
         useClaude: "Usar mi Claude",
         useClaudeHint: "Gratis: copias el prompt, lo pegas en tu cuenta de Claude y traes aquí su respuesta.",
       },
+      models: { label: "Modelo" },
       tiers: {
         label: "Nivel de acabado",
         options: { mockup: "Maqueta", presentable: "Presentable", final: "Producto final" },
@@ -442,6 +444,7 @@ export const ai = defineDictionary({
       label: "AI uses",
       freeUses: (left: number, total: number) => `${left} of ${total} free ${plural(total, "use", "uses")} this month`,
       byok: "With your own key: no free uses spent",
+      fullAccess: (left: number) => `Full access · ${left} ${plural(left, "use", "uses")} this month`,
       unavailable: "Free AI isn't available on this server",
       loading: "Loading AI uses…",
       exhausted: "Keep going with your key or your Claude.",
@@ -565,6 +568,7 @@ export const ai = defineDictionary({
         useClaude: "Use my Claude",
         useClaudeHint: "Free: copy the prompt, paste it in your Claude account and bring its answer back here.",
       },
+      models: { label: "Model" },
       tiers: {
         label: "Finish",
         options: { mockup: "Mockup", presentable: "Presentable", final: "Final product" },

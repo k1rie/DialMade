@@ -282,3 +282,25 @@ describe("wire schemas", () => {
     expect(RenderRequestBodySchema.safeParse(valid).success).toBe(true);
   });
 });
+
+describe("«Acceso completo» (full-access accounts)", () => {
+  it("the picked finish reaches the upstream call: its output room and effort", async () => {
+    const full: AiCaller = { ...caller, fullAccess: true };
+    const opus = { ...config, freeModel: "claude-opus-5-5", freeUsesPerMonth: 1000 };
+    const { client, stream } = streamingClient(HTML, message({ model: "claude-opus-5-5", output: HTML }));
+    const opened = await openRenderSession({ screens: 1 }, { caller: full, config: opus, ledger, now: NOW, client, tier: "final" });
+    if (!opened.ok) throw new Error(JSON.stringify(opened.body));
+    const result = await renderScreen({ task: "screen", sessionId: opened.body.sessionId, brand, direction, screen }, { caller: full, config: opus, ledger, now: NOW, client, tier: "final" });
+    expect(result.ok).toBe(true);
+    if (result.ok) await events(result.body);
+    const params = stream.mock.calls[0]![0] as { model: string; max_tokens: number; output_config?: { effort?: string } };
+    expect(params.model).toBe("claude-opus-5-5");
+    expect(params.max_tokens).toBe(32_000);
+    expect(params.output_config?.effort).toBe("high");
+  });
+
+  it("a session's worst case grows with the finish", () => {
+    expect(sessionWorstCaseUsd("claude-opus-5-5", 3, "final")).toBeGreaterThan(sessionWorstCaseUsd("claude-opus-5-5", 3));
+  });
+});
+

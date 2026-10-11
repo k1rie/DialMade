@@ -14,6 +14,7 @@ import {
   type RenderBlockSuccess,
   type RenderErrorCode,
   type RenderSessionCounters,
+  type RenderChoice,
   type RenderSessionSuccess,
   type RenderUsage,
 } from "./api";
@@ -106,8 +107,8 @@ export const freeTierBlockTransport: BlockActionTransport = {
  * Opens a design session for block actions when none is alive (1 free use: up to 3 screens and 10 actions in 24 h).
  * The UI says so before calling. `screens` is the session's screen allowance, not screens designed now.
  */
-export const openFreeSession = (signal?: AbortSignal): Promise<RenderSessionSuccess> =>
-  postJson<RenderSessionSuccess>(RENDER_SESSION_ENDPOINT, { screens: AI_SESSION_SCREENS }, signal);
+export const openFreeSession = (signal?: AbortSignal, choice: RenderChoice = {}): Promise<RenderSessionSuccess> =>
+  postJson<RenderSessionSuccess>(RENDER_SESSION_ENDPOINT, { screens: AI_SESSION_SCREENS, ...choice }, signal);
 
 /** The theme colors of both modes, for the contrast gate (spec §7, gate 4). */
 export const docThemeColors = (doc: DesignDoc): ThemeColors => ({
