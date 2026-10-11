@@ -277,6 +277,7 @@ export {
   AI_GATE_CODES,
   AI_RENDER_KINDS,
   AI_RENDER_PATHS,
+  AI_RENDER_TIERS,
   AiBlockSchema,
   AiDirectionSchema,
   AiGateWarningSchema,
@@ -298,6 +299,7 @@ export {
   type AiProvenance,
   type AiRenderKind,
   type AiRenderPath,
+  type AiRenderTier,
   type AiScreenRender,
   type DocAiRender,
 } from "./aiRender";

@@ -155,6 +155,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         kind,
         path: target.transport.path,
         model: target.model,
+        ...(target.transport.tier && target.transport.tier !== "mockup" && { tier: target.transport.tier }),
         createdAt: now().toISOString(),
         promptVersion: AI_RENDER_PROMPT_VERSION,
         directionId: target.direction.id,
@@ -307,6 +308,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const provenance = {
       kind: "direction" as const,
       path: target.transport.path,
+      ...(target.transport.tier && target.transport.tier !== "mockup" && { tier: target.transport.tier }),
       createdAt: now().toISOString(),
       promptVersion: AI_RENDER_PROMPT_VERSION,
       seed: drawn,

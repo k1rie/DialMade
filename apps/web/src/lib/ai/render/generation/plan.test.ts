@@ -110,6 +110,17 @@ describe("the cost line", () => {
     expect(reused.costUsd).toBeLessThan(estimate.costUsd);
     expect(reused.seconds).toBeLessThanOrEqual(estimate.seconds);
   });
+
+  it("a higher tier costs more and takes longer (thinking and finer details)", () => {
+    const base = { blocksPerScreen: [6, 6], direction: false, model: "claude-opus-5-5" };
+    const mockup = estimateGenerate(base);
+    const presentable = estimateGenerate({ ...base, tier: "presentable" });
+    const final = estimateGenerate({ ...base, tier: "final" });
+    expect(estimateGenerate({ ...base, tier: "mockup" })).toEqual(mockup);
+    expect(presentable.costUsd).toBeGreaterThan(mockup.costUsd);
+    expect(final.costUsd).toBeGreaterThan(presentable.costUsd);
+    expect(final.seconds).toBeGreaterThan(mockup.seconds);
+  });
 });
 
 describe("free-tier transport", () => {

@@ -206,7 +206,7 @@ razonamiento adaptativo de Haiku 5.5 (no se puede apagar): 0 → 2–8 k tokens 
 cortadas por `max_tokens` (faltaban CTA, footer y pricing). La lista queda como lista simple y `SCREEN_MAX_TOKENS` sube
 de 12 k a 16 k (≈ +$0,002 de reserva por pantalla con Haiku). Gasto de esta comparación ≈ $1,62.
 
-## 3 sexies. Gráficos con detalle
+## 3 sexies. Gráficos con detalle y niveles de acabado
 
 ### Gráficos (`chart.ts`, $0 por uso, mejoran a todos los modelos)
 
@@ -225,6 +225,32 @@ tamaño en px, para que no se deformen. Las etiquetas se validan en el sanitizad
 letras, cifras y `. / - : %`, ≤ 16 caracteres, sin comas), y deben cuadrar con el número de puntos o de series. El
 texto del gráfico toma el color de texto de la imagen (en un panel oscuro, `text-background`). Haiku los usa sin más
 cambios (8 de 8 gráficos con etiquetas): `comparisons/10-graficos-antes-despues.png`.
+
+### Niveles: Maqueta · Presentable · Producto final
+
+Un nivel es **cuánto cuidado** se pide, no qué modelo (decisión del usuario, 2026-10-10). Viven en
+`packages/ai-render/src/tier.ts`:
+
+| | Maqueta | Presentable | Producto final |
+|---|---|---|---|
+| Esfuerzo | low | medium | high |
+| Salida máx. por pantalla | 16 k | 24 k | 32 k |
+| Encargo al final del prompt | ninguno | datos y textos coherentes en toda la pantalla | además, detalle completo en cada bloque |
+| Plan gratis | **sí** (Haiku) | no: key o «mi Claude» | no: key o «mi Claude» |
+
+- **Plan gratis:** solo Maqueta; el servidor ni lee el nivel. Si el usuario elige otro sin key, la barra dice «Generar
+  sin IA», explica por qué y «Usar mi key» pasa a ser el botón principal.
+- **Con key:** el nivel se combina con el modelo elegido en el diálogo de la key (se mantienen los dos controles). La
+  dirección de arte se queda en esfuerzo bajo (su salida es de 1,5 k tokens). El tiempo de espera de la llamada sube
+  con el nivel (180 / 300 / 420 s).
+- **«Mi Claude»:** el prompt copiado lleva el encargo del nivel.
+- El nivel queda en la procedencia de cada bloque (`provenance.tier`, opcional) y el costo estimado se multiplica por
+  el factor de salida del nivel.
+
+**Medido con Opus en Vectora** (`comparisons/11-niveles-opus-*.png`): Maqueta $0,35 (landing + dashboard), 54 s la
+landing; Presentable $0,48, 90 s (×1,5 de salida); Producto final $0,63, 139 s (×2,3). Presentable trae series dobles
+con leyenda y cifras que cuadran entre bloques; Producto final, además, estados, filas destacadas, resultados en los
+testimonios y gráficos con ejes también en el CTA.
 
 ## 4. Límites honestos
 

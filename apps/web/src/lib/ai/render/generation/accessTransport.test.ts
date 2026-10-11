@@ -11,6 +11,7 @@ function fakeAccess(overrides: Partial<AccessTransport> = {}): AccessTransport {
   return {
     path: "free",
     model: "claude-haiku-5-5",
+    tier: "mockup",
     cancelStopsBilling: false,
     openSession: vi.fn(async () => ({ sessionId: "s-1", session: COUNTERS })),
     direction: vi.fn(async () => ({ direction: DIRECTION, usage: null, session: null })),

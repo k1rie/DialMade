@@ -14,11 +14,12 @@ import {
   directionMessage,
   directionCandidates,
   screenMessage,
+  tierSettings,
   type BlockActionInput,
   type RenderBrandInput,
   type RenderScreenInput,
 } from "@dialmade/ai-render";
-import type { AiRenderPath } from "@dialmade/doc";
+import type { AiRenderPath, AiRenderTier } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import { priceFor } from "../pricing";
 import { CHEAPER_BYOK_RENDER_MODEL } from "./byokModel";
@@ -74,6 +75,8 @@ export type RenderEstimateInput = {
   newDirection: boolean;
   /** Recipe of the direction candidates (sizes the direction prompt). */
   recipeId: string;
+  /** «Maqueta · Presentable · Producto final»: more thinking and finer details cost more output (default `mockup`). */
+  tier?: AiRenderTier;
 };
 
 export type CostRange = { minUsd: number; maxUsd: number };
@@ -111,8 +114,8 @@ function generateCost(input: RenderEstimateInput, model: string): CostRange & { 
   }
   let batch = 0;
   input.screens.forEach((screen, index) => {
-    const data = tokens(screenMessage(input.brand, direction, screen)[1]!.text.length);
-    const output = outputOf(screen);
+    const data = tokens(screenMessage(input.brand, direction, screen, { ...(input.tier && { tier: input.tier }) })[1]!.text.length);
+    const output = Math.round(outputOf(screen) * tierSettings(input.tier).outputFactor);
     const first = index === 0;
     usd += costOf(model, { input: data, cacheWrite: first ? prefix : 0, cacheRead: first ? 0 : prefix, output });
     // Up to 3 in parallel: each batch takes as long as its longest screen (+ ≈ 1 s while the first one primes the cache).

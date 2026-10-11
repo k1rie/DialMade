@@ -244,6 +244,16 @@ export const ai = defineDictionary({
         claudeHint: "Gratis con tu cuenta de Claude: copias el prompt, pegas aquí su respuesta y pasa las mismas comprobaciones.",
         noScreens: "Elige al menos una pantalla para preparar el prompt.",
       },
+      tiers: {
+        label: "Nivel de acabado",
+        options: { mockup: "Maqueta", presentable: "Presentable", final: "Producto final" },
+        hints: {
+          mockup: "Rápida y gratis: composición, estilo y textos de ejemplo.",
+          presentable: "Datos y textos coherentes en toda la pantalla, para enseñarla.",
+          final: "El máximo detalle en cada bloque. Tarda y cuesta más.",
+        },
+        needsKey: "Este nivel se genera con tu key o con tu Claude; el plan gratis hace la maqueta.",
+      },
       chips: {
         label: "Dirección de arte",
         hint: "Opcional. «Automática» deja que tu marca y una semilla elijan.",
@@ -576,6 +586,16 @@ export const ai = defineDictionary({
         useClaude: "Copy prompt for my Claude",
         claudeHint: "Free with your Claude account: copy the prompt, paste its answer here and it goes through the same checks.",
         noScreens: "Pick at least one screen to prepare the prompt.",
+      },
+      tiers: {
+        label: "Finish",
+        options: { mockup: "Mockup", presentable: "Presentable", final: "Final product" },
+        hints: {
+          mockup: "Quick and free: composition, style and sample copy.",
+          presentable: "Consistent data and copy across the screen, ready to show.",
+          final: "The most detail in every block. Takes longer and costs more.",
+        },
+        needsKey: "This finish runs with your key or your Claude; the free plan makes the mockup.",
       },
       chips: {
         label: "Art direction",

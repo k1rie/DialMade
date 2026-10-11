@@ -8,6 +8,7 @@ import type { AiRenderPlan } from "../../useAiRenderPlan";
 import { AiDirectionChips } from "../AiDirectionChips";
 import { AiRenderCost } from "../AiRenderCost";
 import { AiScreensPicker } from "../AiScreensPicker";
+import { AiTierPicker } from "../AiTierPicker";
 
 export type DesignDetailsProps = {
   plan: AiRenderPlan;
@@ -18,7 +19,8 @@ export type DesignDetailsProps = {
 };
 
 /**
- * «Diseño con IA»: the art direction chips, the screens and the cost line, all before any call, and the two other
+ * «Diseño con IA»: the finish (Maqueta · Presentable · Producto final), the art direction chips, the screens and the
+ * cost line, all before any call, and the two other
  * ways to Claude (spec §5.3, §10.3): the user's key and «Copiar prompt para mi Claude». When the free tier is closed
  * they are the primary way out.
  */
@@ -30,12 +32,13 @@ export function DesignDetails({ plan, onUseKey, onUseClaude }: DesignDetailsProp
   return (
     <>
       <p className="m-0 text-caption text-muted">{t.designDescription}</p>
+      <AiTierPicker value={plan.tier} onChange={plan.setTier} needsKey={plan.tierNeedsKey} />
       <AiDirectionChips value={plan.chip} onChange={plan.setChip} />
       <AiScreensPicker screens={plan.screens} selected={plan.selected} onToggle={plan.toggleScreen} />
       <AiRenderCost cost={plan.cost} blocked={plan.blocked} empty={empty} className="border-t border-app pt-3" />
       <div className="flex flex-col items-start gap-1.5 border-t border-app pt-3">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={plan.blocked && !byok.active ? "primary" : "secondary"} onClick={onUseKey}>
+          <Button size="sm" variant={(plan.blocked || plan.tierNeedsKey) && !byok.active ? "primary" : "secondary"} onClick={onUseKey}>
             {byok.active ? t.access.manageKey : t.access.useKey}
           </Button>
           <Button size="sm" variant="secondary" disabled={empty} onClick={onUseClaude}>

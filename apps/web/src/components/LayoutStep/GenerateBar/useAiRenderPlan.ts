@@ -1,6 +1,6 @@
 "use client";
 
-import type { AiDirectionChip } from "@dialmade/doc";
+import type { AiDirectionChip, AiRenderTier } from "@dialmade/doc";
 import { useCallback, useMemo } from "react";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useI18n } from "@/i18n";
@@ -8,6 +8,7 @@ import { AI_SESSION_SCREENS } from "@/lib/ai/config";
 import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { FREE_RENDER_TIERS, setRenderTier, useRenderTier } from "@/lib/ai/render/renderTier";
 import { renderPathFor } from "@/lib/ai/render/transport";
 import {
   estimateGenerate,
@@ -35,6 +36,14 @@ export type AiRenderPlan = {
   designAvailable: boolean;
   chip: AiDirectionChip;
   setChip: (chip: AiDirectionChip) => void;
+  /** «Maqueta · Presentable · Producto final» (the tab's choice). */
+  tier: AiRenderTier;
+  setTier: (tier: AiRenderTier) => void;
+  /**
+   * The tier asks for more than the free tier runs (Presentable or Producto final without a key in the tab): the
+   * key or «Copiar prompt para mi Claude» is the way to generate it.
+   */
+  tierNeedsKey: boolean;
   /** Every screen of the draft, in order. */
   screens: AiRenderScreenOption[];
   /** The screens «Generar con IA» designs (the pick, or the first ones without AI). */
@@ -122,19 +131,23 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   // The paid path of «Generar con IA» (Track C): the tab's key wins, else the free tier while it can open a session.
   const byok = useByokKey();
   const byokModel = useByokRenderModel();
+  const tier = useRenderTier();
   const path = renderPathFor(status, byok.active);
+  const tierNeedsKey = path.path !== "byok" && !FREE_RENDER_TIERS.includes(tier);
   const blocked = path.reason;
   const existing = doc.aiRender?.direction;
   const needsDirection = !(existing && (prefs.chip === "auto" || prefs.chip === existing.chip));
   const estimate = useMemo(() => {
     if (!wantsList || selected.length === 0 || !status) return null;
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
-    return estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: path.path === "byok" ? byokModel : status.freeModel });
-  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel]);
+    return path.path === "byok"
+      ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: byokModel, tier })
+      : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel });
+  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier]);
 
   const cost = useMemo(
     () =>
-      estimate && status && !blocked
+      estimate && status && !blocked && !tierNeedsKey
         ? {
             cost: formatRenderCost(estimate.costUsd, locale),
             left: status.freeUsesRemaining,
@@ -144,10 +157,10 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
             ...(path.path === "byok" && { byok: true }),
           }
         : null,
-    [estimate, status, blocked, locale, path.path],
+    [estimate, status, blocked, tierNeedsKey, locale, path.path],
   );
 
-  const ready = mode === "design" && selected.length > 0 && blocked === null && !busy;
+  const ready = mode === "design" && selected.length > 0 && blocked === null && !tierNeedsKey && !busy;
   const start = useCallback(() => {
     if (!store || !ready) return;
     void store.getState().actions.start({ screenIds: selected, chip: prefs.chip });
@@ -162,5 +175,5 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [store, mode, selected, busy, prefs.chip],
   );
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, tier, setTier: setRenderTier, tierNeedsKey, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }

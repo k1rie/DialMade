@@ -1,6 +1,7 @@
 // The cost line of «Generar con IA», shown BEFORE any call (spec §5.5, §10.1): «≈ $0.013 · 1 uso de 5 · 3 pantallas
 // · ≈ 30 s». Built from the probe and spike measurements (§11, §15.1) and the model's price card; Track C's estimate
 // for BYOK (count_tokens, Opus/Sonnet ranges) replaces it on those paths. Pure.
+import { tierSettings, type AiRenderTier } from "@dialmade/ai-render";
 import { usageCostUsd } from "../../pricing";
 
 /** Measured with Haiku 5.5 (spec §5.5, §11): ≈ 1030–1100 output tokens per block, plus a little thinking. */
@@ -24,20 +25,22 @@ export type RenderEstimate = { costUsd: number; seconds: number; screens: number
  * One generate: the art direction (when the document has none to reuse) and one streamed screen per entry of
  * `blocksPerScreen` (the blocks it asks for). The first screen writes the cached prefix, the others read it.
  */
-export function estimateGenerate(input: { blocksPerScreen: readonly number[]; direction: boolean; model: string }): RenderEstimate {
+export function estimateGenerate(input: { blocksPerScreen: readonly number[]; direction: boolean; model: string; tier?: AiRenderTier }): RenderEstimate {
   const { blocksPerScreen, direction, model } = input;
+  // A higher tier thinks more and writes finer details: more output and more time per block.
+  const factor = tierSettings(input.tier).outputFactor;
   let costUsd = direction ? usageCostUsd(DIRECTION_USAGE, model) : 0;
   blocksPerScreen.forEach((blocks, index) => {
     costUsd += usageCostUsd(
       {
         input_tokens: SCREEN_INPUT_TOKENS + blocks * BLOCK_INPUT_TOKENS,
-        output_tokens: blocks * OUTPUT_TOKENS_PER_BLOCK,
+        output_tokens: Math.round(blocks * OUTPUT_TOKENS_PER_BLOCK * factor),
         ...(index === 0 ? { cache_creation_input_tokens: CACHED_PREFIX_TOKENS } : { cache_read_input_tokens: CACHED_PREFIX_TOKENS }),
       },
       model,
     );
   });
-  const slowest = Math.max(0, ...blocksPerScreen.map((blocks) => SCREEN_BASE_SECONDS + blocks * SECONDS_PER_BLOCK));
+  const slowest = Math.max(0, ...blocksPerScreen.map((blocks) => SCREEN_BASE_SECONDS + blocks * SECONDS_PER_BLOCK * factor));
   const raw = (direction ? DIRECTION_SECONDS : 0) + (blocksPerScreen.length > 0 ? slowest : 0);
   // Rounded up to 5 s: it is a promise of «about», not a countdown.
   const seconds = Math.max(5, Math.ceil(raw / 5) * 5);

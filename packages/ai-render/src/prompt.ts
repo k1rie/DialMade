@@ -8,6 +8,7 @@ import { ICON_NAMES } from "@dialmade/ui/icons";
 import { AXIS_GLOSSARY, hash32, type DirectionCandidates } from "./direction";
 import { LIBRARY, selectReferences, type LibraryBlock } from "./library";
 import { PLACEHOLDER_KINDS } from "./sanitize";
+import { tierSettings, type AiRenderTier } from "./tier";
 import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES } from "./vocabulary";
 
 export const AI_RENDER_PROMPT_VERSION = "ai-render/3";
@@ -174,15 +175,18 @@ export function referencesText(brand: RenderBrandInput, direction: DirectionForP
   return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Each one names its gesture, the one bold move that makes it work. Build every block that has references on ONE of them, the one whose gesture suits the block, and follow it closely: the same structure, proportions and devices (rules, fills, shapes, mono labels, stickers, overlaps). Its gesture must be recognisable in your answer even when the block's content differs: change the content, never the gesture (no price → the trial length or the first plan's price becomes the giant figure; a physical object → draw this product's own device or screen as the object; two buttons instead of an email field → the buttons go where the field was). Never blend two references into a safer average. Rewrite every word and number for this brand and product, fit the block's cols and heightPx and show exactly "count" items. The art direction's axes and moves tune the reference's surface (tints, type voice, rules, labels); they never turn its rows, columns or list into a grid of cards. Only when a block's label or note asks for something no reference can show, design it from scratch. Never reuse their sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\nGestures to keep, one per block (from the reference you build on):\n${checklist.join("\n")}\n\n`;
 }
 
+/** The tier's quality brief as a closing paragraph (nothing for `mockup`). */
+const briefText = (tier: AiRenderTier | undefined) => (tierSettings(tier).brief ? `${tierSettings(tier).brief}\n\n` : "");
+
 /** User message of one screen: the cached art direction, then the screen with its reference blocks. */
-export function screenMessage(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { references?: boolean } = {}): MessageContent {
+export function screenMessage(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { references?: boolean; tier?: AiRenderTier } = {}): MessageContent {
   const order = screen.blocks.map((block) => block.id).join(", ");
   const references = options.references === false ? "" : referencesText(brand, direction, screen);
   return [
     { type: "text", text: artDirectionText(brand, direction), cache: true },
     {
       type: "text",
-      text: `<screen_data>\n${jsonData(screen)}\n</screen_data>\n\n${references}Design the ${screen.blocks.length} blocks of this screen. Write exactly ${screen.blocks.length} roots, in this order: ${order}. HTML only.`,
+      text: `<screen_data>\n${jsonData(screen)}\n</screen_data>\n\n${references}${briefText(options.tier)}Design the ${screen.blocks.length} blocks of this screen. Write exactly ${screen.blocks.length} roots, in this order: ${order}. HTML only.`,
     },
   ];
 }
@@ -197,7 +201,7 @@ export type BlockActionInput = {
 };
 
 /** User message of «Otra versión» / «Pedir cambio» (spec §5.4). */
-export function blockMessage(brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput): MessageContent {
+export function blockMessage(brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput, tier?: AiRenderTier): MessageContent {
   const ask =
     input.action.kind === "reroll"
       ? `Design this block again with a clearly different composition inside the same art direction (variation seed ${input.action.seed}). Keep its copy meaning.`
@@ -215,7 +219,7 @@ export function blockMessage(brand: RenderBrandInput, direction: DirectionForPro
       : "";
   return [
     { type: "text", text: artDirectionText(brand, direction), cache: true },
-    { type: "text", text: `<block_data>\n${jsonData(data)}\n</block_data>\n\n${references}${ask} Answer with the one root <… data-block-id="${input.block.id}">, HTML only.` },
+    { type: "text", text: `<block_data>\n${jsonData(data)}\n</block_data>\n\n${references}${briefText(tier)}${ask} Answer with the one root <… data-block-id="${input.block.id}">, HTML only.` },
   ];
 }
 
@@ -247,21 +251,21 @@ export function directionMessage(brand: RenderBrandInput, candidates: DirectionC
 }
 
 /** «Copiar prompt para mi Claude»: everything in one text (spec §5.6). */
-export function manualPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, screens: readonly RenderScreenInput[]): string {
+export function manualPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, screens: readonly RenderScreenInput[], tier?: AiRenderTier): string {
   const parts = [
     AI_RENDER_SYSTEM_PROMPT,
     "",
     artDirectionText(brand, direction),
     ...screens.map((screen) => `\n<screen_data>\n${jsonData(screen)}\n</screen_data>${referencesText(brand, direction, screen) ? `\n\n${referencesText(brand, direction, screen).trimEnd()}` : ""}`),
     "",
-    `Design every block of ${screens.length === 1 ? "this screen" : `these ${screens.length} screens`}, screen after screen, in the order given. Answer with the HTML roots only (one per block, each with its data-block-id), nothing else.`,
+    `${briefText(tier)}Design every block of ${screens.length === 1 ? "this screen" : `these ${screens.length} screens`}, screen after screen, in the order given. Answer with the HTML roots only (one per block, each with its data-block-id), nothing else.`,
   ];
   return parts.join("\n");
 }
 
 /** «Copiar prompt para mi Claude» for «Otra versión» / «Pedir cambio» of one block: the contract, then the same message. */
-export function manualBlockPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput): string {
-  return [AI_RENDER_SYSTEM_PROMPT, "", ...blockMessage(brand, direction, input).map((part) => part.text)].join("\n");
+export function manualBlockPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput, tier?: AiRenderTier): string {
+  return [AI_RENDER_SYSTEM_PROMPT, "", ...blockMessage(brand, direction, input, tier).map((part) => part.text)].join("\n");
 }
 
 /** Axes as one line («editorial · bold-display · …») for the UI and DESIGN.md. */

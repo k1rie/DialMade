@@ -20,6 +20,7 @@ import { expect, it } from "vitest";
 import { createDirection, directionParams, screenParams, streamBlocks } from "../src/anthropic";
 import { classTokensOf, compileAiCss } from "../src/css";
 import { directionCandidates, hash32 } from "../src/direction";
+import { AI_RENDER_TIERS, tierSettings, type AiRenderTier } from "../src/tier";
 import { inlineAssets } from "../src/export";
 import { structureGate } from "../src/gates";
 import { brandInput, screenInput } from "../src/input";
@@ -50,6 +51,8 @@ const MODEL_KEYS = (process.env.DIALMADE_EVAL_MODELS ?? "haiku,sonnet,opus").spl
 const BRAND_IDS = (process.env.DIALMADE_EVAL_BRANDS ?? "brisa,vectora").split(",").map((b) => b.trim());
 const EVAL_BRANDS = BRANDS.filter((brand) => BRAND_IDS.includes(brand.id));
 const SCREEN_IDS = [LANDING_ID, DASH_ID] as const;
+// «Maqueta · Presentable · Producto final»: DIALMADE_EVAL_TIER=presentable|final (effort and output room follow it).
+const TIER = (AI_RENDER_TIERS as readonly string[]).includes(process.env.DIALMADE_EVAL_TIER ?? "") ? (process.env.DIALMADE_EVAL_TIER as AiRenderTier) : "mockup";
 
 type Usage = { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null };
 const costOf = (u: Usage, model: ModelKey) => {
@@ -99,7 +102,7 @@ async function generate(client: Anthropic, brandId: string, model: ModelKey, dir
   if (!LIVE) throw new Error(`Missing saved answers for ${brandId}/${model}: run with DIALMADE_EVAL_LIVE=1`);
   guard();
   const brandData = brandInput(doc);
-  const options = { model: MODELS[model].id, effort: "low" as const };
+  const options = { model: MODELS[model].id, effort: tierSettings(TIER).effort, ...(TIER !== "mockup" && { tier: TIER }) };
   const run = async (id: (typeof SCREEN_IDS)[number], onStart?: () => void): Promise<SavedScreen> => {
     const screen = screenInput(doc, id, { draftOf: screens[id]!.draftOf });
     const t0 = performance.now();

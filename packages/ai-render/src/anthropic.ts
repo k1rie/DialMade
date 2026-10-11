@@ -24,6 +24,7 @@ import {
   type RenderScreenInput,
 } from "./prompt";
 import { BlockStreamParser, type StreamBlock } from "./stream";
+import { tierSettings, type AiRenderTier } from "./tier";
 
 type Params = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
 type Message = Anthropic.Beta.Messages.BetaMessage;
@@ -36,6 +37,8 @@ export type CallOptions = {
   fallbacks?: boolean;
   /** `output_config.effort` errors on a few older models. */
   effortSupported?: boolean;
+  /** «Maqueta · Presentable · Producto final»: the output room and the quality brief (the caller sets `effort`). */
+  tier?: AiRenderTier;
 };
 
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
@@ -72,10 +75,10 @@ export function directionParams(
 }
 
 export const screenParams = (options: CallOptions, brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput): Params =>
-  base(options, SCREEN_MAX_TOKENS, screenMessage(brand, direction, screen));
+  base(options, options.tier ? tierSettings(options.tier).screenMaxTokens : SCREEN_MAX_TOKENS, screenMessage(brand, direction, screen, { ...(options.tier && { tier: options.tier }) }));
 
 export const blockParams = (options: CallOptions, brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput): Params =>
-  base(options, BLOCK_MAX_TOKENS, blockMessage(brand, direction, input));
+  base(options, options.tier ? tierSettings(options.tier).blockMaxTokens : BLOCK_MAX_TOKENS, blockMessage(brand, direction, input, options.tier));
 
 /** The model answered, but not with something usable. `message` carries the billed usage. */
 export class RenderOutputError extends Error {

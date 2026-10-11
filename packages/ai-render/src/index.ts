@@ -1,5 +1,6 @@
 export { iconSvg, placeholderSvg } from "./assets";
 export { CHART_KINDS, canonicalChartValues, chartFromAttributes, chartSvg, formatChartValue, parseChartValues, type ChartKind } from "./chart";
+export { AI_RENDER_TIERS, TIER_SETTINGS, tierSettings, type AiRenderTier, type TierSettings } from "./tier";
 export { LIBRARY, fitScore, selectReferences, type LibraryBlock, type LibraryBlockType, type LibraryFits } from "./library";
 export { contrastIssues, fixContrast, themeColorsFromVars, type ContrastIssue, type ContrastMode, type ContrastResult, type ThemeColors } from "./contrast";
 export {

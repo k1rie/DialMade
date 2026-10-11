@@ -1,6 +1,6 @@
 // «Generar con IA» (spec §5, tracks doc · Track A): the state of one generation, the transport it talks to and what
 // the UI reads. Type-only module (client-safe, no React).
-import type { AiDirectionChip, AiRenderPath } from "@dialmade/doc";
+import type { AiDirectionChip, AiRenderPath, AiRenderTier } from "@dialmade/doc";
 import type {
   RenderApiError,
   RenderBlockBody,
@@ -31,6 +31,8 @@ export type RenderTransport = {
   readonly path: AiRenderPath;
   /** Model named in the provenance (Track C's transports know it; `claude.ai` for «mi Claude»). */
   readonly model?: string;
+  /** «Maqueta · Presentable · Producto final» it asks with (written to the provenance; absent = `mockup`). */
+  readonly tier?: AiRenderTier;
   /** `true` when «Cancelar» stops the call and its billing (BYOK); the free tier finishes and bills the screen. */
   readonly cancelStopsBilling?: boolean;
   openSession(body: RenderSessionBody, signal?: AbortSignal): Promise<TransportResult<OpenedSession>>;

@@ -7,6 +7,7 @@ import { loadAiStatus } from "@/hooks/useAiStatus";
 import { getByokKey } from "../../byokKey";
 import type { RenderApiError } from "../api";
 import { getByokRenderModel } from "../byokModel";
+import { getRenderTier } from "../renderTier";
 import { RenderTransportError, abortedError, createRenderTransport, networkError, renderPathFor, type RenderTransport as AccessTransport } from "../transport";
 import type { RenderTransport, TransportResult } from "./types";
 
@@ -39,6 +40,7 @@ export function fromAccessTransport(access: AccessTransport): RenderTransport {
   return {
     path: access.path,
     model: access.model,
+    tier: access.tier,
     cancelStopsBilling: access.cancelStopsBilling,
     openSession: (body, signal) => settle(() => access.openSession(body, options(signal)), signal),
     direction: (body, signal) => settle(() => access.direction(withoutTask(body), options(signal)), signal),
@@ -67,7 +69,7 @@ export async function currentAccessTransport(): Promise<AccessTransport | Render
   const status = await loadAiStatus();
   const choice = renderPathFor(status, getByokKey() !== null);
   if (!choice.path) return { code: choice.reason === "not-configured" ? "ai-not-configured" : choice.reason, message: "No AI path is open" };
-  return createRenderTransport(choice.path, { status, byokModel: getByokRenderModel(), getKey: getByokKey });
+  return createRenderTransport(choice.path, { status, byokModel: getByokRenderModel(), getKey: getByokKey, tier: getRenderTier() });
 }
 
 /** `currentAccessTransport` as the generation's transport. */
