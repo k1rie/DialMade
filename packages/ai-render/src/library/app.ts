@@ -11,6 +11,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "One figure rules the block: a tall inverted panel with the number at display size, its period and its delta in one line; beside it a plain ledger of three supporting figures separated by hairlines. Hierarchy instead of four equal cards.",
+    gesture: "one inverted panel with the main figure, the rest a plain ledger",
     fits: { composition: ["asymmetric", "split", "data-dense", "bento"], typeVoice: ["bold-display", "technical-mono", "humanist"], colorStrategy: ["high-contrast-cta", "neutral-with-pops", "tonal-monochrome"], decoration: ["outlined", "none", "tinted-panels"], rhythm: ["balanced", "compact"] },
     html: `<section data-block-id="b-kpis" class="@container h-full">
 <div class="grid h-full gap-4 @3xl:grid-cols-12">
@@ -32,6 +33,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "A scoreboard: four figures at heading size in one row, divided by heavy vertical rules, a mono label above each and its change below in mono. No card fills; two rules above and below hold it. Reads in one glance, like a result sheet.",
+    gesture: "four figures divided by heavy vertical rules, no card fills",
     fits: { composition: ["data-dense", "editorial", "asymmetric"], typeVoice: ["technical-mono", "condensed-caps", "bold-display"], decoration: ["rules-and-grids", "outlined", "none"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-kpis" class="@container h-full">
 <dl class="grid h-full grid-cols-2 divide-x-2 divide-foreground border-y-2 border-foreground @3xl:grid-cols-4">
@@ -48,6 +50,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "The chart is the card: no inner padding around it, the area runs edge to edge and the title, the headline number and the range switch sit over a quiet header. A dashed marker and a callout say which point matters. Big, calm, one story.",
+    gesture: "the area runs edge to edge with one marked point",
     fits: { composition: ["data-dense", "split", "asymmetric", "bento"], imagery: ["data-viz-led"], typeVoice: ["humanist", "technical-mono", "quiet", "bold-display"], decoration: ["none", "outlined", "gradient-wash"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-chart" class="@container flex h-full flex-col overflow-hidden rounded-card border border-border bg-card">
 <div class="flex flex-wrap items-start justify-between gap-4 p-5">
@@ -66,6 +69,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "Bars where one is the story: every bar is dimmed except the one that matters, and a text callout above states it with its figure and why. The legend shrinks to a caption. The chart makes one claim.",
+    gesture: "every bar dimmed but one, and a sentence that names it",
     fits: { composition: ["data-dense", "split", "editorial", "asymmetric"], imagery: ["data-viz-led"], typeVoice: ["humanist", "technical-mono", "bold-display"], decoration: ["outlined", "rules-and-grids", "none"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-chart" class="@container flex h-full flex-col rounded-card border border-border bg-card p-5">
 <p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">Orders per week</p>
@@ -80,6 +84,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "A leaderboard instead of a pie: each row is a rank numeral at heading size, the name, the value and a thick proportional bar under it, widest first. Ordered, readable at a glance, and the top row is filled in the primary color.",
+    gesture: "ranked rows with big rank numerals and thick bars",
     fits: { composition: ["data-dense", "asymmetric", "split", "editorial"], imagery: ["data-viz-led", "icon-led"], typeVoice: ["bold-display", "technical-mono", "humanist"], decoration: ["rules-and-grids", "none", "outlined"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-chart" class="@container h-full rounded-card border border-border bg-card p-5">
 <div class="flex items-baseline justify-between"><h2 class="font-heading text-h3 font-semibold text-foreground">Best sellers</h2><p class="text-caption text-muted-foreground">Units · this month</p></div>
@@ -97,6 +102,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "A table without a box: a heading and a count, a mono caps header under a heavy rule, rows with generous height and the first column in medium weight, the status as a dot and a word (no pills), figures right-aligned in tabular numerals and a bold total under a closing rule.",
+    gesture: "no box: a heavy rule, tall rows and a bold total",
     fits: { composition: ["editorial", "data-dense", "asymmetric"], typeVoice: ["quiet", "technical-mono", "humanist", "condensed-caps"], decoration: ["rules-and-grids", "none", "outlined"], rhythm: ["balanced", "compact", "airy"] },
     html: `<section data-block-id="b-table" class="@container flex h-full flex-col">
 <div class="flex flex-wrap items-baseline justify-between gap-3"><h2 class="font-heading text-h2 font-semibold tracking-tight text-foreground">Deliveries today</h2><p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">18 scheduled · 3 late</p></div>
@@ -120,6 +126,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "Rows grouped by day: each group opens with a heavy rule and the day as a large numeral with its weekday in mono on the left, and the entries as a clean list on the right (time in mono, name, a status word). The structure is a calendar, the content a table.",
+    gesture: "rows grouped under large day numerals",
     fits: { composition: ["editorial", "split", "asymmetric", "data-dense"], typeVoice: ["technical-mono", "bold-display", "quiet"], decoration: ["rules-and-grids", "none"], rhythm: ["balanced", "compact", "airy"] },
     html: `<section data-block-id="b-table" class="@container h-full">
 <h2 class="font-heading text-h3 font-semibold text-foreground">Next visits</h2>
@@ -146,6 +153,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "The newest event gets a tinted panel with its sentence at body-large size and an avatar; below, «Earlier» is a compact log of mono timestamps and one-line events under hairlines. One thing to read now, the rest to scan.",
+    gesture: "the newest event large on a tint, the rest a mono log",
     fits: { composition: ["split", "asymmetric", "data-dense", "editorial"], typeVoice: ["technical-mono", "humanist", "quiet"], decoration: ["tinted-panels", "rules-and-grids", "outlined"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-activity" class="@container h-full">
 <div class="rounded-card bg-primary/10 p-5">
@@ -166,6 +174,7 @@ export const APP: LibraryBlock[] = [
     surface: "app",
     pattern:
       "Events grouped under day labels set in mono caps with a rule that runs to the edge; within a group, avatar, sentence with the object in bold and the time pushed right. It is a feed that knows when things happened.",
+    gesture: "events under mono day labels with rules to the edge",
     fits: { composition: ["data-dense", "split", "editorial"], typeVoice: ["technical-mono", "humanist", "quiet"], decoration: ["rules-and-grids", "none", "outlined"], imagery: ["layered-collage", "icon-led"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-activity" class="@container h-full">
 <div class="flex items-center gap-4"><p class="font-mono text-caption uppercase tracking-widest text-foreground">Today</p><span class="h-px grow bg-border"></span></div>

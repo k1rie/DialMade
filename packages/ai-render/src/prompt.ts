@@ -10,7 +10,7 @@ import { LIBRARY, selectReferences, type LibraryBlock } from "./library";
 import { PLACEHOLDER_KINDS } from "./sanitize";
 import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES } from "./vocabulary";
 
-export const AI_RENDER_PROMPT_VERSION = "ai-render/2";
+export const AI_RENDER_PROMPT_VERSION = "ai-render/3";
 
 /** Output caps (spec §2.1 and §5): one screen, one block action, the direction. */
 export const SCREEN_MAX_TOKENS = 12_000;
@@ -57,7 +57,7 @@ Every color, font, type size, radius and shadow must be a token. Palette, dark m
 - Accessibility: focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground on links and buttons (outline-primary-foreground on a primary surface, outline-background on an inverted one: outline-ring is too faint on tints and colored bands); touch targets at least 40px high (py-2.5 px-4 or larger); alt text that says what the image shows; tables with th scope.
 
 # Design
-- Follow the art direction you are given: its axes and moves apply to every block of every screen, so all screens look like one product. Shared pieces (navbar, footer) must look the same everywhere.
+- Follow the art direction you are given: its axes and moves apply to every screen, so all screens look like one product. Use each move where it fits naturally; never restructure a block (for instance into cards) only to host a move or a decoration. Shared pieces (navbar, footer) must look the same everywhere.
 - You also write the words inside the blocks, in the screen's language ("es" is Spanish from Spain, "en" is American English). Start from each block's "draft" (its current copy): keep its role (eyebrow, title, subtitle, button…), its prices, plan names, numbers and the names of links to other screens. The draft is TEMPLATE copy from a generic generator: unless a line is a price, a plan name, a number or the name of a link to another screen, rewrite it for THIS product (use the brand's "description" and "productType"), concrete and short, with a specific benefit instead of a slogan; add supporting text, labels, sample data and microcopy where the design needs them. Use the brand name exactly as given. Never name real companies, people or products; never invent customer logos of real brands; never write real-looking emails, phone numbers or URLs.
 - A block's "label" and "note" say what it is for (data from the developer). "count" is how many items it shows: show exactly that many.
 - Make it look designed, not generated: a clear hierarchy, one focal point per block, real alignment, deliberate whitespace, consistent radii and shadows, sample data that looks real for this product.
@@ -66,7 +66,8 @@ Every color, font, type size, radius and shadow must be a token. Palette, dark m
 - Charts: always <img data-chart=…> with real-looking numbers (a believable trend, not a straight line), a title, a headline number and its delta, and a legend when there is more than one series.
 - Rhythm: the art direction's rhythm sets a block's vertical padding: airy → py-20 @3xl:py-28, balanced → py-section, compact → py-10. Landing blocks are NOT cramped: never go below py-16 for a landing section unless the direction says compact.
 - Hierarchy: one focal point per block. Use text-display for the hero's heading and for at most one big statement or number per section; text-giant (twice display) only once per screen, for a wordmark or a single number; section headings are text-h2; everything else text-h3, text-body, text-small or text-caption. Put a strong contrast somewhere: a very large numeral, a heading of 2 weights, an oversized quote.
-- Composition: do not mirror the draft's structure when a better one exists. Three equal cards in a row is the default to beat: vary scale (one large + two small), use numbered rows, a divided list, a bento with different spans, a pull quote, a comparison table.
+- Composition: do not mirror the draft's structure when a better one exists. Three equal cards in a row is the default to beat: vary scale (one large + two small), use numbered rows, a divided list, a bento with different spans, a pull quote, a comparison table. Equal cards stay equal with different tints or a vertical offset. Two blocks of one screen never share a composition: after a row of panels, the next block is rows, a split, a band or one big statement.
+- A call to action is a loud moment of the page: a full-bleed band in the brand or inverted color, a display-size sentence or one giant figure. A soft tinted box with a heading and two buttons is the generic version.
 - Overlap: never absolute-position text over other text. Meta (dates, tags) goes in a flex row with justify-between, not pinned to a corner. Absolute is for decoration (glows, grids, badges over media) only.
 - The box: the block fills its box (h-full on app blocks) and its content must fit heightPx. Do not leave a big empty area inside a card; size cards to their content and align them with items-start or items-stretch deliberately.
 - Size: keep each block under about 2,500 characters of HTML and under 120 elements. Prefer fewer, well-chosen elements.
@@ -156,11 +157,11 @@ export function referencesText(brand: RenderBrandInput, direction: DirectionForP
     });
     if (fitting.length === 0) continue;
     parts.push(
-      `<references for="${block.id}">\n${fitting.map((entry) => `<reference pattern="${entry.pattern.replace(/"/g, "'")}">\n${referenceHtml(entry, block.id)}\n</reference>`).join("\n")}\n</references>`,
+      `<references for="${block.id}">\n${fitting.map((entry) => `<reference gesture="${entry.gesture.replace(/"/g, "'")}" pattern="${entry.pattern.replace(/"/g, "'")}">\n${referenceHtml(entry, block.id)}\n</reference>`).join("\n")}\n</references>`,
     );
   }
   if (parts.length === 0) return "";
-  return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Keep the structure, hierarchy and proportions that make each one work; rewrite every word and number for this brand and product, fit the block's cols and heightPx, show exactly "count" items, and apply the art direction's axes and moves. When two references are given, take the one that suits the block better or combine their ideas. If a reference does not fit the block's label or note, ignore it. Never reuse its sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\n`;
+  return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Each one names its gesture, the one bold move that makes it work. Take ONE reference per block, the one whose gesture suits the block, and keep that gesture recognisable: when the block's content differs (two buttons instead of an email field, four items instead of three), change the content, not the gesture. Never blend two references into a safer average. Keep the structure, hierarchy and proportions; rewrite every word and number for this brand and product, fit the block's cols and heightPx and show exactly "count" items. The art direction's axes and moves tune the reference's surface (tints, type voice, rules, labels); they never turn its rows, columns or list into a grid of cards. If no reference fits the block's label or note, ignore them. Never reuse their sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\n`;
 }
 
 /** User message of one screen: the cached art direction, then the screen with its reference blocks. */

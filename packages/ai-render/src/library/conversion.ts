@@ -12,6 +12,7 @@ export const CONVERSION: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "Three plans where the recommended one is not just colored: it is raised (ring, shadow, a small label) and its price is the largest number. Prices are big numerals with a small unit, features are a check list, the action fills the full width of the card.",
+    gesture: "the recommended plan raised and holding the largest price",
     fits: { composition: ["centered-stage", "split", "bento", "editorial"], typeVoice: ["humanist", "bold-display", "quiet"], decoration: ["outlined", "tinted-panels", "soft-shapes", "none"], colorStrategy: ["high-contrast-cta", "brand-forward", "neutral-with-pops"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -53,6 +54,7 @@ export const CONVERSION: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "Two plans side by side, not three: one on the light surface, one inverted (foreground fill, background text) so the choice is a clear contrast, with a thin line of reassurance underneath instead of a feature matrix.",
+    gesture: "two plans, one of them inverted",
     fits: { composition: ["split", "asymmetric", "editorial"], typeVoice: ["bold-display", "quiet", "technical-mono"], colorStrategy: ["high-contrast-cta", "neutral-with-pops", "tonal-monochrome"], decoration: ["outlined", "none", "rules-and-grids"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-5xl px-6">
@@ -84,6 +86,7 @@ export const CONVERSION: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A comparison table: plan names and prices in the header cells (the recommended column tinted), feature names in the first column, checks and dashes in the cells, row hairlines. For buyers who compare; dense and honest.",
+    gesture: "a comparison table with the recommended column tinted",
     fits: { composition: ["data-dense", "editorial", "split"], typeVoice: ["technical-mono", "quiet", "humanist"], decoration: ["rules-and-grids", "outlined", "none"], rhythm: ["compact", "balanced"] },
     html: `<section data-block-id="b-pricing" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -115,6 +118,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "navbar",
     surface: "landing",
     pattern: "A masthead: links on the left, the wordmark centered in heavy uppercase, account and cart on the right, closed by a 2px rule. It reads as a publication, not as an app bar.",
+    gesture: "the wordmark centered in heavy uppercase over a 2px rule",
     fits: { composition: ["editorial", "asymmetric", "centered-stage"], typeVoice: ["bold-display", "condensed-caps", "quiet"], decoration: ["rules-and-grids", "none", "outlined"], rhythm: ["airy", "balanced"] },
     html: `<header data-block-id="b-nav" class="@container border-b-2 border-foreground bg-background">
 <div class="mx-auto grid max-w-container grid-cols-3 items-center gap-4 px-6 py-4">
@@ -129,6 +133,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "navbar",
     surface: "landing",
     pattern: "A solid inverted bar (foreground fill): a mono wordmark with a trailing underscore, small uppercase mono links with wide tracking and an outlined action. Technical and terse.",
+    gesture: "a solid inverted bar set in mono",
     fits: { composition: ["data-dense", "asymmetric", "split"], typeVoice: ["technical-mono", "condensed-caps"], decoration: ["outlined", "rules-and-grids", "none"], colorStrategy: ["high-contrast-cta", "tonal-monochrome", "neutral-with-pops"], rhythm: ["compact", "balanced"] },
     html: `<header data-block-id="b-nav" class="@container bg-foreground">
 <div class="mx-auto flex max-w-container items-center justify-between gap-6 px-6 py-4">
@@ -143,6 +148,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "cta",
     surface: "landing",
     pattern: "An inverted band with the heading at display size in uppercase, taking the whole width, and under it one large light button and an underlined text link. A single sentence, a single decision.",
+    gesture: "one display-size uppercase sentence across an inverted band",
     fits: { composition: ["editorial", "centered-stage", "asymmetric"], typeVoice: ["bold-display", "condensed-caps", "technical-mono"], colorStrategy: ["high-contrast-cta", "tonal-monochrome", "neutral-with-pops"], decoration: ["none", "rules-and-grids"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-cta" class="@container bg-foreground py-20 text-background @3xl:py-28">
 <div class="mx-auto max-w-container px-6">
@@ -159,21 +165,48 @@ export const CONVERSION: LibraryBlock[] = [
     id: "cta-tilted-cards",
     type: "cta",
     surface: "landing",
-    pattern: "A tinted panel with the heading and a short line on the left and, on the right, two cards stacked and slightly rotated in opposite directions, the front one holding the real action (email field and button). The tilt adds life; the card holds the point.",
+    pattern:
+      "A tinted panel with the heading and a short line on the left and, on the right, two cards stacked and slightly rotated in opposite directions: the back one previews what the visitor gets, the front one holds the block's actions (its buttons, or a field when the block asks for one). The tilt adds life; the card holds the point.",
+    gesture: "two cards rotated in opposite directions, the front one holding the actions",
     fits: { composition: ["split", "asymmetric", "bento"], imagery: ["tilted-cards", "layered-collage"], decoration: ["tinted-panels", "soft-shapes", "gradient-wash"], typeVoice: ["humanist", "bold-display"], colorStrategy: ["brand-forward", "neutral-with-pops"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-cta" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
 <div class="grid items-center gap-12 overflow-hidden rounded-xl bg-primary/10 p-8 @3xl:grid-cols-12 @3xl:p-14">
 <div class="@3xl:col-span-6">
-<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground @3xl:text-display">The first dispatch is on us</h2>
-<p class="mt-4 max-w-md text-body text-foreground">One short email every Friday with what other growers are sowing this week.</p>
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-foreground @3xl:text-display">Your first seed box is on us</h2>
+<p class="mt-4 max-w-md text-body text-foreground">Pick six varieties for the season and we post them on Friday, with sowing notes for your plot.</p>
 </div>
 <div class="relative min-h-64 @3xl:col-span-6">
-<div class="absolute inset-x-6 top-2 rotate-3 rounded-card border border-border bg-card p-5 shadow-md"><p class="text-small font-medium text-foreground">This week · 14 tips</p><div class="mt-3 space-y-2"><span class="block h-2 w-3/4 rounded-full bg-muted"></span><span class="block h-2 w-1/2 rounded-full bg-muted"></span></div></div>
-<div class="absolute inset-x-0 bottom-0 -rotate-2 rounded-card border border-border bg-card p-5 shadow-lg">
-<label for="cta-tilt-email" class="text-small font-medium text-foreground">Where should we send it?</label>
-<div class="mt-3 flex flex-col gap-3 @sm:flex-row"><input id="cta-tilt-email" type="email" placeholder="Your email" class="grow rounded-input border border-border bg-background px-4 py-3 text-body text-foreground ${FOCUS}"><button type="button" class="rounded-button bg-primary px-5 py-3 text-body font-medium text-primary-foreground hover:bg-primary-hover ${FOCUS}">Send it</button></div>
+<div class="absolute inset-x-6 top-2 rotate-3 rounded-card border border-border bg-card p-5 shadow-md"><div class="flex items-center justify-between gap-4"><p class="text-small font-medium text-foreground">First box · ships Friday</p><span class="rounded-badge bg-primary/10 px-2 py-1 text-caption text-foreground">6 varieties</span></div><p class="mt-2 text-small text-muted-foreground">Cherry tomato, sweet basil, runner beans…</p></div>
+<div class="absolute inset-x-0 bottom-0 -rotate-2 rounded-card border border-border bg-card p-6 shadow-lg">
+<p class="text-small font-medium text-foreground">Two minutes to join · pause any month</p>
+<div class="mt-4 flex flex-wrap items-center gap-5"><a href="#" class="rounded-button bg-primary px-6 py-3 text-body font-medium text-primary-foreground hover:bg-primary-hover ${FOCUS}">Claim my box</a><a href="#" class="inline-flex items-center gap-2 py-2.5 text-body font-medium text-foreground underline underline-offset-4 ${FOCUS}">See what is inside<i data-icon="arrow-right" aria-hidden="true" class="size-4"></i></a></div>
 </div>
+</div>
+</div>
+</div>
+</section>`,
+  },
+  {
+    id: "cta-brand-figure",
+    type: "cta",
+    surface: "landing",
+    pattern:
+      "The whole band in the brand color: on the left one giant figure that IS the offer (days free, minutes to start, visits on the house) with its unit under it; on the right, past a vertical hairline, the heading, one line and the actions, the main one the only light shape on the band.",
+    gesture: "one giant figure of the offer on a band in the brand color",
+    fits: { composition: ["split", "asymmetric", "editorial"], typeVoice: ["humanist", "bold-display", "quiet"], colorStrategy: ["brand-forward", "tonal-monochrome", "high-contrast-cta"], decoration: ["tinted-panels", "soft-shapes", "none"], rhythm: ["airy", "balanced"] },
+    html: `<section data-block-id="b-cta" class="@container bg-primary py-20 text-primary-foreground @3xl:py-28">
+<div class="mx-auto grid max-w-container items-center gap-10 px-6 @3xl:grid-cols-12 @3xl:gap-12">
+<div class="@3xl:col-span-5">
+<p class="font-heading text-giant font-black leading-none tracking-tight tabular-nums text-primary-foreground">3</p>
+<p class="mt-3 text-h3 font-semibold text-primary-foreground">classes on the house</p>
+</div>
+<div class="@3xl:col-span-7 @3xl:border-l @3xl:border-primary-foreground/30 @3xl:pl-12">
+<h2 class="font-heading text-h1 font-semibold tracking-tight text-primary-foreground">Throw your first pot this week</h2>
+<p class="mt-4 max-w-md text-body text-primary-foreground">Clay, aprons and a patient teacher included. Book from your phone and pay only if you stay.</p>
+<div class="mt-8 flex flex-wrap items-center gap-6">
+<a href="#" class="rounded-button bg-background px-7 py-4 text-body font-semibold text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">Book a class</a>
+<a href="#" class="inline-flex items-center gap-2 border-b border-primary-foreground pb-1 text-body font-medium text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-foreground">See the timetable<i data-icon="arrow-right" aria-hidden="true" class="size-4"></i></a>
 </div>
 </div>
 </div>
@@ -184,6 +217,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "faq",
     surface: "landing",
     pattern: "The questions ARE the design: each one at heading size on the left half of a ruled row, its answer in muted body text on the right. A heavy rule opens the list. No accordion chrome, no plus icons, everything visible at once.",
+    gesture: "every question at heading size in ruled rows, all answers visible",
     fits: { composition: ["editorial", "split", "asymmetric"], typeVoice: ["bold-display", "quiet", "humanist"], decoration: ["rules-and-grids", "none"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-faq" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -201,6 +235,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "footer",
     surface: "landing",
     pattern: "Three small link columns and the legal line sit at the top; the wordmark takes the bottom of the block at display size in heavy uppercase, cropped to one line. The footer ends the page with a signature, not with a list.",
+    gesture: "the wordmark at display size as the last line of the page",
     fits: { composition: ["editorial", "centered-stage", "asymmetric"], typeVoice: ["bold-display", "condensed-caps", "quiet"], decoration: ["none", "rules-and-grids"], rhythm: ["airy", "balanced"] },
     html: `<footer data-block-id="b-footer" class="@container overflow-hidden bg-background pt-14">
 <div class="mx-auto max-w-container px-6">
@@ -221,6 +256,7 @@ export const CONVERSION: LibraryBlock[] = [
     type: "footer",
     surface: "landing",
     pattern: "A fully inverted footer: a large sentence with an email field on the left, three link columns on the right, and a hairline above the legal row. It closes the page on the same dark note as the call to action.",
+    gesture: "the whole footer inverted, opening with a large sentence",
     fits: { composition: ["split", "asymmetric", "data-dense"], colorStrategy: ["high-contrast-cta", "tonal-monochrome", "neutral-with-pops"], typeVoice: ["bold-display", "technical-mono", "humanist"], decoration: ["none", "outlined", "rules-and-grids"], rhythm: ["balanced", "compact", "airy"] },
     html: `<footer data-block-id="b-footer" class="@container bg-foreground py-14 text-background">
 <div class="mx-auto max-w-container px-6">

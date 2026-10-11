@@ -10,6 +10,7 @@ export const HEROES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A left-aligned heading with a short promise and two actions, then a product window (top bar with three dots, sidebar, KPI cards, a chart) spanning the full width and cut off by the bottom edge of the block, so it reads as a real interface.",
+    gesture: "a real product window across the block, cut off by its bottom edge",
     fits: { composition: ["asymmetric", "split", "centered-stage"], imagery: ["framed-screens", "data-viz-led"], typeVoice: ["quiet", "bold-display", "humanist"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-hero" class="@container relative overflow-hidden bg-background">
 <div class="mx-auto max-w-container px-6 pt-20 @3xl:pt-28">
@@ -58,6 +59,7 @@ export const HEROES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "An asymmetric 7/5 split: heading, promise and actions on the left; on the right a single raised card that shows one big number, a sparkline and two small stats. Below, a strip of 3–4 metrics separated by vertical hairlines.",
+    gesture: "one raised card with a single big number beside the heading",
     fits: { composition: ["asymmetric", "split", "data-dense"], typeVoice: ["technical-mono", "bold-display"], decoration: ["outlined", "rules-and-grids", "tinted-panels"], imagery: ["data-viz-led", "framed-screens"], rhythm: ["balanced", "compact"] },
     html: `<section data-block-id="b-hero" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -104,6 +106,7 @@ export const HEROES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A centered stage: one heading where a single word sits inside a tinted pill, a short promise, two actions, and a tight row of overlapping avatars with a one-line proof under them. Quiet and friendly; the color is spent in the pill and the primary action only.",
+    gesture: "one word of the heading inside a tinted pill",
     fits: { composition: ["centered-stage", "editorial"], typeVoice: ["humanist", "quiet", "bold-display"], decoration: ["soft-shapes", "tinted-panels", "none"], colorStrategy: ["neutral-with-pops", "brand-forward"], rhythm: ["airy"] },
     html: `<section data-block-id="b-hero" class="@container relative overflow-hidden bg-background py-20 @3xl:py-28">
 <div class="absolute inset-x-0 top-0 h-64 bg-radial from-primary/15 to-transparent" aria-hidden="true"></div>
@@ -131,6 +134,7 @@ export const HEROES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "Typography as the picture: a mono issue line and a hairline on top, an oversized heading that takes the whole width, then a row of three short statements separated by vertical hairlines and a text-link action. No image at all; the whitespace and the rules do the work.",
+    gesture: "an oversized heading as the only picture, held by hairlines",
     fits: { composition: ["editorial", "asymmetric"], typeVoice: ["bold-display", "condensed-caps", "technical-mono", "quiet"], decoration: ["rules-and-grids", "none", "outlined"], imagery: ["icon-led"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-hero" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -157,6 +161,7 @@ export const HEROES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A large rounded photo that is the hero, with the heading in a raised caption card that sits on its bottom-left corner, pill labels pinned to the picture (price, category) and one primary action under it. Warm, tactile and product-first.",
+    gesture: "a large photo with the heading on a caption card over its corner",
     fits: { composition: ["editorial", "split", "asymmetric"], imagery: ["layered-collage", "tilted-cards", "framed-screens"], typeVoice: ["humanist", "quiet"], decoration: ["soft-shapes", "none"], colorStrategy: ["neutral-with-pops", "tonal-monochrome"], rhythm: ["airy"] },
     html: `<section data-block-id="b-hero" class="@container bg-background py-10 @3xl:py-16">
 <div class="mx-auto max-w-container px-6">

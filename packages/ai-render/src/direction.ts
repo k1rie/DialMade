@@ -163,7 +163,7 @@ export const AXIS_GLOSSARY: Readonly<Record<string, string>> = {
   "rules-and-grids": "hairline rules, dividers and faint grids",
   "soft-shapes": "rounded tinted shapes behind media",
   outlined: "borders instead of fills and shadows",
-  "tinted-panels": "panels on muted/accent tints",
+  "tinted-panels": "one or two large panels on muted/accent tints that hold a block's content, not a tint on every item",
   "gradient-wash": "subtle token gradients on backgrounds",
   "framed-screens": "product screenshots in device or browser frames",
   "tilted-cards": "slightly rotated stacked cards",

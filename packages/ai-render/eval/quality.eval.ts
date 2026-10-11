@@ -25,7 +25,7 @@ import { structureGate } from "../src/gates";
 import { brandInput, screenInput } from "../src/input";
 import { processBlock } from "../src/pipeline";
 import { splitBlocks } from "../src/stream";
-import { attr, elements, parseSanitized, textOf } from "../src/tree";
+import { attr, elements, parseSanitized, textOf, type AiElement, type AiNode } from "../src/tree";
 import { apiKey } from "./key";
 import { BRANDS } from "./fixtures";
 import { DASH_ID, LANDING_ID, qualityDoc } from "./quality.fixtures";
@@ -138,14 +138,33 @@ type Stats = {
   containerVariants: number;
   words: number;
   nonLatin: string[];
+  /** Blocks whose items are 3+ sibling panels that differ only in tint or offset (the «three equal cards» look). */
+  equalPanels: string[];
 };
+
+/** A panel's shape without its tint and offset, or null when the element is not a panel (rounded + a fill, border or shadow). */
+function panelShape(element: AiElement): string | null {
+  const utilities = (attr(element, "class") ?? "").split(/\s+/).filter(Boolean).map((cls) => cls.replace(/^(?:[@a-z0-9-]+:)+/, ""));
+  const panel = utilities.some((u) => /^rounded-(card|lg|xl|2xl|3xl)$/.test(u)) && utilities.some((u) => /^(bg-|border$|shadow-)/.test(u));
+  return panel ? utilities.filter((u) => !/^(bg-|-?mt-|-?translate-|-?rotate-)/.test(u)).sort().join(" ") : null;
+}
+
+function hasEqualPanels(tree: AiNode[]): boolean {
+  for (const el of elements(tree)) {
+    const kids = el.children.filter((child): child is AiElement => child.type === "element");
+    if (kids.length < 3) continue;
+    const shapes = kids.map(panelShape);
+    if (shapes[0] !== null && shapes.every((shape) => shape === shapes[0])) return true;
+  }
+  return false;
+}
 
 async function render(brandId: string, screenId: (typeof SCREEN_IDS)[number], saved: SavedScreen | null, kitCss: string) {
   const brand = EVAL_BRANDS.find((b) => b.id === brandId)!;
   const { doc, theme, screens } = qualityDoc(brand);
   const screenDef = screens[screenId]!;
   const screen = screenInput(doc, screenId, { draftOf: screenDef.draftOf });
-  const stats: Stats = { blocks: screen.blocks.length, ok: 0, failed: [], warnings: [], htmlBytes: 0, elements: 0, textSizes: [], fontClasses: [], icons: 0, placeholders: 0, roundedFullIconCircles: 0, headings: {}, containerVariants: 0, words: 0, nonLatin: [] };
+  const stats: Stats = { blocks: screen.blocks.length, ok: 0, failed: [], warnings: [], htmlBytes: 0, elements: 0, textSizes: [], fontClasses: [], icons: 0, placeholders: 0, roundedFullIconCircles: 0, headings: {}, containerVariants: 0, words: 0, nonLatin: [], equalPanels: [] };
   const aiBlocks: Record<string, string> = {};
   if (saved) {
     const roots = splitBlocks(saved.raw, screen.blocks.map((b) => b.id));
@@ -166,6 +185,7 @@ async function render(brandId: string, screenId: (typeof SCREEN_IDS)[number], sa
       aiBlocks[block.id] = inlineAssets(processed.html);
       stats.htmlBytes += processed.html.length;
       const tree = parseSanitized(processed.html);
+      if (hasEqualPanels(tree)) stats.equalPanels.push(block.id);
       for (const el of elements(tree)) {
         stats.elements++;
         const classes = (attr(el, "class") ?? "").split(/\s+/).filter(Boolean);

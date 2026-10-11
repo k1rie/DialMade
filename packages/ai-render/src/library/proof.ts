@@ -9,6 +9,7 @@ export const PROOF: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "One large pull quote instead of a grid of cards: a hairline above, the quote set at heading size, then a small avatar with name and role, and a quiet row of two or three other short quotes underneath separated by vertical hairlines.",
+    gesture: "one quote at heading size instead of a grid",
     fits: { composition: ["editorial", "centered-stage", "asymmetric"], typeVoice: ["quiet", "humanist", "bold-display"], decoration: ["rules-and-grids", "none"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-proof" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -34,6 +35,7 @@ export const PROOF: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "Three quote panels, each on its own soft tint (primary, accent, muted) and at different heights, with the quote large and the person at the bottom. Warmth comes from the color blocking, not from decoration.",
+    gesture: "three different tints at three different heights, the quote large",
     fits: { composition: ["bento", "asymmetric", "centered-stage"], decoration: ["tinted-panels", "soft-shapes", "gradient-wash"], typeVoice: ["humanist", "quiet"], colorStrategy: ["brand-forward", "neutral-with-pops"], imagery: ["layered-collage", "tilted-cards"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-proof" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -62,6 +64,7 @@ export const PROOF: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A big rating numeral with its caption on the left (the proof as a number), and two short quotes stacked on the right in bordered rows with avatar, name and a one-line result in bold.",
+    gesture: "a big rating numeral as the proof",
     fits: { composition: ["split", "asymmetric", "data-dense"], typeVoice: ["bold-display", "technical-mono", "humanist"], decoration: ["outlined", "rules-and-grids"], imagery: ["data-viz-led", "icon-led"], rhythm: ["balanced", "compact"] },
     html: `<section data-block-id="b-proof" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto grid max-w-container gap-10 px-6 @3xl:grid-cols-12 @3xl:items-center">
@@ -89,6 +92,7 @@ export const PROOF: LibraryBlock[] = [
     type: "logos",
     surface: "landing",
     pattern: "Wordmarks as a ruled grid: a heavy rule above and below, hairlines between cells, each name set large in a different weight or case so it reads as a typographic specimen rather than a row of badges.",
+    gesture: "the names as a typographic specimen inside a ruled grid",
     fits: { composition: ["editorial", "asymmetric", "data-dense"], typeVoice: ["bold-display", "condensed-caps", "quiet"], decoration: ["rules-and-grids", "outlined", "none"], rhythm: ["airy", "balanced", "compact"] },
     html: `<section data-block-id="b-logos" class="@container bg-background py-12">
 <div class="mx-auto max-w-container px-6">
@@ -108,6 +112,7 @@ export const PROOF: LibraryBlock[] = [
     type: "kpis",
     surface: "landing",
     pattern: "One giant number at display size on a primary-colored field, with its caption, and three small supporting figures stacked on the right under hairlines. One figure to remember and three to back it up, instead of four equal numbers.",
+    gesture: "one giant number on a primary field",
     fits: { composition: ["asymmetric", "split", "editorial", "data-dense"], typeVoice: ["bold-display", "technical-mono"], colorStrategy: ["brand-forward", "high-contrast-cta"], decoration: ["tinted-panels", "none", "rules-and-grids"], rhythm: ["balanced", "airy"] },
     html: `<section data-block-id="b-stats" class="@container bg-primary py-16 text-primary-foreground @3xl:py-24">
 <div class="mx-auto grid max-w-container items-end gap-12 px-6 @3xl:grid-cols-12">

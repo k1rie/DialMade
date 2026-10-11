@@ -12,6 +12,7 @@ export const FEATURES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "The section is one sentence set at display size, in two tones: the claim in foreground, the explanation in muted. Under a heavy rule, three short columns open with a big mono numeral. No cards, no icons; the type does the persuading.",
+    gesture: "one display-size sentence in two tones, then numbered columns under a heavy rule",
     fits: { composition: ["editorial", "centered-stage", "asymmetric"], typeVoice: ["bold-display", "quiet", "humanist", "technical-mono"], decoration: ["rules-and-grids", "none"], imagery: ["icon-led"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-features" class="@container bg-background py-20 @3xl:py-32">
 <div class="mx-auto max-w-container px-6">
@@ -31,6 +32,7 @@ export const FEATURES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "An asymmetric 5/7 split: on the left a heading and a vertical list where ONE item is open (accent rule on its left edge, its text and a link visible) and the others are only titles; on the right one big tinted panel with a believable piece of the interface.",
+    gesture: "one open item in a list of titles, beside one big tinted panel with the interface",
     fits: { composition: ["split", "asymmetric", "editorial"], typeVoice: ["humanist", "quiet", "bold-display"], decoration: ["tinted-panels", "rules-and-grids", "soft-shapes"], imagery: ["framed-screens", "layered-collage"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-features" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto grid max-w-container gap-12 px-6 @3xl:grid-cols-12 @3xl:items-center">
@@ -63,6 +65,7 @@ export const FEATURES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "Full-width rows under a heavy rule: a numeral at display size on the left, the feature title at heading size in the middle and its explanation on the right. The scale jump between number, title and text is the whole design; no containers.",
+    gesture: "display-size numerals opening full-width ruled rows",
     fits: { composition: ["editorial", "asymmetric", "data-dense"], typeVoice: ["bold-display", "condensed-caps", "technical-mono"], decoration: ["rules-and-grids", "none", "outlined"], imagery: ["icon-led"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-features" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -81,6 +84,7 @@ export const FEATURES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "A bento made of color blocks instead of bordered cards: one cell filled with the primary color carrying a huge numeral, one inverted (foreground fill), one muted holding a small list and one outlined holding an annotated chart. Different spans and heights; contrast between cells is the composition.",
+    gesture: "cells of different sizes and fills (primary, inverted, muted), never equal cards",
     fits: { composition: ["bento", "asymmetric", "data-dense"], decoration: ["tinted-panels", "outlined", "gradient-wash"], imagery: ["data-viz-led", "layered-collage"], colorStrategy: ["brand-forward", "high-contrast-cta", "neutral-with-pops"], typeVoice: ["bold-display", "humanist"], rhythm: ["balanced", "compact"] },
     html: `<section data-block-id="b-features" class="@container bg-background py-16 @3xl:py-24">
 <div class="mx-auto max-w-container px-6">
@@ -112,6 +116,7 @@ export const FEATURES: LibraryBlock[] = [
     surface: "landing",
     pattern:
       "The whole section flips: a foreground-filled band with a large heading on the left, and three columns of single big figures each with a one-line caption. It interrupts the page rhythm on purpose, so the features read as the moment the page turns serious.",
+    gesture: "the whole section inverted, carried by big single figures",
     fits: { composition: ["centered-stage", "asymmetric", "split", "data-dense"], colorStrategy: ["high-contrast-cta", "tonal-monochrome", "neutral-with-pops"], typeVoice: ["bold-display", "technical-mono", "quiet"], decoration: ["none", "outlined", "rules-and-grids"], rhythm: ["airy", "balanced"] },
     html: `<section data-block-id="b-features" class="@container bg-foreground py-20 text-background @3xl:py-28">
 <div class="mx-auto max-w-container px-6">

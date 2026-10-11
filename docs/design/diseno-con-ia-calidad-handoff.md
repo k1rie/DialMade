@@ -13,7 +13,7 @@ Contexto completo para retomar el trabajo en otra sesión o con otra cuenta. Lé
 | Evidencia visual | `docs/design/assets/quality/` (antes/después y la galería en claro de Brisa) |
 | Biblioteca | `packages/ai-render/src/library/` (`heroes`, `features`, `proof`, `conversion`, `app`, `select`, `types`) |
 | Gráficos | `packages/ai-render/src/chart.ts` + `sanitize.ts`, `export.ts`, `tsx.ts`, `apps/preview/src/insert.ts` |
-| Prompt | `packages/ai-render/src/prompt.ts` (`AI_RENDER_PROMPT_VERSION = "ai-render/2"`) |
+| Prompt | `packages/ai-render/src/prompt.ts` (`AI_RENDER_PROMPT_VERSION = "ai-render/3"`: gestos y arreglo de features/CTA, ver `diseno-con-ia-calidad.md` §3 ter) |
 | Evals | `packages/ai-render/eval/` (`quality.eval.ts`, `library.gallery.eval.ts`, fixtures) |
 
 El worktree sigue en la máquina: otra cuenta de Claude en el mismo equipo lo abre tal cual.
@@ -104,6 +104,8 @@ DIALMADE_EVAL_LIVE=1 DIALMADE_EVAL_LABEL=nombre DIALMADE_EVAL_MODELS=haiku DIALM
 1. **Veredicto del usuario sobre la segunda ronda** (features, CTA, FAQ, navbar, footer, logos, stats, KPIs, gráficos,
    tablas, actividad) y marcar `approved` lo que le guste.
 2. **Footer con wordmark gigante:** es la entrada que menos convence; ver si se quiere más extremo.
+   (Hecho el 2026-10-10: features en tarjetas y CTA sin fuerza, `ai-render/3`, §3 ter del informe. Queda: las dos
+   marcas eligen ahora el mismo CTA; faltan más entradas de CTA con gesto fuerte.)
 3. **Tercera ronda:** formularios, ajustes, calendario, estados vacíos, perfil, modal; hoy esos tipos no tienen
    referencias. Y **una referencia de Mobbin por dirección** (editorial, técnica, cálida, juguetona, lujo) que el
    usuario debe aportar; sirven de criterio, el HTML lo escribe quien trabaja en el repo.

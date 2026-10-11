@@ -42,6 +42,9 @@ describe("every library entry is a clean answer", () => {
       expect(entry.html.match(/data-block-id=/g), entry.id).toHaveLength(1);
       expect(entry.html.length, entry.id).toBeLessThan(6_000);
       expect(entry.pattern.length, entry.id).toBeGreaterThan(40);
+      // The gesture is a few words: the one move that must survive the adaptation, not a second pattern.
+      expect(entry.gesture.length, entry.id).toBeGreaterThan(15);
+      expect(entry.gesture.length, entry.id).toBeLessThan(100);
     }
   });
 
@@ -126,6 +129,8 @@ describe("references in the prompt", () => {
     expect(text.length).toBeLessThan(MAX_REFERENCE_CHARS + 4_000);
     // The hand-written html is part of the prompt, with its line breaks gone.
     expect(text).not.toMatch(/\n\s{2,}</);
+    // Every reference names the gesture the model has to keep.
+    expect(text.match(/<reference /g)?.length).toBe(text.match(/<reference gesture="[^"]{15,}" pattern="/g)?.length);
   });
 
   it("depends on structured traits, not on the brand's free text", () => {

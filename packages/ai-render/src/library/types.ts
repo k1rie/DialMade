@@ -34,6 +34,11 @@ export type LibraryBlock = {
   type: LibraryBlockType;
   /** One line: WHAT makes the pattern work, in design terms (it travels in the prompt). */
   pattern: string;
+  /**
+   * The one bold move that must survive any adaptation (a few words, it travels in the prompt). The model keeps it
+   * when the block's content differs from the sample; without it, it keeps the safe parts and drops the point.
+   */
+  gesture: string;
   fits: LibraryFits;
   /**
    * Reviewed and kept by the person who owns the taste of the library. An approved entry outranks drafts of the same

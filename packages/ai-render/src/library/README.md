@@ -50,4 +50,8 @@ Genera `library/<tipo>-<marca>-<modo>.png` y `report.json` (clases descartadas, 
 1. Escribe el HTML en el archivo de su familia (`heroes.ts`, `features.ts`, `proof.ts`, `conversion.ts`, `app.ts`).
 2. `fits`: los valores de los ejes (de `AI_AXES`) en los que la composición luce; un eje que no listas es neutral.
 3. `pattern`: una línea que diga **por qué funciona** (viaja en el prompt).
-4. `corepack pnpm --filter @dialmade/ai-render test` y la galería: nada marcado.
+4. `gesture`: pocas palabras con **el** gesto que debe sobrevivir a la adaptación («una cifra gigante de la oferta
+   sobre una banda del color de marca»). El prompt pide conservarlo aunque cambie el contenido. Un gesto no debe
+   depender de un contenido que el bloque quizá no tenga: si el CTA de la muestra lleva un campo de email, el de
+   Dialmade lleva dos botones, y el modelo tira el gesto con el email.
+5. `corepack pnpm --filter @dialmade/ai-render test` y la galería: nada marcado.
