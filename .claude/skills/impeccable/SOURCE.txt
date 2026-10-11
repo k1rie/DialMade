@@ -1,0 +1,1 @@
+Source: https://github.com/pbakaus/impeccable (.claude/skills/impeccable) @ c63b8dd, Apache-2.0. Pulled 2026-10-11.

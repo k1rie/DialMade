@@ -1,0 +1,1 @@
+Source: https://github.com/Leonxlnx/taste-skill (skills/taste-skill) @ 717446e, MIT. Pulled 2026-10-11.
