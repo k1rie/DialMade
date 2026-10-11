@@ -2,7 +2,7 @@
 // inert <template> (through a Trusted Types policy) and copied node by node with the same allowlist. Never
 // `innerHTML` on the live document. Icons and placeholders are our own
 // SVG markup, built from trusted strings.
-import { ALLOWED_TAGS, INPUT_TYPES, iconSvg, isAllowedAttrFor, placeholderSvg } from "@dialmade/ai-render/runtime";
+import { ALLOWED_TAGS, INPUT_TYPES, chartFromAttributes, iconSvg, isAllowedAttrFor, placeholderSvg } from "@dialmade/ai-render/runtime";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -78,7 +78,9 @@ export function drawAssets(root: Element): void {
   for (const img of Array.from(root.querySelectorAll("img[data-placeholder], img[data-asset]"))) {
     const kind = img.getAttribute("data-asset") === "logo" ? "logo" : (img.getAttribute("data-placeholder") ?? "photo");
     const alt = img.getAttribute("alt") ?? "";
-    const svg = svgFrom(placeholderSvg(kind, alt));
+    // A chart is drawn from its numbers; the second wall validates them again (a bad pair falls back to the art).
+    const chart = chartFromAttributes((name) => img.getAttribute(name), alt, document.documentElement.lang || undefined);
+    const svg = svgFrom(chart ?? placeholderSvg(kind, alt));
     if (!svg) continue;
     const className = img.getAttribute("class");
     if (className) svg.setAttribute("class", className);

@@ -13,8 +13,9 @@ export const SCALE_COLORS: readonly string[] = SCALE_GROUPS.flatMap((group) => S
 const KEYWORD_COLORS = ["transparent", "current", "inherit"] as const;
 const COLOR_SET: ReadonlySet<string> = new Set([...ROLE_COLORS, ...SCALE_COLORS, ...KEYWORD_COLORS]);
 
-export const TYPE_SIZES = ["display", "h1", "h2", "h3", "body", "small", "caption"] as const;
-export const FONT_FAMILIES = ["heading", "body", "mono"] as const;
+/** `giant` is twice `display`: a wordmark or one number per page, never body text. */
+export const TYPE_SIZES = ["giant", "display", "h1", "h2", "h3", "body", "small", "caption"] as const;
+export const FONT_FAMILIES = ["heading", "body", "mono", "sans"] as const;
 export const RADII = ["none", "sm", "md", "lg", "xl", "full", "card", "button", "input", "badge"] as const;
 export const SHADOWS = ["none", "sm", "md", "lg", "card", "button"] as const;
 export const CONTAINER_SIZES = ["3xs", "2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl"] as const;
@@ -65,7 +66,8 @@ const STATIC = new Set([
   "text-wrap", "text-nowrap", "list-disc", "list-decimal", "list-none", "list-inside", "list-outside",
   "align-top", "align-middle", "align-bottom", "align-baseline",
   // borders & effects
-  "border", "border-0", "border-2", "border-4", "border-solid", "border-dashed", "border-dotted", "border-none",
+  "border", "border-0", "border-2", "border-4", "border-t", "border-b", "border-l", "border-r", "border-x", "border-y",
+  "border-s", "border-e", "border-solid", "border-dashed", "border-dotted", "border-none",
   "border-collapse", "border-separate", "ring", "ring-0", "ring-1", "ring-2", "ring-4", "ring-inset",
   "ring-offset-0", "ring-offset-1", "ring-offset-2", "ring-offset-4",
   "outline", "outline-none", "outline-hidden", "outline-0", "outline-1", "outline-2", "outline-offset-0", "outline-offset-2", "outline-offset-4",

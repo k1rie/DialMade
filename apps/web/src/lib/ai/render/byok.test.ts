@@ -91,6 +91,26 @@ describe("BYOK transport: network", () => {
   });
 });
 
+describe("BYOK transport: «Maqueta · Presentable · Producto final»", () => {
+  it("the tier sets the effort and the output room of screens; the art direction stays at low effort", async () => {
+    const { callOptions } = await import("./byok");
+    expect(callOptions("claude-opus-5-5")).toMatchObject({ effort: "low" });
+    expect(callOptions("claude-opus-5-5")).not.toHaveProperty("tier");
+    expect(callOptions("claude-opus-5-5", "presentable")).toMatchObject({ effort: "medium", tier: "presentable" });
+    expect(callOptions("claude-opus-5-5", "final")).toMatchObject({ effort: "high", tier: "final" });
+    const api = anthropicApi();
+    vi.stubGlobal("fetch", api.fetch);
+    const final = byokTransport({ getKey: () => KEY, model: "claude-opus-5-5", tier: "final" });
+    expect(final.tier).toBe("final");
+    await final.direction({ seed: 1, recipeId: "soft-ui", chip: "auto", brand: BRAND, locale: "es", screens: [{ name: "Inicio", kind: "landing", blocks: ["hero"] }], sessionId: "s" });
+    await collect(final.screen({ sessionId: "s", brand: BRAND, direction: DIRECTION, screen }));
+    const [direction, screenCall] = api.requests.map((request) => JSON.parse(request.body) as { max_tokens: number; output_config?: { effort?: string } });
+    expect(direction!.output_config?.effort).toBe("low");
+    expect(screenCall!.output_config?.effort).toBe("high");
+    expect(screenCall!.max_tokens).toBe(32_000);
+  });
+});
+
 describe("BYOK transport: cancel aborts for real (spec §5.3)", () => {
   it("aborting stops the HTTP request; finished blocks stay, the rest never arrive", async () => {
     // The stream sends the first root, then hangs until the request is aborted.

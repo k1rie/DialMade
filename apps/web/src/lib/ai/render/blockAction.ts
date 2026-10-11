@@ -5,7 +5,7 @@
 // The transport is an interface: the free tier (POST /api/ai/render/block with the live session) is here; BYOK and
 // «Copiar prompt para mi Claude» come with track C's `transport.ts` and plug in as other `BlockActionTransport`s.
 import { AI_RENDER_PROMPT_VERSION, brandInput, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
-import { MAX_AI_REQUEST_LENGTH, compileThemeVars, type AiBlock, type AiRenderPath, type DesignDoc } from "@dialmade/doc";
+import { MAX_AI_REQUEST_LENGTH, compileThemeVars, type AiBlock, type AiRenderPath, type AiRenderTier, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import {
   RENDER_BLOCK_ENDPOINT,
@@ -50,6 +50,8 @@ export type BlockActionTransport = {
   usesSession: boolean;
   /** Model of the provenance when the answer has no usage. */
   model?: string;
+  /** «Maqueta · Presentable · Producto final» it asks with (absent = `mockup`). */
+  tier?: AiRenderTier;
   run: (body: RenderBlockBody, signal?: AbortSignal) => Promise<BlockActionAnswer>;
 };
 
@@ -59,6 +61,7 @@ export function blockTransportFrom(access: AccessTransport): BlockActionTranspor
     path: access.path,
     usesSession: access.path === "free",
     model: access.model,
+    tier: access.tier,
     run: async (body, signal) => {
       try {
         return await access.block(body, signal ? { signal } : {});
@@ -208,6 +211,7 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
       kind: request.kind,
       path: deps.transport.path,
       model: (answer.usage?.model ?? deps.transport.model ?? "unknown").slice(0, 80),
+      ...(deps.transport.tier && deps.transport.tier !== "mockup" && { tier: deps.transport.tier }),
       createdAt: (deps.now?.() ?? new Date()).toISOString(),
       ...(answer.usage && { costUsd: answer.usage.costUsd, inputTokens: answer.usage.inputTokens, outputTokens: answer.usage.outputTokens }),
       promptVersion: AI_RENDER_PROMPT_VERSION,

@@ -209,6 +209,10 @@ describe("choosing a path", () => {
   it("free uses the status' free model; BYOK defaults to Opus 5.5", () => {
     expect(createRenderTransport("free", { status: status({}) }).model).toBe("claude-haiku-5-5");
     expect(createRenderTransport("byok", { status: null }).model).toBe("claude-opus-5-5");
+    // The free tier makes the mockup whatever tier was asked; the key runs the tier the user picked.
+    expect(createRenderTransport("free", { status: status({}), tier: "final" }).tier).toBe("mockup");
+    expect(createRenderTransport("byok", { status: null, tier: "presentable" }).tier).toBe("presentable");
+    expect(createRenderTransport("byok", { status: null }).tier).toBe("mockup");
     expect(createRenderTransport("byok", { status: null, byokModel: "claude-sonnet-5-5" }).model).toBe("claude-sonnet-5-5");
   });
 });

@@ -11,6 +11,9 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
   designAvailable: true,
   chip: "auto",
   setChip: () => {},
+  tier: "mockup",
+  setTier: () => {},
+  tierNeedsKey: false,
   screens: [{ id: "s-home", name: "Inicio", blocks: 5, designed: false }],
   selected: ["s-home"],
   toggleScreen: () => {},
@@ -44,6 +47,15 @@ describe("DesignDetails («Diseño con IA»)", () => {
     expect(html).toContain("sin usos gratis este mes");
     expect(html).toMatch(/<button[^>]*class="[^"]*bg-accent-cta[^"]*"[^>]*>(<span[^>]*>)?Usar mi key/);
     expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Usar mi Claude/)).toBeNull();
+  });
+
+  it("offers «Maqueta · Presentable · Producto final»; a tier the free plan does not make points to the key", () => {
+    const html = render(plan());
+    for (const label of ["Nivel de acabado", "Maqueta", "Presentable", "Producto final"]) expect(html).toContain(label);
+    expect(html).not.toContain("Este nivel necesita");
+    const needsKey = render(plan({ tier: "final", tierNeedsKey: true }));
+    expect(needsKey).toContain("Este nivel necesita tu key o tu Claude.");
+    expect(needsKey).toMatch(/<button[^>]*class="[^"]*bg-accent-cta[^"]*"[^>]*>(<span[^>]*>)?Usar mi key/);
   });
 
   it("without screens there is nothing to prepare a prompt for", () => {

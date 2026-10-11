@@ -124,7 +124,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
   const designCta = designMode && plan.ready && cta.kind !== "template";
   // «Diseño» picked but no paid path can answer: the CTA says it generates without AI (the hint says why; the «IA»
   // popover offers the key and «mi Claude»), never a silent swap.
-  const designBlocked = designMode && plan.blocked !== null && cta.kind !== "template";
+  const designBlocked = designMode && (plan.blocked !== null || plan.tierNeedsKey) && cta.kind !== "template";
   const ctaLabel =
     cta.kind === "template"
       ? t.generate.useTemplate(t.sets[cta.set].name)
@@ -142,9 +142,11 @@ export function GenerateBar({ className }: GenerateBarProps) {
   const designHint = designMode
     ? plan.blocked
       ? aiT.blocked[plan.blocked]
-      : plan.cost
-        ? `${plan.cost.byok ? renderT.cost.withKey(plan.cost.cost, plan.cost.screens, plan.cost.seconds) : renderT.cost.line(plan.cost.cost, plan.cost.left, plan.cost.total, plan.cost.screens, plan.cost.seconds)}. ${renderT.ctaHint}`
-        : renderT.ctaHint
+      : plan.tierNeedsKey
+        ? renderT.tiers.needsKey
+        : plan.cost
+          ? `${plan.cost.byok ? renderT.cost.withKey(plan.cost.cost, plan.cost.screens, plan.cost.seconds) : renderT.cost.line(plan.cost.cost, plan.cost.left, plan.cost.total, plan.cost.screens, plan.cost.seconds)}. ${renderT.ctaHint}`
+          : renderT.ctaHint
     : null;
   const ctaHintText =
     cta.kind !== "template" && designHint

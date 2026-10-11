@@ -25,6 +25,12 @@ export const AI_DIRECTION_CHIPS = ["auto", "editorial", "technical", "warm", "pl
 export type AiDirectionChip = (typeof AI_DIRECTION_CHIPS)[number];
 
 export const AI_RENDER_PATHS = ["free", "byok", "manual"] as const;
+/**
+ * «Maqueta · Presentable · Producto final»: how much care a generation asks for (effort, output room and a quality
+ * brief), not which model writes it. The free tier only runs `mockup`; the others go through the user's key or Claude.
+ */
+export const AI_RENDER_TIERS = ["mockup", "presentable", "final"] as const;
+export type AiRenderTier = (typeof AI_RENDER_TIERS)[number];
 export const AI_RENDER_KINDS = ["direction", "generate", "reroll", "change"] as const;
 
 /** Warnings of the quality gates (spec §7), as codes: the UI words them in its own language. */
@@ -62,6 +68,8 @@ export const AiProvenanceSchema = z.strictObject({
   path: z.enum(AI_RENDER_PATHS),
   /** Model that wrote it (`claude.ai` for «mi Claude»). */
   model: Text(80).optional(),
+  /** Quality tier it was asked with (absent: made before tiers existed, i.e. `mockup`). */
+  tier: z.enum(AI_RENDER_TIERS).optional(),
   createdAt: z.iso.datetime(),
   costUsd: z.number().min(0).max(100).optional(),
   inputTokens: z.number().int().min(0).optional(),

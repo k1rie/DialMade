@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { blockParams, directionParams, screenParams } from "./anthropic";
+import { TIER_SETTINGS } from "./tier";
 import { directionCandidates, defaultPick } from "./direction";
-import { AI_RENDER_SYSTEM_PROMPT, artDirectionText, blockMessage, directionMessage, jsonData, manualBlockPrompt, manualPrompt, screenMessage, type RenderBrandInput, type RenderScreenInput } from "./prompt";
+import { AI_RENDER_SYSTEM_PROMPT, SCREEN_MAX_TOKENS, artDirectionText, blockMessage, directionMessage, jsonData, manualBlockPrompt, manualPrompt, screenMessage, type RenderBrandInput, type RenderScreenInput } from "./prompt";
 
 const brand: RenderBrandInput = {
   name: "Brisa",
@@ -46,7 +47,7 @@ describe("prompt builder (spec §3)", () => {
     expect(content[0]!.cache_control).toEqual({ type: "ephemeral" });
     expect(content[0]!.text).toMatch(/^<art_direction>/);
     expect(content[1]!.cache_control).toBeUndefined();
-    expect(params.max_tokens).toBe(12_000);
+    expect(params.max_tokens).toBe(SCREEN_MAX_TOKENS);
     expect(params.output_config).toEqual({ effort: "low" });
     expect("fallbacks" in params).toBe(false);
   });
@@ -71,6 +72,21 @@ describe("prompt builder (spec §3)", () => {
     const text = (params.messages[0]!.content as { text: string }[])[1]!.text;
     expect(text.match(/<\/block_data>/g)).toHaveLength(1);
     expect(params.max_tokens).toBe(4_000);
+  });
+
+  it("a tier adds its quality brief and output room; «Maqueta» sends exactly what it did before", () => {
+    const plain = screenParams(options, brand, direction, screen);
+    const mockup = screenParams({ ...options, tier: "mockup" }, brand, direction, screen);
+    expect(mockup.max_tokens).toBe(plain.max_tokens);
+    expect(JSON.stringify(mockup.messages)).toBe(JSON.stringify(plain.messages));
+    const final = screenParams({ ...options, tier: "final" }, brand, direction, screen);
+    expect(final.max_tokens).toBe(TIER_SETTINGS.final.screenMaxTokens);
+    expect(screenMessage(brand, direction, screen, { tier: "presentable" })[1]!.text).toContain("Quality: presentable");
+    expect(screenMessage(brand, direction, screen)[1]!.text).not.toContain("Quality:");
+    expect(manualPrompt(brand, direction, [screen], "final")).toContain("Quality: final product");
+    // The brief closes the message, right before the order to answer.
+    const text = screenMessage(brand, direction, screen, { tier: "final" })[1]!.text;
+    expect(text.indexOf("Quality: final product")).toBeLessThan(text.indexOf("Design the"));
   });
 
   it("the manual prompt carries the contract, the direction and every screen", () => {

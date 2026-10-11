@@ -18,4 +18,39 @@ describe("island second wall", () => {
     expect(svg.getAttribute("aria-label")).toBe("Ana");
     expect(host.querySelector("img")).toBeNull();
   });
+
+  it("draws a chart from its numbers, and validates them again (second wall)", () => {
+    const host = document.createElement("div");
+    host.innerHTML =
+      '<img class="h-40 w-full" data-chart="bar" data-values="3,5,2;1,2,1" data-placeholder="chart" alt="Ventas">' +
+      '<img class="h-40 w-full" data-chart="radar" data-values="3,5,2" data-placeholder="chart" alt="No kind">' +
+      '<img class="h-40 w-full" data-chart="line" data-values="3,&lt;script&gt;,2" data-placeholder="chart" alt="Bad numbers">';
+    drawAssets(host);
+    const svgs = Array.from(host.querySelectorAll("svg[data-placeholder]"));
+    expect(svgs).toHaveLength(3);
+    // The valid chart: bars, grouped by series.
+    expect(svgs[0]!.querySelectorAll("rect").length).toBe(6);
+    expect(svgs[0]!.getAttribute("aria-label")).toBe("Ventas");
+    // The unknown kind and the bad numbers fall back to the placeholder art (12 chart-colored bars), never to the data.
+    for (const fallback of svgs.slice(1)) expect(fallback.querySelectorAll("rect").length).toBe(13);
+    expect(host.querySelector("script")).toBeNull();
+  });
+
+  it("keeps data-chart and data-values through the template path", () => {
+    const host = document.createElement("div");
+    insertBlock(host, '<section data-block-id="b"><img data-chart="area" data-values="1,2,3" data-placeholder="chart" alt="x" class="h-24 w-full"></section>');
+    expect(host.querySelector("svg path")).not.toBeNull();
+    expect(host.querySelector("img")).toBeNull();
+  });
+
+  it("draws the axis labels and the unit, re-checked by the second wall", () => {
+    const host = document.createElement("div");
+    insertBlock(host, '<section data-block-id="b"><img data-chart="bar" data-values="4,6,5" data-labels="Jan,Feb,Mar" data-unit="%" data-placeholder="chart" alt="x" class="h-24 w-full"></section>');
+    const texts = Array.from(host.querySelectorAll("svg text")).map((text) => text.textContent);
+    expect(texts).toEqual(expect.arrayContaining(["Jan", "Mar", "6%"]));
+    // A label the sanitizer would refuse is ignored here too (the chart is still drawn).
+    insertBlock(host, '<section data-block-id="b"><img data-chart="bar" data-values="4,6,5" data-labels="<b>,x,y" data-placeholder="chart" alt="x"></section>');
+    expect(host.querySelector("svg rect")).not.toBeNull();
+    expect(Array.from(host.querySelectorAll("svg text")).some((text) => text.textContent === "x")).toBe(false);
+  });
 });

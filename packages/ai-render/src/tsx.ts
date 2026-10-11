@@ -11,6 +11,7 @@
 // One component per block (`HeroB7k`), plus `exportThemeCss()` (./theme) for a Tailwind v4 project.
 import { ICONS } from "@dialmade/ui/icons";
 import { placeholderSvg } from "./assets";
+import { chartFromAttributes } from "./chart";
 import { hash32 } from "./direction";
 import { PLACEHOLDER_KINDS } from "./sanitize";
 import { HTML_NS, VOID_TAGS, parseRaw, parseSanitized, type AiElement, type AiNode, type RawNode } from "./tree";
@@ -27,6 +28,8 @@ export type TsxOptions = {
   /** Provenance for the header comment. */
   model?: string;
   createdAt?: string;
+  /** The screen's language, for the numbers of charts. */
+  locale?: string;
 };
 
 /** React's names for the HTML attributes an AI block may carry. */
@@ -78,7 +81,7 @@ function jsxText(text: string): string {
   return /[{}<>&]/.test(text) || text.trim() !== text ? `{${JSON.stringify(text)}}` : text;
 }
 
-type Context = { routes: Readonly<Record<string, string>>; uses: Set<"Icon" | "Placeholder"> };
+type Context = { routes: Readonly<Record<string, string>>; uses: Set<"Icon" | "Placeholder">; locale?: string };
 
 /** The JSX attributes of an element (`[]` of `name=value` strings), in the element's order. */
 function jsxAttrs(element: AiElement, context: Context, skip: ReadonlySet<string> = new Set()): string[] {
@@ -119,6 +122,14 @@ function nodeLines(node: AiElement, depth: number, context: Context): string[] {
     return [`${pad}${tagOpen("Icon", [`name=${attrValue(attrOf("data-icon")!)}`, ...jsxAttrs(node, context, new Set(["data-icon"]))])} />`];
   }
   if (node.tag === "img") {
+    const alt = attrOf("alt");
+    const chart = chartFromAttributes(attrOf, alt ?? "", context.locale);
+    if (chart) {
+      // A chart is the SVG itself, inline (no component to import): the numbers are in the markup.
+      const skip = new Set(["data-placeholder", "data-asset", "data-chart", "data-values", "data-highlight", "data-labels", "data-series", "data-unit", "alt"]);
+      const attrs = jsxAttrs(node, context, skip);
+      return svgJsx(chart, depth, [...attrs, ...(alt ? [`aria-label=${attrValue(alt)}`] : ['aria-hidden="true"'])].join(" "));
+    }
     context.uses.add("Placeholder");
     const kind = attrOf("data-asset") === "logo" ? "logo" : (attrOf("data-placeholder") ?? "photo");
     return [`${pad}${tagOpen("Placeholder", [`kind=${attrValue(kind)}`, ...jsxAttrs(node, context, new Set(["data-placeholder", "data-asset"]))])} />`];
@@ -189,7 +200,7 @@ const oneLine = (text: string) => text.replace(/[\r\n\u2028\u2029]+/g, " ").repl
 export function blockToTsx(html: string, blockId: string, options: TsxOptions = {}): string {
   const root = parseSanitized(html).find((node): node is AiElement => node.type === "element");
   const name = options.name ?? componentName(options.label ?? "Block", blockId);
-  const context: Context = { routes: options.routes ?? {}, uses: new Set() };
+  const context: Context = { routes: options.routes ?? {}, uses: new Set(), ...(options.locale && { locale: options.locale }) };
   const body = root ? nodeLines(root, 2, context) : [`${INDENT.repeat(2)}null`];
   const header = [
     `// ${oneLine(options.label ?? name)} · «Diseño con IA» (Dialmade)${options.model ? ` · ${oneLine(options.model)}` : ""}${options.createdAt ? ` · ${options.createdAt.slice(0, 10)}` : ""}`,

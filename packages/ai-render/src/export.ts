@@ -2,6 +2,7 @@
 // draws are inlined here as SVG. Works on CANONICAL html (what ./tree serializes after ./sanitize): attributes are
 // always double-quoted and escaped, so the patterns below cannot be fooled by the model's own text.
 import { iconSvg, placeholderSvg } from "./assets";
+import { chartFromAttributes } from "./chart";
 import { elements, parseSanitized, serialize } from "./tree";
 
 const ATTR = (name: string) => new RegExp(`\\s${name}="([^"]*)"`);
@@ -12,6 +13,8 @@ const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&q
 export type InlineAssetsOptions = {
   /** URL of the brand logo for `<img data-asset="logo">` (else a placeholder logo is drawn). */
   logoUrl?: string;
+  /** The page's language, for the numbers of charts (`1,840` / `1840`). */
+  locale?: string;
 };
 
 /** `<i data-icon>` → the icon's SVG inside it; `<img data-placeholder>` → inline SVG art with the image's classes. */
@@ -24,8 +27,9 @@ export function inlineAssets(html: string, options: InlineAssetsOptions = {}): s
       if (attrOf(attrs, "data-asset") === "logo" && options.logoUrl) {
         return `<img src="${escape(options.logoUrl)}" alt="${escape(alt)}"${className ? ` class="${className}"` : ""}>`;
       }
+      const chart = chartFromAttributes((name) => { const value = attrOf(attrs, name); return value === undefined ? null : unescape(value); }, alt, options.locale);
       const kind = attrOf(attrs, "data-asset") === "logo" ? "logo" : (attrOf(attrs, "data-placeholder") ?? "photo");
-      const svg = placeholderSvg(kind, alt);
+      const svg = chart ?? placeholderSvg(kind, alt);
       const extra = `${className ? ` class="${className}"` : ""}${alt ? ` aria-label="${escape(alt)}"` : ' aria-hidden="true"'} data-placeholder="${escape(kind)}"`;
       return svg.replace("<svg ", `<svg${extra} `);
     });

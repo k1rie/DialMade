@@ -44,16 +44,16 @@ export function DesignAccessDialog({ plan, view, onClose }: DesignAccessDialogPr
     const reuse = existing !== undefined && (plan.chip === "auto" || plan.chip === existing.chip);
     const direction = reuse ? { axes: existing.axes, moves: existing.moves, rationale: existing.rationale } : manualDirection(seed, recipeId, plan.chip);
     const estimates: Partial<Record<ByokRenderModel, CostRange>> = Object.fromEntries(
-      BYOK_RENDER_MODELS.map((model) => [model, estimateRender({ path: "byok", model, brand, screens: inputs, newDirection: !reuse, recipeId })]),
+      BYOK_RENDER_MODELS.map((model) => [model, estimateRender({ path: "byok", model, brand, screens: inputs, newDirection: !reuse, recipeId, tier: plan.tier })]),
     );
-    return { direction, estimates, job: manualRenderJob({ brand, direction, screens: inputs }) };
-  }, [open, plan.selected, plan.chip, doc, screens, order, seed]);
+    return { direction, estimates, job: manualRenderJob({ brand, direction, screens: inputs, tier: plan.tier }) };
+  }, [open, plan.selected, plan.chip, plan.tier, doc, screens, order, seed]);
 
   const onManualResult = (answer: ManualRenderAnswer) => {
     if (!prepared) return;
     onClose();
     const outcome = generate({ ai: null });
-    if (outcome === "revealing" || outcome === "done") plan.startWith(fromAccessTransport(manualTransport({ direction: prepared.direction, answer })));
+    if (outcome === "revealing" || outcome === "done") plan.startWith(fromAccessTransport(manualTransport({ direction: prepared.direction, answer, tier: plan.tier })));
   };
 
   return (

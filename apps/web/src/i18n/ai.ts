@@ -237,6 +237,11 @@ export const ai = defineDictionary({
         useClaude: "Usar mi Claude",
         useClaudeHint: "Gratis: copias el prompt, lo pegas en tu cuenta de Claude y traes aquí su respuesta.",
       },
+      tiers: {
+        label: "Nivel de acabado",
+        options: { mockup: "Maqueta", presentable: "Presentable", final: "Producto final" },
+        needsKey: "Este nivel necesita tu key o tu Claude.",
+      },
       chips: {
         label: "Dirección de arte",
         options: { auto: "Automática", editorial: "Editorial", technical: "Técnica", warm: "Cálida", playful: "Juguetona", luxury: "Lujo" },
@@ -559,6 +564,11 @@ export const ai = defineDictionary({
         manageKey: "Manage my key",
         useClaude: "Use my Claude",
         useClaudeHint: "Free: copy the prompt, paste it in your Claude account and bring its answer back here.",
+      },
+      tiers: {
+        label: "Finish",
+        options: { mockup: "Mockup", presentable: "Presentable", final: "Final product" },
+        needsKey: "This finish needs your key or your Claude.",
       },
       chips: {
         label: "Art direction",

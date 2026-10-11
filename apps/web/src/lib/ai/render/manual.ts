@@ -14,7 +14,7 @@ import {
   type RenderScreenInput,
   type StreamBlock,
 } from "@dialmade/ai-render";
-import type { AiDirectionChip } from "@dialmade/doc";
+import type { AiDirectionChip, AiRenderTier } from "@dialmade/doc";
 import type { ManualJob, ManualParseResult } from "../manual";
 import type { RenderStreamEvent } from "./api";
 import type { RenderDirectionAnswer, RenderTransport, TransportBlock, TransportDirection } from "./transport";
@@ -69,9 +69,9 @@ export function parseManualRender(text: string, screens: readonly Pick<RenderScr
 }
 
 /** «mi Claude» for a generate: the prompt of `screens` with `direction`, and the parser of the pasted HTML. */
-export function manualRenderJob(input: { brand: RenderBrandInput; direction: RenderDirectionAnswer; screens: readonly RenderScreenInput[] }): ManualJob<ManualRenderAnswer> {
+export function manualRenderJob(input: { brand: RenderBrandInput; direction: RenderDirectionAnswer; screens: readonly RenderScreenInput[]; tier?: AiRenderTier }): ManualJob<ManualRenderAnswer> {
   return {
-    prompt: manualPrompt(input.brand, input.direction, input.screens),
+    prompt: manualPrompt(input.brand, input.direction, input.screens, input.tier),
     attachments: [],
     format: "html",
     parse: (text) => parseManualRender(text, input.screens),
@@ -79,10 +79,10 @@ export function manualRenderJob(input: { brand: RenderBrandInput; direction: Ren
 }
 
 /** «mi Claude» for «Otra versión» / «Pedir cambio» of one block: the pasted answer is that block's root (raw). */
-export function manualBlockJob(input: { brand: RenderBrandInput; direction: RenderDirectionAnswer; action: BlockActionInput }): ManualJob<string> {
+export function manualBlockJob(input: { brand: RenderBrandInput; direction: RenderDirectionAnswer; action: BlockActionInput; tier?: AiRenderTier }): ManualJob<string> {
   const id = input.action.block.id;
   return {
-    prompt: manualBlockPrompt(input.brand, input.direction, input.action),
+    prompt: manualBlockPrompt(input.brand, input.direction, input.action, input.tier),
     attachments: [],
     format: "html",
     parse(text) {
@@ -100,10 +100,11 @@ const noAnswer = (what: string) => ({ code: "invalid-request" as const, message:
  * The pasted answers as a transport: the session is local, the direction is the one the prompt carried, each screen
  * replays its roots as `block` events (then `done`) and a block action returns its pasted root.
  */
-export function manualTransport(input: { direction: RenderDirectionAnswer; answer?: ManualRenderAnswer; block?: string }): RenderTransport {
+export function manualTransport(input: { direction: RenderDirectionAnswer; answer?: ManualRenderAnswer; block?: string; tier?: AiRenderTier }): RenderTransport {
   return {
     path: "manual",
     model: MANUAL_MODEL,
+    tier: input.tier ?? "mockup",
     cancelStopsBilling: true,
     async openSession() {
       return { sessionId: crypto.randomUUID(), session: null };

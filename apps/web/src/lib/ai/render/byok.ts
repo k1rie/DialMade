@@ -3,7 +3,8 @@
 // call, used for one SDK client and dropped: it never reaches the Dialmade server, React state or storage. Cancel
 // aborts the HTTP request for real (it is the user's money). Loaded on demand by ./transport.
 import Anthropic from "@anthropic-ai/sdk";
-import { directionCandidates } from "@dialmade/ai-render";
+import type { AiRenderTier } from "@dialmade/doc";
+import { directionCandidates, tierSettings } from "@dialmade/ai-render";
 import { RenderOutputError, blockParams, createDirection, directionParams, screenParams, streamBlocks, type CallOptions } from "@dialmade/ai-render/anthropic";
 import { DEFAULT_AI_EFFORT, supportsDefaultFallbacks, supportsEffort } from "../config";
 import { messageCostUsd, messageTokens, roundUsd } from "../pricing";
@@ -12,17 +13,24 @@ import { abortedError, enterScreen, type BlockBody, type DirectionBody, type Scr
 
 /** Opus 5.5 is slower than the free tier's Haiku: a screen gets 3 minutes before the SDK gives up. */
 export const BYOK_RENDER_TIMEOUT_MS = 180_000;
+/**
+ * A higher tier thinks before it writes: measured with Opus 5.5 (7-block landing), Presentable ≈ 90 s and Producto
+ * final ≈ 140 s, so they get more room before the SDK gives up.
+ */
+export const BYOK_TIER_TIMEOUT_MS: Readonly<Record<AiRenderTier, number>> = { mockup: BYOK_RENDER_TIMEOUT_MS, presentable: 300_000, final: 420_000 };
 
-export type ByokCall = { apiKey: string; model: string; signal?: AbortSignal };
+export type ByokCall = { apiKey: string; model: string; signal?: AbortSignal; /** Default `mockup`. */ tier?: AiRenderTier };
 
-const callOptions = (model: string): CallOptions => ({
+/** The tier decides how much the model may think (`effort`) and the output room; `mockup` is the old `low`. */
+export const callOptions = (model: string, tier: AiRenderTier = "mockup"): CallOptions => ({
   model,
-  effort: DEFAULT_AI_EFFORT,
+  effort: tier === "mockup" ? DEFAULT_AI_EFFORT : tierSettings(tier).effort,
   fallbacks: supportsDefaultFallbacks(model),
   effortSupported: supportsEffort(model),
+  ...(tier !== "mockup" && { tier }),
 });
 
-const client = (apiKey: string) => new Anthropic({ apiKey, dangerouslyAllowBrowser: true, maxRetries: 1, timeout: BYOK_RENDER_TIMEOUT_MS });
+const client = (apiKey: string, tier: AiRenderTier = "mockup") => new Anthropic({ apiKey, dangerouslyAllowBrowser: true, maxRetries: 1, timeout: BYOK_TIER_TIMEOUT_MS[tier] });
 
 type Message = Anthropic.Beta.Messages.BetaMessage;
 
@@ -51,10 +59,12 @@ export function byokRenderError(error: unknown, signal?: AbortSignal): RenderApi
   return { code: "upstream-error", message: "Unexpected error" };
 }
 
-const requestOptions = (signal?: AbortSignal) => ({ timeout: BYOK_RENDER_TIMEOUT_MS, ...(signal && { signal }) });
+const requestOptions = (signal?: AbortSignal, tier: AiRenderTier = "mockup") => ({ timeout: BYOK_TIER_TIMEOUT_MS[tier], ...(signal && { signal }) });
 
 export async function byokDirection(body: DirectionBody, call: ByokCall): Promise<TransportDirection> {
   const candidates = directionCandidates(body.seed, body.recipeId, body.chip);
+  // The art direction is a short structured answer: it stays at low effort whatever the tier (more thinking could
+  // spend its 1.5k output tokens before the JSON).
   const params = directionParams(callOptions(call.model), body.brand, candidates, body.locale, body.screens);
   try {
     const { answer, message } = await createDirection(client(call.apiKey), params, candidates, requestOptions(call.signal));
@@ -103,9 +113,9 @@ export async function* byokScreen(body: ScreenBody, call: ByokCall): AsyncGenera
   let lastProgress = 0;
   const run = (async () => {
     if (controller.signal.aborted) throw new Anthropic.APIUserAbortError();
-    const params = screenParams(callOptions(call.model), body.brand, body.direction, body.screen);
+    const params = screenParams(callOptions(call.model, call.tier), body.brand, body.direction, body.screen);
     return streamBlocks(
-      client(call.apiKey),
+      client(call.apiKey, call.tier),
       params,
       expected,
       {
@@ -121,7 +131,7 @@ export async function* byokScreen(body: ScreenBody, call: ByokCall): AsyncGenera
           events.push({ type: "progress", received });
         },
       },
-      requestOptions(controller.signal),
+      requestOptions(controller.signal, call.tier),
     );
   })().then(
     (result) => {
@@ -155,14 +165,14 @@ export async function* byokScreen(body: ScreenBody, call: ByokCall): AsyncGenera
 }
 
 export async function byokBlock(body: BlockBody, call: ByokCall): Promise<TransportBlock> {
-  const params = blockParams(callOptions(call.model), body.brand, body.direction, {
+  const params = blockParams(callOptions(call.model, call.tier), body.brand, body.direction, {
     screen: body.screen,
     block: body.block,
     html: body.html,
     action: body.action.kind === "reroll" ? body.action : { kind: "change", request: body.action.request, ...(body.action.target && { target: body.action.target }) },
   });
   try {
-    const result = await streamBlocks(client(call.apiKey), params, [body.block.id], {}, requestOptions(call.signal));
+    const result = await streamBlocks(client(call.apiKey, call.tier), params, [body.block.id], {}, requestOptions(call.signal, call.tier));
     const root = result.blocks.find((block) => block.blockId === body.block.id) ?? result.blocks[0] ?? null;
     if (!root) throw new RenderOutputError("invalid-response", "The answer had no block", result.message);
     return { html: root.html, usage: usageOf(result.message, call.model), session: null };

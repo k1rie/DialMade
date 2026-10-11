@@ -100,6 +100,11 @@ export const MOVES: readonly { id: string; text: string; avoid?: readonly string
   { id: "highlight-row", text: "One highlighted row or card per list using bg-accent and text-accent-foreground" },
   { id: "kicker-badge", text: "A kicker badge with an icon above the hero heading" },
   { id: "metric-strip", text: "A strip of 3–4 metrics separated by vertical dividers (divide-x)" },
+  // Personality moves (the owner's references, 2026-10-10): a type voice, a texture, a color gesture.
+  { id: "italic-accent", text: "Headings in two voices: one word or the second line in italic of the same font, the rest roman" },
+  { id: "spec-sheet", text: "A small mono spec sheet (caps labels over plain values, no boxes) under the main action or a key figure" },
+  { id: "corner-annotations", text: "Tiny mono annotations in the corners of the hero and of color bands: a place, a year, a status or a version" },
+  { id: "color-shapes", text: "One or two big geometric shapes in the brand and CTA colors (a circle, a rotated rounded square) behind the product visual", avoid: ["minimal-swiss", "tech-precision"] },
 ];
 
 export type DirectionCandidates = {
@@ -163,7 +168,7 @@ export const AXIS_GLOSSARY: Readonly<Record<string, string>> = {
   "rules-and-grids": "hairline rules, dividers and faint grids",
   "soft-shapes": "rounded tinted shapes behind media",
   outlined: "borders instead of fills and shadows",
-  "tinted-panels": "panels on muted/accent tints",
+  "tinted-panels": "one or two large panels on muted/accent tints that hold a block's content, not a tint on every item",
   "gradient-wash": "subtle token gradients on backgrounds",
   "framed-screens": "product screenshots in device or browser frames",
   "tilted-cards": "slightly rotated stacked cards",

@@ -233,7 +233,7 @@ export function buildCodePack(input: PackInput): BuiltFile {
       const folder = screen.dir ? `${screen.dir}/` : "";
       const base = screen.dir ? "../" : "";
       const linkHref = linkResolver(screens, (to) => relativeHref(screen, to));
-      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, ...(input.logo && { logoUrl: `${base}assets/logo.png` }) });
+      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, locale: doc.brief.locale, ...(input.logo && { logoUrl: `${base}assets/logo.png` }) });
       const aiCss = Object.keys(ai.aiBlocks).length + Object.keys(ai.aiSurfaces).length > 0 ? [`${base}${AI_FILES.css}`] : [];
       // layout.css sits next to the page and loads after the kit CSS (the names DESIGN.md and the prompts use).
       files[`${folder}index.html`] = render(screenTarget(screen, linkHref), base, [SCREEN_EXPORT_FILES.layoutCss, ...aiCss], true, ai);
@@ -314,7 +314,7 @@ export function buildClaudeDesignPack(input: PackInput): BuiltFile {
     const previewOf = (screen: PackScreen) => (screen === first ? "preview.html" : `preview-${screen.slug}.html`);
     const linkHref = linkResolver(screens, previewOf);
     for (const screen of screens) {
-      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, ...(logoUrl && { logoUrl }) });
+      const ai = aiPageParts(aiBlocks, screen.id, { hrefOf: linkHref, locale: doc.brief.locale, ...(logoUrl && { logoUrl }) });
       const aiCss = Object.keys(ai.aiBlocks).length + Object.keys(ai.aiSurfaces).length > 0 ? [input.ai!.css] : [];
       files[previewOf(screen)] = render(screenTarget(screen, linkHref), [screen.css, ...aiCss], ai);
     }

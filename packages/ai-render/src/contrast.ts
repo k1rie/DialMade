@@ -18,7 +18,7 @@ const MODES: readonly ContrastMode[] = ["light", "dark"];
 const TEXT_AA = 4.5;
 const LARGE_AA = 3;
 const UI_AA = 3;
-const LARGE_SIZES = new Set(["text-display", "text-h1", "text-h2", "text-h3"]);
+const LARGE_SIZES = new Set(["text-giant", "text-display", "text-h1", "text-h2", "text-h3"]);
 const SMALL_SIZES = new Set(["text-body", "text-small", "text-caption"]);
 
 /**
