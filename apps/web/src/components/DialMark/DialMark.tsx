@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 
-/** Fictional Dialmade mark: a dial with a needle. Uses currentColor; the needle hub picks up the accent. */
+/** Dialmade mark: a D made of three layout cells and one continuous bowl. Uses currentColor; the selected (middle) cell picks up the accent. */
 export function DialMark({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
@@ -11,10 +11,12 @@ export function DialMark({ className, title }: { className?: string; title?: str
       aria-label={title}
       className={cn("size-6", className)}
     >
-      <circle cx="24" cy="24" r="20" stroke="currentColor" strokeOpacity="0.16" strokeWidth="4" />
-      <path d="M24 4a20 20 0 0 1 17.32 30" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <path d="M24 24 33 15" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="24" cy="24" r="4.5" fill="var(--app-accent)" />
+      <g fill="currentColor">
+        <rect x="3" y="3" width="12" height="12" rx="2" />
+        <rect x="3" y="33" width="12" height="12" rx="2" />
+        <path d="M18 5a2 2 0 0 1 2-2h4a21 21 0 0 1 0 42h-4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4a9 9 0 0 0 0-18h-4a2 2 0 0 1-2-2Z" />
+      </g>
+      <rect x="3" y="18" width="12" height="12" rx="2" fill="var(--app-accent)" />
     </svg>
   );
 }

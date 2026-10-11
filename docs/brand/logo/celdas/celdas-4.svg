@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Dial: fuste cartesiano + panza en celdas polares; la del centro marca el dial -->
+  <g fill="currentColor">
+    <rect x="3" y="2" width="12" height="44"/>
+    <path d="M18 2h5.5a20 20 0 0 1 16 8l-8 6a10 10 0 0 0-8-4H18Z"/>
+    <path d="M18 46h5.5a20 20 0 0 0 16-8l-8-6a10 10 0 0 1-8 4H18Z"/>
+  </g>
+  <path fill="var(--app-accent, #A677FF)" d="M33 18l8-6a20 20 0 0 1 0 24l-8-6a10 10 0 0 0 0-12Z"/>
+</svg>

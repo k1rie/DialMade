@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+<path stroke="currentColor" stroke-width="6" d="M9 9H24A15 15 0 0 1 24 39H9Z"/>
+<circle cx="24" cy="24" r="3" fill="var(--app-accent, #A677FF)"/>
+</svg>

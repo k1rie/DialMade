@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+<path stroke="currentColor" stroke-width="1" d="M6 3V45M3 6H45M24 3V45M3 24H45M42 3V45M3 42H45"/>
+<path stroke="currentColor" stroke-width="7.5" d="M9.75 9.75H24A14.25 14.25 0 0 1 24 38.25H9.75Z"/>
+<circle cx="24" cy="24" r="2.5" fill="var(--app-accent, #A677FF)"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Rejilla: seis celdas sobre la misma rejilla de 3 filas; un solo círculo las recorta -->
+  <g fill="currentColor">
+    <rect x="3" y="2.5" width="12" height="12.5" rx="2"/>
+    <rect x="3" y="18" width="12" height="12" rx="2"/>
+    <rect x="3" y="33" width="12" height="12.5" rx="2"/>
+    <path d="M18 4.5a2 2 0 0 1 2-2h6.5A18.5 18.5 0 0 1 44 15H20a2 2 0 0 1-2-2Z"/>
+    <path d="M35 18h9a18.5 18.5 0 0 1 0 12h-9a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/>
+    <path d="M18 35a2 2 0 0 1 2-2h24a18.5 18.5 0 0 1-17.5 12.5H20a2 2 0 0 1-2-2Z"/>
+  </g>
+</svg>

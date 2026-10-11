@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Secciones: la D como una página de tres secciones apiladas -->
+  <g fill="currentColor">
+    <path d="M3 2.5h23.5A18.5 18.5 0 0 1 44 15H3Z"/>
+    <rect x="3" y="18" width="12" height="12"/>
+    <path d="M33 18h11a18.5 18.5 0 0 1 0 12H33Z"/>
+    <path d="M3 33h41a18.5 18.5 0 0 1-17.5 12.5H3Z"/>
+  </g>
+</svg>

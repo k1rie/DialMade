@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Cuadrante: la D partida en 2×2 por un medianil ancho en cruz -->
+  <g fill="currentColor">
+    <rect x="3" y="3" width="12" height="18"/>
+    <rect x="3" y="27" width="12" height="18"/>
+    <path d="M21 3h6a18 18 0 0 1 18 18H33a6 6 0 0 0-6-6h-6Z"/>
+    <path d="M21 33h6a6 6 0 0 0 6-6h12a18 18 0 0 1-18 18h-6Z"/>
+  </g>
+</svg>

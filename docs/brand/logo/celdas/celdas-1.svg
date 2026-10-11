@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Una: tres celdas de rejilla + una sola pieza que es toda la curva -->
+  <g fill="currentColor">
+    <rect x="3" y="3" width="12" height="12" rx="2"/>
+    <rect x="3" y="18" width="12" height="12" rx="2"/>
+    <rect x="3" y="33" width="12" height="12" rx="2"/>
+    <path d="M18 5a2 2 0 0 1 2-2h4a21 21 0 0 1 0 42h-4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4a9 9 0 0 0 0-18h-4a2 2 0 0 1-2-2Z"/>
+  </g>
+</svg>

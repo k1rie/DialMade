@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Cuadrícula: tres columnas; la celda central vacía es el ojo de la D -->
+  <g fill="currentColor">
+    <rect x="3" y="3" width="12" height="42" rx="1.5"/>
+    <rect x="18" y="3" width="12" height="9" rx="1.5"/>
+    <rect x="18" y="36" width="12" height="9" rx="1.5"/>
+    <path d="M34.5 3A10.5 10.5 0 0 1 45 13.5V34.5A10.5 10.5 0 0 1 34.5 45A1.5 1.5 0 0 1 33 43.5V4.5A1.5 1.5 0 0 1 34.5 3Z"/>
+  </g>
+</svg>

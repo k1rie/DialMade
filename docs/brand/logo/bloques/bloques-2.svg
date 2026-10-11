@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Arrastre: el bloque hero, en acento, sale de su ranura y deja el hueco marcado -->
+  <g fill="currentColor">
+    <path d="M4.5 3H24A21 21 0 0 1 24 45H4.5A1.5 1.5 0 0 1 3 43.5V37.5A1.5 1.5 0 0 1 4.5 36H24A12 12 0 0 0 24 12H4.5A1.5 1.5 0 0 1 3 10.5V4.5A1.5 1.5 0 0 1 4.5 3Z"/>
+    <rect x="3" y="15" width="12" height="18" rx="1.5" fill-opacity=".2"/>
+  </g>
+  <rect x="6" y="15" width="12" height="18" rx="1.5" fill="var(--app-accent, #A677FF)"/>
+</svg>
