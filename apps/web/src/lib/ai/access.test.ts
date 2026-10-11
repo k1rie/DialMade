@@ -6,6 +6,9 @@ import { DEVICE_COOKIE, issueDeviceCookie } from "./device";
 import { AiOutputError } from "./errors";
 import type { AiServerConfig } from "./serverConfig";
 
+// These tests are about the free tier: they stay on it whatever `FULL_ACCESS_FOR_EVERYONE` says.
+vi.mock("./fullAccess", async (original) => ({ ...(await original<typeof import("./fullAccess")>()), hasFullAccess: vi.fn(async () => false) }));
+
 const NOW = new Date("2026-10-09T12:00:00Z");
 const SECRET = "d".repeat(64);
 const config: AiServerConfig = {

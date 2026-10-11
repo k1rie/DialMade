@@ -12,8 +12,17 @@ import type { AiServerConfig } from "./serverConfig";
 export const FULL_ACCESS_USES_PER_MONTH = 1000;
 export const FULL_ACCESS_REQUESTS_PER_DAY = 1000;
 
-/** Whether the signed-in account behind `request` has full access. Never throws. */
+/**
+ * TEMPORARY (the owner asked for it on 2026-10-10 and will say when to turn it off): while this is `true` every
+ * caller has full access, signed in or not, so the model picker and every finish are open to everyone. The global
+ * monthly budget and the per-IP daily limit still apply. Turning it off is setting it to `false` and deploying:
+ * `ai_full_access` then decides again.
+ */
+export const FULL_ACCESS_FOR_EVERYONE = true;
+
+/** Whether the caller behind `request` has full access: everyone while `FULL_ACCESS_FOR_EVERYONE`, else the signed-in account. Never throws. */
 export async function hasFullAccess(request: Request): Promise<boolean> {
+  if (FULL_ACCESS_FOR_EVERYONE) return true;
   const database = getDatabase();
   if (!database) return false;
   const user = await getSessionUser(request);
