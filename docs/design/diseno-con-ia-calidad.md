@@ -1,5 +1,7 @@
 # «Diseño con IA»: calidad (diagnóstico, biblioteca y medidas)
 
+> **Retirado el 2026-10-11.** La biblioteca de referencias (`packages/ai-render/src/library`), su selección, los gestos del prompt y los evals `eval:quality` y `eval:library` salieron de `main` para cambiar de flujo. Backup completo (ramas, trabajo sin commit, skills) en `~/dev/dialmade-backups/2026-10-11-diseno-ia/` (ver su `LEEME.md`). Este documento queda como historia.
+
 **Fecha:** 2026-10-10. **Rama:** `feat/ai-quality` (desde `main` 58252c6). **Lee antes:** `diseno-con-ia-spec.md` y
 `diseno-con-ia-critique.md`. Las reglas no cambian: el layout es del usuario, solo tokens, sanitizador e isla en el origen
 de preview, la app funciona sin IA y la única IA de pago es Anthropic.

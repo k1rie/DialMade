@@ -6,16 +6,15 @@
 import { getThemeRecipe, getThemeShape } from "@dialmade/catalog";
 import type { AiAxes, AiContext, AiDirection } from "@dialmade/doc";
 import { ICON_NAMES } from "@dialmade/ui/icons";
-import { AXIS_GLOSSARY, hash32, type DirectionCandidates } from "./direction";
-import { LIBRARY, selectReferences, type LibraryBlock } from "./library";
+import { AXIS_GLOSSARY, type DirectionCandidates } from "./direction";
 import { PLACEHOLDER_KINDS } from "./sanitize";
 import { tierSettings, type AiRenderTier } from "./tier";
 import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES } from "./vocabulary";
 
-export const AI_RENDER_PROMPT_VERSION = "ai-render/4";
+export const AI_RENDER_PROMPT_VERSION = "ai-render/5";
 
 /** Output caps (spec §2.1 and §5): one screen, one block action, the direction. */
-// 16k: Haiku 5.5 cannot turn adaptive thinking off, and a 7-block landing with references needs ≈ 7–10k of HTML.
+// 16k: Haiku 5.5 cannot turn adaptive thinking off, and a 7-block landing needs ≈ 7–10k of HTML.
 export const SCREEN_MAX_TOKENS = 16_000;
 export const BLOCK_MAX_TOKENS = 4_000;
 export const DIRECTION_MAX_TOKENS = 1_500;
@@ -154,64 +153,17 @@ export function artDirectionText(brand: RenderBrandInput, direction: DirectionFo
 
 export type MessageContent = { type: "text"; text: string; cache?: true }[];
 
-/** Characters of reference HTML one screen may carry (≈ 12k tokens): later blocks get one reference, then none. */
-export const MAX_REFERENCE_CHARS = 30_000;
-
-/** A reference with its root pointed at the target block and the line breaks gone (indentation is not content). */
-function referenceHtml(entry: LibraryBlock, blockId: string): string {
-  return entry.html.replace(/data-block-id="[^"]*"/, `data-block-id="${blockId}"`).replace(/\s*\n\s*/g, " ").trim();
-}
-
-/**
- * The hand-written reference blocks that suit each block of the screen (./library): same layout type and surface,
- * ranked by the art direction's axes, seeded by the brand so two brands with the same direction get different ones.
- * Pure: the hosted routes, BYOK and «Copiar prompt» build the same text.
- */
-export function referencesText(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { count?: number; seed?: number } = {}): string {
-  // The seed comes from structured traits only (never free text): the same brand always gets the same references.
-  const seed = options.seed ?? hash32(`${brand.productType}:${brand.recipe.id}:${brand.palette.hue}`);
-  const count = options.count ?? 2;
-  const used = new Set<string>();
-  const blocks = screen.blocks.filter((block) => !block.container);
-  const picked = blocks.map((block) => selectReferences(LIBRARY, block.type, screen.kind, direction.axes, block.id, { count, seed, used }));
-  // The budget is spent in rounds: every block gets its best reference before any block gets a second one, so a long
-  // screen never leaves its last blocks (the call to action, the footer) without an example.
-  let budget = MAX_REFERENCE_CHARS;
-  const chosen: LibraryBlock[][] = blocks.map(() => []);
-  for (let round = 0; round < count; round++) {
-    blocks.forEach((block, i) => {
-      const entry = picked[i]![round];
-      if (!entry) return;
-      const size = referenceHtml(entry, block.id).length;
-      if (size > budget) return;
-      budget -= size;
-      chosen[i]!.push(entry);
-    });
-  }
-  const parts = blocks.flatMap((block, i) =>
-    chosen[i]!.length === 0
-      ? []
-      : [`<references for="${block.id}">\n${chosen[i]!.map((entry) => `<reference gesture="${entry.gesture.replace(/"/g, "'")}" pattern="${entry.pattern.replace(/"/g, "'")}">\n${referenceHtml(entry, block.id)}\n</reference>`).join("\n")}\n</references>`],
-  );
-  if (parts.length === 0) return "";
-  // The same gestures again as a closing list: a small model follows the last thing it read. A plain list on purpose:
-  // asking Haiku 5.5 to «check» each block made its adaptive thinking spend 2–8k tokens and cut the screen short.
-  const checklist = blocks.flatMap((block, i) => (chosen[i]!.length === 0 ? [] : [`- ${block.id}: ${chosen[i]!.map((entry) => entry.gesture).join("  OR  ")}`]));
-  return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Each one names its gesture, the one bold move that makes it work. Build every block that has references on ONE of them, the one whose gesture suits the block, and follow it closely: the same structure, proportions and devices (rules, fills, shapes, mono labels, stickers, overlaps). Its gesture must be recognisable in your answer even when the block's content differs: change the content, never the gesture (no price → the trial length or the first plan's price becomes the giant figure; a physical object → draw this product's own device or screen as the object; two buttons instead of an email field → the buttons go where the field was). Never blend two references into a safer average. Rewrite every word and number for this brand and product, fit the block's cols and heightPx and show exactly "count" items. The art direction's axes and moves tune the reference's surface (tints, type voice, rules, labels); they never turn its rows, columns or list into a grid of cards. Only when a block's label or note asks for something no reference can show, design it from scratch. Never reuse their sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\nGestures to keep, one per block (from the reference you build on):\n${checklist.join("\n")}\n\n`;
-}
-
 /** The tier's quality brief as a closing paragraph (nothing for `mockup`). */
 const briefText = (tier: AiRenderTier | undefined) => (tierSettings(tier).brief ? `${tierSettings(tier).brief}\n\n` : "");
 
-/** User message of one screen: the cached art direction, then the screen with its reference blocks. */
-export function screenMessage(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { references?: boolean; tier?: AiRenderTier } = {}): MessageContent {
+/** User message of one screen: the cached art direction, then the screen. */
+export function screenMessage(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { tier?: AiRenderTier } = {}): MessageContent {
   const order = screen.blocks.map((block) => block.id).join(", ");
-  const references = options.references === false ? "" : referencesText(brand, direction, screen);
   return [
     { type: "text", text: artDirectionText(brand, direction), cache: true },
     {
       type: "text",
-      text: `<screen_data>\n${jsonData(screen)}\n</screen_data>\n\n${references}${briefText(options.tier)}Design the ${screen.blocks.length} blocks of this screen. Write exactly ${screen.blocks.length} roots, in this order: ${order}. HTML only.`,
+      text: `<screen_data>\n${jsonData(screen)}\n</screen_data>\n\n${briefText(options.tier)}Design the ${screen.blocks.length} blocks of this screen. Write exactly ${screen.blocks.length} roots, in this order: ${order}. HTML only.`,
     },
   ];
 }
@@ -237,14 +189,9 @@ export function blockMessage(brand: RenderBrandInput, direction: DirectionForPro
     currentHtml: input.html,
     ...(input.action.kind === "change" && { request: input.action.request, ...(input.action.target && { target: input.action.target }) }),
   };
-  // «Otra versión»: two references picked by the variation seed, so a re-roll starts from a different composition.
-  const references =
-    input.action.kind === "reroll" && !input.block.container
-      ? referencesText(brand, direction, { ...input.screen, blocks: [input.block] }, { count: 2, seed: input.action.seed })
-      : "";
   return [
     { type: "text", text: artDirectionText(brand, direction), cache: true },
-    { type: "text", text: `<block_data>\n${jsonData(data)}\n</block_data>\n\n${references}${briefText(tier)}${ask} Answer with the one root <… data-block-id="${input.block.id}">, HTML only.` },
+    { type: "text", text: `<block_data>\n${jsonData(data)}\n</block_data>\n\n${briefText(tier)}${ask} Answer with the one root <… data-block-id="${input.block.id}">, HTML only.` },
   ];
 }
 
@@ -355,7 +302,7 @@ export function manualPrompt(
     "",
     artDirectionText(brand, direction),
     ...(attached > 0 ? ["", attachedReferencesText(attached)] : []),
-    ...screens.map((screen) => `\n<screen_data>\n${jsonData(screen)}\n</screen_data>${referencesText(brand, direction, screen) ? `\n\n${referencesText(brand, direction, screen).trimEnd()}` : ""}`),
+    ...screens.map((screen) => `\n<screen_data>\n${jsonData(screen)}\n</screen_data>`),
     "",
     `${briefText(tier)}Design every block of ${screens.length === 1 ? "this screen" : `these ${screens.length} screens`}, screen after screen, in the order given. Answer with the HTML roots only (one per block, each with its data-block-id), nothing else.`,
   ];

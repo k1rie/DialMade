@@ -1,5 +1,7 @@
 # «Diseño con IA»: calidad — traspaso (2026-10-10)
 
+> **Retirado el 2026-10-11.** La biblioteca de referencias (`packages/ai-render/src/library`), su selección, los gestos del prompt y los evals `eval:quality` y `eval:library` salieron de `main` para cambiar de flujo. Backup completo (ramas, trabajo sin commit, skills) en `~/dev/dialmade-backups/2026-10-11-diseno-ia/` (ver su `LEEME.md`). Este documento queda como historia.
+
 Contexto completo para retomar el trabajo en otra sesión o con otra cuenta. Léelo junto con
 `diseno-con-ia-calidad.md` (diagnóstico y medidas) y `packages/ai-render/src/library/README.md` (reglas de la biblioteca).
 

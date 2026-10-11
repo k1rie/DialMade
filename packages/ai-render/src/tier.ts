@@ -36,7 +36,7 @@ export const TIER_SETTINGS: Readonly<Record<AiRenderTier, TierSettings>> = {
     screenMaxTokens: 32_000,
     blockMaxTokens: 12_000,
     brief:
-      "Quality: final product. Everything a presentable screen needs, plus finished details in every block: specific microcopy, units and captions, states (selected, pending, empty), figures that add up across blocks, and each reference's gesture carried out precisely down to its small devices.",
+      "Quality: final product. Everything a presentable screen needs, plus finished details in every block: specific microcopy, units and captions, states (selected, pending, empty), figures that add up across blocks, and each block's main gesture carried out precisely down to its small devices.",
     outputFactor: 2.4,
   },
 };
