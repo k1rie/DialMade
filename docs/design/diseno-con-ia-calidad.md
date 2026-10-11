@@ -128,6 +128,46 @@ Los dashboards no empeoraron. Gasto: ≈ $0,04.
 **Ojo:** las dos marcas eligen ahora el mismo CTA (`cta-brand-figure`). Es mejor que la caja teñida, pero resta
 variedad: hacen falta más entradas de CTA con gesto fuerte.
 
+## 3 quater. Ronda 3: personalidad a partir de las referencias del dueño del gusto
+
+El 2026-10-10 el dueño del gusto mandó capturas propias (su colección privada) de páginas «que no son genéricas, cada
+una tiene personalidad». Las capturas **no entran al repo**; de cada una se sacó el patrón y se escribió código propio,
+con copy de dominios ajenos al software y sin marcas.
+
+**Qué les da personalidad** (lo común a todas):
+
+1. **Tipografía con dos voces:** una línea o una palabra en cursiva junto al resto en redonda, o un titular enorme y
+   pesado frente a un texto pequeño y quieto.
+2. **Textura en mono:** fichas técnicas, anotaciones en las esquinas, direcciones y fechas («Est. 1931»).
+3. **Un objeto firma:** el producto dibujado como objeto, impresos apilados, un widget real del producto, una foto.
+4. **Campos de color:** banda a sangre en el color de marca, escenario oscuro, formas geométricas grandes detrás.
+
+**Entradas nuevas (aprobadas el 2026-10-10 tras una segunda pasada «más pegada a las referencias»)** — `assets/quality/library/round3/`:
+
+| # | Entrada | Gesto |
+|---|---|---|
+| 1 | `hero-launch-spec-sheet` | titular a dos voces y ficha técnica en mono, con el producto como objeto con pegatinas |
+| 2 | `hero-printed-matter` | una pila de impresos inclinados en colores distintos; el de delante lleva el mensaje |
+| 3 | `hero-color-field-name` | campo del color de marca con el nombre gigante recortado por el borde inferior |
+| 4 | `hero-widget-shapes` | un widget del producto con detalle, flotando sobre dos formas grandes de color |
+| 5 | `hero-photo-field` | foto a sangre con un titular grande centrado y una palabra en cursiva |
+| 6 | `hero-giant-devices` | titular gigante junto a un móvil que pisa un dashboard que se sale del borde |
+| 7 | `cta-offer-showcase` | un precio gigante como gancho, junto a un panel oscuro de escaparate |
+| 8 | `form-console-dark` | escenario oscuro enmarcado por anotaciones mono en las esquinas, un botón claro |
+
+Las 8 pasan las puertas sin cambios en 4 paletas, claro y oscuro. **Moves nuevos** en el catálogo de la dirección:
+`italic-accent`, `spec-sheet`, `corner-annotations` y `color-shapes`, para que esos rasgos lleguen también a los demás
+bloques. La galería acepta ahora `DIALMADE_LIB_BRANDS` (p. ej. con `ollaria`, la marca editorial) y guarda una imagen
+por entrada en `library/entries/`.
+
+**Límite:** la cursiva es sintética (Google Fonts se pide sin el eje `ital`). Se ve aceptable en sans; en una serif de
+titulares se notará. Cargar la cursiva real de la fuente de titulares queda pendiente.
+
+**Veredicto y segunda pasada.** «100 % mucho mejor, solo apégate más a las referencias». Cada entrada se rehízo más
+cerca de su captura (objeto con pantalla, teclado y pegatinas; impresos grandes cortados por el borde; cuadrícula de
+celdas y flores de píxel; titular de una palabra por línea y botones con icono; degradado con corte diagonal; panel
+de noche con estrellas; haz de luz) y se marcaron `approved`.
+
 ## 4. Límites honestos
 
 - **Una ejecución por celda**, 2 marcas, 2 pantallas: sin ruido entre ejecuciones ni panel ciego de calidad.

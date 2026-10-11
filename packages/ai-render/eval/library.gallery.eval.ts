@@ -1,8 +1,9 @@
 // Gallery of the reference library: every entry rendered with two fictional brands (light) and one in dark mode,
 // through the SAME pipeline as a model answer (sanitize, gates, CSS compile). Output (never committed):
-//   <OUT>/library/<type>-<brand>-<mode>.png  and  <OUT>/library/report.json
+//   <OUT>/library/<type>-<brand>-<mode>.png, <OUT>/library/entries/<id>-<brand>-<mode>.png  and  <OUT>/library/report.json
 //
-//   DIALMADE_EVAL_OUT=<dir> DIALMADE_LIB_TYPES=hero,features corepack pnpm --filter @dialmade/ai-render eval:library
+//   DIALMADE_EVAL_OUT=<dir> DIALMADE_LIB_TYPES=hero,features DIALMADE_LIB_BRANDS=brisa,vectora,ollaria \
+//     corepack pnpm --filter @dialmade/ai-render eval:library
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { compileThemeVars } from "@dialmade/doc";
@@ -26,6 +27,7 @@ import { qualityDoc } from "./quality.fixtures";
 const ROOT = join(import.meta.dirname, "../../..");
 const OUT = join(process.env.DIALMADE_EVAL_OUT ?? join(ROOT, "docs/design/assets/quality"), "library");
 const TYPES = process.env.DIALMADE_LIB_TYPES?.split(",").map((t) => t.trim());
+const GALLERY_BRANDS = (process.env.DIALMADE_LIB_BRANDS ?? "brisa,vectora").split(",").map((b) => b.trim());
 const ROWS: Record<string, number> = { navbar: 8, hero: 64, features: 48, logos: 12, testimonials: 40, pricing: 60, cta: 24, footer: 28, stats: 16, kpis: 14, chart: 40, table: 44, activity: 40, list: 40, cards: 44, empty: 36, form: 40, faq: 44, text: 24 };
 const SHELL = { nav: "sidebar", header: true } as const;
 
@@ -37,12 +39,12 @@ function classDiff(before: string, after: string) {
 }
 
 it("library gallery", async () => {
-  await mkdir(OUT, { recursive: true });
+  await mkdir(join(OUT, "entries"), { recursive: true });
   const kitCss = await readBundledCss();
   const browser = await chromium.launch();
   const report: Record<string, unknown>[] = [];
   const types = [...new Set(LIBRARY.map((entry) => entry.type))].filter((type) => !TYPES || TYPES.includes(type));
-  for (const brand of BRANDS.filter((b) => b.id === "brisa" || b.id === "vectora")) {
+  for (const brand of BRANDS.filter((b) => GALLERY_BRANDS.includes(b.id))) {
     const { doc } = qualityDoc(brand);
     const ctx = contentContextFromDoc(doc);
     for (const type of types) {
@@ -97,6 +99,11 @@ it("library gallery", async () => {
         await page.setContent(html, { waitUntil: "networkidle" });
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({ path: join(OUT, `${type}-${brand.id}-${mode}.png`), fullPage: true });
+        // One image per entry too, so a family with many entries can be reviewed one by one.
+        for (const [i, entry] of entries.entries()) {
+          const root = page.locator(`[data-block-id="b-${i}"]`).first();
+          if (await root.count()) await root.screenshot({ path: join(OUT, "entries", `${entry.id}-${brand.id}-${mode}.png`) });
+        }
         await page.close();
       }
     }

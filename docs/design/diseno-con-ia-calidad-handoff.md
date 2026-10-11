@@ -106,15 +106,17 @@ DIALMADE_EVAL_LIVE=1 DIALMADE_EVAL_LABEL=nombre DIALMADE_EVAL_MODELS=haiku DIALM
 2. **Footer con wordmark gigante:** es la entrada que menos convence; ver si se quiere más extremo.
    (Hecho el 2026-10-10: features en tarjetas y CTA sin fuerza, `ai-render/3`, §3 ter del informe. Queda: las dos
    marcas eligen ahora el mismo CTA; faltan más entradas de CTA con gesto fuerte.)
-3. **Tercera ronda:** formularios, ajustes, calendario, estados vacíos, perfil, modal; hoy esos tipos no tienen
+3. **Ronda 3 hecha y aprobada** (§3 quater del informe). Queda: cargar la **cursiva real** de la fuente de titulares
+   (hoy es sintética); pegatinas que Haiku a veces pone sobre texto; seguir con las capturas que mande el usuario.
+4. **Más rondas:** formularios, ajustes, calendario, estados vacíos, perfil, modal; hoy esos tipos no tienen
    referencias. Y **una referencia de Mobbin por dirección** (editorial, técnica, cálida, juguetona, lujo) que el
    usuario debe aportar; sirven de criterio, el HTML lo escribe quien trabaja en el repo.
-4. **Bandas en blanco** entre secciones: vienen de los altos de celda del layout del usuario; ver si el prompt debe
+5. **Bandas en blanco** entre secciones: vienen de los altos de celda del layout del usuario; ver si el prompt debe
    pedir que el bloque llene su celda en landing.
-5. **Medir con más marcas** (≥ 6) y con un panel ciego; ruido entre ejecuciones; móvil y tablet; revisar el modo
+6. **Medir con más marcas** (≥ 6) y con un panel ciego; ruido entre ejecuciones; móvil y tablet; revisar el modo
    oscuro de toda la galería (solo se revisaron héroes y gráficos).
-6. **Variedad:** una pantalla sigue pareciéndose entre marcas con la misma dirección; más variantes por tipo.
-7. **Merge a `main`:** preguntar al usuario. Antes, correr otra vez `-r typecheck/lint/test`, `web build` y la
+7. **Variedad:** una pantalla sigue pareciéndose entre marcas con la misma dirección; más variantes por tipo.
+8. **Merge a `main`:** preguntar al usuario. Antes, correr otra vez `-r typecheck/lint/test`, `web build` y la
    simulación de Vercel.
-8. **Línea de costo de la UI:** `estimate.ts` mide el prompt real, así que ya incluye las referencias; comprobar que
+9. **Línea de costo de la UI:** `estimate.ts` mide el prompt real, así que ya incluye las referencias; comprobar que
    los textos «≈ $0,013 · 1 uso de 5» siguen siendo coherentes con Haiku.

@@ -213,6 +213,74 @@ export const CONVERSION: LibraryBlock[] = [
 </section>`,
   },
   {
+    id: "cta-offer-showcase",
+    approved: true,
+    type: "cta",
+    surface: "landing",
+    pattern:
+      "Two panels side by side: a light card where a giant price is the hook (the brand mark, a tinted offer badge, the figure, what it buys in large muted type, the renewal, an email field and one dark full-width button, small print), and a dark night panel that sells the feeling: a few tiny stars, a sentence in two voices, a mono proof line between marks and a translucent card with a labelled rising chart.",
+    gesture: "a giant price as the hook, beside a dark showcase panel",
+    fits: { composition: ["split", "bento", "centered-stage"], typeVoice: ["quiet", "humanist", "bold-display"], colorStrategy: ["high-contrast-cta", "neutral-with-pops", "tonal-monochrome"], imagery: ["data-viz-led", "framed-screens"], decoration: ["outlined", "none", "tinted-panels"], rhythm: ["airy", "balanced"] },
+    html: `<section data-block-id="b-cta" class="@container bg-muted py-16 @3xl:py-24">
+<div class="mx-auto grid max-w-container gap-4 px-6 @3xl:grid-cols-2">
+<div class="flex flex-col items-center rounded-xl border border-border bg-card px-8 py-12 text-center">
+<img data-asset="logo" alt="Bloom and Stem" class="h-8 w-auto">
+<span class="mt-6 rounded-badge bg-primary/10 px-3 py-1 text-small font-medium text-foreground">Spring offer · 95% off</span>
+<p class="mt-4 font-heading text-giant font-normal leading-none tracking-tight tabular-nums text-foreground">€1</p>
+<h2 class="font-heading text-h1 font-normal tracking-tight text-muted-foreground">for your first box</h2>
+<p class="mt-3 text-small text-muted-foreground">Then €24 a month. Skip or cancel any week.</p>
+<div class="mt-8 w-full max-w-sm space-y-3 text-left">
+<label for="cta-offer-email" class="sr-only">Email</label>
+<input id="cta-offer-email" type="email" placeholder="Email" class="w-full rounded-input border border-border bg-background px-4 py-3.5 text-body text-foreground">
+<button type="button" class="w-full rounded-button bg-foreground px-6 py-3.5 text-body font-semibold text-background hover:bg-foreground/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">Send me flowers</button>
+</div>
+<p class="mt-4 text-small text-muted-foreground">Already a member? <a href="#" class="font-medium text-foreground underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">Sign in</a></p>
+<p class="mt-6 max-w-sm text-caption text-muted-foreground">New members only. By joining you accept our <a href="#" class="underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">terms</a> and <a href="#" class="underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground">privacy policy</a>.</p>
+</div>
+<div class="relative flex flex-col items-center justify-center overflow-hidden rounded-xl bg-foreground px-8 py-14 text-center">
+<div aria-hidden="true"><span class="absolute left-8 top-10 size-0.5 rounded-full bg-background"></span><span class="absolute left-24 top-36 size-1 rounded-full bg-background"></span><span class="absolute left-64 top-8 size-0.5 rounded-full bg-background"></span><span class="absolute right-10 top-16 size-1 rounded-full bg-background"></span><span class="absolute right-24 top-44 size-0.5 rounded-full bg-background"></span><span class="absolute left-12 bottom-24 size-0.5 rounded-full bg-background"></span><span class="absolute right-16 bottom-12 size-1 rounded-full bg-background"></span><span class="absolute left-40 bottom-10 size-0.5 rounded-full bg-background"></span><span class="absolute bottom-20 right-20 h-px w-20 rotate-12 bg-background/40"></span></div>
+<p class="relative font-heading text-h1 font-normal tracking-tight text-background">Fresh every Friday.<span class="block italic">Picked that morning.</span></p>
+<p class="relative mt-5 flex items-center gap-3 font-mono text-caption uppercase tracking-widest text-background"><i data-icon="sparkle" aria-hidden="true" class="size-4"></i>4.9 / 5 · 2,300 members<i data-icon="sparkle" aria-hidden="true" class="size-4"></i></p>
+<div class="relative mt-10 w-full max-w-sm rounded-xl border border-background/20 bg-background/5 p-5 text-left">
+<div class="flex items-center justify-between"><p class="font-mono text-caption uppercase tracking-widest text-background">Stems this season</p><span class="flex size-7 items-center justify-center rounded-md border border-background/40 text-background"><i data-icon="plus" aria-hidden="true" class="size-4"></i></span></div>
+<p class="mt-3 font-heading text-h2 tabular-nums text-background">1,840</p>
+<p class="flex items-center gap-2 text-small text-background"><span class="size-1.5 rounded-full bg-background"></span>May</p>
+<img data-chart="area" data-values="120,140,180,260,420,610,780,900" alt="Stems delivered per week this season" class="mt-3 h-28 w-full">
+<div class="mt-2 flex justify-between font-mono text-caption text-background"><span>01</span><span>07</span><span>14</span><span>21</span><span>28</span></div>
+</div>
+</div>
+</div>
+</section>`,
+  },
+  {
+    id: "form-console-dark",
+    approved: true,
+    type: "form",
+    surface: "landing",
+    pattern:
+      "A near-black stage with a single beam of light crossing one side (a thin bright line inside a soft glow), tiny mono annotations in its corners (a status, a version with a mode pill, a terminal-like line) and a vertical rail of mono words on the edge; on the other side a translucent rounded panel holds the whole form: a mono pill label, the title, three round icon buttons, a labelled rule, mono caps field labels over pill fields and one full-width light button.",
+    gesture: "a dark stage with one beam of light, framed by mono annotations in its corners",
+    fits: { composition: ["split", "asymmetric", "data-dense"], typeVoice: ["technical-mono", "condensed-caps", "bold-display"], colorStrategy: ["high-contrast-cta", "tonal-monochrome"], decoration: ["gradient-wash", "outlined", "rules-and-grids"], rhythm: ["airy", "balanced"] },
+    html: `<section data-block-id="b-form" class="@container relative overflow-hidden bg-foreground py-24 @3xl:py-32">
+<div aria-hidden="true" class="absolute inset-y-0 left-0 hidden w-1/2 @3xl:block"><span class="absolute left-24 top-0 h-full w-64 rotate-12 bg-radial from-background/25 via-transparent to-transparent"></span><span class="absolute left-56 top-0 h-full w-1 rotate-12 bg-linear-to-b from-transparent via-background to-transparent"></span></div>
+<p class="absolute left-6 top-6 font-mono text-caption uppercase tracking-widest text-background">Obs.core // on-line</p>
+<p class="absolute right-6 top-6 flex items-center gap-4 font-mono text-caption uppercase tracking-widest text-background">v03.01<span class="rounded-full border border-background/30 px-2 py-0.5">Night</span></p>
+<p class="absolute bottom-6 left-6 font-mono text-caption uppercase tracking-widest text-background">uplink_ready_</p>
+<div aria-hidden="true" class="absolute bottom-24 right-6 top-24 hidden flex-col items-center gap-3 font-mono text-caption uppercase text-background @3xl:flex"><span>Idle</span><span class="w-px grow bg-background/20"></span><span>Dome</span><span class="w-px grow bg-background/20"></span><span>02</span></div>
+<div class="relative mx-auto grid max-w-container px-6 @3xl:grid-cols-12">
+<div class="rounded-xl border border-background/10 bg-background/5 p-8 shadow-lg @3xl:col-span-5 @3xl:col-start-7">
+<span class="rounded-full border border-background/30 px-2.5 py-1 font-mono text-caption uppercase tracking-widest text-background">Night.pass</span>
+<h2 class="mt-5 font-heading text-h2 font-semibold text-background">Reserve the dome</h2>
+<p class="mt-1 text-small text-background">Telescope time, or a guided night under the sky.</p>
+<div class="mt-6 grid grid-cols-3 gap-3"><button type="button" aria-label="Continue with your member card" class="flex items-center justify-center rounded-full border border-background/20 bg-background/10 py-3 text-background hover:bg-background/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"><i data-icon="user" aria-hidden="true" class="size-5"></i></button><button type="button" aria-label="Continue with email" class="flex items-center justify-center rounded-full border border-background/20 bg-background/10 py-3 text-background hover:bg-background/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"><i data-icon="mail" aria-hidden="true" class="size-5"></i></button><button type="button" aria-label="Pick from the calendar" class="flex items-center justify-center rounded-full border border-background/20 bg-background/10 py-3 text-background hover:bg-background/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"><i data-icon="calendar" aria-hidden="true" class="size-5"></i></button></div>
+<div class="mt-6 flex items-center gap-3 font-mono text-caption uppercase tracking-widest text-background"><span class="h-px grow bg-background/20"></span>Or by hand<span class="h-px grow bg-background/20"></span></div>
+<div class="mt-5 space-y-4"><div><label for="dome-name" class="font-mono text-caption uppercase tracking-widest text-background">Name</label><input id="dome-name" type="text" placeholder="Your name" class="mt-2 w-full rounded-full border border-background/20 bg-background/10 px-5 py-3 text-body text-background placeholder-background"></div><div><label for="dome-night" class="font-mono text-caption uppercase tracking-widest text-background">Night</label><input id="dome-night" type="text" placeholder="Friday 22 May" class="mt-2 w-full rounded-full border border-background/20 bg-background/10 px-5 py-3 text-body text-background placeholder-background"></div></div>
+<button type="button" class="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-background px-6 py-4 font-mono text-small font-semibold uppercase tracking-widest text-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background">Request the night<i data-icon="arrow-right" aria-hidden="true" class="size-4"></i></button>
+</div>
+</div>
+</section>`,
+  },
+  {
     id: "faq-big-questions",
     type: "faq",
     surface: "landing",

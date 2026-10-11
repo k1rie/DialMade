@@ -35,7 +35,8 @@ inventar la composición desde cero: es lo que sube el piso del resultado (`docs
 `APPROVED_BONUS` (≈ un eje de composición): gana a un borrador cuando la dirección encaja parecido, pero no a una que
 encaje claramente mejor. Los tipos sin ninguna aprobada siguen usando borradores.
 
-Aprobadas el 2026-10-10: los 5 héroes, los 3 testimonios y los 3 pricing.
+Aprobadas el 2026-10-10: los 5 héroes, los 3 testimonios y los 3 pricing, y las 8 entradas de la ronda 3 (sacadas de
+las referencias del dueño del gusto: 6 héroes, `cta-offer-showcase` y `form-console-dark`).
 
 ## Cómo se ve
 

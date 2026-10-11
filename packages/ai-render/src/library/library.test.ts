@@ -63,9 +63,10 @@ describe("every library entry is a clean answer", () => {
   }
 
   it("carries no raw colors, brand names, real contacts or scripts", () => {
-    const BRANDS = /\b(stripe|linear|vercel|notion|resend|mercury|raycast|figma|slack|github|google|apple|microsoft|amazon|airbnb|shopify|spotify|openai|anthropic)\b/i;
+    const BRANDS = /\b(stripe|linear|vercel|notion|resend|mercury|raycast|figma|slack|github|google|apple|microsoft|amazon|airbnb|shopify|spotify|openai|anthropic|calendly|mobbin)\b/i;
     for (const entry of LIBRARY) {
-      const text = `${entry.id} ${entry.pattern} ${entry.html}`;
+      // Class names are vocabulary, not copy (`bg-linear-to-b` is not a brand).
+      const text = `${entry.id} ${entry.pattern} ${entry.gesture} ${entry.html.replace(/class="[^"]*"/g, "")}`;
       expect(text, entry.id).not.toMatch(BRANDS);
       expect(entry.html, entry.id).not.toMatch(/(?<![\w&])#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b|rgb\(|hsl\(|oklch\(|style=|<script|\son\w+=|https?:\/\//i);
       expect(entry.html, entry.id).not.toMatch(/[\w.+-]+@[\w-]+\.[a-z]{2,}/i);
