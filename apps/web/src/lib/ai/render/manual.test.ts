@@ -124,3 +124,23 @@ describe("«Copiar prompt para mi Claude» (spec §5.6)", () => {
     await expect(manualTransport({ direction }).block({ sessionId: "m", brand: BRAND, direction, screen: screenOnly, block: home.blocks[1]!, html: "", action: { kind: "reroll", seed: 1 } })).rejects.toMatchObject({ code: "invalid-request" });
   });
 });
+
+describe("«mi Claude» and the reference screenshots of «Estilo»", () => {
+  it("lists them as attachments, in order, and tells Claude how to use them", () => {
+    const job = manualRenderJob({ brand: BRAND, direction, screens: [home], references: [{ name: "stripe-home.png" }, { name: "" }, { name: "notes\u0007.png" }] });
+    expect(job.attachments).toEqual(["stripe-home.png", "reference-2", "notes.png"]);
+    expect(job.prompt).toContain("The 3 images attached to this conversation are reference screenshots");
+    expect(job.prompt).toMatch(/never their text, names, logos, products or exact colors/);
+  });
+
+  it("without screenshots the prompt and the attachments are what they were", () => {
+    const job = manualRenderJob({ brand: BRAND, direction, screens: [home] });
+    expect(job.attachments).toEqual([]);
+    expect(job.prompt).not.toContain("attached to this conversation");
+  });
+
+  it("one screenshot is singular", () => {
+    const job = manualRenderJob({ brand: BRAND, direction, screens: [home], references: [{ name: "a.png" }] });
+    expect(job.prompt).toContain("The image attached to this conversation is a reference screenshot");
+  });
+});

@@ -3,6 +3,7 @@
 // for BYOK (count_tokens, Opus/Sonnet ranges) replaces it on those paths. Pure.
 import { tierSettings, type AiRenderTier } from "@dialmade/ai-render";
 import { usageCostUsd } from "../../pricing";
+import { REFERENCE_IMAGE_TOKENS } from "../api";
 
 /** Measured with Haiku 5.5 (spec §5.5, §11): ≈ 1030–1100 output tokens per block, plus a little thinking. */
 const OUTPUT_TOKENS_PER_BLOCK = 1_150;
@@ -25,11 +26,19 @@ export type RenderEstimate = { costUsd: number; seconds: number; screens: number
  * One generate: the art direction (when the document has none to reuse) and one streamed screen per entry of
  * `blocksPerScreen` (the blocks it asks for). The first screen writes the cached prefix, the others read it.
  */
-export function estimateGenerate(input: { blocksPerScreen: readonly number[]; direction: boolean; model: string; tier?: AiRenderTier }): RenderEstimate {
+export function estimateGenerate(input: {
+  blocksPerScreen: readonly number[];
+  direction: boolean;
+  model: string;
+  tier?: AiRenderTier;
+  /** Reference screenshots the direction call carries («Estilo»): each adds its image tokens to that call. */
+  references?: number;
+}): RenderEstimate {
   const { blocksPerScreen, direction, model } = input;
   // A higher tier thinks more and writes finer details: more output and more time per block.
   const factor = tierSettings(input.tier).outputFactor;
-  let costUsd = direction ? usageCostUsd(DIRECTION_USAGE, model) : 0;
+  const images = (input.references ?? 0) * REFERENCE_IMAGE_TOKENS;
+  let costUsd = direction ? usageCostUsd({ ...DIRECTION_USAGE, input_tokens: DIRECTION_USAGE.input_tokens + images }, model) : 0;
   blocksPerScreen.forEach((blocks, index) => {
     costUsd += usageCostUsd(
       {

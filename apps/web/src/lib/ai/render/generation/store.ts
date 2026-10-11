@@ -34,7 +34,7 @@ export type GenerationActions = {
 export type GenerationStoreState = GenerationState & { prefs: GenerationPrefs; actions: GenerationActions };
 export type GenerationStore = StoreApi<GenerationStoreState>;
 
-export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null };
+export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null, style: "", references: [] };
 
 let transportOverride: RenderTransport | null = null;
 /** The transport of the NEXT run only (consumed when it starts): «mi Claude»'s pasted answer is good for one run. */
@@ -112,6 +112,13 @@ export function createGenerationStore(docStore: Pick<DesignDocStore, "getState">
       },
     };
   });
+  // The reference screenshots live in the prefs (memory only): the engine spends them when the direction answers.
+  deps.onDirectionUsed ??= (used) => {
+    const spent = new Set(used.map((reference) => reference.data));
+    const { prefs, actions } = store.getState();
+    const left = prefs.references.filter((reference) => !spent.has(reference.data));
+    if (left.length !== prefs.references.length) actions.setPrefs({ references: left });
+  };
   return store;
 }
 

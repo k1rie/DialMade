@@ -3,6 +3,7 @@
 // direction (cached per document for 5 minutes, shared by its screens) and the screen or block data (not cached).
 // Everything the user typed (names, labels, notes, copy, the brief, a «Pedir cambio» request) travels as JSON inside
 // tags with `<` and `>` escaped: it can never close a block, and the system prompt says it is data, not orders.
+import { getThemeRecipe, getThemeShape } from "@dialmade/catalog";
 import type { AiAxes, AiDirection } from "@dialmade/doc";
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { AXIS_GLOSSARY, hash32, type DirectionCandidates } from "./direction";
@@ -60,6 +61,7 @@ Every color, font, type size, radius and shadow must be a token. Palette, dark m
 
 # Design
 - Follow the art direction you are given: its axes and moves apply to every screen, so all screens look like one product. Use each move where it fits naturally; never restructure a block (for instance into cards) only to host a move or a decoration. Shared pieces (navbar, footer) must look the same everywhere.
+- When the art direction has a "style" (the developer's own words for the look they want) or "references" (what was taken from their reference screenshots), they weigh more than the moves and the axes: follow them in every block, within the tokens, the palette and these rules. Never copy text, names, logos or images of a reference.
 - You also write the words inside the blocks, in the screen's language ("es" is Spanish from Spain, "en" is American English). Start from each block's "draft" (its current copy): keep its role (eyebrow, title, subtitle, button…), its prices, plan names, numbers and the names of links to other screens. The draft is TEMPLATE copy from a generic generator: unless a line is a price, a plan name, a number or the name of a link to another screen, rewrite it for THIS product (use the brand's "description" and "productType"), concrete and short, with a specific benefit instead of a slogan; add supporting text, labels, sample data and microcopy where the design needs them. Use the brand name exactly as given. Never name real companies, people or products; never invent customer logos of real brands; never write real-looking emails, phone numbers or URLs.
 - A block's "label" and "note" say what it is for (data from the developer). "count" is how many items it shows: show exactly that many.
 - Make it look designed, not generated: a clear hierarchy, one focal point per block, real alignment, deliberate whitespace, consistent radii and shadows, sample data that looks real for this product.
@@ -119,12 +121,13 @@ export type RenderScreenInput = {
   blocks: RenderBlockInput[];
 };
 
-export type DirectionForPrompt = Pick<AiDirection, "axes" | "moves" | "rationale">;
+export type DirectionForPrompt = Pick<AiDirection, "axes" | "moves" | "rationale" | "style" | "references">;
 
 /** Tier 2 of the cache: the same text for every screen and block action of the document. */
 export function artDirectionText(brand: RenderBrandInput, direction: DirectionForPrompt): string {
   const axes = Object.fromEntries(Object.entries(direction.axes).map(([axis, value]) => [axis, `${value}: ${AXIS_GLOSSARY[value] ?? ""}`]));
-  return `<art_direction>\n${jsonData({ brand, axes, moves: direction.moves, rationale: direction.rationale })}\n</art_direction>`;
+  const extra = { ...(direction.style && { style: direction.style }), ...(direction.references && { references: direction.references }) };
+  return `<art_direction>\n${jsonData({ brand, axes, moves: direction.moves, rationale: direction.rationale, ...extra })}\n</art_direction>`;
 }
 
 export type MessageContent = { type: "text"; text: string; cache?: true }[];
@@ -224,38 +227,93 @@ export function blockMessage(brand: RenderBrandInput, direction: DirectionForPro
 }
 
 /** Structured output of the direction call: each axis restricted to the code's candidates. */
-export function directionSchema(candidates: DirectionCandidates) {
+export function directionSchema(candidates: DirectionCandidates, options: { references?: boolean } = {}) {
   const axes: Record<string, unknown> = {};
   for (const [axis, values] of Object.entries(candidates.axes)) axes[axis] = { type: "string", enum: values };
   return {
     type: "object",
     additionalProperties: false,
-    required: ["axes", "moves", "rationale"],
+    required: ["axes", "moves", "rationale", ...(candidates.themes.length > 0 ? ["theme"] : []), ...(options.references ? ["references"] : [])],
     properties: {
       axes: { type: "object", additionalProperties: false, required: Object.keys(axes), properties: axes },
       moves: { type: "array", items: { type: "string", enum: candidates.moves }, minItems: 1, description: "2 or 3 of the candidate moves" },
       rationale: { type: "string", description: "One or two sentences, at most 280 characters, in the brand's language" },
+      ...(candidates.themes.length > 0 && {
+        theme: { type: "string", enum: ["none", ...candidates.themes], description: 'One of the listed variants, or "none" to keep the style as it is' },
+      }),
+      ...(options.references && {
+        references: { type: "string", description: "At most 400 characters, in English: what the screens should take from the reference screenshots" },
+      }),
     },
   } as const;
 }
 
+/** «Estilo»: the developer's words for the look and up to `MAX_STYLE_REFERENCES` screenshots (never stored). */
+export type DirectionStyle = { text?: string; images?: readonly { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string }[] };
+
+export const MAX_STYLE_LENGTH = 600;
+export const MAX_STYLE_REFERENCES = 3;
+
+/** One line per variant of the recipe: its id, what it changes and the mode it was made for. */
+function themeLine(id: string): string {
+  const recipe = getThemeRecipe(id);
+  const shape = getThemeShape(id);
+  if (!recipe || !shape) return id;
+  const only = shape.modes.length === 1 ? ` Made for ${shape.modes[0]} mode only.` : "";
+  return `${id}: ${shape.label}, ${recipe.description.en}${only}`;
+}
+
 /** User message of the direction call (spec §5.1 step 2). */
-export function directionMessage(brand: RenderBrandInput, candidates: DirectionCandidates, locale: "es" | "en", screens: { name: string; kind: string; blocks: string[] }[]): MessageContent {
+export function directionMessage(
+  brand: RenderBrandInput,
+  candidates: DirectionCandidates,
+  locale: "es" | "en",
+  screens: { name: string; kind: string; blocks: string[] }[],
+  style: DirectionStyle = {},
+): MessageContent {
   const options = Object.fromEntries(Object.entries(candidates.axes).map(([axis, values]) => [axis, values.map((value) => `${value}: ${AXIS_GLOSSARY[value] ?? ""}`)]));
+  const text = style.text?.trim();
+  const images = style.images?.length ?? 0;
+  const asks = [
+    candidates.themes.length > 0
+      ? ` Also pick "theme": one of the variants in "themes" (each changes only the shape of the style: corners, border, shadow and buttons, never the colors) that best suits the brand and what the developer asked for, or "none" to keep the style as it is. Prefer "none" when no variant clearly fits.`
+      : "",
+    text ? ` The developer described the look they want in "style": let it decide between the options and the moves, and say in the rationale how you follow it.` : "",
+    images > 0
+      ? ` The ${images === 1 ? "image above is a reference screenshot" : `${images} images above are reference screenshots`} of a look they like: in "references", say in plain words what the screens should take from ${images === 1 ? "it" : "them"} (composition, type voice and scale, decoration, density, shapes, color used as a gesture), never their text, names, logos, products or exact colors (the palette is fixed).`
+      : "",
+  ].join("");
   return [
     {
       type: "text",
-      text: `<screen_data>\n${jsonData({ task: "art-direction", brand, locale, screens, options, moves: candidates.moves })}\n</screen_data>\n\nChoose the art direction of this product before any screen is designed: one value per axis from "options", the 2 or 3 "moves" that fit the brand best, and a short rationale (at most 280 characters, language "${locale}") that a developer understands. Pick what makes THIS brand distinct, not the safest option.`,
+      text: `<screen_data>\n${jsonData({ task: "art-direction", brand, locale, screens, ...(text && { style: text }), options, moves: candidates.moves, ...(candidates.themes.length > 0 && { themes: candidates.themes.map(themeLine) }) })}\n</screen_data>\n\nChoose the art direction of this product before any screen is designed: one value per axis from "options", the 2 or 3 "moves" that fit the brand best, and a short rationale (at most 280 characters, language "${locale}") that a developer understands. Pick what makes THIS brand distinct, not the safest option.${asks}`,
     },
   ];
 }
 
+/**
+ * «mi Claude»: the developer attaches their reference screenshots to the conversation themselves (they never travel in
+ * the copied text). Same rule as the API path: take the look, never the content.
+ */
+function attachedReferencesText(count: number): string {
+  const what = count === 1 ? "The image attached to this conversation is a reference screenshot" : `The ${count} images attached to this conversation are reference screenshots`;
+  return `${what} of a look the developer likes. Take from ${count === 1 ? "it" : "them"} the composition, type voice and scale, decoration, density, shapes and color used as a gesture, in every block; never their text, names, logos, products or exact colors (the palette is fixed).`;
+}
+
 /** «Copiar prompt para mi Claude»: everything in one text (spec §5.6). */
-export function manualPrompt(brand: RenderBrandInput, direction: DirectionForPrompt, screens: readonly RenderScreenInput[], tier?: AiRenderTier): string {
+export function manualPrompt(
+  brand: RenderBrandInput,
+  direction: DirectionForPrompt,
+  screens: readonly RenderScreenInput[],
+  tier?: AiRenderTier,
+  options: { references?: number } = {},
+): string {
+  const attached = options.references ?? 0;
   const parts = [
     AI_RENDER_SYSTEM_PROMPT,
     "",
     artDirectionText(brand, direction),
+    ...(attached > 0 ? ["", attachedReferencesText(attached)] : []),
     ...screens.map((screen) => `\n<screen_data>\n${jsonData(screen)}\n</screen_data>${referencesText(brand, direction, screen) ? `\n\n${referencesText(brand, direction, screen).trimEnd()}` : ""}`),
     "",
     `${briefText(tier)}Design every block of ${screens.length === 1 ? "this screen" : `these ${screens.length} screens`}, screen after screen, in the order given. Answer with the HTML roots only (one per block, each with its data-block-id), nothing else.`,

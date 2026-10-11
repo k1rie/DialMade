@@ -22,6 +22,8 @@ const T = {
     value: "Valor",
     moves: "Movimientos de diseño",
     why: "Por qué",
+    style: "Estilo pedido",
+    references: "De las referencias",
     chip: (chip: string) => `Dirección elegida: «${chip}».`,
     blocks: "Bloques de IA por pantalla",
     base: "diseño base",
@@ -39,6 +41,8 @@ const T = {
     value: "Value",
     moves: "Design moves",
     why: "Why",
+    style: "Requested style",
+    references: "From the references",
     chip: (chip: string) => `Chosen direction: "${chip}".`,
     blocks: "AI blocks per screen",
     base: "base design",
@@ -114,6 +118,8 @@ export function aiDesignLines(doc: DesignDoc, locale: Locale, level = 2): string
       "",
       `${L.why}: ${line(direction.rationale)}`,
       "",
+      ...(direction.style ? [`${L.style}: ${line(direction.style)}`, ""] : []),
+      ...(direction.references ? [`${L.references}: ${line(direction.references)}`, ""] : []),
     );
   }
   const all = entries(doc);

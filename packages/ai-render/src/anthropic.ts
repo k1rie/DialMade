@@ -19,6 +19,7 @@ import {
   screenMessage,
   type BlockActionInput,
   type DirectionForPrompt,
+  type DirectionStyle,
   type MessageContent,
   type RenderBrandInput,
   type RenderScreenInput,
@@ -48,12 +49,15 @@ const SYSTEM: Anthropic.Beta.Messages.BetaTextBlockParam[] = [{ type: "text", te
 const content = (blocks: MessageContent): Anthropic.Beta.Messages.BetaTextBlockParam[] =>
   blocks.map((block) => ({ type: "text", text: block.text, ...(block.cache && { cache_control: { type: "ephemeral" as const } }) }));
 
-function base(options: CallOptions, maxTokens: number, user: MessageContent, format?: Anthropic.Beta.Messages.BetaJSONOutputFormat): Params {
+type ImageBlock = Anthropic.Beta.Messages.BetaImageBlockParam;
+
+function base(options: CallOptions, maxTokens: number, user: MessageContent, format?: Anthropic.Beta.Messages.BetaJSONOutputFormat, images: ImageBlock[] = []): Params {
   return {
     model: options.model,
     max_tokens: maxTokens,
     system: SYSTEM,
-    messages: [{ role: "user", content: content(user) }],
+    // Images before the text that talks about them.
+    messages: [{ role: "user", content: [...images, ...content(user)] }],
     ...((options.effortSupported !== false || format) && {
       output_config: { ...(options.effortSupported !== false && { effort: options.effort }), ...(format && { format }) },
     }),
@@ -67,11 +71,16 @@ export function directionParams(
   candidates: DirectionCandidates,
   locale: "es" | "en",
   screens: { name: string; kind: string; blocks: string[] }[],
+  style: DirectionStyle = {},
 ): Params {
-  return base(options, DIRECTION_MAX_TOKENS, directionMessage(brand, candidates, locale, screens), {
-    type: "json_schema",
-    schema: directionSchema(candidates) as unknown as Record<string, unknown>,
-  });
+  const images: ImageBlock[] = (style.images ?? []).map((image) => ({ type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } }));
+  return base(
+    options,
+    DIRECTION_MAX_TOKENS,
+    directionMessage(brand, candidates, locale, screens, style),
+    { type: "json_schema", schema: directionSchema(candidates, { references: images.length > 0 }) as unknown as Record<string, unknown> },
+    images,
+  );
 }
 
 export const screenParams = (options: CallOptions, brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput): Params =>
@@ -95,9 +104,9 @@ export class RenderOutputError extends Error {
 const textOf = (message: Message) => message.content.map((block) => (block.type === "text" ? block.text : "")).join("");
 
 /** The model's pick, checked against the code's candidates (anything else falls back to the first candidate). */
-export function parseDirectionAnswer(raw: unknown, candidates: DirectionCandidates): { axes: AiAxes; moves: string[]; rationale: string } | null {
+export function parseDirectionAnswer(raw: unknown, candidates: DirectionCandidates): { axes: AiAxes; moves: string[]; rationale: string; references?: string; themeId?: string } | null {
   if (!raw || typeof raw !== "object") return null;
-  const answer = raw as { axes?: Record<string, unknown>; moves?: unknown; rationale?: unknown };
+  const answer = raw as { axes?: Record<string, unknown>; moves?: unknown; rationale?: unknown; references?: unknown; theme?: unknown };
   const axes = {} as Record<string, string>;
   for (const axis of AI_AXIS_NAMES) {
     const value = answer.axes?.[axis];
@@ -106,7 +115,10 @@ export function parseDirectionAnswer(raw: unknown, candidates: DirectionCandidat
   }
   const moves = Array.isArray(answer.moves) ? answer.moves.filter((move): move is string => typeof move === "string" && candidates.moves.includes(move)).slice(0, 3) : [];
   const rationale = typeof answer.rationale === "string" ? answer.rationale.replace(/\s+/g, " ").trim().slice(0, 280) : "";
-  return { axes: axes as AiAxes, moves: moves.length > 0 ? moves : candidates.moves.slice(0, 3), rationale };
+  const references = typeof answer.references === "string" ? answer.references.replace(/\s+/g, " ").trim().slice(0, 400) : "";
+  // Only a variant the code offered counts; "none" or anything else keeps the plain style.
+  const themeId = typeof answer.theme === "string" && candidates.themes.includes(answer.theme) ? answer.theme : "";
+  return { axes: axes as AiAxes, moves: moves.length > 0 ? moves : candidates.moves.slice(0, 3), rationale, ...(references && { references }), ...(themeId && { themeId }) };
 }
 
 /** The direction call (structured output). Throws the SDK's errors and `RenderOutputError`. */

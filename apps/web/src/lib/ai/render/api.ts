@@ -1,10 +1,12 @@
 // Wire format of «Diseño con IA» (/api/ai/render/*), shared by the route handlers and the client. Client-safe (no SDK,
 // no env). Everything the user wrote (names, labels, notes, copy, the brief, a request) travels in these bodies as
 // DATA: the prompt builder of @dialmade/ai-render escapes it, and the answer is only HTML that the client sanitizes.
+import { MAX_STYLE_LENGTH, MAX_STYLE_REFERENCES, type DirectionStyle } from "@dialmade/ai-render";
 import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, MAX_AI_REQUEST_LENGTH, type AiRenderTier } from "@dialmade/doc";
 import { z } from "zod";
 import type { AiApiError, AiApiErrorCode } from "../api";
 import { AI_SESSION_SCREENS } from "../config";
+import { VISION_IMAGE_MAX_BYTES } from "../vision/constants";
 import { FULL_ACCESS_RENDER_MODELS, type FullAccessRenderModel } from "./fullAccessModel";
 
 export const RENDER_SESSION_ENDPOINT = "/api/ai/render/session";
@@ -14,6 +16,15 @@ export const RENDER_BLOCK_ENDPOINT = "/api/ai/render/block";
 /** Body caps: a screen of up to 40 blocks with drafts fits easily. */
 export const MAX_RENDER_BODY_BYTES = 128 * 1024;
 export const MAX_RENDER_BLOCKS = 40;
+/** Base64 of one reference screenshot (re-encoded in the browser like the vision ones: ≤ 900 KB of JPEG). */
+const MAX_REFERENCE_BASE64 = Math.ceil((VISION_IMAGE_MAX_BYTES * 4) / 3) + 4;
+/**
+ * Input tokens of one re-encoded reference screenshot (long side ≤ 1280 px: ≈ width × height / 750, so ≈ 1.4k at the
+ * most), rounded up. The cost lines add it per screenshot; the hard budget counts the real ones (`count_tokens`).
+ */
+export const REFERENCE_IMAGE_TOKENS = 1_600;
+/** The direction may carry up to 3 reference screenshots. */
+export const MAX_RENDER_DIRECTION_BODY_BYTES = MAX_RENDER_BODY_BYTES + MAX_STYLE_REFERENCES * (MAX_REFERENCE_BASE64 + 64);
 
 const Id = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/);
 const Line = (max: number) => z.string().max(max);
@@ -69,6 +80,16 @@ export const RenderDirectionSchema = z.strictObject({
   }),
   moves: z.array(Line(160)).min(1).max(3),
   rationale: Line(280),
+  style: Line(MAX_STYLE_LENGTH).optional(),
+  references: Line(400).optional(),
+  /** The variant of the recipe the model picked (one of the code's candidates; the engine checks it again). */
+  themeId: Line(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+});
+
+/** A reference screenshot of «Estilo»: used by the direction call only, never stored or logged. */
+export const StyleReferenceSchema = z.strictObject({
+  mediaType: z.literal("image/jpeg"),
+  data: z.string().max(MAX_REFERENCE_BASE64).regex(/^[A-Za-z0-9+/]+={0,2}$/),
 });
 
 /**
@@ -100,6 +121,9 @@ export const RenderRequestBodySchema = z.discriminatedUnion("task", [
     seed: z.number().int().min(0).max(0xffffffff),
     recipeId: Line(48),
     chip: z.enum(AI_DIRECTION_CHIPS),
+    /** «Estilo»: the developer's words for the look and up to 3 reference screenshots (data, not instructions). */
+    style: Line(MAX_STYLE_LENGTH).optional(),
+    references: z.array(StyleReferenceSchema).max(MAX_STYLE_REFERENCES).optional(),
     screens: z.array(z.strictObject({ name: Line(80), kind: z.enum(["landing", "app"]), blocks: z.array(Line(32)).max(MAX_RENDER_BLOCKS) })).max(AI_SESSION_SCREENS),
     ...FullAccessChoice,
   }),
@@ -113,6 +137,15 @@ export const RenderRequestBodySchema = z.discriminatedUnion("task", [
   }),
 ]);
 export type RenderRequestBody = z.infer<typeof RenderRequestBodySchema>;
+
+/** The only task whose body may carry the reference screenshots (and so exceed `MAX_RENDER_BODY_BYTES`). */
+export const carriesReferences = (json: unknown): boolean => typeof json === "object" && json !== null && (json as { task?: unknown }).task === "direction";
+
+/** «Estilo» of a direction body as the prompt builder takes it. */
+export const styleOf = (body: { style?: string | undefined; references?: { mediaType: "image/jpeg"; data: string }[] | undefined }): DirectionStyle => ({
+  ...(body.style?.trim() && { text: body.style.trim() }),
+  ...(body.references?.length && { images: body.references }),
+});
 
 /** POST /api/ai/render/block: «Otra versión» or «Pedir cambio» of one block (one session action). */
 export const RenderBlockBodySchema = z.strictObject({

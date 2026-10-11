@@ -106,6 +106,22 @@ export const AiDirectionSchema = z.strictObject({
   moves: z.array(Text(160)).min(1).max(3),
   /** Why, in one or two sentences: shown in the UI and written to DESIGN.md. */
   rationale: Text(280),
+  /** The developer's own words for the look they want («Estilo» in the «IA» popover). */
+  style: Text(600).optional(),
+  /**
+   * What the model took from the developer's reference screenshots (composition, type, decoration, density), in its
+   * own words. The screenshots themselves are never stored: only this note travels to the screens.
+   */
+  references: Text(400).optional(),
+  /**
+   * The variant of the recipe (`brief.themeId`) the model picked with this direction. The brief holds the value in
+   * use; this one remembers what the AI chose, so a later direction only replaces a variant the developer did not set.
+   */
+  themeId: z
+    .string()
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
   provenance: AiProvenanceSchema,
 });
 

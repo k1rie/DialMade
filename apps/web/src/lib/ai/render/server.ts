@@ -44,6 +44,7 @@ import { maxRequestCostUsd, messageCostUsd, messageTokens, roundUsd } from "../p
 import { readAiServerConfig, type AiServerConfig } from "../serverConfig";
 import {
   encodeSse,
+  styleOf,
   type RenderApiError,
   type RenderBlockBody,
   type RenderBlockSuccess,
@@ -250,7 +251,7 @@ export async function renderDirection(body: Extract<RenderRequestBody, { task: "
   const config = context.config ?? readAiServerConfig();
   const candidates = directionCandidates(body.seed, body.recipeId, body.chip);
   // The art direction stays at `mockup`, whatever the finish (as in BYOK).
-  const params = directionParams(callOptions(config), body.brand, candidates, body.locale, body.screens);
+  const params = directionParams(callOptions(config), body.brand, candidates, body.locale, body.screens, styleOf(body));
   const call = await reserveCall({ ...context, config }, body.sessionId, "direction", params);
   if ("ok" in call) return call;
   try {

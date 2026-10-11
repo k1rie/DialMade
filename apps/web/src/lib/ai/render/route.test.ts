@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FULL_ACCESS_USES_PER_MONTH, hasFullAccess } from "../fullAccess";
-import { RenderSessionBodySchema } from "./api";
-import { parseRenderRequest } from "./route";
+import { MAX_RENDER_BODY_BYTES, MAX_RENDER_DIRECTION_BODY_BYTES, RenderRequestBodySchema, RenderSessionBodySchema, StyleReferenceSchema, carriesReferences } from "./api";
+import { parseRenderRequest, type RenderRequestLimits } from "./route";
 
 vi.mock("../fullAccess", async (original) => ({ ...(await original<typeof import("../fullAccess")>()), hasFullAccess: vi.fn(async () => false) }));
 
@@ -38,5 +38,43 @@ describe("«Acceso completo» on the render routes", () => {
     vi.mocked(hasFullAccess).mockResolvedValue(true);
     const parsed = await parseRenderRequest(post({ screens: 1, model: "claude-fable-5-1" }), RenderSessionBodySchema, "{ screens }");
     expect(parsed.ok).toBe(false);
+  });
+});
+
+describe("body caps and the reference screenshots of «Estilo»", () => {
+  const limits: RenderRequestLimits = { maxBytes: MAX_RENDER_DIRECTION_BODY_BYTES, mayExceedDefault: carriesReferences };
+  const status = async (body: unknown) => {
+    const parsed = await parseRenderRequest(post(body), RenderRequestBodySchema, "{ task }", limits);
+    return parsed.ok ? 200 : parsed.response.status;
+  };
+  const pad = (bytes: number) => "x".repeat(bytes);
+
+  it("the larger cap fits Vercel's 4.5 MB request limit and holds three screenshots", () => {
+    expect(MAX_RENDER_DIRECTION_BODY_BYTES).toBeLessThan(4.5 * 1024 * 1024);
+    expect(MAX_RENDER_DIRECTION_BODY_BYTES).toBeGreaterThan(MAX_RENDER_BODY_BYTES + 3 * 900 * 1024);
+  });
+
+  it("a direction body over 128 KB passes the size gate (a schema error is a 400, never a 413)", async () => {
+    expect(await status({ task: "direction", pad: pad(MAX_RENDER_BODY_BYTES + 50_000) })).toBe(400);
+  });
+
+  it("any other task keeps the 128 KB cap, whatever the route's larger cap", async () => {
+    for (const task of ["screen", "block", "unknown"]) expect(await status({ task, pad: pad(MAX_RENDER_BODY_BYTES + 50_000) }), task).toBe(413);
+  });
+
+  it("nothing passes the larger cap either", async () => {
+    expect(await status({ task: "direction", pad: pad(MAX_RENDER_DIRECTION_BODY_BYTES + 1_000) })).toBe(413);
+  });
+
+  it("a body under the default cap is untouched by the larger one", async () => {
+    expect(await status({ task: "screen", pad: pad(1_000) })).toBe(400);
+  });
+
+  it("the screenshot schema takes a JPEG base64 and nothing else", () => {
+    expect(StyleReferenceSchema.safeParse({ mediaType: "image/jpeg", data: "QUJD" }).success).toBe(true);
+    expect(StyleReferenceSchema.safeParse({ mediaType: "image/png", data: "QUJD" }).success).toBe(false);
+    expect(StyleReferenceSchema.safeParse({ mediaType: "image/jpeg", data: "not base64 !" }).success).toBe(false);
+    expect(StyleReferenceSchema.safeParse({ mediaType: "image/jpeg", data: "QUJD", url: "https://example.com/a.jpg" }).success).toBe(false);
+    expect(StyleReferenceSchema.safeParse({ mediaType: "image/jpeg", data: "A".repeat(2_000_000) }).success).toBe(false);
   });
 });

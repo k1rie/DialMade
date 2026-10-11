@@ -407,6 +407,14 @@ export const SparkleIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const ImageIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.25" y="2.75" width="11.5" height="10.5" rx="1.75" />
+    <path d="m2.75 11 3.1-3.1a1 1 0 0 1 1.4 0L10.5 11.2M9.25 9.9l1.1-1.1a1 1 0 0 1 1.4 0l1.75 1.75" />
+    <circle cx="10.25" cy="5.75" r="1" />
+  </Icon>
+);
+
 export const CloseIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 4l8 8M12 4l-8 8" />

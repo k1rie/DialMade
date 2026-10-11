@@ -70,3 +70,22 @@ describe("estimateRender (spec §5.5)", () => {
     expect(action.minUsd).toBeLessThan(0.002);
   });
 });
+
+describe("reference screenshots in the estimate", () => {
+  const base = { path: "byok", model: "claude-sonnet-5-5", brand, screens: three, recipeId: "soft-ui" } as const;
+
+  it("each screenshot adds its image tokens to the direction call, and nothing else", () => {
+    const without = estimateRender({ ...base, newDirection: true });
+    const one = estimateRender({ ...base, newDirection: true, references: 1 });
+    const three3 = estimateRender({ ...base, newDirection: true, references: 3 });
+    expect(one.minUsd).toBeGreaterThan(without.minUsd);
+    expect(three3.minUsd).toBeGreaterThan(one.minUsd);
+    // 1.6k input tokens at Sonnet's input price: cents, never dollars.
+    expect(three3.minUsd - without.minUsd).toBeLessThan(0.05);
+  });
+
+  it("without a new direction the screenshots cost nothing (they are not sent)", () => {
+    const reuse = estimateRender({ ...base, newDirection: false });
+    expect(estimateRender({ ...base, newDirection: false, references: 3 }).minUsd).toBe(reuse.minUsd);
+  });
+});

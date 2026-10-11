@@ -8,7 +8,7 @@ import { directionCandidates, tierSettings } from "@dialmade/ai-render";
 import { RenderOutputError, blockParams, createDirection, directionParams, screenParams, streamBlocks, type CallOptions } from "@dialmade/ai-render/anthropic";
 import { DEFAULT_AI_EFFORT, supportsDefaultFallbacks, supportsEffort } from "../config";
 import { messageCostUsd, messageTokens, roundUsd } from "../pricing";
-import type { RenderApiError, RenderStreamEvent, RenderUsage } from "./api";
+import { styleOf, type RenderApiError, type RenderStreamEvent, type RenderUsage } from "./api";
 import { abortedError, enterScreen, type BlockBody, type DirectionBody, type ScreenBody, type TransportBlock, type TransportDirection, RenderTransportError } from "./transport";
 
 /** Opus 5.5 is slower than the free tier's Haiku: a screen gets 3 minutes before the SDK gives up. */
@@ -65,7 +65,7 @@ export async function byokDirection(body: DirectionBody, call: ByokCall): Promis
   const candidates = directionCandidates(body.seed, body.recipeId, body.chip);
   // The art direction is a short structured answer: it stays at low effort whatever the tier (more thinking could
   // spend its 1.5k output tokens before the JSON).
-  const params = directionParams(callOptions(call.model), body.brand, candidates, body.locale, body.screens);
+  const params = directionParams(callOptions(call.model), body.brand, candidates, body.locale, body.screens, styleOf(body));
   try {
     const { answer, message } = await createDirection(client(call.apiKey), params, candidates, requestOptions(call.signal));
     return { direction: answer, usage: usageOf(message, call.model), session: null };

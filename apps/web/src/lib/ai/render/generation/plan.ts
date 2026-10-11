@@ -3,7 +3,7 @@
 // Pure: the store, the cost line and the tests share it.
 import { aiDraftOf } from "../edit";
 import { KIT_TYPES, brandInput, renderableBlocks, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
-import type { DesignDoc } from "@dialmade/doc";
+import type { AiDirection, AiDirectionChip, DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../../config";
 import { MAX_RENDER_BLOCKS } from "../api";
 
@@ -21,6 +21,14 @@ export function pickedScreens(doc: DesignDoc, picked: readonly string[] | null, 
   if (!picked) return defaultScreenPick(doc, max);
   const wanted = new Set(picked);
   return doc.screenOrder.filter((id) => wanted.has(id) && doc.screens[id]).slice(0, max);
+}
+
+/**
+ * Whether «Generar con IA» reuses the document's art direction: same chip (or «Automática»), the same «Estilo» words
+ * and no new reference screenshots. Anything else asks for a new one.
+ */
+export function directionReusable(existing: AiDirection | undefined, chip: AiDirectionChip, style = "", references = 0): existing is AiDirection {
+  return !!existing && (chip === "auto" || chip === existing.chip) && (existing.style ?? "") === style.trim() && references === 0;
 }
 
 /** The brand as the render routes take it (their Zod caps). */

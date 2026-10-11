@@ -50,7 +50,7 @@ const answerAll: ScreenScript = async function* (body) {
   yield { type: "done", session: { ...COUNTERS, screensUsed: 1 } };
 };
 
-function fakeTransport(script: ScreenScript = answerAll, options: { direction?: "ok" | "fail" } = {}) {
+function fakeTransport(script: ScreenScript = answerAll, options: { direction?: "ok" | "fail"; themeId?: string } = {}) {
   const screens: ScreenBody[] = [];
   const transport = {
     path: "free" as const,
@@ -65,6 +65,7 @@ function fakeTransport(script: ScreenScript = answerAll, options: { direction?: 
                 axes: { composition: "editorial", typeVoice: "quiet", decoration: "none", imagery: "icon-led", colorStrategy: "brand-forward", rhythm: "airy" },
                 moves: ["Cards with a border and no shadow"],
                 rationale: "Calma y aire",
+                ...(options.themeId && { themeId: options.themeId }),
               },
               usage: { model: "claude-haiku-5-5", inputTokens: 2000, outputTokens: 400, cacheReadTokens: 0, costUsd: 0.0015 },
               session: { ...COUNTERS, directionsUsed: 1 },
@@ -83,7 +84,7 @@ function fakeTransport(script: ScreenScript = answerAll, options: { direction?: 
   return { transport, screens };
 }
 
-function setup(transport: RenderTransport, doc: DesignDoc = baseDoc()) {
+function setup(transport: RenderTransport, doc: DesignDoc = baseDoc(), extra: Partial<GenerationDeps> = {}) {
   let current = doc;
   const writes: PatchOp[][] = [];
   const store = createStore<GenerationState>()(() => IDLE_GENERATION);
@@ -101,6 +102,7 @@ function setup(transport: RenderTransport, doc: DesignDoc = baseDoc()) {
     model: () => "claude-haiku-5-5",
     now: () => NOW,
     seed: () => 42,
+    ...extra,
   };
   const engine = createGenerationEngine(store, deps);
   return { engine, store, writes, doc: () => current };
@@ -263,6 +265,27 @@ describe("«Generar con IA» (engine)", () => {
     expect(again.screens[0]!.direction.axes).toEqual(doc().aiRender!.direction!.axes);
   });
 
+  it("«Estilo»: the words and screenshots go to the direction; the words stay in it, the screenshots never do", async () => {
+    const { transport } = fakeTransport();
+    const { engine, doc } = setup(transport);
+    const shot = { mediaType: "image/jpeg" as const, data: "AAAA" };
+    await engine.start({ screenIds: ["s-home"], chip: "auto", style: "  Editorial, mucho aire  ", references: [shot] });
+    expect(transport.direction).toHaveBeenCalledWith(expect.objectContaining({ style: "Editorial, mucho aire", references: [shot] }), expect.anything());
+    const stored = doc().aiRender!.direction!;
+    expect(stored.style).toBe("Editorial, mucho aire");
+    expect(JSON.stringify(doc())).not.toContain("AAAA");
+
+    // Same words, no new screenshots: reused. Other words: a new direction.
+    const again = fakeTransport();
+    const second = setup(again.transport, doc());
+    await second.engine.start({ screenIds: ["s-pricing"], chip: "auto", style: "Editorial, mucho aire" });
+    expect(again.transport.direction).not.toHaveBeenCalled();
+    expect(again.screens[0]!.direction).toMatchObject({ style: "Editorial, mucho aire" });
+    const third = fakeTransport();
+    await setup(third.transport, doc()).engine.start({ screenIds: ["s-pricing"], chip: "auto", style: "Brutalista" });
+    expect(third.transport.direction).toHaveBeenCalledOnce();
+  });
+
   it("a failed block is retried as one block action of the session", async () => {
     const script: ScreenScript = async function* (body) {
       for (const block of body.screen.blocks.slice(1)) yield { type: "block", blockId: block.id, html: blockHtml(block.id, block.type), forced: false };
@@ -278,5 +301,67 @@ describe("«Generar con IA» (engine)", () => {
     expect(store.getState().screens["s-pricing"]!.blocks[first]!.phase).toBe("done");
     expect(doc().screens["s-pricing"]!.aiRender!.blocks[first]!.provenance.kind).toBe("reroll");
     expect(store.getState().session?.counters?.actionsUsed).toBe(1);
+  });
+});
+
+describe("«Generar con IA»: the variant the direction picks", () => {
+  it("lands in the brief with the direction, in one patch, and shows in the run state", async () => {
+    const { transport } = fakeTransport(answerAll, { themeId: "tweakcn-claymorphism" });
+    const { engine, store, writes, doc } = setup(transport);
+    await engine.start({ screenIds: ["s-home"], chip: "auto" });
+
+    expect(doc().brief.themeId).toBe("tweakcn-claymorphism");
+    expect(doc().aiRender?.direction?.themeId).toBe("tweakcn-claymorphism");
+    const directionWrite = writes.find((ops) => ops.some((op) => op.path === "/aiRender" || op.path === "/aiRender/direction"));
+    expect(directionWrite?.map((op) => op.path)).toContain("/brief/themeId");
+    expect(store.getState().direction?.themeId).toBe("tweakcn-claymorphism");
+  });
+
+  it("does not override a variant the developer already chose", async () => {
+    const chosen = applyPatch(baseDoc(), [{ op: "add", path: "/brief/themeId", value: "tweakcn-amethyst-haze" }]);
+    if (!chosen.ok) throw new Error(chosen.error.message);
+    const { transport } = fakeTransport(answerAll, { themeId: "tweakcn-claymorphism" });
+    const { engine, doc } = setup(transport, chosen.doc);
+    await engine.start({ screenIds: ["s-home"], chip: "auto" });
+
+    expect(doc().brief.themeId).toBe("tweakcn-amethyst-haze");
+    expect(doc().aiRender?.direction?.themeId).toBe("tweakcn-claymorphism");
+  });
+
+  it("a failed direction call leaves the brief alone", async () => {
+    const { transport } = fakeTransport(answerAll, { direction: "fail", themeId: "tweakcn-claymorphism" });
+    const { engine, doc } = setup(transport);
+    await engine.start({ screenIds: ["s-home"], chip: "auto" });
+    expect(doc().brief.themeId).toBeUndefined();
+  });
+});
+
+describe("«Generar con IA»: the reference screenshots are spent when the direction answers", () => {
+  const shot = { mediaType: "image/jpeg" as const, data: "ZGF0YQ" };
+
+  it("a good answer spends them and they travel in the direction body", async () => {
+    const { transport } = fakeTransport();
+    const onDirectionUsed = vi.fn();
+    const { engine } = setup(transport, baseDoc(), { onDirectionUsed });
+    await engine.start({ screenIds: ["s-home"], chip: "auto", references: [shot] });
+    expect(transport.direction).toHaveBeenCalledWith(expect.objectContaining({ references: [shot] }), expect.anything());
+    expect(onDirectionUsed).toHaveBeenCalledOnce();
+    expect(onDirectionUsed).toHaveBeenCalledWith([shot]);
+  });
+
+  it("a failed direction call keeps them attached for the next try", async () => {
+    const { transport } = fakeTransport(answerAll, { direction: "fail" });
+    const onDirectionUsed = vi.fn();
+    const { engine } = setup(transport, baseDoc(), { onDirectionUsed });
+    await engine.start({ screenIds: ["s-home"], chip: "auto", references: [shot] });
+    expect(onDirectionUsed).not.toHaveBeenCalled();
+  });
+
+  it("without screenshots nothing is spent", async () => {
+    const { transport } = fakeTransport();
+    const onDirectionUsed = vi.fn();
+    const { engine } = setup(transport, baseDoc(), { onDirectionUsed });
+    await engine.start({ screenIds: ["s-home"], chip: "auto" });
+    expect(onDirectionUsed).not.toHaveBeenCalled();
   });
 });

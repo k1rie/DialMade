@@ -13,6 +13,7 @@ import { setFullAccessRenderModel, useFullAccessRenderModel } from "@/lib/ai/ren
 import { FREE_RENDER_TIERS, setRenderTier, useRenderTier } from "@/lib/ai/render/renderTier";
 import { renderPathFor } from "@/lib/ai/render/transport";
 import {
+  directionReusable,
   estimateGenerate,
   formatRenderCost,
   setNextRunTransport,
@@ -21,6 +22,7 @@ import {
   type AiGenerateMode,
   type RenderEstimate,
   type RenderTransport,
+  type StyleReference,
 } from "@/lib/ai/render/generation";
 import { aiRenderAvailable } from "@/lib/ai/render/preview";
 import { compileScreenLayout } from "@/lib/screen-layout";
@@ -38,6 +40,11 @@ export type AiRenderPlan = {
   designAvailable: boolean;
   chip: AiDirectionChip;
   setChip: (chip: AiDirectionChip) => void;
+  /** «Estilo»: the developer's words for the look and the reference screenshots of the next direction. */
+  style: string;
+  setStyle: (style: string) => void;
+  references: StyleReference[];
+  setReferences: (references: StyleReference[]) => void;
   /** «Maqueta · Presentable · Producto final» (the tab's choice). */
   tier: AiRenderTier;
   setTier: (tier: AiRenderTier) => void;
@@ -106,6 +113,8 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [store, setEnabled],
   );
   const setChip = useCallback((chip: AiDirectionChip) => store?.getState().actions.setPrefs({ chip }), [store]);
+  const setStyle = useCallback((style: string) => store?.getState().actions.setPrefs({ style }), [store]);
+  const setReferences = useCallback((references: StyleReference[]) => store?.getState().actions.setPrefs({ references }), [store]);
 
   const screens = useMemo<AiRenderScreenOption[]>(() => {
     if (!wantsList) return [];
@@ -148,16 +157,16 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const tierNeedsKey = path.path !== "byok" && !hostedFull && !FREE_RENDER_TIERS.includes(tier);
   const blocked = path.reason;
   const existing = doc.aiRender?.direction;
-  const needsDirection = !(existing && (prefs.chip === "auto" || prefs.chip === existing.chip));
+  const needsDirection = !directionReusable(existing, prefs.chip, prefs.style, prefs.references.length);
   const estimate = useMemo(() => {
     if (!wantsList || selected.length === 0 || !status) return null;
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
     return path.path === "byok"
-      ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: byokModel, tier })
+      ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: byokModel, tier, references: prefs.references.length })
       : hostedFull
-        ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: fullAccessModel, tier })
-        : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel });
-  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier, hostedFull, fullAccessModel]);
+        ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: fullAccessModel, tier, references: prefs.references.length })
+        : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel, references: prefs.references.length });
+  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier, hostedFull, fullAccessModel, prefs.references.length]);
 
   const cost = useMemo(
     () =>
@@ -177,17 +186,23 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const ready = mode === "design" && selected.length > 0 && blocked === null && !tierNeedsKey && !busy;
   const start = useCallback(() => {
     if (!store || !ready) return;
-    void store.getState().actions.start({ screenIds: selected, chip: prefs.chip });
-  }, [store, ready, selected, prefs.chip]);
+    // The screenshots are used once, by this direction, and dropped: only the model's note about them is kept. The
+    // engine drops them when the direction call answers, so a run that fails before that leaves them attached.
+    void store.getState().actions.start({ screenIds: selected, chip: prefs.chip, style: prefs.style, references: prefs.references });
+  }, [store, ready, selected, prefs.chip, prefs.style, prefs.references]);
 
   const startWith = useCallback(
     (transport: RenderTransport) => {
       if (!store || mode !== "design" || selected.length === 0 || busy) return;
       setNextRunTransport(transport);
-      void store.getState().actions.start({ screenIds: selected, chip: prefs.chip });
+      const { actions } = store.getState();
+      // «mi Claude»: a copied prompt carries the words only; the user attached the screenshots in Claude (the dialog
+      // listed them), so they are spent here and the answer is local: nothing can fail before the direction.
+      void actions.start({ screenIds: selected, chip: prefs.chip, style: prefs.style });
+      if (prefs.references.length > 0) actions.setPrefs({ references: [] });
     },
-    [store, mode, selected, busy, prefs.chip],
+    [store, mode, selected, busy, prefs.chip, prefs.style, prefs.references.length],
   );
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, style: prefs.style, setStyle, references: prefs.references, setReferences, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }

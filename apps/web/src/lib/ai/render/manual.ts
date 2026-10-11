@@ -16,6 +16,7 @@ import {
 } from "@dialmade/ai-render";
 import type { AiDirectionChip, AiRenderTier } from "@dialmade/doc";
 import type { ManualJob, ManualParseResult } from "../manual";
+import { promptFileName } from "../vision/prompt";
 import type { RenderStreamEvent } from "./api";
 import type { RenderDirectionAnswer, RenderTransport, TransportBlock, TransportDirection } from "./transport";
 
@@ -69,10 +70,18 @@ export function parseManualRender(text: string, screens: readonly Pick<RenderScr
 }
 
 /** «mi Claude» for a generate: the prompt of `screens` with `direction`, and the parser of the pasted HTML. */
-export function manualRenderJob(input: { brand: RenderBrandInput; direction: RenderDirectionAnswer; screens: readonly RenderScreenInput[]; tier?: AiRenderTier }): ManualJob<ManualRenderAnswer> {
+export function manualRenderJob(input: {
+  brand: RenderBrandInput;
+  direction: RenderDirectionAnswer;
+  screens: readonly RenderScreenInput[];
+  tier?: AiRenderTier;
+  /** The reference screenshots of «Estilo»: they cannot travel in the text, so the user attaches them in Claude. */
+  references?: readonly { name: string }[];
+}): ManualJob<ManualRenderAnswer> {
+  const references = input.references ?? [];
   return {
-    prompt: manualPrompt(input.brand, input.direction, input.screens, input.tier),
-    attachments: [],
+    prompt: manualPrompt(input.brand, input.direction, input.screens, input.tier, { references: references.length }),
+    attachments: references.map((reference, index) => promptFileName(reference.name || `reference-${index + 1}`)),
     format: "html",
     parse: (text) => parseManualRender(text, input.screens),
   };

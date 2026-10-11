@@ -1,8 +1,9 @@
 import { AI_AXES, AI_AXIS_NAMES, AI_DIRECTION_CHIPS, AiDirectionSchema } from "@dialmade/doc";
-import { styleRecipes } from "@dialmade/catalog";
+import { getThemeRecipe, styleRecipes } from "@dialmade/catalog";
 import { describe, expect, it } from "vitest";
 import { parseDirectionAnswer } from "./anthropic";
-import { CHIP_AXES, MOVES, RECIPE_EXCLUSIONS, defaultPick, directionCandidates, hash32, prng } from "./direction";
+import { CHIP_AXES, MOVES, RECIPE_EXCLUSIONS, defaultPick, directionCandidates, hash32, prng, themeCandidates } from "./direction";
+import { directionSchema } from "./prompt";
 
 describe("art direction (spec §4)", () => {
   it("the same seed draws the same candidates; another seed, others", () => {
@@ -52,6 +53,56 @@ describe("art direction (spec §4)", () => {
     expect(pick.moves).toEqual([candidates.moves[2]]);
     expect(pick.rationale).toHaveLength(280);
     expect(parseDirectionAnswer("nope", candidates)).toBeNull();
+  });
+
+  it("the note about the reference screenshots is kept, single-line and capped", () => {
+    const candidates = directionCandidates(3, "playful");
+    const pick = parseDirectionAnswer({ axes: {}, moves: [], rationale: "", references: `Big serif\n  headings ${"y".repeat(500)}` }, candidates)!;
+    expect(pick.references).toMatch(/^Big serif headings y+$/);
+    expect(pick.references).toHaveLength(400);
+    expect(parseDirectionAnswer({ axes: {}, moves: [], rationale: "" }, candidates)).not.toHaveProperty("references");
+  });
+
+  it("offers the variants of the recipe as theme candidates, and only those", () => {
+    const candidates = directionCandidates(5, "playful");
+    expect(candidates.themes.length).toBeGreaterThan(0);
+    for (const id of candidates.themes) expect(getThemeRecipe(id)?.archetypeId, id).toBe("playful");
+    expect(candidates.themes).toEqual(themeCandidates("playful"));
+    // A recipe nobody classified a theme under has no candidates, and then the answer has no theme.
+    expect(directionCandidates(5, "bento").themes).toEqual([]);
+    expect(directionCandidates(5, "no-such-recipe").themes).toEqual([]);
+  });
+
+  it("the structured output asks for a theme only when there are candidates, from \"none\" plus the candidates", () => {
+    const withThemes = directionSchema(directionCandidates(5, "playful")) as unknown as { required: string[]; properties: Record<string, { enum?: string[] }> };
+    expect(withThemes.required).toContain("theme");
+    expect(withThemes.properties.theme?.enum).toEqual(["none", ...themeCandidates("playful")]);
+    const without = directionSchema(directionCandidates(5, "bento")) as unknown as { required: string[]; properties: Record<string, unknown> };
+    expect(without.required).not.toContain("theme");
+    expect(without.properties).not.toHaveProperty("theme");
+  });
+
+  it("parseDirectionAnswer keeps a theme the code offered and drops \"none\", strangers and other recipes' themes", () => {
+    const candidates = directionCandidates(3, "playful");
+    const offered = candidates.themes[0]!;
+    expect(parseDirectionAnswer({ axes: {}, moves: [], rationale: "", theme: offered }, candidates)).toMatchObject({ themeId: offered });
+    for (const theme of ["none", "daisyui-no-such-theme", "tweakcn-neo-brutalism", 42, null]) {
+      expect(parseDirectionAnswer({ axes: {}, moves: [], rationale: "", theme }, candidates), String(theme)).not.toHaveProperty("themeId");
+    }
+  });
+
+  it("a stored direction accepts the picked theme and rejects a malformed one", () => {
+    const base = {
+      id: "dir-2",
+      version: 1,
+      seed: 4,
+      chip: "auto",
+      ...defaultPick(directionCandidates(4, "playful")),
+      rationale: "",
+      provenance: { kind: "direction", path: "free", createdAt: "2026-10-10T12:00:00.000Z", promptVersion: "ai-render/3", seed: 4 },
+    };
+    expect(AiDirectionSchema.safeParse({ ...base, themeId: "daisyui-cupcake" }).success).toBe(true);
+    expect(AiDirectionSchema.safeParse({ ...base, themeId: "Not A Slug" }).success).toBe(false);
   });
 
   it("the default pick (no model) is a valid stored direction", () => {

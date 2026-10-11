@@ -112,7 +112,7 @@ export type GenerationState = {
   /** `counters` only in the free tier. */
   session: { id: string; counters: RenderSessionCounters | null } | null;
   /** The art direction of this run: the model's rationale, or the code's pick when the call failed. */
-  direction: { rationale: string; fromModel: boolean } | null;
+  direction: { rationale: string; fromModel: boolean; /** The variant of the recipe the direction picked (brief.themeId). */ themeId?: string } | null;
   /** What stopped the run before any screen (or the last error of a block action). */
   error: RenderErrorCode | null;
   announcement: ScreenAnnouncement | null;
@@ -132,8 +132,20 @@ export type GenerationPrefs = {
   chip: AiDirectionChip;
   /** Screens picked in AiScreensPicker; `null` = the default pick (`defaultScreenPick`). */
   screens: string[] | null;
+  /** «Estilo»: the developer's words for the look (kept in the direction once used). */
+  style: string;
+  /** Reference screenshots for the next direction: in memory only, never written to the document or storage. */
+  references: StyleReference[];
 };
+
+/** A reference screenshot, re-encoded in the browser (JPEG, long side ≤ 1280 px). */
+export type StyleReference = { id: string; name: string; mediaType: "image/jpeg"; data: string };
 
 export type AiGenerateMode = "off" | "copy" | "design";
 
-export type GenerateRequest = { screenIds: readonly string[]; chip: AiDirectionChip };
+export type GenerateRequest = {
+  screenIds: readonly string[];
+  chip: AiDirectionChip;
+  style?: string;
+  references?: readonly Pick<StyleReference, "mediaType" | "data">[];
+};

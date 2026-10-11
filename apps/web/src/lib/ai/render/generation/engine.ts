@@ -11,6 +11,7 @@
 import {
   AI_RENDER_PROMPT_VERSION,
   KIT_TYPES,
+  MAX_STYLE_LENGTH,
   StructureTracker,
   blockBasis,
   defaultPick,
@@ -27,12 +28,12 @@ import {
   type RenderScreenInput,
   type ThemeColors,
 } from "@dialmade/ai-render";
-import type { AiBlock, AiDirection, AiDirectionChip, DesignDoc } from "@dialmade/doc";
+import type { AiBlock, AiDirection, DesignDoc } from "@dialmade/doc";
 import type { StoreApi } from "zustand/vanilla";
 import { deriveDesign } from "@/lib/design-derived";
 import type { RenderApiError, RenderErrorCode, RenderSessionCounters } from "../api";
 import { aiBlockOps, directionOps, type PatchOp } from "./patches";
-import { pickedScreens, planKit, requestBrand, requestScreen, screenBlocks, type KitClone, type KitPlan } from "./plan";
+import { directionReusable, pickedScreens, planKit, requestBrand, requestScreen, screenBlocks, type KitClone, type KitPlan } from "./plan";
 import type { BlockFailure, BlockRun, GenerateRequest, GenerationState, RenderTransport, ScreenRun } from "./types";
 
 export type GenerationDeps = {
@@ -49,6 +50,11 @@ export type GenerationDeps = {
   onCounters?: (body: unknown) => void;
   /** The design session's counters (free tier), published for Track B's block actions (`liveSession`). */
   onSession?: (sessionId: string, counters: RenderSessionCounters, opened: boolean) => void;
+  /**
+   * The direction call answered: the reference screenshots it carried are spent (only the model's note stays). Not
+   * called when the call failed or was cancelled, so the developer does not have to attach them again.
+   */
+  onDirectionUsed?: (references: readonly { data: string }[]) => void;
   now?: () => Date;
   seed?: () => number;
 };
@@ -86,7 +92,13 @@ type Run = {
   active: Set<string>;
 };
 
-const forPrompt = (direction: AiDirection): DirectionForPrompt => ({ axes: direction.axes, moves: direction.moves, rationale: direction.rationale });
+const forPrompt = (direction: AiDirection): DirectionForPrompt => ({
+  axes: direction.axes,
+  moves: direction.moves,
+  rationale: direction.rationale,
+  ...(direction.style && { style: direction.style }),
+  ...(direction.references && { references: direction.references }),
+});
 
 export type GenerationEngine = {
   start: (request: GenerateRequest) => Promise<void>;
@@ -280,9 +292,12 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     update(target.id, (state) => (state.phase === "screens" ? { phase: target.controller.signal.aborted ? "cancelled" : "done" } : {}));
   }
 
-  async function direction(target: Omit<Run, "direction">, doc: DesignDoc, screenIds: readonly string[], chip: AiDirectionChip): Promise<AiDirection | "cancelled"> {
+  async function direction(target: Omit<Run, "direction">, doc: DesignDoc, screenIds: readonly string[], request: GenerateRequest): Promise<AiDirection | "cancelled"> {
+    const { chip } = request;
+    const style = request.style?.trim().slice(0, MAX_STYLE_LENGTH) ?? "";
+    const references = request.references ?? [];
     const existing = doc.aiRender?.direction;
-    if (existing && (chip === "auto" || chip === existing.chip)) {
+    if (directionReusable(existing, chip, style, references.length)) {
       update(target.id, () => ({ direction: { rationale: existing.rationale, fromModel: true } }));
       return existing;
     }
@@ -297,6 +312,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         seed: drawn,
         recipeId: recipeId.slice(0, 48),
         chip,
+        ...(style && { style }),
+        ...(references.length > 0 && { references: references.map(({ mediaType, data }) => ({ mediaType, data })) }),
         screens: screenIds.map((id) => {
           const input = target.inputs.get(id)!;
           return { name: input.name, kind: input.kind, blocks: input.blocks.slice(0, 40).map((block) => block.type.slice(0, 32)) };
@@ -315,6 +332,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     };
     let made: AiDirection;
     if (answer.ok) {
+      if (references.length > 0) deps.onDirectionUsed?.(references);
       setCounters(target.id, answer.value.session);
       const usage = answer.value.usage;
       if (usage) addCost(target.id, null, usage.costUsd);
@@ -324,6 +342,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         seed: drawn,
         chip,
         ...answer.value.direction,
+        // The developer's words come from the request, never from the answer.
+        ...(style && { style }),
         provenance: {
           ...provenance,
           model: (usage?.model ?? target.model).slice(0, 80),
@@ -334,11 +354,11 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       // Without a model the code's first pick is the direction (spec §4.2); the screens still get one.
       deps.onCounters?.(answer.error);
       setCounters(target.id, answer.error.session);
-      made = { id: `d-${drawn.toString(36)}`, version: 1, seed: drawn, chip, ...defaultPick(directionCandidates(drawn, recipeId, chip)), rationale: "", provenance };
+      made = { id: `d-${drawn.toString(36)}`, version: 1, seed: drawn, chip, ...defaultPick(directionCandidates(drawn, recipeId, chip)), rationale: "", ...(style && { style }), provenance };
     }
     const latest = deps.getDoc();
     if (latest) deps.applyPatch(directionOps(latest, made));
-    update(target.id, () => ({ direction: { rationale: made.rationale, fromModel: answer.ok } }));
+    update(target.id, () => ({ direction: { rationale: made.rationale, fromModel: answer.ok, ...(made.themeId && { themeId: made.themeId }) } }));
     return made;
   }
 
@@ -388,7 +408,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     if (opened.value.session) deps.onSession?.(opened.value.sessionId, opened.value.session, true);
     update(id, () => ({ phase: "direction", session: { id: opened.value.sessionId, counters: opened.value.session } }));
 
-    const made = await direction(base, doc, screenIds, request.chip);
+    const made = await direction(base, doc, screenIds, request);
     if (!current(id)) return;
     starting = null;
     if (made === "cancelled" || controller.signal.aborted) {

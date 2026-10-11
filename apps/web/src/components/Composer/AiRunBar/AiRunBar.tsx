@@ -1,5 +1,6 @@
 "use client";
 
+import { getThemeShape } from "@dialmade/catalog";
 import { AnimatePresence, motion } from "motion/react";
 import { useLayoutEffect, useRef } from "react";
 import { Button, Spinner } from "@/components/ui/Button";
@@ -67,9 +68,13 @@ export function AiRunBar({ className }: AiRunBarProps) {
   else if (state.phase === "failed") status = { key: `failed-${state.error}`, text: state.error ? errorText(state.error) : t.screenFailed(""), tone: "danger" };
   else status = { key: `done-${counts.ai}-${counts.base}`, text: t.summary(counts.ai, counts.base, counts.warnings), tone: "fg" };
 
+  const variantName = state.direction?.themeId ? getThemeShape(state.direction.themeId)?.label : undefined;
+
   const detail =
     state.phase === "screens" && state.direction?.rationale
-      ? t.direction(state.direction.rationale)
+      ? variantName
+        ? t.directionVariant(state.direction.rationale, variantName)
+        : t.direction(state.direction.rationale)
       : state.phase === "cancelled"
         ? cancelDetail(state.cancel?.billing ?? null, t)
         : state.phase === "done" && state.error

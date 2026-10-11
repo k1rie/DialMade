@@ -65,9 +65,9 @@ describe("generation store", () => {
     const engine = { start: vi.fn(async () => {}), cancel: vi.fn(), retryScreen: vi.fn(async () => {}), retryBlock: vi.fn(async () => {}), dismiss: vi.fn() };
     const factory = vi.fn(() => engine);
     const store = createGenerationStore(docStore(doc).store, { engine: factory });
-    expect(store.getState().prefs).toEqual({ mode: "off", chip: "auto", screens: null });
+    expect(store.getState().prefs).toEqual({ mode: "off", chip: "auto", screens: null, style: "", references: [] });
     store.getState().actions.setPrefs({ mode: "design", chip: "luxury" });
-    expect(store.getState().prefs).toEqual({ mode: "design", chip: "luxury", screens: null });
+    expect(store.getState().prefs).toEqual({ mode: "design", chip: "luxury", screens: null, style: "", references: [] });
     await store.getState().actions.start({ screenIds: ["s-home"], chip: "luxury" });
     await store.getState().actions.retryScreen("s-home");
     expect(engine.start).toHaveBeenCalledWith({ screenIds: ["s-home"], chip: "luxury" });
@@ -93,6 +93,39 @@ describe("«mi Claude» transport for one run", () => {
     expect(await deps!.transport()).toBe(manual);
     expect(await deps!.transport()).toBe(paid);
     setRenderTransport(null);
+  });
+});
+
+describe("reference screenshots of «Estilo»", () => {
+  const shot = (n: number) => ({ id: `r-${n}`, name: `shot-${n}.png`, mediaType: "image/jpeg" as const, data: `ZGF0YQ${n}` });
+
+  async function loadedStore() {
+    const { doc } = docWithAiHero();
+    let deps: GenerationDeps | null = null;
+    const factory = vi.fn((_store: unknown, d: GenerationDeps) => {
+      deps = d;
+      return { start: vi.fn(async () => {}), cancel: vi.fn(), retryScreen: vi.fn(async () => {}), retryBlock: vi.fn(async () => {}), dismiss: vi.fn() } as unknown as GenerationEngine;
+    });
+    const store = createGenerationStore(docStore(doc).store, { engine: factory });
+    store.getState().actions.dismiss();
+    await vi.waitFor(() => expect(deps).not.toBeNull());
+    return { store, deps: deps! };
+  }
+
+  it("stay attached until the engine says the direction call answered, then only the spent ones go", async () => {
+    const { store, deps } = await loadedStore();
+    store.getState().actions.setPrefs({ references: [shot(1), shot(2), shot(3)] });
+    expect(store.getState().prefs.references).toHaveLength(3);
+
+    deps.onDirectionUsed?.([{ data: shot(1).data }, { data: shot(3).data }]);
+    expect(store.getState().prefs.references.map((reference) => reference.id)).toEqual(["r-2"]);
+  });
+
+  it("starting a run does not drop them by itself (a failed run keeps them for the next try)", async () => {
+    const { store } = await loadedStore();
+    store.getState().actions.setPrefs({ references: [shot(1)] });
+    await store.getState().actions.start({ screenIds: ["s-home"], chip: "auto", references: [shot(1)] });
+    expect(store.getState().prefs.references).toHaveLength(1);
   });
 });
 

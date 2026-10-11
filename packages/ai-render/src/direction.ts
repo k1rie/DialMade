@@ -2,6 +2,7 @@
 // Opus 5.5 take no temperature). The code, with a seed per document, draws two candidates per axis (filtered by the
 // recipe's compatibility table and fixed by the chip) and a handful of design «moves» from its own catalog; the model
 // picks among them and says why. Without a model («mi Claude», a failed call) the code's first pick is the direction.
+import { themesByArchetype } from "@dialmade/catalog";
 import { AI_AXES, AI_AXIS_NAMES, type AiAxes, type AiAxis, type AiDirectionChip } from "@dialmade/doc";
 
 /** mulberry32: small, fast and good enough to draw a few candidates. */
@@ -107,6 +108,14 @@ export const MOVES: readonly { id: string; text: string; avoid?: readonly string
   { id: "color-shapes", text: "One or two big geometric shapes in the brand and CTA colors (a circle, a rotated rounded square) behind the product visual", avoid: ["minimal-swiss", "tech-precision"] },
 ];
 
+let variantIds: Record<string, string[]> | undefined;
+
+/** The imported themes (daisyUI, tweakcn) that are variants of `recipeId`: the shapes the model may choose from. */
+export function themeCandidates(recipeId: string): string[] {
+  variantIds ??= Object.fromEntries(Object.entries(themesByArchetype()).map(([id, themes]) => [id, themes.map((theme) => theme.id)]));
+  return variantIds[recipeId] ?? [];
+}
+
 export type DirectionCandidates = {
   seed: number;
   chip: AiDirectionChip;
@@ -114,6 +123,11 @@ export type DirectionCandidates = {
   axes: { [K in AiAxis]: AxisValue<K>[] };
   /** 5 move candidates; the model keeps 2–3. */
   moves: string[];
+  /**
+   * Variants of the recipe (`brief.themeId`): shape only (corners, border, shadow, buttons), never colors. The model
+   * keeps one or none; empty when the recipe has no variants.
+   */
+  themes: string[];
 };
 
 function draw<T>(random: () => number, values: readonly T[], count: number): T[] {
@@ -142,7 +156,7 @@ export function directionCandidates(seed: number, recipeId: string, chip: AiDire
     MOVES.filter((move) => !move.avoid?.some((tag) => blocked.has(tag))),
     5,
   ).map((move) => move.text);
-  return { seed, chip, axes, moves };
+  return { seed, chip, axes, moves, themes: themeCandidates(recipeId) };
 }
 
 /** The direction without a model: the first candidate of each axis and the first three moves. */

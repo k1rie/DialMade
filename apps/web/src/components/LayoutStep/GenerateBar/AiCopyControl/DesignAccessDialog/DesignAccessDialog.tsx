@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { AiKeyDialog, type AiKeyDialogView } from "@/components/AiKeyDialog";
 import { BYOK_RENDER_MODELS, type ByokRenderModel } from "@/lib/ai/render/byokModel";
 import { estimateRender, type CostRange } from "@/lib/ai/render/estimate";
-import { fromAccessTransport, requestBrand, screenBlocks } from "@/lib/ai/render/generation";
+import { directionReusable, fromAccessTransport, requestBrand, screenBlocks } from "@/lib/ai/render/generation";
 import { manualDirection, manualRenderJob, manualTransport, type ManualRenderAnswer } from "@/lib/ai/render/manual";
 import type { AiRenderPlan } from "../../useAiRenderPlan";
 import { useLayoutEnv, useLayoutStore } from "../../../useLayoutStore";
@@ -39,15 +39,25 @@ export function DesignAccessDialog({ plan, view, onClose }: DesignAccessDialogPr
     if (inputs.length === 0) return null;
     const brand = requestBrand(next);
     const recipeId = next.brief.recipeId;
-    // The engine reuses the document's direction for «Automática» or the same chip: the prompt must carry that one.
+    // The engine reuses the document's direction for «Automática» or the same chip and «Estilo»: the prompt must carry
+    // that one. The reference screenshots cannot travel in a copied prompt: «mi Claude» gets the words and the user
+    // attaches the screenshots in Claude (the job lists them), so they do not force a new direction here.
     const existing = next.aiRender?.direction;
-    const reuse = existing !== undefined && (plan.chip === "auto" || plan.chip === existing.chip);
-    const direction = reuse ? { axes: existing.axes, moves: existing.moves, rationale: existing.rationale } : manualDirection(seed, recipeId, plan.chip);
+    const style = plan.style.trim();
+    const references = plan.references;
+    const reuse = directionReusable(existing, plan.chip, style);
+    const direction = reuse
+      ? { axes: existing.axes, moves: existing.moves, rationale: existing.rationale, ...(existing.style && { style: existing.style }), ...(existing.references && { references: existing.references }) }
+      : { ...manualDirection(seed, recipeId, plan.chip), ...(style && { style }) };
     const estimates: Partial<Record<ByokRenderModel, CostRange>> = Object.fromEntries(
-      BYOK_RENDER_MODELS.map((model) => [model, estimateRender({ path: "byok", model, brand, screens: inputs, newDirection: !reuse, recipeId, tier: plan.tier })]),
+      BYOK_RENDER_MODELS.map((model) => [
+        model,
+        // With a key the screenshots travel in the direction call: they count (and a new direction is drawn for them).
+        estimateRender({ path: "byok", model, brand, screens: inputs, newDirection: !reuse || references.length > 0, recipeId, tier: plan.tier, references: references.length }),
+      ]),
     );
-    return { direction, estimates, job: manualRenderJob({ brand, direction, screens: inputs, tier: plan.tier }) };
-  }, [open, plan.selected, plan.chip, plan.tier, doc, screens, order, seed]);
+    return { direction, estimates, job: manualRenderJob({ brand, direction, screens: inputs, tier: plan.tier, references }) };
+  }, [open, plan.selected, plan.chip, plan.style, plan.tier, plan.references, doc, screens, order, seed]);
 
   const onManualResult = (answer: ManualRenderAnswer) => {
     if (!prepared) return;

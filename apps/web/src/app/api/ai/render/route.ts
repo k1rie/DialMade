@@ -1,4 +1,4 @@
-import { RenderRequestBodySchema } from "@/lib/ai/render/api";
+import { MAX_RENDER_DIRECTION_BODY_BYTES, RenderRequestBodySchema, carriesReferences } from "@/lib/ai/render/api";
 import { parseRenderRequest } from "@/lib/ai/render/route";
 import { renderDirection, renderJsonResponse, renderScreen, renderStreamResponse } from "@/lib/ai/render/server";
 
@@ -12,7 +12,11 @@ export const maxDuration = 300;
  * the RAW html of each root as it closes, then `usage` and `done`). The client sanitizes every block in a worker.
  */
 export async function POST(request: Request): Promise<Response> {
-  const parsed = await parseRenderRequest(request, RenderRequestBodySchema, '{ task: "direction" | "screen", sessionId, brand, … }');
+  // The larger cap is for the direction's reference screenshots only: a screen body keeps the 128 KB cap.
+  const parsed = await parseRenderRequest(request, RenderRequestBodySchema, '{ task: "direction" | "screen", sessionId, brand, … }', {
+    maxBytes: MAX_RENDER_DIRECTION_BODY_BYTES,
+    mayExceedDefault: carriesReferences,
+  });
   if (!parsed.ok) return parsed.response;
   const context = { caller: parsed.caller, config: parsed.config, tier: parsed.tier, signal: request.signal };
   if (parsed.body.task === "direction") return renderJsonResponse(await renderDirection(parsed.body, context), parsed.caller);

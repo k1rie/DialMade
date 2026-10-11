@@ -22,6 +22,7 @@ import {
 import type { AiRenderPath, AiRenderTier } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import { priceFor } from "../pricing";
+import { REFERENCE_IMAGE_TOKENS } from "./api";
 import { CHEAPER_BYOK_RENDER_MODEL } from "./byokModel";
 import type { RenderDirectionAnswer } from "./transport";
 
@@ -73,6 +74,8 @@ export type RenderEstimateInput = {
   screens: readonly RenderScreenInput[];
   /** A new art direction is drawn first (the document has none yet, or «Otra versión» of it). */
   newDirection: boolean;
+  /** Reference screenshots the direction call carries (API paths only: «mi Claude» gets them as attachments). */
+  references?: number;
   /** Recipe of the direction candidates (sizes the direction prompt). */
   recipeId: string;
   /** «Maqueta · Presentable · Producto final»: more thinking and finer details cost more output (default `mockup`). */
@@ -109,7 +112,8 @@ function generateCost(input: RenderEstimateInput, model: string): CostRange & { 
       input.screens[0]?.locale ?? "en",
       input.screens.map((screen) => ({ name: screen.name, kind: screen.kind, blocks: screen.blocks.map((block) => block.type) })),
     );
-    usd += costOf(model, { input: system + tokens(message[0]!.text.length), cacheWrite: 0, cacheRead: 0, output: DIRECTION_OUTPUT_TOKENS });
+    const images = (input.references ?? 0) * REFERENCE_IMAGE_TOKENS;
+    usd += costOf(model, { input: system + tokens(message[0]!.text.length) + images, cacheWrite: 0, cacheRead: 0, output: DIRECTION_OUTPUT_TOKENS });
     seconds += speed.firstTokenSeconds + DIRECTION_OUTPUT_TOKENS / speed.tokensPerSecond;
   }
   let batch = 0;
