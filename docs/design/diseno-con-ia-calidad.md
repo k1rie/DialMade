@@ -206,6 +206,26 @@ razonamiento adaptativo de Haiku 5.5 (no se puede apagar): 0 → 2–8 k tokens 
 cortadas por `max_tokens` (faltaban CTA, footer y pricing). La lista queda como lista simple y `SCREEN_MAX_TOKENS` sube
 de 12 k a 16 k (≈ +$0,002 de reserva por pantalla con Haiku). Gasto de esta comparación ≈ $1,62.
 
+## 3 sexies. Gráficos con detalle
+
+### Gráficos (`chart.ts`, $0 por uso, mejoran a todos los modelos)
+
+Los gráficos los dibuja nuestro código a partir de `<img data-chart>`; el modelo solo pone los números. Ahora el
+dibujo trae los detalles que faltaban:
+
+- **Eje X** con fechas o periodos (`data-labels="3 mar,10 mar,…"`, como mucho ~6 visibles).
+- **Valores sobre las barras** (≤ 8 barras) y **burbuja** con etiqueta y valor del punto de `data-highlight`.
+- **Marcas del eje Y** redondas (pasos 1, 1,2, 1,5, 2, 2,5, 3, 4, 5, 6, 8 × 10ⁿ) y **unidad** (`data-unit="€"`), con el
+  número en el formato del idioma («1820 €», «€1,820», «18,5k €»).
+- **Leyenda** cuando hay varias series (`data-series="Cash in,Cash out"`), **curvas suaves** (monótonas, sin
+  sobrepasar los datos), un punto donde termina cada línea y el total o el porcentaje en el centro del donut.
+
+Cómo: un `<svg>` exterior sin escalar con uno interior estirado (solo formas) y los textos colocados por porcentaje con
+tamaño en px, para que no se deformen. Las etiquetas se validan en el sanitizador y otra vez en el runtime (solo
+letras, cifras y `. / - : %`, ≤ 16 caracteres, sin comas), y deben cuadrar con el número de puntos o de series. El
+texto del gráfico toma el color de texto de la imagen (en un panel oscuro, `text-background`). Haiku los usa sin más
+cambios (8 de 8 gráficos con etiquetas): `comparisons/10-graficos-antes-despues.png`.
+
 ## 4. Límites honestos
 
 - **Una ejecución por celda**, 2 marcas, 2 pantallas: sin ruido entre ejecuciones ni panel ciego de calidad.

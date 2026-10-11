@@ -81,10 +81,10 @@ export function AiBlocksCard({ doc, texts, recommendedLabel, dialog }: AiBlocksC
         </div>
       }
     >
-      <Button size="sm" variant="secondary" leadingIcon={<CopyIcon />} disabled={!ready} onClick={() => current && ai && void copy(ai.blockHtmlText(current, routes), "HTML")}>
+      <Button size="sm" variant="secondary" leadingIcon={<CopyIcon />} disabled={!ready} onClick={() => current && ai && void copy(ai.blockHtmlText(current, routes, doc.brief.locale), "HTML")}>
         {texts.copyHtml}
       </Button>
-      <Button size="sm" variant="secondary" leadingIcon={<CopyIcon />} disabled={!ready} onClick={() => current && ai && void copy(ai.blockTsxText(current, routes), "TSX")}>
+      <Button size="sm" variant="secondary" leadingIcon={<CopyIcon />} disabled={!ready} onClick={() => current && ai && void copy(ai.blockTsxText(current, routes, doc.brief.locale), "TSX")}>
         {texts.copyTsx}
       </Button>
       <Button size="sm" variant="ghost" leadingIcon={<CopyIcon />} disabled={!ai} onClick={() => ai && void copy(ai.exportThemeCss(), "ai-theme.css")}>

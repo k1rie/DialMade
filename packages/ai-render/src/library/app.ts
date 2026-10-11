@@ -57,10 +57,9 @@ export const APP: LibraryBlock[] = [
 <div><p class="text-small text-muted-foreground">Visitors · last 3 months</p><p class="mt-1 font-heading text-display font-bold tabular-nums leading-none tracking-tight text-foreground">12,480</p></div>
 <div class="flex flex-col items-end gap-3">
 <div class="inline-flex rounded-button border border-border bg-muted p-0.5 text-caption" role="group" aria-label="Range"><button type="button" class="rounded-button bg-card px-3 py-1.5 font-medium text-foreground shadow-sm ${FOCUS}">3 months</button><button type="button" class="rounded-button px-3 py-1.5 text-muted-foreground hover:text-foreground ${FOCUS}">30 days</button></div>
-<p class="rounded-badge bg-muted px-2 py-1 text-caption text-foreground">Peak: Sep 14 · 1,204 visits</p>
 </div>
 </div>
-<img data-chart="area" data-values="32,35,33,38,36,42,40,47,45,52,49,58,56,63,60,71,66,74" data-highlight="13" alt="Visitors per week over the last three months, peaking in week 14" class="min-h-40 w-full grow">
+<img data-chart="area" data-values="620,680,650,720,700,790,760,860,830,940,900,1010,1204,1080,1150,1120,1180,1160" data-labels="Jun 22,Jun 29,Jul 6,Jul 13,Jul 20,Jul 27,Aug 3,Aug 10,Aug 17,Aug 24,Aug 31,Sep 7,Sep 14,Sep 21,Sep 28,Oct 5,Oct 12,Oct 19" data-highlight="12" alt="Visitors per week over the last three months, peaking on Sep 14" class="min-h-40 w-full grow">
 </section>`,
   },
   {
@@ -74,8 +73,7 @@ export const APP: LibraryBlock[] = [
     html: `<section data-block-id="b-chart" class="@container flex h-full flex-col rounded-card border border-border bg-card p-5">
 <p class="font-mono text-caption uppercase tracking-widest text-muted-foreground">Orders per week</p>
 <h2 class="mt-2 max-w-md font-heading text-h2 font-semibold tracking-tight text-foreground">Week 9 was the best of the quarter: <span class="text-primary-text">+38%</span> on the average.</h2>
-<img data-chart="bar" data-values="21,24,22,26,25,29,27,30,38,28,26,31" data-highlight="8" alt="Orders per week, week 9 highlighted" class="mt-5 min-h-32 w-full grow">
-<div class="mt-2 flex justify-between font-mono text-caption text-muted-foreground"><span>W1</span><span>W4</span><span>W8</span><span>W12</span></div>
+<img data-chart="bar" data-values="21,24,22,26,25,29,27,30,38,28,26,31" data-labels="W1,W2,W3,W4,W5,W6,W7,W8,W9,W10,W11,W12" data-highlight="8" alt="Orders per week, week 9 highlighted" class="mt-5 min-h-32 w-full grow">
 </section>`,
   },
   {

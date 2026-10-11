@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inlineAssets } from "./export";
-import { CHART_KINDS, canonicalChartValues, chartSvg, parseChartValues } from "./chart";
+import { CHART_KINDS, canonicalChartValues, chartFromAttributes, chartSvg, formatChartValue, parseChartLabels, parseChartUnit, parseChartValues } from "./chart";
 import { sanitizeBlock } from "./sanitize";
 import { blockToTsx } from "./tsx";
 import { checkClass } from "./vocabulary";
@@ -97,7 +97,9 @@ describe("data-highlight", () => {
     expect(bars.match(/opacity="\.32"/g)).toHaveLength(3);
     const line = chartSvg("line", [[3, 5, 2, 8]], "x", 1);
     expect(line).toContain("stroke-dasharray");
-    expect(chartSvg("bar", [[3, 5]], "x")).not.toContain("opacity");
+    expect(chartSvg("bar", [[3, 5]], "x")).not.toMatch(/<rect[^>]*opacity/);
+    // The stressed value is said in a bubble.
+    expect(bars).toMatch(/<rect[^>]*rx="10"/);
   });
 
   it("is kept only on a chart image and only when the index exists in the data", () => {
@@ -112,6 +114,62 @@ describe("data-highlight", () => {
     const html = sanitized('<img data-chart="bar" data-values="3,5,2,8" data-highlight="3" alt="Ventas" class="h-32 w-full">');
     expect(inlineAssets(html)).toContain('opacity=".32"');
     expect(blockToTsx(html, "b-chart", { label: "Ventas" })).toContain("opacity");
+  });
+});
+
+describe("chart details: axis, legend, values, unit", () => {
+  const attrs = (map: Record<string, string>) => (name: string) => map[name] ?? null;
+
+  it("reads labels, legend names and units, and refuses anything else", () => {
+    expect(parseChartLabels("Jan, Feb,Mar")).toEqual(["Jan", "Feb", "Mar"]);
+    expect(parseChartLabels("Sem. 1,Sem. 2,Ene 2026")).toEqual(["Sem. 1", "Sem. 2", "Ene 2026"]);
+    for (const raw of ["Jan", "<b>,x", "a,,b", "this label is far too long,b", "a\"b,c", "(x),y"]) expect(parseChartLabels(raw), raw).toBeNull();
+    expect(parseChartLabels("In", 1, 3)).toEqual(["In"]);
+    for (const unit of ["€", "$", "%", "h", "min", "kg"]) expect(parseChartUnit(unit), unit).toBe(unit);
+    for (const unit of ["", "€€", "euros", "<", "1"]) expect(parseChartUnit(unit), unit).toBeNull();
+  });
+
+  it("formats numbers the way each language reads them", () => {
+    expect(formatChartValue(1840, "€", "en")).toBe("€1,840");
+    expect(formatChartValue(18_500, "€", "es")).toBe("18,5k €");
+    expect(formatChartValue(1_250_000, "$", "en")).toBe("$1.3M");
+    expect(formatChartValue(96, "%")).toBe("96%");
+    expect(formatChartValue(12, "h")).toBe("12 h");
+    expect(formatChartValue(2.5)).toBe("2.5");
+  });
+
+  it("draws the x axis, the legend, bar values and ticks as text that never stretches", () => {
+    const svg = chartFromAttributes(attrs({ "data-chart": "bar", "data-values": "4,6,5,9;3,4,4,5", "data-labels": "Jan,Feb,Mar,Apr", "data-series": "In,Out", "data-unit": "€" }), "Cash")!;
+    for (const text of [">Jan<", ">Apr<", ">In<", ">Out<"]) expect(svg).toContain(text);
+    // Text lives outside the stretched plot (the inner svg with preserveAspectRatio="none").
+    const plot = /<svg[^>]*preserveAspectRatio="none"[^>]*>([\s\S]*?)<\/svg>/.exec(svg)![1]!;
+    expect(plot).not.toContain("<text");
+    // One bar series of 8 or fewer: each bar says its value.
+    expect(chartFromAttributes(attrs({ "data-chart": "bar", "data-values": "4,6,5", "data-unit": "%" }), "x")).toContain(">6%<");
+  });
+
+  it("ignores extras that do not fit the data, and escapes what it prints", () => {
+    const svg = chartFromAttributes(attrs({ "data-chart": "line", "data-values": "1,2,3", "data-labels": "Mon,Tue", "data-series": "In,Out" }), "Trend")!;
+    expect(svg).not.toContain(">Mon<");
+    expect(svg).not.toContain(">In<");
+    expect(chartFromAttributes(attrs({ "data-chart": "line", "data-values": "1,2" }), "x")).toBeTruthy();
+    expect(chartFromAttributes(attrs({ "data-chart": "pie", "data-values": "1,2" }), "x")).toBeNull();
+    expect(chartSvg("line", [[1, 2, 3]], "x", 0, { labels: ["A&B", "C", "D"] })).toContain("A&amp;B · 1");
+  });
+
+  it("puts the total, or the stressed share and its name, in a donut", () => {
+    expect(chartSvg("donut", [[50, 30, 20]], "x", null, { unit: "€" })).toContain(">€100<");
+    expect(chartSvg("donut", [[50, 30, 20]], "x", 1, { labels: ["Rent", "Food", "Fun"] })).toMatch(/>30%<[\s\S]*>Food</);
+  });
+
+  it("survives the sanitizer only when the extras match the numbers", () => {
+    expect(sanitized('<img data-chart="bar" data-values="1,2,3" data-labels="a,b,c" data-unit="€" alt="x">')).toMatch(/data-labels="a,b,c"[\s\S]*data-unit="€"|data-unit="€"[\s\S]*data-labels="a,b,c"/);
+    expect(sanitized('<img data-chart="bar" data-values="1,2,3" data-labels="a,b" alt="x">')).not.toContain("data-labels");
+    expect(sanitized('<img data-chart="bar" data-values="1,2;3,4" data-series="In,Out" alt="x">')).toContain('data-series="In,Out"');
+    expect(sanitized('<img data-chart="bar" data-values="1,2" data-series="In,Out" alt="x">')).not.toContain("data-series");
+    expect(sanitized('<img data-chart="donut" data-values="5,3,2" data-labels="a,b,c" alt="x">')).toContain("data-labels");
+    expect(sanitized('<img data-labels="a,b" data-unit="€" alt="x">')).not.toMatch(/data-labels|data-unit/);
+    expect(sanitized('<div data-unit="€"></div>')).not.toContain("data-unit");
   });
 });
 

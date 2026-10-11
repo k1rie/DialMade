@@ -3,7 +3,7 @@
 // (@dialmade/ui, no brand logos) and token-colored placeholder art.
 import { ICONS } from "@dialmade/ui/icons";
 
-export { CHART_KINDS, CHART_LIMITS, canonicalChartValues, chartSvg, isChartKind, parseChartHighlight, parseChartValues, type ChartKind } from "./chart";
+export { CHART_KINDS, CHART_LIMITS, canonicalChartValues, chartFromAttributes, chartSvg, formatChartValue, isChartKind, parseChartHighlight, parseChartLabels, parseChartUnit, parseChartValues, type ChartExtras, type ChartKind } from "./chart";
 
 const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 

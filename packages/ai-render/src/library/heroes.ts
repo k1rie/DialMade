@@ -395,7 +395,7 @@ export const HEROES: LibraryBlock[] = [
 <div class="p-5">
 <p class="font-heading text-h3 font-semibold text-foreground">Today</p>
 <div class="mt-3 flex justify-end gap-8 text-right"><div><p class="text-caption text-muted-foreground">Orders</p><p class="text-body font-semibold tabular-nums text-foreground">€3,284.50</p></div><div><p class="text-caption text-muted-foreground">Yesterday</p><p class="text-body tabular-nums text-muted-foreground">€2,916.10</p></div></div>
-<img data-chart="line" data-values="4,4,6,5,9,12,11,16,15,18" data-highlight="9" alt="Orders through the day, highest now" class="mt-3 h-28 w-full">
+<img data-chart="line" data-values="4,4,6,5,9,12,11,16,15,18" data-labels="06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,Now" data-highlight="9" alt="Orders through the day, highest now" class="mt-3 h-28 w-full">
 <div class="mt-4 grid grid-cols-2 gap-3"><div class="rounded-lg border border-border p-3"><p class="text-caption text-muted-foreground">New shops</p><p class="text-body font-semibold tabular-nums text-foreground">37</p><img data-chart="spark" data-values="3,5,4,7,6,9" alt="New shops this week" class="mt-1 h-8 w-24"></div><div class="rounded-lg border border-border p-3"><p class="text-caption text-muted-foreground">On time</p><p class="text-body font-semibold tabular-nums text-foreground">98%</p><img data-chart="spark" data-values="91,94,93,96,97,98" alt="Deliveries on time this week" class="mt-1 h-8 w-24"></div></div>
 </div>
 </div>

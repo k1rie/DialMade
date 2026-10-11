@@ -86,14 +86,14 @@ export type AiPageParts = {
 export function aiPageParts(
   blocks: readonly AiExportBlock[],
   screenId: ScreenId,
-  options: { hrefOf: (screenId: ScreenId) => string | null; logoUrl?: string },
+  options: { hrefOf: (screenId: ScreenId) => string | null; logoUrl?: string; locale?: string },
 ): AiPageParts {
   const parts: AiPageParts = { aiBlocks: {}, aiSurfaces: {} };
   for (const block of blocks) {
     if (block.screenId !== screenId) continue;
     if (block.surface) parts.aiSurfaces[block.blockId] = block.surface.join(" ");
     if (block.html) {
-      const html = exportBlockHtml(block.html, { hrefOf: options.hrefOf, ...(options.logoUrl && { logoUrl: options.logoUrl }) });
+      const html = exportBlockHtml(block.html, { hrefOf: options.hrefOf, ...(options.logoUrl && { logoUrl: options.logoUrl }), ...(options.locale && { locale: options.locale }) });
       parts.aiBlocks[block.blockId] = `${provenanceComment(block.model, block.createdAt)}${html}`;
     }
   }
@@ -105,17 +105,18 @@ export const screenRoutes = (doc: DesignDoc): Record<ScreenId, string> =>
   Object.fromEntries(orderedScreens(doc).map((screen) => [screen.id, screen.route]));
 
 /** «Copiar HTML»: the block with its provenance, links to the screens' routes and inline SVG assets. */
-export function blockHtmlText(block: AiExportBlock, routes: Readonly<Record<ScreenId, string>>): string {
+export function blockHtmlText(block: AiExportBlock, routes: Readonly<Record<ScreenId, string>>, locale?: string): string {
   if (!block.html) return "";
-  return `${provenanceComment(block.model, block.createdAt)}\n${exportBlockHtml(block.html, { hrefOf: (id) => routes[id] ?? null })}\n`;
+  return `${provenanceComment(block.model, block.createdAt)}\n${exportBlockHtml(block.html, { hrefOf: (id) => routes[id] ?? null, ...(locale && { locale }) })}\n`;
 }
 
 /** «Copiar TSX»: one React component for the block (`blockToTsx`). */
-export function blockTsxText(block: AiExportBlock, routes: Readonly<Record<ScreenId, string>>): string {
+export function blockTsxText(block: AiExportBlock, routes: Readonly<Record<ScreenId, string>>, locale?: string): string {
   if (!block.html) return "";
   return blockToTsx(block.html, block.blockId, {
     label: block.label,
     routes,
+    ...(locale && { locale }),
     ...(block.model && { model: block.model }),
     createdAt: block.createdAt,
   });

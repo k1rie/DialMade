@@ -39,7 +39,18 @@ describe("island second wall", () => {
   it("keeps data-chart and data-values through the template path", () => {
     const host = document.createElement("div");
     insertBlock(host, '<section data-block-id="b"><img data-chart="area" data-values="1,2,3" data-placeholder="chart" alt="x" class="h-24 w-full"></section>');
-    expect(host.querySelector("svg polyline")).not.toBeNull();
+    expect(host.querySelector("svg path")).not.toBeNull();
     expect(host.querySelector("img")).toBeNull();
+  });
+
+  it("draws the axis labels and the unit, re-checked by the second wall", () => {
+    const host = document.createElement("div");
+    insertBlock(host, '<section data-block-id="b"><img data-chart="bar" data-values="4,6,5" data-labels="Jan,Feb,Mar" data-unit="%" data-placeholder="chart" alt="x" class="h-24 w-full"></section>');
+    const texts = Array.from(host.querySelectorAll("svg text")).map((text) => text.textContent);
+    expect(texts).toEqual(expect.arrayContaining(["Jan", "Mar", "6%"]));
+    // A label the sanitizer would refuse is ignored here too (the chart is still drawn).
+    insertBlock(host, '<section data-block-id="b"><img data-chart="bar" data-values="4,6,5" data-labels="<b>,x,y" data-placeholder="chart" alt="x"></section>');
+    expect(host.querySelector("svg rect")).not.toBeNull();
+    expect(Array.from(host.querySelectorAll("svg text")).some((text) => text.textContent === "x")).toBe(false);
   });
 });

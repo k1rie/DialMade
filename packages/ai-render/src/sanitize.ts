@@ -4,7 +4,7 @@
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
 import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
-import { canonicalChartValues, isChartKind, parseChartHighlight, parseChartValues } from "./chart";
+import { CHART_LIMITS, canonicalChartValues, isChartKind, parseChartHighlight, parseChartLabels, parseChartUnit, parseChartValues } from "./chart";
 import { checkClass, type ClassRejection } from "./vocabulary";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
@@ -163,6 +163,19 @@ class Walker {
         else drop(name);
         continue;
       }
+      if (name === "data-labels" || name === "data-series") {
+        // The x axis (or a donut's segments) and the legend: short plain labels, re-checked against the numbers below.
+        const labels = tag === "img" ? (name === "data-labels" ? parseChartLabels(value) : parseChartLabels(value, 1, CHART_LIMITS.series)) : null;
+        if (labels) out.push([name, labels.join(",")]);
+        else drop(name);
+        continue;
+      }
+      if (name === "data-unit") {
+        const unit = tag === "img" ? parseChartUnit(value) : null;
+        if (unit) out.push([name, unit]);
+        else drop(name);
+        continue;
+      }
       if (name === "data-asset") {
         if (tag === "img" && value.trim() === "logo") out.push([name, "logo"]);
         else drop(name);
@@ -265,6 +278,12 @@ class Walker {
         const longest = series ? Math.max(...series.map((s) => s.length)) : 0;
         if (Number(out[at("data-highlight")]![1]) >= longest) out.splice(at("data-highlight"), 1);
       }
+      // Labels must match the points (a donut: its segments) and names the series; extras without a chart go.
+      const series = at("data-values") >= 0 ? parseChartValues(out[at("data-values")]![1]) : null;
+      const points = series ? (out[at("data-chart")]?.[1] === "donut" ? series[0]!.length : Math.max(...series.map((s) => s.length))) : 0;
+      if (at("data-labels") >= 0 && out[at("data-labels")]![1].split(",").length !== points) out.splice(at("data-labels"), 1);
+      if (at("data-series") >= 0 && out[at("data-series")]![1].split(",").length !== (series?.length ?? 0)) out.splice(at("data-series"), 1);
+      if (at("data-unit") >= 0 && !series) out.splice(at("data-unit"), 1);
       if (at("data-chart") >= 0) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i]![0] === "data-placeholder" || out[i]![0] === "data-asset") out.splice(i, 1);
         out.push(["data-placeholder", "chart"]);

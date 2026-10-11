@@ -245,8 +245,7 @@ export const CONVERSION: LibraryBlock[] = [
 <div class="flex items-center justify-between"><p class="font-mono text-caption uppercase tracking-widest text-background">Stems this season</p><span class="flex size-7 items-center justify-center rounded-md border border-background/40 text-background"><i data-icon="plus" aria-hidden="true" class="size-4"></i></span></div>
 <p class="mt-3 font-heading text-h2 tabular-nums text-background">1,840</p>
 <p class="flex items-center gap-2 text-small text-background"><span class="size-1.5 rounded-full bg-background"></span>May</p>
-<img data-chart="area" data-values="120,140,180,260,420,610,780,900" alt="Stems delivered per week this season" class="mt-3 h-28 w-full">
-<div class="mt-2 flex justify-between font-mono text-caption text-background"><span>01</span><span>07</span><span>14</span><span>21</span><span>28</span></div>
+<img data-chart="area" data-values="120,140,180,260,420,610,780,900" data-labels="Mar 1,Mar 8,Mar 15,Mar 22,Mar 29,Apr 5,Apr 12,Apr 19" alt="Stems delivered per week this season" class="mt-3 h-32 w-full text-background">
 </div>
 </div>
 </div>

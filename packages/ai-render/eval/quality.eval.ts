@@ -184,7 +184,7 @@ async function render(brandId: string, screenId: (typeof SCREEN_IDS)[number], sa
       }
       stats.ok++;
       stats.warnings.push(...processed.gates.warnings.map((w) => `${block.id}: ${w.code}${w.detail ? ` ${w.detail}` : ""}`));
-      aiBlocks[block.id] = inlineAssets(processed.html);
+      aiBlocks[block.id] = inlineAssets(processed.html, { locale: brand.locale });
       stats.htmlBytes += processed.html.length;
       const tree = parseSanitized(processed.html);
       if (hasEqualPanels(tree)) stats.equalPanels.push(block.id);

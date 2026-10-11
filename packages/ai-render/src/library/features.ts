@@ -104,7 +104,7 @@ export const FEATURES: LibraryBlock[] = [
 </div>
 <div class="rounded-card border border-border bg-card p-7 @3xl:col-span-7">
 <div class="flex items-baseline justify-between"><h3 class="font-heading text-h3 font-semibold text-foreground">Deliveries on time</h3><p class="font-heading text-h2 font-semibold tabular-nums text-foreground">96%</p></div>
-<img data-chart="bar" data-values="82,85,88,84,90,93,91,96" data-highlight="7" alt="Deliveries on time, last eight weeks" class="mt-4 h-28 w-full">
+<img data-chart="bar" data-values="82,85,88,84,90,93,91,96" data-labels="W1,W2,W3,W4,W5,W6,W7,W8" data-unit="%" data-highlight="7" alt="Deliveries on time, last eight weeks" class="mt-4 h-32 w-full">
 </div>
 </div>
 </div>
