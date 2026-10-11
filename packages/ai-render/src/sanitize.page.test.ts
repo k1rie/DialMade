@@ -53,11 +53,24 @@ describe("sanitizeBlock in page mode", () => {
     expect(unknown.ok && unknown.html).not.toMatch(/filter|feGaussian/i);
   });
 
-  it("keeps a <style> only as a direct child of the root and never marks styles or drawings as editable copy", () => {
+  it("gathers a <style> written deeper into the root's stylesheet and never marks styles or drawings as editable copy", () => {
     const result = page(`<section data-block-id="b-hero"><div><style>.x{gap:1px}</style><p>Texto</p></div><svg><text>Dibujo</text></svg></section>`);
-    expect(result.ok && result.html).not.toContain("<style");
+    expect(result.ok && result.html).toMatch(/^<section data-block-id="b-hero"><style>\[data-block-id="b-hero"\] \.x\{gap:1px\}<\/style><div>/);
+    expect(result.ok && result.html.match(/<style/g)).toHaveLength(1);
     expect(result.ok && result.html).toMatch(/<p data-dl-t="\d+">Texto<\/p>/);
     expect(result.ok && result.html).not.toMatch(/<text[^>]*data-dl-t/);
+  });
+
+  it("keeps a drawing's gradients: its own <style> joins the section's, and style paints point at the prefixed ids", () => {
+    const html = `<section data-block-id="b-hero"><style>.title{gap:1px}</style><p>x</p><svg viewBox="0 0 10 10"><style>.bowl{fill:url(#glaze)}</style><defs><linearGradient id="glaze"><stop offset="0" stop-color="var(--primary)"/></linearGradient></defs><path class="bowl" style="stroke:url(#glaze)" d="M0 0 L10 10"/></svg></section>`;
+    const result = page(html);
+    if (!result.ok) throw new Error(result.failure);
+    expect(result.html).toContain('<style>[data-block-id="b-hero"] .title{gap:1px}[data-block-id="b-hero"] .bowl{fill:url(#ai-b-hero-glaze)}</style>');
+    expect(result.html).toContain('style="stroke:url(#ai-b-hero-glaze)"');
+    expect(result.html).toContain('<lineargradient id="ai-b-hero-glaze"');
+    expect(result.report.hostile).toBe(0);
+    const again = page(result.html);
+    expect(again.ok && again.html).toBe(result.html);
   });
 
   it("never uses the base kit's class prefix and drops token grammar it does not need", () => {
@@ -79,4 +92,21 @@ describe("sanitizeBlock in page mode", () => {
     expect(result.ok && result.html).toContain('<div style="display:flex;gap:8px">');
     expect(result.ok && result.html).toContain('<stop offset="0" style="stop-color:var(--accent)">');
   });
+
+  it("the repaired CSS paths never let a remote url, a script or a handler through", () => {
+    const evil = [
+      `<svg><style>.a{fill:url(https://evil.test/x.svg#a)} .b{fill:url(#ok)}</style><path class="a b" d="M0 0"/></svg>`,
+      `<svg><style>.a{}</style><img src=x onerror=alert(1)></style><circle r="1"/></svg>`,
+      `<svg><path style="fill:url(#ok);background:url(javascript:alert(1));stroke:url( 'x' )" d="M0 0"/></svg>`,
+      `<div><style>:root{--x:url(#ok);--y:expression(alert(1))} #a{background:url(#ok)} body{behavior:url(x.htc)}</style></div>`,
+      `<div><style>#a"onmouseover="alert(1){gap:1px} a[href="#x"]{gap:1px}</style><p>y</p></div>`,
+    ];
+    for (const payload of evil) {
+      const result = page(`<section data-block-id="b-hero"><p>x</p>${payload}</section>`);
+      const html = result.ok ? result.html : "";
+      for (const url of html.match(/url\([^)]*\)/g) ?? []) expect(url, payload).toMatch(/^url\(#ai-b-hero-[\w-]+\)$/);
+      expect(html, payload).not.toMatch(/javascript|expression|behavior|onerror|onmouseover|<script|\ssrc=/i);
+    }
+  });
 });
+

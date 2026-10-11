@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CSS_LIMITS, PAGE_SCOPE, sanitizeCss, sanitizeStyleAttr } from "./pageCss";
+import { CSS_LIMITS, PAGE_SCOPE, fontRolesOf, sanitizeCss, sanitizeStyleAttr } from "./pageCss";
 
 const page = (css: string) => sanitizeCss(css, { kind: "page" });
 const section = (css: string, blockId = "b-hero") => sanitizeCss(css, { kind: "section", blockId });
@@ -50,8 +50,36 @@ describe("sanitizeCss (page mode)", () => {
     expect(report.droppedRules).toBe(4);
   });
 
-  it("never targets the document, and class names with those words stay", () => {
-    expect(page("html{color:var(--foreground)} body .a{gap:1px} :root{--x:1px} .body-copy{gap:2px}").css).toBe(`${PAGE_SCOPE} .body-copy{gap:2px}`);
+  it("lands the document's rules on the scope (a page's own tokens live there), and class names with those words stay", () => {
+    expect(page("html{color:var(--foreground)} body .a{gap:1px} :root{--x:1px} .body-copy{gap:2px} .x html{gap:3px} .body{gap:4px}").css).toBe(
+      `${PAGE_SCOPE}{color:var(--foreground)}${PAGE_SCOPE} .a{gap:1px}${PAGE_SCOPE}{--x:1px}${PAGE_SCOPE} .body-copy{gap:2px}${PAGE_SCOPE} .body{gap:4px}`,
+    );
+    expect(section(":root{--pad:2rem} body > .a{padding:var(--pad)}").css).toBe(`[data-block-id="b-hero"]{--pad:2rem}[data-block-id="b-hero"] .a{padding:var(--pad)}`);
+  });
+
+  it("#id selectors follow the ids the HTML sanitizer prefixed (a section's own; on the page, whichever section has it)", () => {
+    const own = section('#late:checked ~ .bar{gap:1px} a[href="#late"]{gap:2px}');
+    expect(own.css).toBe(`[data-block-id="b-hero"] #ai-b-hero-late:checked ~ .bar{gap:1px}[data-block-id="b-hero"] a[href="#late"]{gap:2px}`);
+    expect(section(own.css).css).toBe(own.css);
+    const onPage = page("#late:checked + label{gap:1px}");
+    expect(onPage.css).toBe(`${PAGE_SCOPE} [id$="-late"]:checked + label{gap:1px}`);
+    expect(page(onPage.css).css).toBe(onPage.css);
+  });
+
+  it("keeps a section's local gradient, clip and mask paints, pointing at its prefixed ids; nothing remote", () => {
+    const { css, report } = section(".bowl{fill:url(#glaze);stroke:url( #rim );clip-path:url(#c)} .x{fill:url(https://x.test/#a);background:url(#glaze)}");
+    expect(css).toBe(`[data-block-id="b-hero"] .bowl{fill:url(#ai-b-hero-glaze);stroke:url(#ai-b-hero-rim);clip-path:url(#ai-b-hero-c)}`);
+    expect(report.droppedDeclarations).toBe(2);
+    expect(section(css).css).toBe(css);
+    // The page stylesheet cannot know which section holds the drawing.
+    expect(page(".bowl{fill:url(#glaze)}").css).toBe("");
+  });
+
+  it("maps the brand's own family names to the theme's font variables", () => {
+    const fonts = fontRolesOf({ "--dl-font-heading": '"Outfit", ui-sans-serif, sans-serif', "--dl-font-body": '"Work Sans", system-ui, sans-serif', "--dl-font-mono": "ui-monospace, monospace" });
+    expect(fonts).toEqual({ outfit: "heading", "work sans": "body" });
+    const { css } = sanitizeCss(".t{font-family:'Outfit',sans-serif} .b{font:400 1rem/1.5 \"Work Sans\", serif} .c{font-family:'Comic Sans MS'}", { kind: "page" }, { fonts });
+    expect(css).toBe(`${PAGE_SCOPE} .t{font-family:var(--dl-font-heading),sans-serif}${PAGE_SCOPE} .b{font:400 1rem/1.5 var(--dl-font-body), serif}`);
   });
 
   it("never lets the stylesheet be closed from inside", () => {
@@ -78,5 +106,8 @@ describe("sanitizeCss (page mode)", () => {
   it("cleans a style attribute with the same rules", () => {
     expect(sanitizeStyleAttr("display:flex; gap:28px; color:#fff; background:url(x.png); --pct:40%")).toBe("display:flex;gap:28px;--pct:40%");
     expect(sanitizeStyleAttr("stop-color:var(--accent)")).toBe("stop-color:var(--accent)");
+    // A gradient paint: prefixed for its section, kept as written by the island's second wall.
+    expect(sanitizeStyleAttr("fill:url(#g)", { idPrefix: "ai-b-hero-" })).toBe("fill:url(#ai-b-hero-g)");
+    expect(sanitizeStyleAttr("fill:url(#ai-b-hero-g)")).toBe("fill:url(#ai-b-hero-g)");
   });
 });

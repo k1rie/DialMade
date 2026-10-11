@@ -113,7 +113,7 @@ export { checkClass, colorOfClass, splitClass, type ClassCheck, type ClassReject
 export { exportBlockHtml, inlineAssets, provenanceComment, type ExportBlockOptions, type InlineAssetsOptions } from "./export";
 export { blockToTsx, componentName, tsxAssetsModule, type TsxOptions } from "./tsx";
 export { pinViewportUnits } from "./viewport";
-export { CSS_LIMITS, PAGE_BASE_CSS, PAGE_SCOPE, oklabMix, sanitizeCss, sanitizeStyleAttr, sectionScope, type CssReport, type CssResult, type CssScope } from "./pageCss";
+export { CSS_LIMITS, PAGE_BASE_CSS, PAGE_SCOPE, fontRolesOf, oklabMix, prefixedId, sanitizeCss, sanitizeStyleAttr, sectionIdPrefix, sectionScope, type CssFonts, type CssOptions, type CssReport, type CssResult, type CssScope } from "./pageCss";
 export {
   AI_PAGE_PROMPT_VERSION,
   AI_PAGE_SYSTEM_PROMPT,

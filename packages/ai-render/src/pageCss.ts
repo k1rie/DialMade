@@ -4,8 +4,11 @@
 // worker, on the server for the export and again inside the preview island (`@dialmade/ai-render/runtime`).
 //
 // Kept: style rules, @media, @container, @supports and @keyframes. Gone: every other at-rule (@import, @font-face,
-// @namespace…), url(), image-set(), expression(), escapes, literal colors (the palette must stay switchable: colors go
-// through the theme's variables) and font families other than the theme's (`var(--dl-font-*)` and generic families).
+// @namespace…), url() (but a local `url(#id)` paint of an SVG), image-set(), expression(), escapes, literal colors (the
+// palette must stay switchable: colors go through the theme's variables) and font families other than the theme's
+// (`var(--dl-font-*)`, generic families, or the brand's own family names, mapped to their variable).
+// Repaired instead of dropped: `:root`, `html` and `body` rules land on the scope (a page's own custom properties
+// live there), and `#id` selectors follow the ids the HTML sanitizer prefixed (`ai-<blockId>-`).
 
 /** Where a stylesheet applies: the page (every AI block) or one section (its own root). */
 export type CssScope = { kind: "page" } | { kind: "section"; blockId: string };
@@ -18,6 +21,39 @@ export type CssReport = {
 };
 
 export type CssResult = { css: string; report: CssReport };
+
+/** The brand's font families (lowercase, unquoted) → the theme variable that carries each one. */
+export type CssFonts = Readonly<Record<string, "heading" | "body" | "mono">>;
+
+export type CssOptions = {
+  /** The brand's family names, so `font-family: "Outfit"` becomes `var(--dl-font-heading)` instead of being dropped. */
+  fonts?: CssFonts;
+};
+
+/** The prefix the HTML sanitizer gives a section's ids: its CSS and its local SVG references use it too. */
+export const sectionIdPrefix = (blockId: string) => `ai-${blockId.replace(/[^\w-]/g, "").slice(0, 40)}-`;
+const SAFE_ID = /^[A-Za-z][\w-]{0,40}$/;
+
+/** A section id with the section's prefix (idempotent: an id that already has it stays); null when unusable. */
+export function prefixedId(id: string, prefix: string): string | null {
+  if (id.startsWith(prefix) && SAFE_ID.test(id.slice(prefix.length))) return id;
+  const part = id.replace(/[^\w-]/g, "").slice(0, 40);
+  return SAFE_ID.test(part) ? `${prefix}${part}` : null;
+}
+
+/** The theme's font roles (`--dl-font-heading`…) read back as family names, for `CssOptions.fonts`. */
+export function fontRolesOf(vars: Readonly<Record<string, string>>): CssFonts {
+  const out: Record<string, "heading" | "body" | "mono"> = {};
+  for (const role of ["heading", "body", "mono"] as const) {
+    const first = vars[`--dl-font-${role}`]?.split(",")[0]?.trim().replace(/^["']|["']$/g, "").toLowerCase();
+    if (first && !FONT_FAMILY_OK.test(first) && !/^(?:ui-|-apple|blinkmac)/.test(first) && !(first in out)) out[first] = role;
+  }
+  return out;
+}
+
+/** How a declaration treats a local `url(#id)`: prefixed for a section, kept as written (already prefixed), or dropped. */
+type RefMode = { kind: "prefix"; prefix: string } | { kind: "keep" } | { kind: "drop" };
+type DeclarationContext = { refs: RefMode; fonts?: CssFonts };
 
 /** Caps of the page stylesheet and of one section's own rules (after sanitizing). */
 export const CSS_LIMITS = { pageBytes: 32 * 1024, sectionBytes: 12 * 1024, rawBytes: 96 * 1024, depth: 4 } as const;
@@ -53,9 +89,16 @@ const LITERAL_COLOR = /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch
 /** Never in a value: resources, script-like constructs, escapes and anything that could close the stylesheet. */
 const FORBIDDEN_VALUE = /url\s*\(|image-set\s*\(|image\s*\(|element\s*\(|expression\s*\(|javascript:|-moz-binding|behavior|\\|<|>|@|\{|\}/i;
 /** Selectors: no braces, at signs, escapes, comments or attribute values that could carry a resource. */
-const FORBIDDEN_SELECTOR = /[{}@\\<]|\/\*|url\s*\(|:root\b|:host\b|(?:^|[\s>+~,(])(?:html|body)(?![\w-])/i;
+const FORBIDDEN_SELECTOR = /[{}@\\<]|\/\*|url\s*\(|:host\b/i;
+/** The document's own selectors (`:root`, `html`, `body`) anywhere but at the start: never kept. */
+const DOCUMENT_SELECTOR = /:root\b|(?:^|[\s>+~,(])(?:html|body)(?![\w-])/i;
+/** `:root`, `html` and `body` at the start of a selector (with their combinators): they become the scope itself. */
+const LEADING_DOCUMENT = /^(?:(?::root|html|body)(?![\w-])\s*>?\s*)+/i;
 
 const FONT_FAMILY_OK = /^(?:var\(--dl-font-(?:heading|body|mono)\)|serif|sans-serif|monospace|system-ui|ui-serif|ui-sans-serif|ui-monospace|ui-rounded|cursive|inherit)$/;
+/** SVG paints and references that may point at a gradient, clip or mask of the same section. */
+const LOCAL_REF_PROPERTIES: ReadonlySet<string> = new Set(["fill", "stroke", "clip-path", "mask"]);
+const LOCAL_REF = /^url\(\s*#([A-Za-z][\w-]{0,80})\s*\)$/;
 /** Properties that cannot be used at all (they leave the box or reach outside the page). */
 const DROPPED_PROPERTIES: ReadonlySet<string> = new Set(["behavior", "-moz-binding", "src", "unicode-range", "font-display"]);
 /** Values a property may not take: `position: fixed/sticky` leaves the block's box. */
@@ -170,7 +213,7 @@ function parse(parts: string[], report: CssReport): Node[] {
 }
 
 /** One `property: value`, cleaned, or null when it must go. */
-function declaration(raw: string, report: CssReport): string | null {
+function declaration(raw: string, report: CssReport, context: DeclarationContext): string | null {
   const colon = raw.indexOf(":");
   if (colon <= 0) return drop(report);
   const property = raw.slice(0, colon).trim().toLowerCase();
@@ -178,6 +221,14 @@ function declaration(raw: string, report: CssReport): string | null {
   const important = /!\s*important\s*$/i.test(value);
   value = value.replace(/!\s*important\s*$/i, "").trim();
   if (!/^(?:--[a-z0-9-]{1,48}|-?[a-z][a-z-]{0,48})$/.test(property) || !value || value.length > 600) return drop(report);
+  // A gradient, clip or mask of the section's own SVG: kept, pointing at the id the HTML sanitizer gave it.
+  const ref = LOCAL_REF_PROPERTIES.has(property) ? LOCAL_REF.exec(value) : null;
+  if (ref) {
+    if (context.refs.kind === "drop") return drop(report);
+    const id = context.refs.kind === "prefix" ? prefixedId(ref[1]!, context.refs.prefix) : ref[1]!;
+    return id ? `${property}:url(#${id})${important ? " !important" : ""}` : drop(report);
+  }
+  if (context.fonts && (property === "font-family" || property === "font")) value = brandFonts(value, context.fonts);
   if (DROPPED_PROPERTIES.has(property) || FORBIDDEN_VALUE.test(value)) return drop(report);
   if (property === "position" && FORBIDDEN_POSITION.test(value)) return drop(report);
   if (property === "font-family" && !value.split(",").every((family) => FONT_FAMILY_OK.test(family.trim()))) return drop(report);
@@ -195,13 +246,26 @@ function declaration(raw: string, report: CssReport): string | null {
  */
 export const oklabMix = (value: string): string => value.replace(/color-mix\(\s*in\s+(?:oklch|lch|hsl|hwb)(?:\s+(?:shorter|longer|increasing|decreasing)\s+hue)?\b/gi, "color-mix(in oklab");
 
-/** A `style` attribute of page mode: the same declaration rules as the stylesheets; "" when nothing is left. */
-export function sanitizeStyleAttr(text: string): string {
+/** The brand's quoted or bare family names in a font value → their theme variables. */
+function brandFonts(value: string, fonts: CssFonts): string {
+  return value.replace(/(["'])([^"']{1,60})\1|(?<![\w-])([A-Za-z][\w -]{0,58}[A-Za-z0-9])(?=\s*(?:,|$))/g, (match, _quote, quoted, bare) => {
+    const role = fonts[String(quoted ?? bare).trim().toLowerCase()];
+    return role ? `var(--dl-font-${role})` : match;
+  });
+}
+
+/**
+ * A `style` attribute of page mode: the same declaration rules as the stylesheets; "" when nothing is left. With
+ * `idPrefix` (the HTML sanitizer, for one section) a local `url(#id)` points at the prefixed id; without it (the
+ * island's second wall, on HTML that was already sanitized) it is kept as written.
+ */
+export function sanitizeStyleAttr(text: string, options: CssOptions & { idPrefix?: string } = {}): string {
   if (text.length > 2000) return "";
   const report = emptyReport();
+  const context: DeclarationContext = { refs: options.idPrefix ? { kind: "prefix", prefix: options.idPrefix } : { kind: "keep" }, ...(options.fonts && { fonts: options.fonts }) };
   return chunks(text)
     .filter((part) => part !== ";" && part.trim() && part !== "{" && part !== "}")
-    .map((part) => declaration(part.trim(), report))
+    .map((part) => declaration(part.trim(), report, context))
     .filter((d): d is string => d !== null)
     .join(";");
 }
@@ -221,26 +285,60 @@ function hasLiteralColor(value: string, property: string): boolean {
   return false;
 }
 
+/**
+ * `#id` selectors follow the HTML sanitizer's ids: a section's own (`#ai-<blockId>-id`), or on the page stylesheet,
+ * whichever section has it (`[id$="-id"]`). Quoted attribute values are left alone.
+ */
+function rewriteIds(selector: string, scope: CssScope): string | null {
+  let ok = true;
+  const rewritten = selector
+    .split(/("[^"]*"|'[^']*')/)
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part.replace(/#([A-Za-z_-][\w-]*)/g, (_, id: string) => {
+            if (scope.kind === "page") return SAFE_ID.test(id) ? `[id$="-${id}"]` : ((ok = false), "");
+            const next = prefixedId(id, sectionIdPrefix(scope.blockId));
+            if (!next) ok = false;
+            return `#${next ?? ""}`;
+          }),
+    )
+    .join("");
+  return ok ? rewritten : null;
+}
+
 /** The selector list scoped to `scope`; null when nothing usable is left. */
 function scopeSelectors(list: string, scope: CssScope): string | null {
   if (FORBIDDEN_SELECTOR.test(list) || list.length > 600) return null;
   const prefix = scope.kind === "page" ? PAGE_SCOPE : sectionScope(scope.blockId);
   const out: string[] = [];
   for (const raw of list.split(",")) {
-    const selector = raw
+    let selector = raw
       .trim()
       .replace(/\s+/g, " ")
       .replace(/\[data-block-id\s*=\s*(?:"([\w-]+)"|'([\w-]+)'|([\w-]+))\s*\]/g, (_, a, b, c) => sectionScope(a ?? b ?? c));
     if (!selector) continue;
+    // Quotes only inside an attribute selector (`a[href="#x"]`): anywhere else the selector is malformed.
+    if (/["']/.test(selector.replace(/\[[^\]]*\]/g, ""))) continue;
+    // `:root{--pad:…}`, `body .x`: the document is the scope here (a page's own tokens live on it).
+    const leading = LEADING_DOCUMENT.exec(selector);
+    const onScope = leading !== null && leading[0].length === selector.length;
+    if (leading) selector = selector.slice(leading[0].length).trim();
+    if (DOCUMENT_SELECTOR.test(selector)) continue;
+    const ids = rewriteIds(selector, scope);
+    if (ids === null) continue;
+    selector = ids;
     if (scope.kind === "section") {
       // The section's own rules: they must start at its root (written or not).
       const own = sectionScope(scope.blockId);
-      if (selector.startsWith(own)) out.push(selector);
+      if (onScope) out.push(own);
+      else if (selector.startsWith(own)) out.push(selector);
       else if (/^\[data-block-id/.test(selector)) continue; // another section: never
       else out.push(`${own} ${selector}`);
-    } else out.push(selector.startsWith(`${PAGE_SCOPE} `) ? selector : `${prefix} ${selector}`);
+    } else if (onScope) out.push(PAGE_SCOPE);
+    else out.push(selector.startsWith(`${PAGE_SCOPE} `) || selector === PAGE_SCOPE ? selector : `${prefix} ${selector}`);
   }
-  return out.length > 0 ? out.join(",") : null;
+  return out.length > 0 ? [...new Set(out)].join(",") : null;
 }
 
 /** Cleans a keyframes name or an at-rule prelude; null when it carries something it should not. */
@@ -251,12 +349,12 @@ function prelude(name: string, text: string): string | null {
   return text;
 }
 
-function serialize(nodes: Node[], scope: CssScope, report: CssReport): string {
+function serialize(nodes: Node[], scope: CssScope, report: CssReport, context: DeclarationContext): string {
   let out = "";
   for (const node of nodes) {
     if (node.kind === "at") {
       const head = prelude(node.name, node.prelude);
-      const body = serialize(node.children, scope, report);
+      const body = serialize(node.children, scope, report, context);
       if (head === null) {
         report.droppedRules++;
         continue;
@@ -264,7 +362,7 @@ function serialize(nodes: Node[], scope: CssScope, report: CssReport): string {
       if (body) out += `@${node.name} ${head}{${body}}`;
       continue;
     }
-    const declarations = node.declarations.map((d) => declaration(d, report)).filter((d): d is string => d !== null);
+    const declarations = node.declarations.map((d) => declaration(d, report, context)).filter((d): d is string => d !== null);
     if (declarations.length === 0) continue;
     if (node.kind === "frame") {
       if (!/^(?:from|to|\d{1,3}(?:\.\d+)?%)(?:\s*,\s*(?:from|to|\d{1,3}(?:\.\d+)?%))*$/.test(node.selector)) {
@@ -288,10 +386,12 @@ function serialize(nodes: Node[], scope: CssScope, report: CssReport): string {
  * Model-written CSS → its sanitized, scoped and re-serialized form. Idempotent: the output sanitized again is the
  * same text (stored CSS goes through it again in the island and in the export). Over the cap it is emptied, never cut.
  */
-export function sanitizeCss(css: string, scope: CssScope): CssResult {
+export function sanitizeCss(css: string, scope: CssScope, options: CssOptions = {}): CssResult {
   const report = emptyReport();
   if (css.length > CSS_LIMITS.rawBytes) return { css: "", report: { ...report, droppedRules: 1 } };
-  const out = serialize(parse(chunks(css), report), scope, report);
+  // A section's SVG references point at its prefixed ids; the page stylesheet cannot know which section holds one.
+  const refs: RefMode = scope.kind === "section" ? { kind: "prefix", prefix: sectionIdPrefix(scope.blockId) } : { kind: "drop" };
+  const out = serialize(parse(chunks(css), report), scope, report, { refs, ...(options.fonts && { fonts: options.fonts }) });
   const cap = scope.kind === "page" ? CSS_LIMITS.pageBytes : CSS_LIMITS.sectionBytes;
   if (out.includes("</") || new TextEncoder().encode(out).length > cap) return { css: "", report: { ...report, droppedRules: report.droppedRules + 1 } };
   return { css: out, report };

@@ -2,6 +2,7 @@
 // token-level fixes (4), new contact text (7). Gate 1 (structure) runs before, on the stream; gate 5 (responsive)
 // after, in the iframe; gate 8 (coherence) across blocks. A block that fails falls back to the base design.
 import type { AiBlock, AiGateWarning } from "@dialmade/doc";
+import type { CssFonts } from "./pageCss";
 import { fixContrast, type ThemeColors } from "./contrast";
 import { hash32 } from "./direction";
 import { extraGateWarnings, fixHeadings, newContacts, snippet, warning } from "./gates";
@@ -18,6 +19,8 @@ export type BlockContext = {
   theme: ThemeColors;
   /** «page»: own CSS and SVG (no token contrast fixes: the colors live in the stylesheet, not in classes). */
   mode?: SanitizeMode;
+  /** Page mode: the brand's family names (`fontRolesOf`), so the section's CSS may name them. */
+  fonts?: CssFonts;
 };
 
 export type ProcessedBlock =
@@ -32,7 +35,7 @@ const droppedCount = (report: SanitizeReport) =>
 export function processBlock(raw: string, context: BlockContext): ProcessedBlock {
   const { block } = context;
   const page = context.mode === "page";
-  const sanitized = sanitizeBlock(raw, { blockId: block.id, screenIds: context.screenIds, ...(page && { mode: "page" as const }) });
+  const sanitized = sanitizeBlock(raw, { blockId: block.id, screenIds: context.screenIds, ...(page && { mode: "page" as const }), ...(page && context.fonts && { fonts: context.fonts }) });
   if (!sanitized.ok) return { ok: false, failure: sanitized.failure, report: sanitized.report };
   const { report, tree } = sanitized;
   if (report.hostile > 0) return { ok: false, failure: "hostile", report };

@@ -22,9 +22,11 @@ import {
   newSeed,
   pageStyleText,
   retargetBlock,
+  fontRolesOf,
   sanitizeCss,
   themeColorsFromVars,
   type BlockContext,
+  type CssFonts,
   type DirectionForPrompt,
   type ProcessedBlock,
   type RenderBlockInput,
@@ -148,6 +150,14 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     return theme;
   };
 
+  // Page mode: the brand's family names, so a page's CSS may name them (they become the theme's font variables).
+  const fontsCache = new WeakMap<DesignDoc, CssFonts>();
+  const fontsOf = (doc: DesignDoc): CssFonts => {
+    let fonts = fontsCache.get(doc);
+    if (!fonts) fontsCache.set(doc, (fonts = fontRolesOf(deriveDesign(doc, null).vars.light)));
+    return fonts;
+  };
+
   const inputOf = (target: Run, screenId: string, blockId: string): RenderBlockInput | undefined => target.inputs.get(screenId)?.blocks.find((block) => block.id === blockId);
 
   /** Writes one processed block as an active AI block. */
@@ -185,7 +195,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const input = inputOf(target, screenId, blockId);
     if (!doc || !input) return null;
     const page = target.inputs.get(screenId)?.mode === "page";
-    const context: BlockContext = { block: input, screenIds: doc.screenOrder, theme: themeOf(target, doc, screenId), ...(page && { mode: "page" as const }) };
+    const context: BlockContext = { block: input, screenIds: doc.screenOrder, theme: themeOf(target, doc, screenId), ...(page && { mode: "page" as const, fonts: fontsOf(doc) }) };
     const first = await deps.process(raw, context).catch(() => null);
     if (!first?.ok || !KIT_TYPES.has(input.type) || !first.html) return first;
     return deps.process(retargetBlock(first.html, blockId, blockId, screenId), context).catch(() => null);
@@ -262,7 +272,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
           // Page mode: the page stylesheet comes first, before its sections; it is sanitized and scoped here.
           const text = pageStyleText(event.html);
           const doc = deps.getDoc();
-          const ops = text !== null && doc ? aiPageCssOps(doc, screenId, sanitizeCss(text, { kind: "page" }).css) : null;
+          const ops = text !== null && doc ? aiPageCssOps(doc, screenId, sanitizeCss(text, { kind: "page" }, { fonts: fontsOf(doc) }).css) : null;
           if (ops) deps.applyPatch(ops);
           continue;
         }

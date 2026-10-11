@@ -20,7 +20,7 @@ import { chromium } from "playwright";
 import { expect, it } from "vitest";
 import { screenParams, streamBlocks } from "../src/anthropic";
 import { brandInput, screenInput } from "../src/input";
-import { PAGE_BASE_CSS, sanitizeCss } from "../src/pageCss";
+import { PAGE_BASE_CSS, fontRolesOf, sanitizeCss } from "../src/pageCss";
 import { pageStyleText } from "../src/pagePrompt";
 import { processBlock } from "../src/pipeline";
 import type { DirectionForPrompt } from "../src/prompt";
@@ -112,7 +112,9 @@ it("page mode: arms × brands, 7-block landing", async () => {
       const ids = screen.blocks.map((b) => b.id);
       const roots = splitBlocks(saved.raw, ids);
       const styleRoot = roots.find((root) => root.blockId === null && pageStyleText(root.html) !== null);
-      const pageCss = styleRoot ? sanitizeCss(pageStyleText(styleRoot.html)!, { kind: "page" }) : { css: "", report: { droppedDeclarations: 0, droppedRules: 0 } };
+      // As production: the brand's family names may be named (they become the theme's font variables).
+      const fonts = fontRolesOf(compileThemeVars(doc, { mode: "light" }));
+      const pageCss = styleRoot ? sanitizeCss(pageStyleText(styleRoot.html)!, { kind: "page" }, { fonts }) : { css: "", report: { droppedDeclarations: 0, droppedRules: 0 } };
       const aiBlocks: Record<string, string> = {};
       const failed: string[] = [];
       let warnings = 0;
@@ -122,7 +124,7 @@ it("page mode: arms × brands, 7-block landing", async () => {
           failed.push(`${block.id}:missing`);
           continue;
         }
-        const processed = processBlock(root.html, { block, screenIds: doc.screenOrder, theme, mode: "page" });
+        const processed = processBlock(root.html, { block, screenIds: doc.screenOrder, theme, mode: "page", fonts });
         if (!processed.ok) {
           failed.push(`${block.id}:${processed.failure}`);
           continue;

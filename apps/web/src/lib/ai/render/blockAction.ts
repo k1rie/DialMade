@@ -4,7 +4,7 @@
 //
 // The transport is an interface: the free tier (POST /api/ai/render/block with the live session) is here; BYOK and
 // «Copiar prompt para mi Claude» come with track C's `transport.ts` and plug in as other `BlockActionTransport`s.
-import { AI_PAGE_PROMPT_VERSION, AI_RENDER_PROMPT_VERSION, brandInput, directionForPrompt, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
+import { AI_PAGE_PROMPT_VERSION, AI_RENDER_PROMPT_VERSION, brandInput, directionForPrompt, fontRolesOf, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
 import { MAX_AI_REQUEST_LENGTH, compileThemeVars, type AiBlock, type AiRenderPath, type AiRenderTier, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import {
@@ -204,7 +204,12 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
   const answer = await deps.transport.run(body, deps.signal);
   if (answer.html === null) throw new BlockActionError("invalid-response", "The answer had no block", answer.session ?? undefined);
   const page = body.screen.mode === "page";
-  const processed = await deps.process(answer.html, { block: body.block, screenIds: doc.screenOrder, theme: docThemeColors(doc), ...(page && { mode: "page" as const }) });
+  const processed = await deps.process(answer.html, {
+    block: body.block,
+    screenIds: doc.screenOrder,
+    theme: docThemeColors(doc),
+    ...(page && { mode: "page" as const, fonts: fontRolesOf(compileThemeVars(doc, { mode: "light" })) }),
+  });
   if (!processed.ok) throw new BlockActionError("gates-failed", processed.failure, answer.session ?? undefined);
   const direction = doc.aiRender!.direction!;
   const block: AiBlock = {

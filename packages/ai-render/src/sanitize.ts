@@ -6,7 +6,7 @@ import { HTML_NS, parseRaw, serialize, SVG_NS, VOID_TAGS, type AiElement, type A
 import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
 import { CHART_LIMITS, canonicalChartValues, isChartKind, parseChartHighlight, parseChartLabels, parseChartUnit, parseChartValues } from "./chart";
 import { checkClass, type ClassRejection } from "./vocabulary";
-import { sanitizeCss, sanitizeStyleAttr } from "./pageCss";
+import { prefixedId, sanitizeCss, sanitizeStyleAttr, sectionIdPrefix, type CssFonts } from "./pageCss";
 import { checkSvgAttr, SVG_HOSTILE, SVG_TAGS } from "./svgAllowlist";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
@@ -64,6 +64,8 @@ export type SanitizeContext = {
   /** Screen ids a `#screen:<id>` link may point to. */
   screenIds: readonly string[];
   mode?: SanitizeMode;
+  /** Page mode: the brand's family names, so its CSS may name them (`fontRolesOf` of the theme's variables). */
+  fonts?: CssFonts;
 };
 
 /** A class name of page mode: lowercase, short, never the base kit's `dl-` prefix. */
@@ -93,8 +95,6 @@ export type SanitizeResult =
 const emptyReport = (): SanitizeReport => ({ droppedTags: {}, droppedAttrs: {}, droppedClasses: {}, classesTotal: 0, classesKept: 0, unknownIcons: [], hostile: 0, cssDropped: 0 });
 const bump = (record: Record<string, number>, key: string) => (record[key] = (record[key] ?? 0) + 1);
 
-const SAFE_ID = /^[A-Za-z][\w-]{0,40}$/;
-const sanitizeIdPart = (value: string) => value.replace(/[^\w-]/g, "").slice(0, 40);
 
 /** Visible text: no control characters except newlines and tabs, capped. */
 function cleanText(value: string): string {
@@ -108,7 +108,13 @@ class Walker {
   readonly report = emptyReport();
   elements = 0;
   maxDepth = 0;
+  /** Page mode: CSS found below the root (a nested `<style>`, an SVG's `<style>`), merged into the root's own. */
+  private nestedCss: string[] = [];
   constructor(private readonly context: SanitizeContext) {}
+
+  private get cssOptions() {
+    return this.context.fonts ? { fonts: this.context.fonts } : {};
+  }
 
   private get page(): boolean {
     return this.context.mode === "page";
@@ -131,11 +137,8 @@ class Walker {
   }
 
   private prefixId(id: string): string | null {
-    const prefix = `ai-${sanitizeIdPart(this.context.blockId)}-`;
     // Idempotent: stored (already sanitized) HTML can go through the sanitizer again without growing its ids.
-    if (id.startsWith(prefix) && SAFE_ID.test(id.slice(prefix.length))) return id;
-    const part = sanitizeIdPart(id);
-    return SAFE_ID.test(part) ? `${prefix}${part}` : null;
+    return prefixedId(id, sectionIdPrefix(this.context.blockId));
   }
 
   /** The attributes `element` keeps, in a canonical order (class first). */
@@ -153,7 +156,7 @@ class Walker {
       }
       if (name === "style" && this.page) {
         // Page mode: one-off declarations (a flex row, a custom property), under the stylesheets' rules.
-        const style = sanitizeStyleAttr(value);
+        const style = sanitizeStyleAttr(value, { idPrefix: sectionIdPrefix(this.context.blockId), ...this.cssOptions });
         if (style) out.push(["style", style]);
         else drop(name);
         continue;
@@ -367,13 +370,14 @@ class Walker {
         continue;
       }
       if (this.page && node.namespace === HTML_NS && node.tag === "style") {
-        // A section's own rules: only as a child of its root, scoped to it by the CSS sanitizer.
+        // A section's own rules: one stylesheet, a child of its root, scoped to it by the CSS sanitizer. One written
+        // deeper joins it (see `element`).
+        const text = node.children.map((child) => (child.type === "text" ? child.value : "")).join("");
         if (depth !== 1) {
-          bump(this.report.droppedTags, "style");
+          this.nestedCss.push(text);
           continue;
         }
-        const text = node.children.map((child) => (child.type === "text" ? child.value : "")).join("");
-        const css = sanitizeCss(text, { kind: "section", blockId: this.context.blockId });
+        const css = sanitizeCss(text, { kind: "section", blockId: this.context.blockId }, this.cssOptions);
         this.report.cssDropped += css.report.droppedDeclarations + css.report.droppedRules;
         if (css.css) out.push({ type: "element", tag: "style", attrs: [], children: [{ type: "text", value: css.css }] });
         continue;
@@ -411,6 +415,11 @@ class Walker {
         this.report.hostile++;
         continue;
       }
+      if (child.namespace === SVG_NS && child.tag === "style") {
+        // A drawing's own rules (`.bowl{fill:url(#glaze)}`): they join the section's stylesheet.
+        this.nestedCss.push(child.children.map((text) => (text.type === "text" ? text.value : "")).join(""));
+        continue;
+      }
       if (child.namespace !== SVG_NS || !SVG_TAGS.has(child.tag)) {
         bump(this.report.droppedTags, `svg:${child.tag}`);
         continue;
@@ -442,7 +451,8 @@ class Walker {
         continue;
       }
       if (name === "style") {
-        const style = sanitizeStyleAttr(value);
+        // A gradient paint (`fill:url(#g)`) points at the prefixed id, like the `fill` attribute.
+        const style = sanitizeStyleAttr(value, { idPrefix: sectionIdPrefix(this.context.blockId), ...this.cssOptions });
         if (style) out.push([name, style]);
         continue;
       }
@@ -477,12 +487,23 @@ class Walker {
     this.elements++;
     this.maxDepth = Math.max(this.maxDepth, depth);
     const tag = node.tag === "b" ? "strong" : node.tag;
-    return {
-      type: "element",
-      tag,
-      attrs: this.attrs(tag, node.attrs, isRoot),
-      children: VOID_TAGS.has(tag) ? [] : this.children(node.children, depth),
-    };
+    const children = VOID_TAGS.has(tag) ? [] : this.children(node.children, depth);
+    if (isRoot && this.page && this.nestedCss.length > 0) this.mergeNestedCss(children);
+    return { type: "element", tag, attrs: this.attrs(tag, node.attrs, isRoot), children };
+  }
+
+  /** The CSS written below the root joins the root's stylesheet (one per section, its first child when it is new). */
+  private mergeNestedCss(children: AiNode[]): void {
+    const index = children.findIndex((child) => child.type === "element" && child.tag === "style");
+    const own = index >= 0 ? (children[index] as AiElement).children.map((child) => (child.type === "text" ? child.value : "")).join("") : "";
+    const css = sanitizeCss([own, ...this.nestedCss].join("\n"), { kind: "section", blockId: this.context.blockId }, this.cssOptions);
+    this.report.cssDropped += css.report.droppedDeclarations + css.report.droppedRules;
+    this.nestedCss = [];
+    const style: AiElement = { type: "element", tag: "style", attrs: [], children: [{ type: "text", value: css.css }] };
+    if (index >= 0) {
+      if (css.css) children[index] = style;
+      else children.splice(index, 1);
+    } else if (css.css) children.unshift(style);
   }
 }
 

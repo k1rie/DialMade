@@ -130,6 +130,15 @@ describe("AI blocks across «Generar»", () => {
     expect(staleAiBlocks(again, "s-home").size).toBe(0);
   });
 
+  it("a rebuild keeps a landing's page stylesheet (page mode paints its sections with it)", () => {
+    const { doc: base, draft } = designed();
+    const doc = ok(applyPatch(base, [{ op: "add", path: "/screens/s-home/aiRender/pageCss", value: ":where([data-dl-ai-block]) .hero{gap:1px}" }]));
+    const again = ok(withCarriedAiRender(doc, withGeneratedScreens(doc, draft), draft));
+    expect(again.screens["s-home"]?.aiRender?.pageCss).toBe(":where([data-dl-ai-block]) .hero{gap:1px}");
+    const english = ok(withCarriedAiRender(doc, withContentLocale(doc, "en", { rebuildPages: true })));
+    expect(english.screens["s-home"]?.aiRender?.pageCss).toBe(":where([data-dl-ai-block]) .hero{gap:1px}");
+  });
+
   it("removing a block removes its AI block (to the screen's stash); bringing the block back brings it back", () => {
     const { doc, draft, hero, features } = designed();
     const removed = [without(draft[0]!, features)];

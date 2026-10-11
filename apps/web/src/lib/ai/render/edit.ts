@@ -307,7 +307,10 @@ const storedRender = (doc: DesignDoc, screenId: string): AiScreenRender | undefi
   (Object.hasOwn(doc.screens, screenId) ? doc.screens[screenId]?.aiRender : undefined) ??
   (doc.screenStash && Object.hasOwn(doc.screenStash, screenId) ? doc.screenStash[screenId]?.aiRender : undefined);
 
-/** A copy's AI blocks: the source's blocks (and stashed ones) that were copied, under the copy's ids. */
+/**
+ * A copy's AI blocks: the source's blocks (and stashed ones) that were copied, under the copy's ids, with the source's
+ * page stylesheet (page mode: it is scoped to the AI blocks, never to an id, so it fits the copy as is).
+ */
 function copiedRender(doc: DesignDoc, copyOf: NonNullable<AiCarrySource["copyOf"]>): AiScreenRender | undefined {
   const source = storedRender(doc, copyOf.screenId);
   if (!source) return undefined;
@@ -318,7 +321,7 @@ function copiedRender(doc: DesignDoc, copyOf: NonNullable<AiCarrySource["copyOf"
     else if (source.stash && Object.hasOwn(source.stash, sourceId)) stash[copyId] = remapAiBlock(source.stash[sourceId]!, sourceId, copyId);
   }
   if (Object.keys(blocks).length === 0 && Object.keys(stash).length === 0) return undefined;
-  return { version: 1, blocks, ...(Object.keys(stash).length > 0 && { stash }) };
+  return { version: 1, blocks, ...(Object.keys(stash).length > 0 && { stash }), ...(source.pageCss !== undefined && { pageCss: source.pageCss }) };
 }
 
 /**
@@ -344,7 +347,7 @@ function settleRender(render: AiScreenRender, screen: Pick<Screen, "kind" | "she
   const stashIds = Object.keys(stash);
   for (const id of stashIds.slice(0, Math.max(0, stashIds.length - MAX_AI_STASHED_BLOCKS))) delete stash[id];
   if (Object.keys(blocks).length === 0 && Object.keys(stash).length === 0) return undefined;
-  return { version: 1, blocks, ...(Object.keys(stash).length > 0 && { stash }) };
+  return { version: 1, blocks, ...(Object.keys(stash).length > 0 && { stash }), ...(render.pageCss !== undefined && { pageCss: render.pageCss }) };
 }
 
 /**
