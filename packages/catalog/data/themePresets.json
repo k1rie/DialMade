@@ -1,0 +1,4164 @@
+[
+  {
+    "id": "daisyui-abyss",
+    "label": "Abyss",
+    "source": "daisyui",
+    "sourceKey": "abyss",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#001a1f",
+        "foreground": "#ffd6a7",
+        "card": "#001a1f",
+        "cardForeground": "#ffd6a7",
+        "primary": "#c2fd00",
+        "primaryForeground": "#536f00",
+        "secondary": "#cebef4",
+        "secondaryForeground": "#564775",
+        "muted": "#000e12",
+        "mutedForeground": "#cbab85",
+        "accent": "#505050",
+        "accentForeground": "#f8f8f8",
+        "border": "#000507",
+        "destructive": "#f04e4f",
+        "destructiveForeground": "#500007",
+        "success": "#01df72",
+        "warning": "#ffc326",
+        "info": "#00b9fa"
+      }
+    },
+    "radius": {
+      "selector": 32,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-acid",
+    "label": "Acid",
+    "source": "daisyui",
+    "sourceKey": "acid",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8f8f8",
+        "foreground": "#000000",
+        "card": "#f8f8f8",
+        "cardForeground": "#000000",
+        "primary": "#ff42f4",
+        "primaryForeground": "#180017",
+        "secondary": "#ff8031",
+        "secondaryForeground": "#180400",
+        "muted": "#eeeeee",
+        "mutedForeground": "#9e9e9e",
+        "accent": "#ccfe00",
+        "accentForeground": "#0f1600",
+        "border": "#e1e1e1",
+        "destructive": "#ff3426",
+        "destructiveForeground": "#190000",
+        "success": "#00f69e",
+        "warning": "#fee300",
+        "info": "#0083eb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 16,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-aqua",
+    "label": "Aqua",
+    "source": "daisyui",
+    "sourceKey": "aqua",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#1a368b",
+        "foreground": "#b8e6fe",
+        "card": "#1a368b",
+        "cardForeground": "#b8e6fe",
+        "primary": "#13ecf3",
+        "primaryForeground": "#015355",
+        "secondary": "#966fb3",
+        "secondaryForeground": "#f2f0fc",
+        "muted": "#162455",
+        "mutedForeground": "#93b8d0",
+        "accent": "#ffe999",
+        "accentForeground": "#161309",
+        "border": "#091444",
+        "destructive": "#ff7e72",
+        "destructiveForeground": "#180403",
+        "success": "#18a34a",
+        "warning": "#d97708",
+        "info": "#2563eb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-autumn",
+    "label": "Autumn",
+    "source": "daisyui",
+    "sourceKey": "autumn",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f1f1f1",
+        "foreground": "#141414",
+        "card": "#f1f1f1",
+        "cardForeground": "#141414",
+        "primary": "#8c0327",
+        "primaryForeground": "#edd0d0",
+        "secondary": "#d85251",
+        "secondaryForeground": "#110202",
+        "muted": "#dbdbdb",
+        "mutedForeground": "#929292",
+        "accent": "#d59b6b",
+        "accentForeground": "#100904",
+        "border": "#c5c5c5",
+        "destructive": "#cb0024",
+        "destructiveForeground": "#ffd4d1",
+        "success": "#499380",
+        "warning": "#e97f16",
+        "info": "#44adbb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-black",
+    "label": "Black",
+    "source": "daisyui",
+    "sourceKey": "black",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#000000",
+        "foreground": "#d6d6d6",
+        "card": "#000000",
+        "cardForeground": "#d6d6d6",
+        "primary": "#3a3a3a",
+        "primaryForeground": "#ffffff",
+        "secondary": "#3a3a3a",
+        "secondaryForeground": "#ffffff",
+        "muted": "#141414",
+        "mutedForeground": "#ababab",
+        "accent": "#3a3a3a",
+        "accentForeground": "#ffffff",
+        "border": "#1b1b1b",
+        "destructive": "#ff0301",
+        "destructiveForeground": "#160000",
+        "success": "#028002",
+        "warning": "#ffff00",
+        "info": "#0000ff"
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 0,
+      "box": 0
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-bumblebee",
+    "label": "Bumblebee",
+    "source": "daisyui",
+    "sourceKey": "bumblebee",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#161616",
+        "card": "#ffffff",
+        "cardForeground": "#161616",
+        "primary": "#f7c800",
+        "primaryForeground": "#733e0a",
+        "secondary": "#ff8b1f",
+        "secondaryForeground": "#7c2808",
+        "muted": "#f5f5f5",
+        "mutedForeground": "#a4a4a4",
+        "accent": "#000000",
+        "accentForeground": "#ffffff",
+        "border": "#e4e4e4",
+        "destructive": "#ff6266",
+        "destructiveForeground": "#801518",
+        "success": "#00d093",
+        "warning": "#f6b900",
+        "info": "#00b9fa"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-business",
+    "label": "Business",
+    "source": "daisyui",
+    "sourceKey": "business",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#202020",
+        "foreground": "#cdcdcd",
+        "card": "#202020",
+        "cardForeground": "#cdcdcd",
+        "primary": "#1c4e80",
+        "primaryForeground": "#d0dae5",
+        "secondary": "#7c909a",
+        "secondaryForeground": "#050708",
+        "muted": "#1c1c1c",
+        "mutedForeground": "#a4a4a4",
+        "accent": "#ea6947",
+        "accentForeground": "#130402",
+        "border": "#181818",
+        "destructive": "#ac3e31",
+        "destructiveForeground": "#f2d8d4",
+        "success": "#6bb187",
+        "warning": "#dbae5a",
+        "info": "#0291d5"
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 4,
+      "box": 4
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-caramellatte",
+    "label": "Caramel Latte",
+    "source": "daisyui",
+    "sourceKey": "caramellatte",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fff7ed",
+        "foreground": "#7c2808",
+        "card": "#fff7ed",
+        "cardForeground": "#7c2808",
+        "primary": "#000000",
+        "primaryForeground": "#ffffff",
+        "secondary": "#370a00",
+        "secondaryForeground": "#ffd6a7",
+        "muted": "#feecd3",
+        "mutedForeground": "#be9f8c",
+        "accent": "#8c3f27",
+        "accentForeground": "#ffd6a7",
+        "border": "#ffd6a7",
+        "destructive": "#ff6266",
+        "destructiveForeground": "#801518",
+        "success": "#005f45",
+        "warning": "#f6b900",
+        "info": "#193ab7"
+      }
+    },
+    "radius": {
+      "selector": 32,
+      "field": 8,
+      "box": 16
+    },
+    "border": 2,
+    "depth": 1,
+    "noise": 1
+  },
+  {
+    "id": "daisyui-cmyk",
+    "label": "CMYK",
+    "source": "daisyui",
+    "sourceKey": "cmyk",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#161616",
+        "card": "#ffffff",
+        "cardForeground": "#161616",
+        "primary": "#45aeee",
+        "primaryForeground": "#020b13",
+        "secondary": "#e8488a",
+        "secondaryForeground": "#130207",
+        "muted": "#eeeeee",
+        "mutedForeground": "#9f9f9f",
+        "accent": "#fff234",
+        "accentForeground": "#161401",
+        "border": "#dedede",
+        "destructive": "#e93f33",
+        "destructiveForeground": "#130101",
+        "success": "#823290",
+        "warning": "#ee8134",
+        "info": "#4ba8c0"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-coffee",
+    "label": "Coffee",
+    "source": "daisyui",
+    "sourceKey": "coffee",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#261b25",
+        "foreground": "#c59f61",
+        "card": "#261b25",
+        "cardForeground": "#c59f61",
+        "primary": "#db924c",
+        "primaryForeground": "#110802",
+        "secondary": "#273e3f",
+        "secondaryForeground": "#d0d5d5",
+        "muted": "#1e151d",
+        "mutedForeground": "#9e7f4e",
+        "accent": "#11576d",
+        "accentForeground": "#d0dbe0",
+        "border": "#120a11",
+        "destructive": "#fc9581",
+        "destructiveForeground": "#150806",
+        "success": "#9db787",
+        "warning": "#ffd260",
+        "info": "#8ecac1"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-corporate",
+    "label": "Corporate",
+    "source": "daisyui",
+    "sourceKey": "corporate",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#181a2a",
+        "card": "#ffffff",
+        "cardForeground": "#181a2a",
+        "primary": "#0082c4",
+        "primaryForeground": "#ffffff",
+        "secondary": "#61738d",
+        "secondaryForeground": "#ffffff",
+        "muted": "#e8e8e8",
+        "mutedForeground": "#9b9b9d",
+        "accent": "#009488",
+        "accentForeground": "#ffffff",
+        "border": "#d1d1d1",
+        "destructive": "#ff6266",
+        "destructiveForeground": "#000000",
+        "success": "#00a146",
+        "warning": "#f7c800",
+        "info": "#008eaf"
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 4,
+      "box": 4
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-cupcake",
+    "label": "Cupcake",
+    "source": "daisyui",
+    "sourceKey": "cupcake",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#faf7f5",
+        "foreground": "#291334",
+        "card": "#faf7f5",
+        "cardForeground": "#291334",
+        "primary": "#44ebd3",
+        "primaryForeground": "#005d58",
+        "secondary": "#f9cbe5",
+        "secondaryForeground": "#9e004a",
+        "muted": "#efeae6",
+        "mutedForeground": "#a19c9d",
+        "accent": "#ffd6a7",
+        "accentForeground": "#9f2d00",
+        "border": "#e7e2df",
+        "destructive": "#fe1c55",
+        "destructiveForeground": "#4d0218",
+        "success": "#00b77f",
+        "warning": "#e8b100",
+        "info": "#00a4e8"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 32,
+      "box": 16
+    },
+    "border": 2,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-cyberpunk",
+    "label": "Cyberpunk",
+    "source": "daisyui",
+    "sourceKey": "cyberpunk",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fff25d",
+        "foreground": "#000000",
+        "card": "#fff25d",
+        "cardForeground": "#000000",
+        "primary": "#ff7a9b",
+        "primaryForeground": "#180408",
+        "secondary": "#00e2f4",
+        "secondaryForeground": "#001215",
+        "muted": "#f7e83a",
+        "mutedForeground": "#a49a23",
+        "accent": "#cb79ff",
+        "accentForeground": "#0f0517",
+        "border": "#e3d40e",
+        "destructive": "#ff6f70",
+        "destructiveForeground": "#000000",
+        "success": "#00a96f",
+        "warning": "#ffc22c",
+        "info": "#00b3f0"
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 0,
+      "box": 0
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-dark",
+    "label": "Dark",
+    "source": "daisyui",
+    "sourceKey": "dark",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#1d232a",
+        "foreground": "#f3f8ff",
+        "card": "#1d232a",
+        "cardForeground": "#f3f8ff",
+        "primary": "#605dff",
+        "primaryForeground": "#edf1fe",
+        "secondary": "#f43098",
+        "secondaryForeground": "#f9e4f0",
+        "muted": "#191e24",
+        "mutedForeground": "#c2c7cc",
+        "accent": "#00d0bb",
+        "accentForeground": "#084d49",
+        "border": "#15191e",
+        "destructive": "#ff667f",
+        "destructiveForeground": "#4d0218",
+        "success": "#00d093",
+        "warning": "#f6b900",
+        "info": "#00b9fa"
+      }
+    },
+    "radius": {
+      "selector": 8,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-dim",
+    "label": "Dim",
+    "source": "daisyui",
+    "sourceKey": "dim",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#2a303c",
+        "foreground": "#b2ccd6",
+        "card": "#2a303c",
+        "cardForeground": "#b2ccd6",
+        "primary": "#9fe88d",
+        "primaryForeground": "#091307",
+        "secondary": "#ff7d5d",
+        "secondaryForeground": "#160503",
+        "muted": "#242933",
+        "mutedForeground": "#8fa4ad",
+        "accent": "#c792e9",
+        "accentForeground": "#0e0813",
+        "border": "#20252e",
+        "destructive": "#ffae9b",
+        "destructiveForeground": "#160b09",
+        "success": "#62efbd",
+        "warning": "#efd057",
+        "info": "#28ebff"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-dracula",
+    "label": "Dracula",
+    "source": "daisyui",
+    "sourceKey": "dracula",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#282a36",
+        "foreground": "#f8f8f3",
+        "card": "#282a36",
+        "cardForeground": "#f8f8f3",
+        "primary": "#ff79c6",
+        "primaryForeground": "#16050e",
+        "secondary": "#bd93f9",
+        "secondaryForeground": "#0d0815",
+        "muted": "#232530",
+        "mutedForeground": "#c7c7c4",
+        "accent": "#ffb86c",
+        "accentForeground": "#160d04",
+        "border": "#1f202a",
+        "destructive": "#ff5555",
+        "destructiveForeground": "#160202",
+        "success": "#51fa7b",
+        "warning": "#f1fa8c",
+        "info": "#8be9fd"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-emerald",
+    "label": "Emerald",
+    "source": "daisyui",
+    "sourceKey": "emerald",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#333c4d",
+        "card": "#ffffff",
+        "cardForeground": "#333c4d",
+        "primary": "#66cc8a",
+        "primaryForeground": "#223d30",
+        "secondary": "#377cfb",
+        "secondaryForeground": "#ffffff",
+        "muted": "#e8e8e8",
+        "mutedForeground": "#9ea0a3",
+        "accent": "#f68067",
+        "accentForeground": "#000000",
+        "border": "#d1d1d1",
+        "destructive": "#ff6f70",
+        "destructiveForeground": "#000000",
+        "success": "#00a96f",
+        "warning": "#ffc22c",
+        "info": "#00b3f0"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-fantasy",
+    "label": "Fantasy",
+    "source": "daisyui",
+    "sourceKey": "fantasy",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#1f2937",
+        "card": "#ffffff",
+        "cardForeground": "#1f2937",
+        "primary": "#6b0072",
+        "primaryForeground": "#e3cee4",
+        "secondary": "#0075b1",
+        "secondaryForeground": "#cfe4f4",
+        "muted": "#e8e8e8",
+        "mutedForeground": "#9c9d9f",
+        "accent": "#ff912e",
+        "accentForeground": "#180600",
+        "border": "#d1d1d1",
+        "destructive": "#ff6f70",
+        "destructiveForeground": "#000000",
+        "success": "#00a96f",
+        "warning": "#ffc22c",
+        "info": "#00b3f0"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-forest",
+    "label": "Forest",
+    "source": "daisyui",
+    "sourceKey": "forest",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#1b1717",
+        "foreground": "#cac9c9",
+        "card": "#1b1717",
+        "cardForeground": "#cac9c9",
+        "primary": "#1fb854",
+        "primaryForeground": "#000000",
+        "secondary": "#1eb88e",
+        "secondaryForeground": "#000c07",
+        "muted": "#161212",
+        "mutedForeground": "#a1a0a0",
+        "accent": "#1fb8ab",
+        "accentForeground": "#010c0b",
+        "border": "#110d0d",
+        "destructive": "#ff6f70",
+        "destructiveForeground": "#000000",
+        "success": "#00a96f",
+        "warning": "#ffc22c",
+        "info": "#00b3f0"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 32,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-garden",
+    "label": "Garden",
+    "source": "daisyui",
+    "sourceKey": "garden",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#e9e7e7",
+        "foreground": "#100f0f",
+        "card": "#e9e7e7",
+        "cardForeground": "#100f0f",
+        "primary": "#f50076",
+        "primaryForeground": "#ffffff",
+        "secondary": "#8e4162",
+        "secondaryForeground": "#ead7de",
+        "muted": "#d4d2d2",
+        "mutedForeground": "#8d8c8c",
+        "accent": "#5c7f67",
+        "accentForeground": "#ffffff",
+        "border": "#bebdbd",
+        "destructive": "#ff6f70",
+        "destructiveForeground": "#000000",
+        "success": "#00a96f",
+        "warning": "#ffc22c",
+        "info": "#00b3f0"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-halloween",
+    "label": "Halloween",
+    "source": "daisyui",
+    "sourceKey": "halloween",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#1b1816",
+        "foreground": "#cdcdcd",
+        "card": "#1b1816",
+        "cardForeground": "#cdcdcd",
+        "primary": "#ff9a33",
+        "primaryForeground": "#131616",
+        "secondary": "#7900bf",
+        "secondaryForeground": "#e3d4f6",
+        "muted": "#0b0908",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#50a700",
+        "accentForeground": "#000000",
+        "border": "#000000",
+        "destructive": "#f35248",
+        "destructiveForeground": "#140202",
+        "success": "#18a34a",
+        "warning": "#d97708",
+        "info": "#2563eb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-lemonade",
+    "label": "Lemonade",
+    "source": "daisyui",
+    "sourceKey": "lemonade",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8fdef",
+        "foreground": "#151614",
+        "card": "#f8fdef",
+        "cardForeground": "#151614",
+        "primary": "#4c9200",
+        "primaryForeground": "#010800",
+        "secondary": "#bcc000",
+        "secondaryForeground": "#0d0e00",
+        "muted": "#e1e6d9",
+        "mutedForeground": "#969a91",
+        "accent": "#e9d100",
+        "accentForeground": "#141000",
+        "border": "#cbcfc3",
+        "destructive": "#efc6c2",
+        "destructiveForeground": "#140e0e",
+        "success": "#b9dbc6",
+        "warning": "#d7d3b0",
+        "info": "#b1d9e9"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-light",
+    "label": "Light",
+    "source": "daisyui",
+    "sourceKey": "light",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#18181b",
+        "card": "#ffffff",
+        "cardForeground": "#18181b",
+        "primary": "#422ad5",
+        "primaryForeground": "#e0e7ff",
+        "secondary": "#f43098",
+        "secondaryForeground": "#f9e4f0",
+        "muted": "#f8f8f8",
+        "mutedForeground": "#a6a6a6",
+        "accent": "#00d0bb",
+        "accentForeground": "#084d49",
+        "border": "#eeeeee",
+        "destructive": "#ff667f",
+        "destructiveForeground": "#4d0218",
+        "success": "#00d093",
+        "warning": "#f6b900",
+        "info": "#00b9fa"
+      }
+    },
+    "radius": {
+      "selector": 8,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-lofi",
+    "label": "Lo-Fi",
+    "source": "daisyui",
+    "sourceKey": "lofi",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#000000",
+        "card": "#ffffff",
+        "cardForeground": "#000000",
+        "primary": "#0d0d0d",
+        "primaryForeground": "#ffffff",
+        "secondary": "#1a1919",
+        "secondaryForeground": "#ffffff",
+        "muted": "#f5f5f5",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#262626",
+        "accentForeground": "#ffffff",
+        "border": "#ebebeb",
+        "destructive": "#ff9a8c",
+        "destructiveForeground": "#180706",
+        "success": "#69fec3",
+        "warning": "#ffd182",
+        "info": "#5fcfdd"
+      }
+    },
+    "radius": {
+      "selector": 32,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-luxury",
+    "label": "Luxury",
+    "source": "daisyui",
+    "sourceKey": "luxury",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#09090b",
+        "foreground": "#dca54d",
+        "card": "#09090b",
+        "cardForeground": "#dca54d",
+        "primary": "#ffffff",
+        "primaryForeground": "#161616",
+        "secondary": "#152747",
+        "secondaryForeground": "#cbd0d7",
+        "muted": "#171618",
+        "mutedForeground": "#b0843e",
+        "accent": "#513448",
+        "accentForeground": "#dad3d7",
+        "border": "#1e1d1f",
+        "destructive": "#ff6f6f",
+        "destructiveForeground": "#160404",
+        "success": "#87d03a",
+        "warning": "#e2d563",
+        "info": "#67c6ff"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-night",
+    "label": "Night",
+    "source": "daisyui",
+    "sourceKey": "night",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#0f172a",
+        "foreground": "#c9cbd0",
+        "card": "#0f172a",
+        "cardForeground": "#c9cbd0",
+        "primary": "#3abdf7",
+        "primaryForeground": "#010d15",
+        "secondary": "#818cf8",
+        "secondaryForeground": "#060715",
+        "muted": "#0c1425",
+        "mutedForeground": "#a0a2a7",
+        "accent": "#f471b5",
+        "accentForeground": "#14040c",
+        "border": "#0a1120",
+        "destructive": "#fb7085",
+        "destructiveForeground": "#150406",
+        "success": "#2fd4bf",
+        "warning": "#f4bf51",
+        "info": "#0ca5e9"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-nord",
+    "label": "Nord",
+    "source": "daisyui",
+    "sourceKey": "nord",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#eceff4",
+        "foreground": "#2e3440",
+        "card": "#eceff4",
+        "cardForeground": "#2e3440",
+        "primary": "#5e81ac",
+        "primaryForeground": "#03060b",
+        "secondary": "#81a1c1",
+        "secondaryForeground": "#06090d",
+        "muted": "#e5e9f0",
+        "mutedForeground": "#9b9fa6",
+        "accent": "#88c0d0",
+        "accentForeground": "#070d10",
+        "border": "#d8dee9",
+        "destructive": "#bf616a",
+        "destructiveForeground": "#0d0304",
+        "success": "#a3be8d",
+        "warning": "#ebcb8b",
+        "info": "#b48ead"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-pastel",
+    "label": "Pastel",
+    "source": "daisyui",
+    "sourceKey": "pastel",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#161616",
+        "card": "#ffffff",
+        "cardForeground": "#161616",
+        "primary": "#e9d4ff",
+        "primaryForeground": "#8000d6",
+        "secondary": "#feccd2",
+        "secondaryForeground": "#bf0039",
+        "muted": "#f9fafb",
+        "mutedForeground": "#a6a7a8",
+        "accent": "#a3f2ce",
+        "accentForeground": "#007655",
+        "border": "#e5e6e7",
+        "destructive": "#ff9fa0",
+        "destructiveForeground": "#bc000e",
+        "success": "#7af1a7",
+        "warning": "#ffb668",
+        "info": "#51e8fb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 32,
+      "box": 16
+    },
+    "border": 2,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-retro",
+    "label": "Retro",
+    "source": "daisyui",
+    "sourceKey": "retro",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ece3ca",
+        "foreground": "#793205",
+        "card": "#ece3ca",
+        "cardForeground": "#793205",
+        "primary": "#ff9fa0",
+        "primaryForeground": "#801518",
+        "secondary": "#b7f6cd",
+        "secondaryForeground": "#00642e",
+        "muted": "#e4d8b4",
+        "mutedForeground": "#ae9377",
+        "accent": "#ca8a00",
+        "accentForeground": "#793205",
+        "border": "#dbca9b",
+        "destructive": "#ff6266",
+        "destructiveForeground": "#7c2808",
+        "success": "#00766e",
+        "warning": "#e95500",
+        "info": "#0082c4"
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 4,
+      "box": 8
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-silk",
+    "label": "Silk",
+    "source": "daisyui",
+    "sourceKey": "silk",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f7f5f3",
+        "foreground": "#4b4743",
+        "card": "#f7f5f3",
+        "cardForeground": "#4b4743",
+        "primary": "#1c1c29",
+        "primaryForeground": "#e2fd00",
+        "secondary": "#1c1c29",
+        "secondaryForeground": "#ff842b",
+        "muted": "#f3ede9",
+        "mutedForeground": "#aaa5a2",
+        "accent": "#1c1c29",
+        "accentForeground": "#00faf1",
+        "border": "#e2ddd9",
+        "destructive": "#ff8482",
+        "destructiveForeground": "#740014",
+        "success": "#afd89e",
+        "warning": "#efc375",
+        "info": "#7cc8ff"
+      }
+    },
+    "radius": {
+      "selector": 32,
+      "field": 8,
+      "box": 16
+    },
+    "border": 2,
+    "depth": 1,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-sunset",
+    "label": "Sunset",
+    "source": "daisyui",
+    "sourceKey": "sunset",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#121c22",
+        "foreground": "#9fb9d0",
+        "card": "#121c22",
+        "cardForeground": "#9fb9d0",
+        "primary": "#ff865b",
+        "primaryForeground": "#160603",
+        "secondary": "#fd6f9c",
+        "secondaryForeground": "#160409",
+        "muted": "#0e171e",
+        "mutedForeground": "#7e94a6",
+        "accent": "#b387fa",
+        "accentForeground": "#0c0615",
+        "border": "#091319",
+        "destructive": "#ffbbbd",
+        "destructiveForeground": "#160d0d",
+        "success": "#addfad",
+        "warning": "#f1c892",
+        "info": "#89e0eb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-synthwave",
+    "label": "Synthwave",
+    "source": "daisyui",
+    "sourceKey": "synthwave",
+    "modes": [
+      "dark"
+    ],
+    "colors": {
+      "dark": {
+        "background": "#09002f",
+        "foreground": "#a2b2ff",
+        "card": "#09002f",
+        "cardForeground": "#a2b2ff",
+        "primary": "#f861b4",
+        "primaryForeground": "#500323",
+        "secondary": "#71d1fe",
+        "secondaryForeground": "#042e49",
+        "muted": "#120b3d",
+        "mutedForeground": "#818ece",
+        "accent": "#ff8b1f",
+        "accentForeground": "#421104",
+        "border": "#1c184b",
+        "destructive": "#ec8c78",
+        "destructiveForeground": "#201047",
+        "success": "#00d0bb",
+        "warning": "#fede1c",
+        "info": "#00b9fa"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-valentine",
+    "label": "Valentine",
+    "source": "daisyui",
+    "sourceKey": "valentine",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fcf2f8",
+        "foreground": "#c0005b",
+        "card": "#fcf2f8",
+        "cardForeground": "#c0005b",
+        "primary": "#f43098",
+        "primaryForeground": "#ffffff",
+        "secondary": "#a949ff",
+        "secondaryForeground": "#f8f3fd",
+        "muted": "#f9e4f0",
+        "mutedForeground": "#d997ac",
+        "accent": "#71d1fe",
+        "accentForeground": "#014a70",
+        "border": "#f9cbe5",
+        "destructive": "#f82834",
+        "destructiveForeground": "#fef2f2",
+        "success": "#5ce8b3",
+        "warning": "#ff8b1f",
+        "info": "#51e8fb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 32,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-winter",
+    "label": "Winter",
+    "source": "daisyui",
+    "sourceKey": "winter",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#394e6a",
+        "card": "#ffffff",
+        "cardForeground": "#394e6a",
+        "primary": "#0070ed",
+        "primaryForeground": "#d1e4ff",
+        "secondary": "#463aa2",
+        "secondaryForeground": "#d5d7ee",
+        "muted": "#f2f7fe",
+        "mutedForeground": "#a6adb9",
+        "accent": "#c148ac",
+        "accentForeground": "#0e020b",
+        "border": "#e3e9f4",
+        "destructive": "#e58b8b",
+        "destructiveForeground": "#120707",
+        "success": "#81cfd1",
+        "warning": "#efd7bc",
+        "info": "#94e7fb"
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 8,
+      "box": 16
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "daisyui-wireframe",
+    "label": "Wireframe",
+    "source": "daisyui",
+    "sourceKey": "wireframe",
+    "modes": [
+      "light"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#161616",
+        "card": "#ffffff",
+        "cardForeground": "#161616",
+        "primary": "#d4d4d4",
+        "primaryForeground": "#242424",
+        "secondary": "#d4d4d4",
+        "secondaryForeground": "#242424",
+        "muted": "#f5f5f5",
+        "mutedForeground": "#a4a4a4",
+        "accent": "#d4d4d4",
+        "accentForeground": "#242424",
+        "border": "#ebebeb",
+        "destructive": "#9d0410",
+        "destructiveForeground": "#fec8c8",
+        "success": "#005f45",
+        "warning": "#943c00",
+        "info": "#005885"
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 4,
+      "box": 4
+    },
+    "border": 1,
+    "depth": 0,
+    "noise": 0
+  },
+  {
+    "id": "tweakcn-amber-minimal",
+    "label": "Amber Minimal",
+    "source": "tweakcn",
+    "sourceKey": "amber-minimal",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#262626",
+        "card": "#ffffff",
+        "cardForeground": "#262626",
+        "primary": "#f59e0b",
+        "primaryForeground": "#000000",
+        "secondary": "#f3f4f6",
+        "secondaryForeground": "#4b5563",
+        "muted": "#f9fafb",
+        "mutedForeground": "#6b7280",
+        "accent": "#fffbeb",
+        "accentForeground": "#92400e",
+        "border": "#e5e7eb",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#f59e0b",
+          "#d97706",
+          "#b45309",
+          "#92400e",
+          "#78350f"
+        ]
+      },
+      "dark": {
+        "background": "#171717",
+        "foreground": "#e5e5e5",
+        "card": "#262626",
+        "cardForeground": "#e5e5e5",
+        "primary": "#f59e0b",
+        "primaryForeground": "#000000",
+        "secondary": "#262626",
+        "secondaryForeground": "#e5e5e5",
+        "muted": "#1f1f1f",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#92400e",
+        "accentForeground": "#fde68a",
+        "border": "#404040",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#fbbf24",
+          "#d97706",
+          "#92400e",
+          "#b45309",
+          "#92400e"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 2,
+      "field": 4,
+      "box": 6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Inter",
+      "serif": "Source Serif 4",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 8,
+      "spread": -1,
+      "x": 0,
+      "y": 4
+    },
+    "tracking": 0,
+    "spacing": 0.25
+  },
+  {
+    "id": "tweakcn-amethyst-haze",
+    "label": "Amethyst Haze",
+    "source": "tweakcn",
+    "sourceKey": "amethyst-haze",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8f7fa",
+        "foreground": "#3d3c4f",
+        "card": "#ffffff",
+        "cardForeground": "#3d3c4f",
+        "primary": "#8a79ab",
+        "primaryForeground": "#f8f7fa",
+        "secondary": "#dfd9ec",
+        "secondaryForeground": "#3d3c4f",
+        "muted": "#dcd9e3",
+        "mutedForeground": "#6b6880",
+        "accent": "#e6a5b8",
+        "accentForeground": "#4b2e36",
+        "border": "#cec9d9",
+        "destructive": "#d95c5c",
+        "destructiveForeground": "#f8f7fa",
+        "chart": [
+          "#8a79ab",
+          "#e6a5b8",
+          "#77b8a1",
+          "#f0c88d",
+          "#a0bbe3"
+        ]
+      },
+      "dark": {
+        "background": "#1a1823",
+        "foreground": "#e0ddef",
+        "card": "#232030",
+        "cardForeground": "#e0ddef",
+        "primary": "#a995c9",
+        "primaryForeground": "#1a1823",
+        "secondary": "#5a5370",
+        "secondaryForeground": "#e0ddef",
+        "muted": "#242031",
+        "mutedForeground": "#a09aad",
+        "accent": "#372e3f",
+        "accentForeground": "#f2b8c6",
+        "border": "#302c40",
+        "destructive": "#e57373",
+        "destructiveForeground": "#1a1823",
+        "chart": [
+          "#a995c9",
+          "#f2b8c6",
+          "#77b8a1",
+          "#f0c88d",
+          "#a0bbe3"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Geist",
+      "serif": "Lora",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.06,
+      "blur": 5,
+      "spread": 1,
+      "x": 1,
+      "y": 2
+    },
+    "tracking": 0,
+    "spacing": 0.25
+  },
+  {
+    "id": "tweakcn-bold-tech",
+    "label": "Bold Tech",
+    "source": "tweakcn",
+    "sourceKey": "bold-tech",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#312e81",
+        "card": "#ffffff",
+        "cardForeground": "#312e81",
+        "primary": "#8b5cf6",
+        "primaryForeground": "#ffffff",
+        "secondary": "#f3f0ff",
+        "secondaryForeground": "#4338ca",
+        "muted": "#f5f3ff",
+        "mutedForeground": "#7c3aed",
+        "accent": "#dbeafe",
+        "accentForeground": "#1e40af",
+        "border": "#e0e7ff",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#8b5cf6",
+          "#7c3aed",
+          "#6d28d9",
+          "#5b21b6",
+          "#4c1d95"
+        ]
+      },
+      "dark": {
+        "background": "#0f172a",
+        "foreground": "#e0e7ff",
+        "card": "#1e1b4b",
+        "cardForeground": "#e0e7ff",
+        "primary": "#8b5cf6",
+        "primaryForeground": "#ffffff",
+        "secondary": "#1e1b4b",
+        "secondaryForeground": "#e0e7ff",
+        "muted": "#171447",
+        "mutedForeground": "#c4b5fd",
+        "accent": "#4338ca",
+        "accentForeground": "#e0e7ff",
+        "border": "#2e1065",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a78bfa",
+          "#8b5cf6",
+          "#7c3aed",
+          "#6d28d9",
+          "#5b21b6"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 6,
+      "field": 8,
+      "box": 10
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Roboto",
+      "serif": "Playfair Display",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#835ef3",
+      "opacity": 0.2,
+      "blur": 4,
+      "spread": 0,
+      "x": 2,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-bubblegum",
+    "label": "Bubblegum",
+    "source": "tweakcn",
+    "sourceKey": "bubblegum",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f6e6ee",
+        "foreground": "#5b5b5b",
+        "card": "#fdedc9",
+        "cardForeground": "#5b5b5b",
+        "primary": "#d04f99",
+        "primaryForeground": "#ffffff",
+        "secondary": "#8acfd1",
+        "secondaryForeground": "#333333",
+        "muted": "#b2e1eb",
+        "mutedForeground": "#7a7a7a",
+        "accent": "#fbe2a7",
+        "accentForeground": "#333333",
+        "border": "#d04f99",
+        "destructive": "#f96f70",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#e670ab",
+          "#84d2e2",
+          "#fbe2a7",
+          "#f3a0ca",
+          "#d7488e"
+        ]
+      },
+      "dark": {
+        "background": "#12242e",
+        "foreground": "#f3e3ea",
+        "card": "#1c2e38",
+        "cardForeground": "#f3e3ea",
+        "primary": "#fbe2a7",
+        "primaryForeground": "#12242e",
+        "secondary": "#e4a2b1",
+        "secondaryForeground": "#12242e",
+        "muted": "#24272b",
+        "mutedForeground": "#e4a2b1",
+        "accent": "#c67b96",
+        "accentForeground": "#f3e3ea",
+        "border": "#324859",
+        "destructive": "#e35ea4",
+        "destructiveForeground": "#12242e",
+        "chart": [
+          "#50afb6",
+          "#e4a2b1",
+          "#c67b96",
+          "#175c6c",
+          "#24272b"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 2.4,
+      "field": 4.4,
+      "box": 6.4
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Poppins",
+      "serif": "Lora",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#d1519a",
+      "opacity": 1,
+      "blur": 0,
+      "spread": 0,
+      "x": 3,
+      "y": 3
+    }
+  },
+  {
+    "id": "tweakcn-caffeine",
+    "label": "Caffeine",
+    "source": "tweakcn",
+    "sourceKey": "caffeine",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f9f9f9",
+        "foreground": "#202020",
+        "card": "#fcfcfc",
+        "cardForeground": "#202020",
+        "primary": "#644a40",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ffdfb5",
+        "secondaryForeground": "#582d1d",
+        "muted": "#efefef",
+        "mutedForeground": "#646464",
+        "accent": "#e8e8e8",
+        "accentForeground": "#202020",
+        "border": "#d8d8d8",
+        "destructive": "#e54d2e",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#644a40",
+          "#ffdfb5",
+          "#e8e8e8",
+          "#ffe6c4",
+          "#66493e"
+        ]
+      },
+      "dark": {
+        "background": "#111111",
+        "foreground": "#eeeeee",
+        "card": "#191919",
+        "cardForeground": "#eeeeee",
+        "primary": "#ffe0c2",
+        "primaryForeground": "#081a1b",
+        "secondary": "#393028",
+        "secondaryForeground": "#ffe0c2",
+        "muted": "#222222",
+        "mutedForeground": "#b4b4b4",
+        "accent": "#2a2a2a",
+        "accentForeground": "#eeeeee",
+        "border": "#201e18",
+        "destructive": "#e54d2e",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ffe0c2",
+          "#393028",
+          "#2a2a2a",
+          "#42382e",
+          "#ffe0c1"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1
+  },
+  {
+    "id": "tweakcn-candyland",
+    "label": "Candyland",
+    "source": "tweakcn",
+    "sourceKey": "candyland",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f7f9fa",
+        "foreground": "#333333",
+        "card": "#ffffff",
+        "cardForeground": "#333333",
+        "primary": "#ffc0cb",
+        "primaryForeground": "#000000",
+        "secondary": "#87ceeb",
+        "secondaryForeground": "#000000",
+        "muted": "#ddd9c4",
+        "mutedForeground": "#6e6e6e",
+        "accent": "#ffff00",
+        "accentForeground": "#000000",
+        "border": "#d4d4d4",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ffc0cb",
+          "#87ceeb",
+          "#ffff00",
+          "#ff99cc",
+          "#33cc33"
+        ]
+      },
+      "dark": {
+        "background": "#1a1d23",
+        "foreground": "#e5e5e5",
+        "card": "#2f3436",
+        "cardForeground": "#e5e5e5",
+        "primary": "#ff99cc",
+        "primaryForeground": "#000000",
+        "secondary": "#33cc33",
+        "secondaryForeground": "#000000",
+        "muted": "#444444",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#87ceeb",
+        "accentForeground": "#000000",
+        "border": "#444444",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff99cc",
+          "#33cc33",
+          "#87ceeb",
+          "#ffff00",
+          "#ffcc00"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Poppins",
+      "mono": "Roboto Mono"
+    }
+  },
+  {
+    "id": "tweakcn-catppuccin",
+    "label": "Catppuccin",
+    "source": "tweakcn",
+    "sourceKey": "catppuccin",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#eff1f5",
+        "foreground": "#4c4f69",
+        "card": "#ffffff",
+        "cardForeground": "#4c4f69",
+        "primary": "#8839ef",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ccd0da",
+        "secondaryForeground": "#4c4f69",
+        "muted": "#dce0e8",
+        "mutedForeground": "#6c6f85",
+        "accent": "#04a5e5",
+        "accentForeground": "#ffffff",
+        "border": "#bcc0cc",
+        "destructive": "#d20f39",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#8839ef",
+          "#04a5e5",
+          "#40a02b",
+          "#fe640b",
+          "#dc8a78"
+        ]
+      },
+      "dark": {
+        "background": "#181825",
+        "foreground": "#cdd6f4",
+        "card": "#1e1e2e",
+        "cardForeground": "#cdd6f4",
+        "primary": "#cba6f7",
+        "primaryForeground": "#1e1e2e",
+        "secondary": "#585b70",
+        "secondaryForeground": "#cdd6f4",
+        "muted": "#292c3c",
+        "mutedForeground": "#a6adc8",
+        "accent": "#89dceb",
+        "accentForeground": "#1e1e2e",
+        "border": "#313244",
+        "destructive": "#f38ba8",
+        "destructiveForeground": "#1e1e2e",
+        "chart": [
+          "#cba6f7",
+          "#89dceb",
+          "#a6e3a1",
+          "#fab387",
+          "#f5e0dc"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 1.6,
+      "field": 3.6,
+      "box": 5.6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Montserrat",
+      "serif": "Georgia",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#2d2d53",
+      "opacity": 0.12,
+      "blur": 6,
+      "spread": 0,
+      "x": 0,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-claymorphism",
+    "label": "Claymorphism",
+    "source": "tweakcn",
+    "sourceKey": "claymorphism",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#e7e5e4",
+        "foreground": "#1e293b",
+        "card": "#f5f5f4",
+        "cardForeground": "#1e293b",
+        "primary": "#6366f1",
+        "primaryForeground": "#ffffff",
+        "secondary": "#d6d3d1",
+        "secondaryForeground": "#4b5563",
+        "muted": "#e7e5e4",
+        "mutedForeground": "#6b7280",
+        "accent": "#f3e5f5",
+        "accentForeground": "#374151",
+        "border": "#d6d3d1",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#6366f1",
+          "#4f46e5",
+          "#4338ca",
+          "#3730a3",
+          "#312e81"
+        ]
+      },
+      "dark": {
+        "background": "#1e1b18",
+        "foreground": "#e2e8f0",
+        "card": "#2c2825",
+        "cardForeground": "#e2e8f0",
+        "primary": "#818cf8",
+        "primaryForeground": "#1e1b18",
+        "secondary": "#3a3633",
+        "secondaryForeground": "#d1d5db",
+        "muted": "#1f1c19",
+        "mutedForeground": "#9ca3af",
+        "accent": "#484441",
+        "accentForeground": "#d1d5db",
+        "border": "#3a3633",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#1e1b18",
+        "chart": [
+          "#818cf8",
+          "#6366f1",
+          "#4f46e5",
+          "#4338ca",
+          "#3730a3"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 16,
+      "field": 18,
+      "box": 20
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Plus Jakarta Sans",
+      "serif": "Lora",
+      "mono": "Roboto Mono"
+    },
+    "shadow": {
+      "color": "#95959d",
+      "opacity": 0.18,
+      "blur": 10,
+      "spread": 4,
+      "x": 2,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-clean-slate",
+    "label": "Clean Slate",
+    "source": "tweakcn",
+    "sourceKey": "clean-slate",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8fafc",
+        "foreground": "#1e293b",
+        "card": "#ffffff",
+        "cardForeground": "#1e293b",
+        "primary": "#6366f1",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e5e7eb",
+        "secondaryForeground": "#374151",
+        "muted": "#f3f4f6",
+        "mutedForeground": "#6b7280",
+        "accent": "#e0e7ff",
+        "accentForeground": "#374151",
+        "border": "#d1d5db",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#6366f1",
+          "#4f46e5",
+          "#4338ca",
+          "#3730a3",
+          "#312e81"
+        ]
+      },
+      "dark": {
+        "background": "#0f172a",
+        "foreground": "#e2e8f0",
+        "card": "#1e293b",
+        "cardForeground": "#e2e8f0",
+        "primary": "#818cf8",
+        "primaryForeground": "#0f172a",
+        "secondary": "#2d3748",
+        "secondaryForeground": "#d1d5db",
+        "muted": "#152032",
+        "mutedForeground": "#9ca3af",
+        "accent": "#374151",
+        "accentForeground": "#d1d5db",
+        "border": "#4b5563",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#0f172a",
+        "chart": [
+          "#818cf8",
+          "#6366f1",
+          "#4f46e5",
+          "#4338ca",
+          "#3730a3"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Inter",
+      "serif": "Merriweather",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 8,
+      "spread": -1,
+      "x": 0,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-cosmic-night",
+    "label": "Cosmic Night",
+    "source": "tweakcn",
+    "sourceKey": "cosmic-night",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f5f5ff",
+        "foreground": "#2a2a4a",
+        "card": "#ffffff",
+        "cardForeground": "#2a2a4a",
+        "primary": "#6e56cf",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e4dfff",
+        "secondaryForeground": "#4a4080",
+        "muted": "#f0f0fa",
+        "mutedForeground": "#6c6c8a",
+        "accent": "#d8e6ff",
+        "accentForeground": "#2a2a4a",
+        "border": "#e0e0f0",
+        "destructive": "#ff5470",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#6e56cf",
+          "#9e8cfc",
+          "#5d5fef",
+          "#7c75fa",
+          "#4740b3"
+        ]
+      },
+      "dark": {
+        "background": "#0f0f1a",
+        "foreground": "#e2e2f5",
+        "card": "#1a1a2e",
+        "cardForeground": "#e2e2f5",
+        "primary": "#a48fff",
+        "primaryForeground": "#0f0f1a",
+        "secondary": "#2d2b55",
+        "secondaryForeground": "#c4c2ff",
+        "muted": "#222244",
+        "mutedForeground": "#a0a0c0",
+        "accent": "#303060",
+        "accentForeground": "#e2e2f5",
+        "border": "#303052",
+        "destructive": "#ff5470",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a48fff",
+          "#7986cb",
+          "#64b5f6",
+          "#4db6ac",
+          "#ff79c6"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Inter",
+      "serif": "Georgia",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#2d2d53",
+      "opacity": 0.12,
+      "blur": 10,
+      "spread": 0,
+      "x": 0,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-cyberpunk",
+    "label": "Cyberpunk",
+    "source": "tweakcn",
+    "sourceKey": "cyberpunk",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8f9fa",
+        "foreground": "#0c0c1d",
+        "card": "#ffffff",
+        "cardForeground": "#0c0c1d",
+        "primary": "#ff00c8",
+        "primaryForeground": "#ffffff",
+        "secondary": "#f0f0ff",
+        "secondaryForeground": "#0c0c1d",
+        "muted": "#f0f0ff",
+        "mutedForeground": "#0c0c1d",
+        "accent": "#00ffcc",
+        "accentForeground": "#0c0c1d",
+        "border": "#dfe6e9",
+        "destructive": "#ff3d00",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff00c8",
+          "#9000ff",
+          "#00e5ff",
+          "#00ffcc",
+          "#ffe600"
+        ]
+      },
+      "dark": {
+        "background": "#0c0c1d",
+        "foreground": "#eceff4",
+        "card": "#1e1e3f",
+        "cardForeground": "#eceff4",
+        "primary": "#ff00c8",
+        "primaryForeground": "#ffffff",
+        "secondary": "#1e1e3f",
+        "secondaryForeground": "#eceff4",
+        "muted": "#151530",
+        "mutedForeground": "#8085a6",
+        "accent": "#00ffcc",
+        "accentForeground": "#0c0c1d",
+        "border": "#2e2e5e",
+        "destructive": "#ff3d00",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff00c8",
+          "#9000ff",
+          "#00e5ff",
+          "#00ffcc",
+          "#ffe600"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Outfit",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 8,
+      "spread": -2,
+      "x": 0,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-darkmatter",
+    "label": "Darkmatter",
+    "source": "tweakcn",
+    "sourceKey": "darkmatter",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#111827",
+        "card": "#ffffff",
+        "cardForeground": "#111827",
+        "primary": "#d87943",
+        "primaryForeground": "#ffffff",
+        "secondary": "#527575",
+        "secondaryForeground": "#ffffff",
+        "muted": "#f3f4f6",
+        "mutedForeground": "#6b7280",
+        "accent": "#eeeeee",
+        "accentForeground": "#111827",
+        "border": "#e5e7eb",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#fafafa",
+        "chart": [
+          "#5f8787",
+          "#e78a53",
+          "#fbcb97",
+          "#888888",
+          "#999999"
+        ]
+      },
+      "dark": {
+        "background": "#121113",
+        "foreground": "#c1c1c1",
+        "card": "#121212",
+        "cardForeground": "#c1c1c1",
+        "primary": "#e78a53",
+        "primaryForeground": "#121113",
+        "secondary": "#5f8787",
+        "secondaryForeground": "#121113",
+        "muted": "#222222",
+        "mutedForeground": "#888888",
+        "accent": "#333333",
+        "accentForeground": "#c1c1c1",
+        "border": "#222222",
+        "destructive": "#5f8787",
+        "destructiveForeground": "#121113",
+        "chart": [
+          "#5f8787",
+          "#e78a53",
+          "#fbcb97",
+          "#888888",
+          "#999999"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 8,
+      "field": 10,
+      "box": 12
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Geist Mono",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.05,
+      "blur": 4,
+      "spread": 0,
+      "x": 0,
+      "y": 1
+    },
+    "tracking": 0,
+    "spacing": 0.25
+  },
+  {
+    "id": "tweakcn-elegant-luxury",
+    "label": "Elegant Luxury",
+    "source": "tweakcn",
+    "sourceKey": "elegant-luxury",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#faf7f5",
+        "foreground": "#1a1a1a",
+        "card": "#faf7f5",
+        "cardForeground": "#1a1a1a",
+        "primary": "#9b2c2c",
+        "primaryForeground": "#ffffff",
+        "secondary": "#fdf2d6",
+        "secondaryForeground": "#805500",
+        "muted": "#f0ebe8",
+        "mutedForeground": "#57534e",
+        "accent": "#fef3c7",
+        "accentForeground": "#7f1d1d",
+        "border": "#f5e8d2",
+        "destructive": "#991b1b",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#b91c1c",
+          "#9b2c2c",
+          "#7f1d1d",
+          "#b45309",
+          "#92400e"
+        ]
+      },
+      "dark": {
+        "background": "#1c1917",
+        "foreground": "#f5f5f4",
+        "card": "#292524",
+        "cardForeground": "#f5f5f4",
+        "primary": "#b91c1c",
+        "primaryForeground": "#faf7f5",
+        "secondary": "#92400e",
+        "secondaryForeground": "#fef3c7",
+        "muted": "#1f1c1a",
+        "mutedForeground": "#d6d3d1",
+        "accent": "#b45309",
+        "accentForeground": "#fef3c7",
+        "border": "#44403c",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#f87171",
+          "#ef4444",
+          "#dc2626",
+          "#fbbf24",
+          "#f59e0b"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 2,
+      "field": 4,
+      "box": 6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Poppins",
+      "serif": "Libre Baskerville",
+      "mono": "IBM Plex Mono"
+    },
+    "shadow": {
+      "color": "#4b1111",
+      "opacity": 0.12,
+      "blur": 16,
+      "spread": -2,
+      "x": 1,
+      "y": 1
+    }
+  },
+  {
+    "id": "tweakcn-graphite",
+    "label": "Graphite",
+    "source": "tweakcn",
+    "sourceKey": "graphite",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f0f0f0",
+        "foreground": "#333333",
+        "card": "#f5f5f5",
+        "cardForeground": "#333333",
+        "primary": "#606060",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e0e0e0",
+        "secondaryForeground": "#333333",
+        "muted": "#d9d9d9",
+        "mutedForeground": "#666666",
+        "accent": "#c0c0c0",
+        "accentForeground": "#333333",
+        "border": "#d0d0d0",
+        "destructive": "#cc3333",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#606060",
+          "#476666",
+          "#909090",
+          "#a8a8a8",
+          "#c0c0c0"
+        ]
+      },
+      "dark": {
+        "background": "#1a1a1a",
+        "foreground": "#d9d9d9",
+        "card": "#202020",
+        "cardForeground": "#d9d9d9",
+        "primary": "#a0a0a0",
+        "primaryForeground": "#1a1a1a",
+        "secondary": "#303030",
+        "secondaryForeground": "#d9d9d9",
+        "muted": "#2a2a2a",
+        "mutedForeground": "#808080",
+        "accent": "#404040",
+        "accentForeground": "#d9d9d9",
+        "border": "#353535",
+        "destructive": "#e06666",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a0a0a0",
+          "#7e9ca0",
+          "#707070",
+          "#585858",
+          "#404040"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 1.6,
+      "field": 3.6,
+      "box": 5.6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Montserrat",
+      "serif": "Georgia",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#333333",
+      "opacity": 0.15,
+      "blur": 0,
+      "spread": 0,
+      "x": 0,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-kodama-grove",
+    "label": "Kodama Grove",
+    "source": "tweakcn",
+    "sourceKey": "kodama-grove",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#e4d7b0",
+        "foreground": "#5c4b3e",
+        "card": "#e7dbbf",
+        "cardForeground": "#5c4b3e",
+        "primary": "#8d9d4f",
+        "primaryForeground": "#fdfbf6",
+        "secondary": "#decea0",
+        "secondaryForeground": "#5c4b3e",
+        "muted": "#decea0",
+        "mutedForeground": "#85766a",
+        "accent": "#dbc894",
+        "accentForeground": "#5c4b3e",
+        "border": "#b19681",
+        "destructive": "#d98b7e",
+        "destructiveForeground": "#faf8f2",
+        "chart": [
+          "#9db18c",
+          "#8a9f7b",
+          "#bac9b4",
+          "#71856a",
+          "#5e6e58"
+        ]
+      },
+      "dark": {
+        "background": "#3a3529",
+        "foreground": "#ede4d4",
+        "card": "#413c33",
+        "cardForeground": "#ede4d4",
+        "primary": "#8a9f7b",
+        "primaryForeground": "#2a2521",
+        "secondary": "#5a5345",
+        "secondaryForeground": "#ede4d4",
+        "muted": "#4a4439",
+        "mutedForeground": "#a8a096",
+        "accent": "#a18f5c",
+        "accentForeground": "#2a2521",
+        "border": "#5a5345",
+        "destructive": "#b5766a",
+        "destructiveForeground": "#f0e9db",
+        "chart": [
+          "#8a9f7b",
+          "#9db18c",
+          "#71856a",
+          "#a18f5c",
+          "#5e6e58"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 2.8,
+      "field": 4.8,
+      "box": 6.8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Merriweather",
+      "serif": "Source Serif 4",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#5b6d46",
+      "opacity": 0.15,
+      "blur": 2,
+      "spread": 0,
+      "x": 3,
+      "y": 3
+    }
+  },
+  {
+    "id": "tweakcn-midnight-bloom",
+    "label": "Midnight Bloom",
+    "source": "tweakcn",
+    "sourceKey": "midnight-bloom",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f9f9f9",
+        "foreground": "#333333",
+        "card": "#ffffff",
+        "cardForeground": "#333333",
+        "primary": "#6c5ce7",
+        "primaryForeground": "#ffffff",
+        "secondary": "#a1c9f2",
+        "secondaryForeground": "#333333",
+        "muted": "#c9c4b5",
+        "mutedForeground": "#6e6e6e",
+        "accent": "#8b9467",
+        "accentForeground": "#ffffff",
+        "border": "#d4d4d4",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#6c5ce7",
+          "#8e44ad",
+          "#4b0082",
+          "#6495ed",
+          "#4682b4"
+        ]
+      },
+      "dark": {
+        "background": "#1a1d23",
+        "foreground": "#e5e5e5",
+        "card": "#2f3436",
+        "cardForeground": "#e5e5e5",
+        "primary": "#6c5ce7",
+        "primaryForeground": "#ffffff",
+        "secondary": "#4b0082",
+        "secondaryForeground": "#e5e5e5",
+        "muted": "#444444",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#6495ed",
+        "accentForeground": "#e5e5e5",
+        "border": "#444444",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#6c5ce7",
+          "#8e44ad",
+          "#4b0082",
+          "#6495ed",
+          "#4682b4"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Montserrat",
+      "serif": "Playfair Display",
+      "mono": "Source Code Pro"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 10,
+      "spread": -2,
+      "x": 0,
+      "y": 5
+    }
+  },
+  {
+    "id": "tweakcn-mocha-mousse",
+    "label": "Mocha Mousse",
+    "source": "tweakcn",
+    "sourceKey": "mocha-mousse",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f1f0e5",
+        "foreground": "#56453f",
+        "card": "#f1f0e5",
+        "cardForeground": "#56453f",
+        "primary": "#a37764",
+        "primaryForeground": "#ffffff",
+        "secondary": "#baab92",
+        "secondaryForeground": "#ffffff",
+        "muted": "#e4c7b8",
+        "mutedForeground": "#8a655a",
+        "accent": "#e4c7b8",
+        "accentForeground": "#56453f",
+        "border": "#baab92",
+        "destructive": "#1f1a17",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a37764",
+          "#8a655a",
+          "#c39e88",
+          "#baab92",
+          "#a28777"
+        ]
+      },
+      "dark": {
+        "background": "#2d2521",
+        "foreground": "#f1f0e5",
+        "card": "#3c332e",
+        "cardForeground": "#f1f0e5",
+        "primary": "#c39e88",
+        "primaryForeground": "#2d2521",
+        "secondary": "#8a655a",
+        "secondaryForeground": "#f1f0e5",
+        "muted": "#56453f",
+        "mutedForeground": "#c5aa9b",
+        "accent": "#baab92",
+        "accentForeground": "#2d2521",
+        "border": "#56453f",
+        "destructive": "#e57373",
+        "destructiveForeground": "#2d2521",
+        "chart": [
+          "#c39e88",
+          "#baab92",
+          "#a37764",
+          "#8a655a",
+          "#a28777"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "DM Sans",
+      "serif": "Georgia",
+      "mono": "Menlo"
+    },
+    "shadow": {
+      "color": "#997b6c",
+      "opacity": 0.11,
+      "blur": 0,
+      "spread": 0,
+      "x": 2,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-modern-minimal",
+    "label": "Modern Minimal",
+    "source": "tweakcn",
+    "sourceKey": "modern-minimal",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#333333",
+        "card": "#ffffff",
+        "cardForeground": "#333333",
+        "primary": "#3b82f6",
+        "primaryForeground": "#ffffff",
+        "secondary": "#f3f4f6",
+        "secondaryForeground": "#4b5563",
+        "muted": "#f9fafb",
+        "mutedForeground": "#6b7280",
+        "accent": "#e0f2fe",
+        "accentForeground": "#1e3a8a",
+        "border": "#e5e7eb",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#3b82f6",
+          "#2563eb",
+          "#1d4ed8",
+          "#1e40af",
+          "#1e3a8a"
+        ]
+      },
+      "dark": {
+        "background": "#171717",
+        "foreground": "#e5e5e5",
+        "card": "#262626",
+        "cardForeground": "#e5e5e5",
+        "primary": "#3b82f6",
+        "primaryForeground": "#ffffff",
+        "secondary": "#262626",
+        "secondaryForeground": "#e5e5e5",
+        "muted": "#1f1f1f",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#1e3a8a",
+        "accentForeground": "#bfdbfe",
+        "border": "#404040",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#60a5fa",
+          "#3b82f6",
+          "#2563eb",
+          "#1d4ed8",
+          "#1e40af"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 2,
+      "field": 4,
+      "box": 6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Inter",
+      "serif": "Source Serif 4",
+      "mono": "JetBrains Mono"
+    }
+  },
+  {
+    "id": "tweakcn-mono",
+    "label": "Mono",
+    "source": "tweakcn",
+    "sourceKey": "mono",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#0a0a0a",
+        "card": "#ffffff",
+        "cardForeground": "#0a0a0a",
+        "primary": "#737373",
+        "primaryForeground": "#fafafa",
+        "secondary": "#f5f5f5",
+        "secondaryForeground": "#171717",
+        "muted": "#f5f5f5",
+        "mutedForeground": "#717171",
+        "accent": "#f5f5f5",
+        "accentForeground": "#171717",
+        "border": "#e5e5e5",
+        "destructive": "#e7000b",
+        "destructiveForeground": "#f5f5f5",
+        "chart": [
+          "#737373",
+          "#737373",
+          "#737373",
+          "#737373",
+          "#737373"
+        ]
+      },
+      "dark": {
+        "background": "#0a0a0a",
+        "foreground": "#fafafa",
+        "card": "#191919",
+        "cardForeground": "#fafafa",
+        "primary": "#737373",
+        "primaryForeground": "#fafafa",
+        "secondary": "#262626",
+        "secondaryForeground": "#fafafa",
+        "muted": "#262626",
+        "mutedForeground": "#a1a1a1",
+        "accent": "#404040",
+        "accentForeground": "#fafafa",
+        "border": "#383838",
+        "destructive": "#ff6467",
+        "destructiveForeground": "#262626",
+        "chart": [
+          "#737373",
+          "#737373",
+          "#737373",
+          "#737373",
+          "#737373"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 0,
+      "box": 0
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Geist Mono",
+      "serif": "Geist Mono",
+      "mono": "Geist Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0,
+      "blur": 0,
+      "spread": 0,
+      "x": 0,
+      "y": 1
+    }
+  },
+  {
+    "id": "tweakcn-nature",
+    "label": "Nature",
+    "source": "tweakcn",
+    "sourceKey": "nature",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8f5f0",
+        "foreground": "#3e2723",
+        "card": "#f8f5f0",
+        "cardForeground": "#3e2723",
+        "primary": "#2e7d32",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e8f5e9",
+        "secondaryForeground": "#1b5e20",
+        "muted": "#f0e9e0",
+        "mutedForeground": "#6d4c41",
+        "accent": "#c8e6c9",
+        "accentForeground": "#1b5e20",
+        "border": "#e0d6c9",
+        "destructive": "#c62828",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#4caf50",
+          "#388e3c",
+          "#2e7d32",
+          "#1b5e20",
+          "#0a1f0c"
+        ]
+      },
+      "dark": {
+        "background": "#1c2a1f",
+        "foreground": "#f0ebe5",
+        "card": "#2d3a2e",
+        "cardForeground": "#f0ebe5",
+        "primary": "#4caf50",
+        "primaryForeground": "#0a1f0c",
+        "secondary": "#3e4a3d",
+        "secondaryForeground": "#d7e0d6",
+        "muted": "#252f26",
+        "mutedForeground": "#d7cfc4",
+        "accent": "#388e3c",
+        "accentForeground": "#f0ebe5",
+        "border": "#3e4a3d",
+        "destructive": "#c62828",
+        "destructiveForeground": "#f0ebe5",
+        "chart": [
+          "#81c784",
+          "#66bb6a",
+          "#4caf50",
+          "#43a047",
+          "#388e3c"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Montserrat",
+      "serif": "Merriweather",
+      "mono": "Source Code Pro"
+    }
+  },
+  {
+    "id": "tweakcn-neo-brutalism",
+    "label": "Neo Brutalism",
+    "source": "tweakcn",
+    "sourceKey": "neo-brutalism",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#ffffff",
+        "foreground": "#000000",
+        "card": "#ffffff",
+        "cardForeground": "#000000",
+        "primary": "#ff3333",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ffff00",
+        "secondaryForeground": "#000000",
+        "muted": "#f0f0f0",
+        "mutedForeground": "#333333",
+        "accent": "#0066ff",
+        "accentForeground": "#ffffff",
+        "border": "#000000",
+        "destructive": "#000000",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff3333",
+          "#ffff00",
+          "#0066ff",
+          "#00cc00",
+          "#cc00cc"
+        ]
+      },
+      "dark": {
+        "background": "#000000",
+        "foreground": "#ffffff",
+        "card": "#333333",
+        "cardForeground": "#ffffff",
+        "primary": "#ff6666",
+        "primaryForeground": "#000000",
+        "secondary": "#ffff33",
+        "secondaryForeground": "#000000",
+        "muted": "#1a1a1a",
+        "mutedForeground": "#cccccc",
+        "accent": "#3399ff",
+        "accentForeground": "#000000",
+        "border": "#ffffff",
+        "destructive": "#ffffff",
+        "destructiveForeground": "#000000",
+        "chart": [
+          "#ff6666",
+          "#ffff33",
+          "#3399ff",
+          "#33cc33",
+          "#cc33cc"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 0,
+      "box": 0
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "DM Sans",
+      "mono": "Space Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 1,
+      "blur": 0,
+      "spread": 0,
+      "x": 4,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-northern-lights",
+    "label": "Northern Lights",
+    "source": "tweakcn",
+    "sourceKey": "northern-lights",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f9f9fa",
+        "foreground": "#333333",
+        "card": "#ffffff",
+        "cardForeground": "#333333",
+        "primary": "#34a85a",
+        "primaryForeground": "#ffffff",
+        "secondary": "#6495ed",
+        "secondaryForeground": "#ffffff",
+        "muted": "#ddd9c4",
+        "mutedForeground": "#6e6e6e",
+        "accent": "#66d9ef",
+        "accentForeground": "#333333",
+        "border": "#d4d4d4",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#34a85a",
+          "#6495ed",
+          "#66d9ef",
+          "#4682b4",
+          "#1a9641"
+        ]
+      },
+      "dark": {
+        "background": "#1a1d23",
+        "foreground": "#e5e5e5",
+        "card": "#2f3436",
+        "cardForeground": "#e5e5e5",
+        "primary": "#34a85a",
+        "primaryForeground": "#ffffff",
+        "secondary": "#4682b4",
+        "secondaryForeground": "#e5e5e5",
+        "muted": "#444444",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#6495ed",
+        "accentForeground": "#e5e5e5",
+        "border": "#444444",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#34a85a",
+          "#4682b4",
+          "#6495ed",
+          "#66d9ef",
+          "#1a9641"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Plus Jakarta Sans",
+      "serif": "Source Serif 4",
+      "mono": "JetBrains Mono"
+    }
+  },
+  {
+    "id": "tweakcn-notebook",
+    "label": "Notebook",
+    "source": "tweakcn",
+    "sourceKey": "notebook",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f9f9f9",
+        "foreground": "#3a3a3a",
+        "card": "#ffffff",
+        "cardForeground": "#3a3a3a",
+        "primary": "#606060",
+        "primaryForeground": "#f0f0f0",
+        "secondary": "#dedede",
+        "secondaryForeground": "#3a3a3a",
+        "muted": "#e3e3e3",
+        "mutedForeground": "#505050",
+        "accent": "#f3eac8",
+        "accentForeground": "#5d4037",
+        "border": "#747272",
+        "destructive": "#c87a7a",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#333333",
+          "#555555",
+          "#777777",
+          "#999999",
+          "#bbbbbb"
+        ]
+      },
+      "dark": {
+        "background": "#2b2b2b",
+        "foreground": "#dcdcdc",
+        "card": "#333333",
+        "cardForeground": "#dcdcdc",
+        "primary": "#b0b0b0",
+        "primaryForeground": "#2b2b2b",
+        "secondary": "#5a5a5a",
+        "secondaryForeground": "#c0c0c0",
+        "muted": "#454545",
+        "mutedForeground": "#a0a0a0",
+        "accent": "#e0e0e0",
+        "accentForeground": "#333333",
+        "border": "#4f4f4f",
+        "destructive": "#d9afaf",
+        "destructiveForeground": "#2b2b2b",
+        "chart": [
+          "#efefef",
+          "#d0d0d0",
+          "#b0b0b0",
+          "#909090",
+          "#707070"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 6,
+      "field": 8,
+      "box": 10
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Architects Daughter",
+      "serif": "Times New Roman",
+      "mono": "Courier New"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.03,
+      "blur": 5,
+      "spread": 0,
+      "x": 1,
+      "y": 4
+    },
+    "tracking": 0.031,
+    "spacing": 0.25
+  },
+  {
+    "id": "tweakcn-ocean-breeze",
+    "label": "Ocean Breeze",
+    "source": "tweakcn",
+    "sourceKey": "ocean-breeze",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f0f8ff",
+        "foreground": "#374151",
+        "card": "#ffffff",
+        "cardForeground": "#374151",
+        "primary": "#22c55e",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e0f2fe",
+        "secondaryForeground": "#4b5563",
+        "muted": "#f3f4f6",
+        "mutedForeground": "#6b7280",
+        "accent": "#d1fae5",
+        "accentForeground": "#374151",
+        "border": "#e5e7eb",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#22c55e",
+          "#10b981",
+          "#059669",
+          "#047857",
+          "#065f46"
+        ]
+      },
+      "dark": {
+        "background": "#0f172a",
+        "foreground": "#d1d5db",
+        "card": "#1e293b",
+        "cardForeground": "#d1d5db",
+        "primary": "#34d399",
+        "primaryForeground": "#0f172a",
+        "secondary": "#2d3748",
+        "secondaryForeground": "#a1a1aa",
+        "muted": "#19212e",
+        "mutedForeground": "#6b7280",
+        "accent": "#374151",
+        "accentForeground": "#a1a1aa",
+        "border": "#4b5563",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#0f172a",
+        "chart": [
+          "#34d399",
+          "#2dd4bf",
+          "#22c55e",
+          "#10b981",
+          "#059669"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "DM Sans",
+      "serif": "Lora",
+      "mono": "IBM Plex Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 8,
+      "spread": -1,
+      "x": 0,
+      "y": 4
+    }
+  },
+  {
+    "id": "tweakcn-pastel-dreams",
+    "label": "Pastel Dreams",
+    "source": "tweakcn",
+    "sourceKey": "pastel-dreams",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f7f3f9",
+        "foreground": "#374151",
+        "card": "#ffffff",
+        "cardForeground": "#374151",
+        "primary": "#a78bfa",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e9d8fd",
+        "secondaryForeground": "#4b5563",
+        "muted": "#f3e8ff",
+        "mutedForeground": "#6b7280",
+        "accent": "#f3e5f5",
+        "accentForeground": "#374151",
+        "border": "#e9d8fd",
+        "destructive": "#fca5a5",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a78bfa",
+          "#8b5cf6",
+          "#7c3aed",
+          "#6d28d9",
+          "#5b21b6"
+        ]
+      },
+      "dark": {
+        "background": "#1c1917",
+        "foreground": "#e0e7ff",
+        "card": "#2d2535",
+        "cardForeground": "#e0e7ff",
+        "primary": "#c0aafd",
+        "primaryForeground": "#1c1917",
+        "secondary": "#3f324a",
+        "secondaryForeground": "#d1d5db",
+        "muted": "#20182b",
+        "mutedForeground": "#9ca3af",
+        "accent": "#4a3d5a",
+        "accentForeground": "#d1d5db",
+        "border": "#3f324a",
+        "destructive": "#fca5a5",
+        "destructiveForeground": "#1c1917",
+        "chart": [
+          "#c0aafd",
+          "#a78bfa",
+          "#8b5cf6",
+          "#7c3aed",
+          "#6d28d9"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 20,
+      "field": 22,
+      "box": 24
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Open Sans",
+      "serif": "Source Serif 4",
+      "mono": "IBM Plex Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.08,
+      "blur": 16,
+      "spread": -4,
+      "x": 0,
+      "y": 8
+    }
+  },
+  {
+    "id": "tweakcn-perpetuity",
+    "label": "Perpetuity",
+    "source": "tweakcn",
+    "sourceKey": "perpetuity",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#e8f0f0",
+        "foreground": "#0a4a55",
+        "card": "#f2f7f7",
+        "cardForeground": "#0a4a55",
+        "primary": "#06858e",
+        "primaryForeground": "#ffffff",
+        "secondary": "#d9eaea",
+        "secondaryForeground": "#0a4a55",
+        "muted": "#e0eaea",
+        "mutedForeground": "#427a7e",
+        "accent": "#c9e5e7",
+        "accentForeground": "#0a4a55",
+        "border": "#cde0e2",
+        "destructive": "#d13838",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#06858e",
+          "#1e9ea6",
+          "#37b6be",
+          "#5dc7ce",
+          "#8ad8dd"
+        ]
+      },
+      "dark": {
+        "background": "#0a1a20",
+        "foreground": "#4de8e8",
+        "card": "#0c2025",
+        "cardForeground": "#4de8e8",
+        "primary": "#4de8e8",
+        "primaryForeground": "#0a1a20",
+        "secondary": "#164955",
+        "secondaryForeground": "#4de8e8",
+        "muted": "#0f3039",
+        "mutedForeground": "#36a5a5",
+        "accent": "#164955",
+        "accentForeground": "#4de8e8",
+        "border": "#164955",
+        "destructive": "#e83c3c",
+        "destructiveForeground": "#f2f2f2",
+        "chart": [
+          "#4de8e8",
+          "#36a5a5",
+          "#2d8a8a",
+          "#19595e",
+          "#0e383c"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 0,
+      "box": 2
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Courier New",
+      "serif": "Courier New",
+      "mono": "Courier New"
+    },
+    "shadow": {
+      "color": "#177982",
+      "opacity": 0.15,
+      "blur": 2,
+      "spread": 0,
+      "x": 1,
+      "y": 1
+    }
+  },
+  {
+    "id": "tweakcn-quantum-rose",
+    "label": "Quantum Rose",
+    "source": "tweakcn",
+    "sourceKey": "quantum-rose",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fff0f8",
+        "foreground": "#91185c",
+        "card": "#fff7fc",
+        "cardForeground": "#91185c",
+        "primary": "#e6067a",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ffd6ff",
+        "secondaryForeground": "#91185c",
+        "muted": "#ffe3f2",
+        "mutedForeground": "#c04283",
+        "accent": "#ffc1e3",
+        "accentForeground": "#91185c",
+        "border": "#ffc7e6",
+        "destructive": "#d13869",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#e6067a",
+          "#c44b97",
+          "#9969b6",
+          "#7371bf",
+          "#5e84ff"
+        ]
+      },
+      "dark": {
+        "background": "#1a0922",
+        "foreground": "#ffb3ff",
+        "card": "#2a1435",
+        "cardForeground": "#ffb3ff",
+        "primary": "#ff6bef",
+        "primaryForeground": "#180518",
+        "secondary": "#46204f",
+        "secondaryForeground": "#ffb3ff",
+        "muted": "#331941",
+        "mutedForeground": "#d67ad6",
+        "accent": "#5a1f5d",
+        "accentForeground": "#ffb3ff",
+        "border": "#4a1b5f",
+        "destructive": "#ff2876",
+        "destructiveForeground": "#f9f9f9",
+        "chart": [
+          "#ff6bef",
+          "#c359e3",
+          "#9161ff",
+          "#6f73e2",
+          "#547aff"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Poppins",
+      "serif": "Playfair Display",
+      "mono": "Space Mono"
+    },
+    "shadow": {
+      "color": "#82174d",
+      "opacity": 0.18,
+      "blur": 0,
+      "spread": 0,
+      "x": 0,
+      "y": 3
+    }
+  },
+  {
+    "id": "tweakcn-retro-arcade",
+    "label": "Retro Arcade",
+    "source": "tweakcn",
+    "sourceKey": "retro-arcade",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fdf6e3",
+        "foreground": "#073642",
+        "card": "#eee8d5",
+        "cardForeground": "#073642",
+        "primary": "#d33682",
+        "primaryForeground": "#ffffff",
+        "secondary": "#2aa198",
+        "secondaryForeground": "#ffffff",
+        "muted": "#93a1a1",
+        "mutedForeground": "#073642",
+        "accent": "#cb4b16",
+        "accentForeground": "#ffffff",
+        "border": "#839496",
+        "destructive": "#dc322f",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#268bd2",
+          "#2aa198",
+          "#d33682",
+          "#cb4b16",
+          "#dc322f"
+        ]
+      },
+      "dark": {
+        "background": "#002b36",
+        "foreground": "#93a1a1",
+        "card": "#073642",
+        "cardForeground": "#93a1a1",
+        "primary": "#d33682",
+        "primaryForeground": "#ffffff",
+        "secondary": "#2aa198",
+        "secondaryForeground": "#ffffff",
+        "muted": "#586e75",
+        "mutedForeground": "#93a1a1",
+        "accent": "#cb4b16",
+        "accentForeground": "#ffffff",
+        "border": "#586e75",
+        "destructive": "#dc322f",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#268bd2",
+          "#2aa198",
+          "#d33682",
+          "#cb4b16",
+          "#dc322f"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 2,
+      "box": 4
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Outfit",
+      "mono": "Space Mono"
+    },
+    "shadow": {
+      "color": "#04232f",
+      "opacity": 0.15,
+      "blur": 4,
+      "spread": 0,
+      "x": 2,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-sage-garden",
+    "label": "Sage Garden",
+    "source": "tweakcn",
+    "sourceKey": "sage-garden",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f8f7f4",
+        "foreground": "#1a1f2e",
+        "card": "#ffffff",
+        "cardForeground": "#1a1f2e",
+        "primary": "#7c9082",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ced4bf",
+        "secondaryForeground": "#1a1f2e",
+        "muted": "#e8e6e1",
+        "mutedForeground": "#6b7280",
+        "accent": "#bfc9bb",
+        "accentForeground": "#1a1f2e",
+        "border": "#e8e6e1",
+        "destructive": "#c73e3a",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#7c9082",
+          "#a0aa88",
+          "#8b9d83",
+          "#6b7280",
+          "#e8e6e1"
+        ]
+      },
+      "dark": {
+        "background": "#0a0a0a",
+        "foreground": "#f5f5f5",
+        "card": "#121212",
+        "cardForeground": "#f5f5f5",
+        "primary": "#7c9082",
+        "primaryForeground": "#000000",
+        "secondary": "#1a1a1a",
+        "secondaryForeground": "#f5f5f5",
+        "muted": "#1a1a1a",
+        "mutedForeground": "#a0a0a0",
+        "accent": "#36443a",
+        "accentForeground": "#f5f5f5",
+        "border": "#2a2a2a",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#7c9082",
+          "#a0aa88",
+          "#8b9d83",
+          "#6b7280",
+          "#5a6b5e"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 1.6,
+      "field": 3.6,
+      "box": 5.6
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Antic",
+      "serif": "Signifier",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#1a1f2e",
+      "opacity": 0.04,
+      "blur": 2,
+      "spread": 0,
+      "x": 0,
+      "y": 1
+    },
+    "tracking": 0,
+    "spacing": 0.23
+  },
+  {
+    "id": "tweakcn-soft-pop",
+    "label": "Soft Pop",
+    "source": "tweakcn",
+    "sourceKey": "soft-pop",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f7f9f3",
+        "foreground": "#000000",
+        "card": "#ffffff",
+        "cardForeground": "#000000",
+        "primary": "#4f46e5",
+        "primaryForeground": "#ffffff",
+        "secondary": "#14b8a6",
+        "secondaryForeground": "#ffffff",
+        "muted": "#f0f0f0",
+        "mutedForeground": "#333333",
+        "accent": "#f59e0b",
+        "accentForeground": "#000000",
+        "border": "#000000",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#4f46e5",
+          "#14b8a6",
+          "#f59e0b",
+          "#ec4899",
+          "#22c55e"
+        ]
+      },
+      "dark": {
+        "background": "#000000",
+        "foreground": "#ffffff",
+        "card": "#1a212b",
+        "cardForeground": "#ffffff",
+        "primary": "#818cf8",
+        "primaryForeground": "#000000",
+        "secondary": "#2dd4bf",
+        "secondaryForeground": "#000000",
+        "muted": "#333333",
+        "mutedForeground": "#cccccc",
+        "accent": "#fcd34d",
+        "accentForeground": "#000000",
+        "border": "#545454",
+        "destructive": "#f87171",
+        "destructiveForeground": "#000000",
+        "chart": [
+          "#818cf8",
+          "#2dd4bf",
+          "#fcd34d",
+          "#f472b6",
+          "#4ade80"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 12,
+      "field": 14,
+      "box": 16
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "DM Sans",
+      "serif": "DM Sans",
+      "mono": "Space Mono"
+    },
+    "shadow": {
+      "color": "#1a1a1a",
+      "opacity": 0.05,
+      "blur": 0,
+      "spread": 0,
+      "x": 0,
+      "y": 0
+    },
+    "spacing": 0.25
+  },
+  {
+    "id": "tweakcn-solar-dusk",
+    "label": "Solar Dusk",
+    "source": "tweakcn",
+    "sourceKey": "solar-dusk",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fdfbf7",
+        "foreground": "#4a3b33",
+        "card": "#f8f4ee",
+        "cardForeground": "#4a3b33",
+        "primary": "#b45309",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e4c090",
+        "secondaryForeground": "#57534e",
+        "muted": "#f1e9da",
+        "mutedForeground": "#78716c",
+        "accent": "#f2daba",
+        "accentForeground": "#57534e",
+        "border": "#e4d9bc",
+        "destructive": "#991b1b",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#b45309",
+          "#78716c",
+          "#a16207",
+          "#78716c",
+          "#ca8a04"
+        ]
+      },
+      "dark": {
+        "background": "#1c1917",
+        "foreground": "#f5f5f4",
+        "card": "#292524",
+        "cardForeground": "#f5f5f4",
+        "primary": "#f97316",
+        "primaryForeground": "#ffffff",
+        "secondary": "#57534e",
+        "secondaryForeground": "#e7e5e4",
+        "muted": "#201d1a",
+        "mutedForeground": "#a8a29e",
+        "accent": "#1e4252",
+        "accentForeground": "#e7e5e4",
+        "border": "#44403c",
+        "destructive": "#dc2626",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#f97316",
+          "#0ea5e9",
+          "#eab308",
+          "#a8a29e",
+          "#78716c"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0.8,
+      "field": 2.8,
+      "box": 4.8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Oxanium",
+      "serif": "Merriweather",
+      "mono": "Fira Code"
+    },
+    "shadow": {
+      "color": "#4b3f34",
+      "opacity": 0.18,
+      "blur": 3,
+      "spread": 0,
+      "x": 0,
+      "y": 2
+    }
+  },
+  {
+    "id": "tweakcn-starry-night",
+    "label": "Starry Night",
+    "source": "tweakcn",
+    "sourceKey": "starry-night",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f5f7fa",
+        "foreground": "#1a2238",
+        "card": "#e3eaf2",
+        "cardForeground": "#1a2238",
+        "primary": "#3a5ba0",
+        "primaryForeground": "#fffbe6",
+        "secondary": "#f7c873",
+        "secondaryForeground": "#1a2238",
+        "muted": "#e5e5df",
+        "mutedForeground": "#3a5ba0",
+        "accent": "#6ea3c1",
+        "accentForeground": "#fffbe6",
+        "border": "#b0b8c1",
+        "destructive": "#2d1e2f",
+        "destructiveForeground": "#fffbe6",
+        "chart": [
+          "#3a5ba0",
+          "#f7c873",
+          "#6ea3c1",
+          "#b0b8c1",
+          "#2d1e2f"
+        ]
+      },
+      "dark": {
+        "background": "#181a24",
+        "foreground": "#e6eaf3",
+        "card": "#23243a",
+        "cardForeground": "#e6eaf3",
+        "primary": "#3a5ba0",
+        "primaryForeground": "#ffe066",
+        "secondary": "#ffe066",
+        "secondaryForeground": "#23243a",
+        "muted": "#1d1e2f",
+        "mutedForeground": "#7a88a1",
+        "accent": "#bccdf0",
+        "accentForeground": "#181a24",
+        "border": "#2d2e3e",
+        "destructive": "#a04a6c",
+        "destructiveForeground": "#ffe066",
+        "chart": [
+          "#3a5ba0",
+          "#ffe066",
+          "#6ea3c1",
+          "#7a88a1",
+          "#a04a6c"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 4,
+      "field": 6,
+      "box": 8
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Libre Baskerville"
+    }
+  },
+  {
+    "id": "tweakcn-sunset-horizon",
+    "label": "Sunset Horizon",
+    "source": "tweakcn",
+    "sourceKey": "sunset-horizon",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fff9f5",
+        "foreground": "#3d3436",
+        "card": "#ffffff",
+        "cardForeground": "#3d3436",
+        "primary": "#ff7e5f",
+        "primaryForeground": "#ffffff",
+        "secondary": "#ffedea",
+        "secondaryForeground": "#b35340",
+        "muted": "#fff0eb",
+        "mutedForeground": "#78716c",
+        "accent": "#feb47b",
+        "accentForeground": "#3d3436",
+        "border": "#ffe0d6",
+        "destructive": "#e63946",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff7e5f",
+          "#feb47b",
+          "#ffcaa7",
+          "#ffad8f",
+          "#ce6a57"
+        ]
+      },
+      "dark": {
+        "background": "#2a2024",
+        "foreground": "#f2e9e4",
+        "card": "#392f35",
+        "cardForeground": "#f2e9e4",
+        "primary": "#ff7e5f",
+        "primaryForeground": "#ffffff",
+        "secondary": "#463a41",
+        "secondaryForeground": "#f2e9e4",
+        "muted": "#30272c",
+        "mutedForeground": "#d7c6bc",
+        "accent": "#feb47b",
+        "accentForeground": "#2a2024",
+        "border": "#463a41",
+        "destructive": "#e63946",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#ff7e5f",
+          "#feb47b",
+          "#ffcaa7",
+          "#ffad8f",
+          "#ce6a57"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 6,
+      "field": 8,
+      "box": 10
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Montserrat",
+      "serif": "Merriweather",
+      "mono": "Ubuntu Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.09,
+      "blur": 12,
+      "spread": -3,
+      "x": 0,
+      "y": 6
+    }
+  },
+  {
+    "id": "tweakcn-tangerine",
+    "label": "Tangerine",
+    "source": "tweakcn",
+    "sourceKey": "tangerine",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#e8ebed",
+        "foreground": "#333333",
+        "card": "#ffffff",
+        "cardForeground": "#333333",
+        "primary": "#e05d38",
+        "primaryForeground": "#ffffff",
+        "secondary": "#f3f4f6",
+        "secondaryForeground": "#4b5563",
+        "muted": "#f9fafb",
+        "mutedForeground": "#6b7280",
+        "accent": "#d6e4f0",
+        "accentForeground": "#1e3a8a",
+        "border": "#dcdfe2",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#86a7c8",
+          "#eea591",
+          "#5a7ca6",
+          "#466494",
+          "#334c82"
+        ]
+      },
+      "dark": {
+        "background": "#1c2433",
+        "foreground": "#e5e5e5",
+        "card": "#2a3040",
+        "cardForeground": "#e5e5e5",
+        "primary": "#e05d38",
+        "primaryForeground": "#ffffff",
+        "secondary": "#2a303e",
+        "secondaryForeground": "#e5e5e5",
+        "muted": "#2a303e",
+        "mutedForeground": "#a3a3a3",
+        "accent": "#2a3656",
+        "accentForeground": "#bfdbfe",
+        "border": "#3d4354",
+        "destructive": "#ef4444",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#86a7c8",
+          "#e6a08f",
+          "#5a7ca6",
+          "#466494",
+          "#334c82"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 8,
+      "field": 10,
+      "box": 12
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Inter",
+      "serif": "Source Serif 4",
+      "mono": "JetBrains Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.1,
+      "blur": 3,
+      "spread": 0,
+      "x": 0,
+      "y": 1
+    }
+  },
+  {
+    "id": "tweakcn-vintage-paper",
+    "label": "Vintage Paper",
+    "source": "tweakcn",
+    "sourceKey": "vintage-paper",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#f5f1e6",
+        "foreground": "#4a3f35",
+        "card": "#fffcf5",
+        "cardForeground": "#4a3f35",
+        "primary": "#a67c52",
+        "primaryForeground": "#ffffff",
+        "secondary": "#e2d8c3",
+        "secondaryForeground": "#5c4d3f",
+        "muted": "#ece5d8",
+        "mutedForeground": "#7d6b56",
+        "accent": "#d4c8aa",
+        "accentForeground": "#4a3f35",
+        "border": "#dbd0ba",
+        "destructive": "#b54a35",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#a67c52",
+          "#8d6e4c",
+          "#735a3a",
+          "#b3906f",
+          "#c0a080"
+        ]
+      },
+      "dark": {
+        "background": "#2d2621",
+        "foreground": "#ece5d8",
+        "card": "#3a322c",
+        "cardForeground": "#ece5d8",
+        "primary": "#c0a080",
+        "primaryForeground": "#2d2621",
+        "secondary": "#4a4039",
+        "secondaryForeground": "#ece5d8",
+        "muted": "#312b26",
+        "mutedForeground": "#c5bcac",
+        "accent": "#59493e",
+        "accentForeground": "#ece5d8",
+        "border": "#4a4039",
+        "destructive": "#b54a35",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#c0a080",
+          "#b3906f",
+          "#a67c52",
+          "#8d6e4c",
+          "#735a3a"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 0,
+      "field": 2,
+      "box": 4
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Libre Baskerville",
+      "serif": "Lora",
+      "mono": "IBM Plex Mono"
+    },
+    "shadow": {
+      "color": "#3a332c",
+      "opacity": 0.12,
+      "blur": 5,
+      "spread": 0,
+      "x": 2,
+      "y": 3
+    }
+  },
+  {
+    "id": "tweakcn-violet-bloom",
+    "label": "Violet Bloom",
+    "source": "tweakcn",
+    "sourceKey": "violet-bloom",
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "colors": {
+      "light": {
+        "background": "#fdfdfd",
+        "foreground": "#000000",
+        "card": "#fdfdfd",
+        "cardForeground": "#000000",
+        "primary": "#7033ff",
+        "primaryForeground": "#ffffff",
+        "secondary": "#edf0f4",
+        "secondaryForeground": "#080808",
+        "muted": "#f5f5f5",
+        "mutedForeground": "#525252",
+        "accent": "#e2ebff",
+        "accentForeground": "#1e69dc",
+        "border": "#e7e7ee",
+        "destructive": "#e54b4f",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#4ac885",
+          "#7033ff",
+          "#fd822b",
+          "#3276e4",
+          "#747474"
+        ]
+      },
+      "dark": {
+        "background": "#1a1b1e",
+        "foreground": "#f0f0f0",
+        "card": "#222327",
+        "cardForeground": "#f0f0f0",
+        "primary": "#8c5cff",
+        "primaryForeground": "#ffffff",
+        "secondary": "#2a2c33",
+        "secondaryForeground": "#f0f0f0",
+        "muted": "#2a2c33",
+        "mutedForeground": "#a0a0a0",
+        "accent": "#1e293b",
+        "accentForeground": "#79c0ff",
+        "border": "#33353a",
+        "destructive": "#f87171",
+        "destructiveForeground": "#ffffff",
+        "chart": [
+          "#4ade80",
+          "#8c5cff",
+          "#fca5a5",
+          "#5993f4",
+          "#a0a0a0"
+        ]
+      }
+    },
+    "radius": {
+      "selector": 18.4,
+      "field": 20.4,
+      "box": 22.4
+    },
+    "border": 1,
+    "fonts": {
+      "sans": "Plus Jakarta Sans",
+      "serif": "Lora",
+      "mono": "IBM Plex Mono"
+    },
+    "shadow": {
+      "color": "#000000",
+      "opacity": 0.16,
+      "blur": 3,
+      "spread": 0,
+      "x": 0,
+      "y": 2
+    },
+    "tracking": -0.025,
+    "spacing": 0.27
+  }
+]

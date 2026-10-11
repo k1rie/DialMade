@@ -28,3 +28,13 @@ export {
   recommendKind,
 } from "./defaults";
 export { googleFontsCss2Url, type FontRequest } from "./googleFonts";
+export {
+  archetypeOf,
+  getThemeRecipe,
+  getThemeShape,
+  nearestArchetype,
+  resolveRecipe,
+  themeShapes,
+  themesByArchetype,
+  themeToRecipe,
+} from "./themeRecipes";

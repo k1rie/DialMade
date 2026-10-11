@@ -1,0 +1,33 @@
+{
+  "generator": "packages/catalog/scripts/etl-themes.mjs",
+  "count": 71,
+  "sources": {
+    "daisyui": {
+      "upstream": "https://github.com/saadeghi/daisyui",
+      "commit": "8c24218588f34a678f48df435950790b57ef2bf7",
+      "license": "MIT",
+      "path": "packages/daisyui/src/themes/*.css",
+      "themes": 35,
+      "sha256": "1db8ac4b66bdd92efebf3defe51fc8217acd81fd477c8cc392e45646ae4c5b41"
+    },
+    "tweakcn": {
+      "upstream": "https://github.com/jnsahaj/tweakcn",
+      "commit": "a3b47b37cba97dd637de517aab52c45ec0f83456",
+      "license": "Apache-2.0",
+      "path": "utils/theme-presets.ts",
+      "presets": 42,
+      "kept": 36,
+      "sha256": "d333858a5a4f1e2fd615f1b73709f552e5a84c12882196456dfc48e1f09376a8"
+    }
+  },
+  "dropped": {
+    "tweakcn": {
+      "twitter": "nombre de marca",
+      "t3-chat": "nombre de producto",
+      "supabase": "nombre de marca",
+      "claude": "nombre de producto",
+      "vercel": "nombre de marca",
+      "doom-64": "título de videojuego"
+    }
+  }
+}

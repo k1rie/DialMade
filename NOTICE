@@ -143,3 +143,56 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------------
+daisyUI
+https://github.com/saadeghi/daisyui
+Commit 8c24218588f34a678f48df435950790b57ef2bf7
+
+Uso: los 35 temas de packages/daisyui/src/themes/*.css (colores, radios, borde,
+depth y noise) se normalizan en packages/catalog/data/themePresets.json con
+packages/catalog/scripts/etl-themes.mjs.
+
+Use: the 35 themes in packages/daisyui/src/themes/*.css (colors, radii, border,
+depth and noise) are normalized into packages/catalog/data/themePresets.json by
+packages/catalog/scripts/etl-themes.mjs.
+
+MIT License
+
+Copyright (c) 2020 Pouya Saadeghi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+tweakcn
+https://github.com/jnsahaj/tweakcn
+Commit a3b47b37cba97dd637de517aab52c45ec0f83456
+
+Uso: 36 de los 42 presets de utils/theme-presets.ts (se descartan los que llevan
+nombre de marca o de producto) se normalizan en
+packages/catalog/data/themePresets.json. Los datos se han modificado: ver
+packages/catalog/data/ATTRIBUTION-THEMES.md, que incluye el texto completo de la
+licencia Apache-2.0 y la lista de cambios.
+
+Use: 36 of the 42 presets in utils/theme-presets.ts (brand- and product-named
+ones are dropped) are normalized into packages/catalog/data/themePresets.json.
+The data has been modified: see packages/catalog/data/ATTRIBUTION-THEMES.md,
+which carries the full Apache License 2.0 text and the list of changes.
+
+Licensed under the Apache License, Version 2.0.

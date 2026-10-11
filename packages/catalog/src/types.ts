@@ -156,3 +156,69 @@ export interface DesignDefaults {
   landingLayout: LandingLayout;
   motion: MotionTier;
 }
+
+export type ThemeMode = "light" | "dark";
+export type ThemeSource = "daisyui" | "tweakcn";
+
+/** Roles de color de un tema importado, en hex sRGB. Los opcionales dependen de la fuente. */
+export interface ThemeColors {
+  background: string;
+  foreground: string;
+  card: string;
+  cardForeground: string;
+  primary: string;
+  primaryForeground: string;
+  secondary: string;
+  secondaryForeground: string;
+  muted: string;
+  mutedForeground: string;
+  accent: string;
+  accentForeground: string;
+  border: string;
+  destructive: string;
+  destructiveForeground?: string;
+  /** Solo daisyUI. */
+  success?: string;
+  warning?: string;
+  info?: string;
+  /** Solo tweakcn: 5 colores de gráfica. */
+  chart?: string[];
+}
+
+/** La forma de un tema importado: todo menos los colores (la paleta es de la marca del usuario). */
+export interface ThemeShape {
+  id: string;
+  label: string;
+  source: ThemeSource;
+  /** Nombre del tema en su origen (`cupcake`, `neo-brutalism`). */
+  sourceKey: string;
+  /** daisyUI define un tema por modo; tweakcn trae claro y oscuro juntos. */
+  modes: ThemeMode[];
+  /** Radios en px: `selector` (chips, toggles), `field` (botones, inputs) y `box` (cards, modales). */
+  radius: { selector: number; field: number; box: number };
+  /** Ancho de borde en px. */
+  border: number;
+  /** Solo daisyUI: relieve de botones y cards. */
+  depth?: 0 | 1;
+  /** Solo daisyUI: textura de ruido. */
+  noise?: 0 | 1;
+  /** Solo tweakcn: primera familia de cada pila. */
+  fonts?: { sans?: string; serif?: string; mono?: string };
+  /** Solo tweakcn: sombra base en px. */
+  shadow?: { color: string; opacity: number; blur: number; spread: number; x: number; y: number };
+  /** Solo tweakcn: `letter-spacing` en em. */
+  tracking?: number;
+  /** Solo tweakcn: unidad de espaciado en rem (0.25 es la de Tailwind). */
+  spacing?: number;
+}
+
+/** Un tema de daisyUI o tweakcn ya normalizado por el ETL (`data/themePresets.json`). */
+export interface ThemePreset extends ThemeShape {
+  colors: Partial<Record<ThemeMode, ThemeColors>>;
+}
+
+/** Una receta derivada de un tema, con el arquetipo hecho a mano del que hereda lo que el tema no define. */
+export interface ThemeRecipe extends StyleRecipe {
+  themeId: string;
+  archetypeId: string;
+}
