@@ -59,6 +59,7 @@ export function themeSignature(doc: DesignDoc): string {
       brand.achromatic,
       brief.paletteStyleId,
       brief.recipeId,
+      brief.themeId,
       brief.pairingId,
       brief.motionTier,
       brief.dials,

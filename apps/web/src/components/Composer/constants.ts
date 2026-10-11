@@ -4,13 +4,12 @@ import type { PaletteStyleId } from "@dialmade/palette";
 export const DND = {
   recipe: "composer-recipe",
   pairing: "composer-pairing",
-  theme: "composer-theme",
   section: "composer-section",
 } as const;
 
 export const CANVAS_DROP_ID = "composer-canvas";
-export const CANVAS_ACCEPT: readonly string[] = [DND.recipe, DND.pairing, DND.theme];
-export const STYLE_SLOT_ACCEPT: readonly string[] = [DND.recipe, DND.theme];
+export const CANVAS_ACCEPT: readonly string[] = [DND.recipe, DND.pairing];
+export const STYLE_SLOT_ACCEPT: readonly string[] = [DND.recipe];
 export const TYPE_SLOT_ACCEPT: readonly string[] = [DND.pairing];
 
 /** Dial ticks: the 1–10 range reads as three zones (≤3, 4–7, ≥8). */
@@ -18,30 +17,8 @@ export const DIAL_DETENTS: readonly number[] = [3, 7];
 export const DIAL_MIN = 1;
 export const DIAL_MAX = 10;
 
-export type ThemeCombo = { id: string; paletteStyleId: PaletteStyleId; recipeId: string };
-
-/** Curated palette style × recipe pairs for the «Temas» grid (Buffer-style theme cards). */
-export const THEME_COMBOS: readonly ThemeCombo[] = [
-  { id: "brand-minimal-swiss", paletteStyleId: "brand", recipeId: "minimal-swiss" },
-  { id: "vibrant-playful", paletteStyleId: "vibrant", recipeId: "playful" },
-  { id: "pastel-soft-ui", paletteStyleId: "pastel", recipeId: "soft-ui" },
-  { id: "mono-editorial", paletteStyleId: "mono", recipeId: "editorial" },
-  { id: "dark-luxury-dark-luxury", paletteStyleId: "dark-luxury", recipeId: "dark-luxury" },
-  { id: "earthy-organic", paletteStyleId: "earthy", recipeId: "organic" },
-  { id: "neon-tech-precision", paletteStyleId: "neon", recipeId: "tech-precision" },
-  { id: "corporate-corporate-clean", paletteStyleId: "corporate", recipeId: "corporate-clean" },
-  { id: "brand-glass", paletteStyleId: "brand", recipeId: "glass" },
-  { id: "vibrant-bento", paletteStyleId: "vibrant", recipeId: "bento" },
-  { id: "pastel-soft-neubrutal", paletteStyleId: "pastel", recipeId: "soft-neubrutal" },
-  { id: "mono-tech-precision", paletteStyleId: "mono", recipeId: "tech-precision" },
-  { id: "dark-luxury-editorial", paletteStyleId: "dark-luxury", recipeId: "editorial" },
-  { id: "earthy-soft-ui", paletteStyleId: "earthy", recipeId: "soft-ui" },
-  { id: "neon-retro-futurist", paletteStyleId: "neon", recipeId: "retro-futurist" },
-  { id: "corporate-bento", paletteStyleId: "corporate", recipeId: "bento" },
-];
-
-export const THEMES_VISIBLE = 8;
-export const FONT_PACKS_VISIBLE = 4;
+/** Cards of the panel's grids shown before «Ver más». */
+export const CARDS_VISIBLE = 8;
 
 /** Button color candidates: scale steps that can carry text (white or near-black) at AA. */
 export const BUTTON_COLOR_STEPS = {
@@ -53,5 +30,5 @@ export const BUTTON_COLOR_STEPS = {
 /** Roles a button color override writes, in both modes. */
 export const BUTTON_COLOR_ROLES = ["primary", "primary-foreground", "cta", "cta-foreground"] as const;
 
-/** Palette styles whose theme defaults to dark (`Theme.defaultMode`); theme cards preview them dark. */
+/** Palette styles whose theme defaults to dark (`Theme.defaultMode`); their cards preview dark. */
 export const DARK_PALETTE_STYLES: ReadonlySet<PaletteStyleId> = new Set<PaletteStyleId>(["dark-luxury", "neon"]);

@@ -7,7 +7,7 @@ import { deriveDesign } from "@/lib/design-derived";
 const KEEP =
   /^--(background|foreground|card|card-foreground|primary|primary-foreground|cta|cta-foreground|muted|muted-foreground|border|border-strong|brand|secondary|secondary-foreground|ring)$|^--dl-(radius-|shadow-|space-|border-width|card-|button-|font-|heading-)/;
 
-export type BriefChoice = Partial<Pick<Brief, "recipeId" | "pairingId" | "paletteStyleId" | "motionTier">>;
+export type BriefChoice = Partial<Pick<Brief, "recipeId" | "themeId" | "pairingId" | "paletteStyleId" | "motionTier">>;
 
 const signatures = new WeakMap<DesignDoc, string>();
 
@@ -21,6 +21,7 @@ function themeSignature(doc: DesignDoc): string {
       brand.achromatic,
       brief.paletteStyleId,
       brief.recipeId,
+      brief.themeId,
       brief.pairingId,
       brief.motionTier,
       brief.dials,
@@ -41,7 +42,9 @@ const sampleCache = new Map<string, ThemeVars>();
  * copy returns the same objects and the cards do not re-render.
  */
 export function sampleVars(doc: DesignDoc, choice: BriefChoice, mode: PreviewMode): ThemeVars {
-  const key = `${themeSignature(doc)}|${choice.recipeId ?? ""}|${choice.pairingId ?? ""}|${choice.paletteStyleId ?? ""}|${choice.motionTier ?? ""}|${mode}`;
+  // `themeId` apart: absent inherits the doc's variant, `undefined` is «the plain recipe».
+  const themeKey = "themeId" in choice ? (choice.themeId ?? "-") : "=";
+  const key = `${themeSignature(doc)}|${choice.recipeId ?? ""}|${themeKey}|${choice.pairingId ?? ""}|${choice.paletteStyleId ?? ""}|${choice.motionTier ?? ""}|${mode}`;
   const hit = sampleCache.get(key);
   if (hit) {
     sampleCache.delete(key);
@@ -59,9 +62,11 @@ export function sampleVars(doc: DesignDoc, choice: BriefChoice, mode: PreviewMod
 /** Brief choices a recipe brings when applied with `cascade` (pairing and motion follow unless pinned). */
 export function recipeChoice(doc: DesignDoc, recipeId: string): BriefChoice {
   const recipe = getStyleRecipe(recipeId);
-  if (!recipe) return { recipeId };
+  // A recipe card shows the plain recipe: picking it drops the doc's variant (`withRecipe`).
+  if (!recipe) return { recipeId, themeId: undefined };
   return {
     recipeId,
+    themeId: undefined,
     ...(recipe.pairingId && !isLocked(doc, "/brief/pairingId") && { pairingId: recipe.pairingId }),
     ...(!isLocked(doc, "/brief/motionTier") && { motionTier: recipe.defaultMotion }),
   };

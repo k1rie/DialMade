@@ -102,6 +102,7 @@ export interface CreateDesignDocInput {
     locale?: Locale;
     paletteStyleId?: PaletteStyleId;
     recipeId?: string;
+    themeId?: string;
     pairingId?: string;
     motionTier?: "subtle" | "standard" | "expressive";
     dials?: Partial<Dials>;
@@ -144,6 +145,7 @@ export function createDesignDoc(input: CreateDesignDocInput): DesignDoc {
       locale: brief.locale ?? "es",
       paletteStyleId: brief.paletteStyleId ?? "brand",
       recipeId: brief.recipeId ?? defaults.recipe.id,
+      ...(brief.themeId && { themeId: brief.themeId }),
       pairingId: brief.pairingId ?? defaults.pairing.id,
       motionTier: brief.motionTier ?? defaults.motion.id,
       dials: { ...DEFAULT_DIALS, ...brief.dials },

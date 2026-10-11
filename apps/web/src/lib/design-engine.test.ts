@@ -2,7 +2,7 @@ import { MAX_STASHED_SCREENS, addPage, applyPatch, checkScreenPage, createDesign
 import { getScreenTemplate, instantiateTemplate, type LayoutBlock, type LayoutDoc, type ScreenTemplateId } from "@dialmade/layout";
 import { buildDefaultPage, contentContextFromDoc } from "@dialmade/sections";
 import { describe, expect, it } from "vitest";
-import { syncPalette, withContentLocale, withGeneratedScreens, withProductType, withRecipe, type GeneratedScreenInput } from "./design-engine";
+import { syncPalette, withContentLocale, withGeneratedScreens, withProductType, withRecipe, withTheme, type GeneratedScreenInput } from "./design-engine";
 
 function importedDoc(locks: string[]): DesignDoc {
   const base = createDesignDoc({
@@ -34,6 +34,56 @@ describe("design engine and import locks", () => {
       expect(result.doc.brand.seeds).toEqual({ primary: "#3a5bd9", secondary: "#0f766e" });
       expect(result.doc.brief.paletteStyleId).toBe("pastel");
     }
+  });
+});
+
+describe("variants of a recipe (brief.themeId)", () => {
+  const plain = () => importedDoc([]);
+
+  it("withTheme sets the variant and its recipe, and cascades the recipe's pairing and motion", () => {
+    const result = withTheme(plain(), "tweakcn-neo-brutalism", { cascade: true });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.doc.brief.themeId).toBe("tweakcn-neo-brutalism");
+    expect(result.doc.brief.recipeId).toBe("soft-neubrutal");
+    expect(result.doc.brief.pairingId).toBe("grotesk-startup");
+  });
+
+  it("changing the variant replaces it; null goes back to the plain recipe", () => {
+    const first = withTheme(plain(), "daisyui-cupcake");
+    if (!first.ok) throw new Error(first.error.message);
+    const second = withTheme(first.doc, "daisyui-pastel");
+    expect(second.ok && second.doc.brief.themeId).toBe("daisyui-pastel");
+    const back = withTheme(first.doc, null);
+    expect(back.ok).toBe(true);
+    if (back.ok) {
+      expect(back.doc.brief.themeId).toBeUndefined();
+      expect(back.doc.brief.recipeId).toBe("playful");
+    }
+  });
+
+  it("null on a doc without variant is a no-op, and an unknown theme fails without touching the doc", () => {
+    const doc = plain();
+    const same = withTheme(doc, null);
+    expect(same.ok && same.doc).toBe(doc);
+    expect(withTheme(doc, "daisyui-no-existe").ok).toBe(false);
+  });
+
+  it("picking a recipe drops the variant, even the recipe the variant belongs to", () => {
+    const themed = withTheme(plain(), "daisyui-cupcake");
+    if (!themed.ok) throw new Error(themed.error.message);
+    expect(themed.doc.brief.themeId).toBe("daisyui-cupcake");
+    const sameRecipe = withRecipe(themed.doc, "playful");
+    expect(sameRecipe.ok && sameRecipe.doc.brief.themeId).toBeUndefined();
+    const other = withRecipe(themed.doc, "editorial");
+    expect(other.ok && other.doc.brief.themeId).toBeUndefined();
+  });
+
+  it("a locked pairing is kept by the variant's cascade", () => {
+    const locked = importedDoc(["/brief/pairingId"]);
+    const result = withTheme(locked, "tweakcn-neo-brutalism", { cascade: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.doc.brief.pairingId).toBe("inter-neo-grotesque");
   });
 });
 

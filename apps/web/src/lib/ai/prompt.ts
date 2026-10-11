@@ -1,4 +1,4 @@
-import { getProductType, getStyleRecipe, outputKindOptions, type Locale, type OutputKind } from "@dialmade/catalog";
+import { getProductType, outputKindOptions, resolveRecipe, type Locale, type OutputKind } from "@dialmade/catalog";
 import { orderedScreens, type DesignDoc, type Screen } from "@dialmade/doc";
 import { sanitizeLabel, sanitizeLine, sanitizeNote } from "@dialmade/layout";
 import { sectionRegistry, type SectionRegistry } from "@dialmade/sections";
@@ -170,7 +170,7 @@ function screenEntry(screen: Screen, sections: readonly PromptSection[], locale:
  */
 export function buildCopyUserMessage(input: CopyPromptInput): string {
   const { doc, fields, instructions, locale = doc.brief.locale, registry = sectionRegistry } = input;
-  const recipe = getStyleRecipe(doc.brief.recipeId);
+  const recipe = resolveRecipe(doc.brief.recipeId, doc.brief.themeId);
   const product = getProductType(doc.brief.productType);
   const { sections, brandFields } = groupSections(fields, locale, registry);
   const common = {

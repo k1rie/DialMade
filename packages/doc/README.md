@@ -24,7 +24,7 @@ const css = toThemeCss(doc); // :root + .dark con todas las variables
 DesignDoc v2 {
   version: 2,
   brand: { name, tagline?, logoRef?, seeds: { primary, secondary? }, achromatic },   // contenido compartido
-  brief: { productType ("generic"), focus, locale, paletteStyleId, recipeId, pairingId, motionTier,
+  brief: { productType ("generic"), focus, locale, paletteStyleId, recipeId, themeId?, pairingId, motionTier,
            dials: { variance, motion, density } (1–10),
            locks: string[] },   // JSON Pointers ("/tokens/color/light/primary") o claves antiguas ("pairingId")
   tokens: valores guardados (editados o importados): color { light, dark, scales? } (#rrggbb o #rrggbbaa),
@@ -52,7 +52,7 @@ AppShell { nav, header, activeItem?, pinned? }   // pinned: props del marco edit
 - **Terceros.** Un import con `ownership: "third-party"` solo aporta atributos: no puede escribir `/brand`, `/tokens/color` ni las familias tipográficas.
 - **Árbol de página.** El `root` existe y cada elemento tiene un solo padre. No hay ciclos ni huérfanos, y `hidden` solo apunta a ids existentes. Los tipos llevan namespace: una página `landing` solo admite `landing.*` y `ui.*`.
 - **Props.** Tienen que ser JSON. Un texto compartido se guarda como `{ bind: "brand.name" | "brand.tagline" }` y se resuelve con `resolveBindings(doc, props)`.
-- **Catálogo cerrado.** `productType`, `recipeId`, `pairingId` y el `layoutId` de la landing se validan contra @dialmade/catalog.
+- **Catálogo cerrado.** `productType`, `recipeId`, `pairingId` y el `layoutId` de la landing se validan contra @dialmade/catalog. La excepción es `brief.themeId` (variante de la receta, de los temas de daisyUI y tweakcn): un id que ya no existe, o que es de otro arquetipo que `recipeId`, no falla; se ignora y manda la receta (`resolveRecipe`). Una variante cambia la forma (radios, borde, sombra, botón), nunca los colores.
 - **Página App.** Nace con `dials.density = 7`. `effectiveDials(doc, key)` combina los diales globales con los de la página (`key` = tipo de página, id de pantalla o un `RenderTarget`).
 
 ## Pantallas (DesignDoc v2, Modo Layout)

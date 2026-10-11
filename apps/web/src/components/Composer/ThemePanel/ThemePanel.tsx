@@ -6,8 +6,8 @@ import { useDictionary } from "@/i18n";
 import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import { ButtonColor } from "./ButtonColor";
-import { FontPacks } from "./FontPacks";
-import { ThemeGrid } from "./ThemeGrid";
+import { PaletteGrid } from "./PaletteGrid";
+import { VariantGrid } from "./VariantGrid";
 
 export type ThemePanelProps = {
   doc: DesignDoc;
@@ -15,18 +15,18 @@ export type ThemePanelProps = {
   className?: string;
 };
 
-/** Right column (Buffer): theme cards, button color and font packs. */
+/** Right column (Buffer): variants of the style, the palette style and the button color. */
 export function ThemePanel({ doc, theme, className }: ThemePanelProps) {
   const t = useDictionary(composer);
   return (
     <aside
-      aria-label={t.themes.title}
+      aria-label={t.panel.label}
       className={cn("flex min-h-0 flex-col overflow-hidden rounded-panel border border-app bg-app-elevated/90 shadow-surface", className)}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4">
-        <ThemeGrid doc={doc} />
+        <VariantGrid doc={doc} />
+        <PaletteGrid doc={doc} />
         <ButtonColor doc={doc} theme={theme} />
-        <FontPacks doc={doc} />
       </div>
     </aside>
   );

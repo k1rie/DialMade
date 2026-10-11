@@ -14,7 +14,7 @@ import { composer } from "@/i18n/composer";
 import { cn } from "@/lib/cn";
 import type { DroppedItem } from "@/lib/dnd";
 import { tween } from "@/lib/motion";
-import { DND, STYLE_SLOT_ACCEPT, THEME_COMBOS, TYPE_SLOT_ACCEPT } from "../../constants";
+import { DND, STYLE_SLOT_ACCEPT, TYPE_SLOT_ACCEPT } from "../../constants";
 import { LockIcon, UnlockIcon } from "../../icons";
 import { PairingCard } from "../../PairingCard";
 import { recipeChoice, sampleVars } from "../../previewVars";
@@ -43,7 +43,7 @@ const slotFrame = (state: DropSlotState) =>
 export function DirectionControl({ doc, mode }: DirectionControlProps) {
   const { locale } = useI18n();
   const t = useDictionary(composer);
-  const { applyRecipe, applyPairing, applyTheme, setPairingLocked } = useComposerActions();
+  const { applyRecipe, applyPairing, setPairingLocked } = useComposerActions();
   const [deck, setDeck] = useState<Deck>("styles");
 
   const recipe = getStyleRecipe(doc.brief.recipeId);
@@ -56,12 +56,8 @@ export function DirectionControl({ doc, mode }: DirectionControlProps) {
   const onStyleDrop = useCallback(
     (item: DroppedItem) => {
       if (item.type === DND.recipe) applyRecipe(String(item.data.recipeId));
-      if (item.type === DND.theme) {
-        const combo = THEME_COMBOS.find((c) => c.id === item.data.comboId);
-        if (combo) applyTheme(combo, item.data.mode === "dark" ? "dark" : "light");
-      }
     },
-    [applyRecipe, applyTheme],
+    [applyRecipe],
   );
   const onTypeDrop = useCallback((item: DroppedItem) => applyPairing(String(item.data.pairingId)), [applyPairing]);
 

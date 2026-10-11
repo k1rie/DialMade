@@ -4,6 +4,8 @@ import {
   outputKindOptions,
   type Locale,
   type OutputKind,
+  type StyleRecipe,
+  type ThemeRecipe,
 } from "@dialmade/catalog";
 import type { CssColorFormat } from "@dialmade/palette";
 import { resolveBindings } from "../bindings";
@@ -11,6 +13,15 @@ import { legacyPageKinds } from "../screens";
 import { LAYOUT_PAGE_ID } from "../constants";
 import type { DesignDoc, Dials, Page, PageElement } from "../schema";
 import { resolveThemeInputs, resolveTokens, type ResolvedTokens, type ThemeInputs } from "../tokens";
+
+/**
+ * What a recipe reports to the outside: `recipeId` is always the catalog recipe (the archetype) and `themeId`
+ * appears when an imported variant (daisyUI, tweakcn) is applied on top of it.
+ */
+export function recipeIds(recipe: StyleRecipe): { recipeId: string; themeId?: string } {
+  const variant = recipe as Partial<ThemeRecipe>;
+  return variant.themeId && variant.archetypeId ? { recipeId: variant.archetypeId, themeId: variant.themeId } : { recipeId: recipe.id };
+}
 
 /** Shared by every exporter. Missing inputs are resolved from the doc via @dialmade/catalog and @dialmade/palette. */
 export interface ExportOptions extends Partial<ThemeInputs> {

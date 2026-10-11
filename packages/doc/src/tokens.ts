@@ -3,6 +3,7 @@ import {
   DEFAULT_RECIPE_ID,
   getMotionTier,
   getStyleRecipe,
+  resolveRecipe,
   getTypographyPairing,
   googleFontsCss2Url,
   type FontRequest,
@@ -101,7 +102,7 @@ export function resolveThemeInputs(doc: DesignDoc, overrides: Partial<ThemeInput
   const { brief } = doc;
   return {
     theme: overrides.theme ?? generateTheme(themeInputFor(doc)),
-    recipe: overrides.recipe ?? getStyleRecipe(brief.recipeId) ?? getStyleRecipe(DEFAULT_RECIPE_ID)!,
+    recipe: overrides.recipe ?? resolveRecipe(brief.recipeId, brief.themeId) ?? getStyleRecipe(DEFAULT_RECIPE_ID)!,
     pairing: overrides.pairing ?? getTypographyPairing(brief.pairingId) ?? getTypographyPairing(DEFAULT_PAIRING_ID)!,
     motionTier: overrides.motionTier ?? getMotionTier(brief.motionTier) ?? getMotionTier("standard")!,
   };

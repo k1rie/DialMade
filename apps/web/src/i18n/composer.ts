@@ -144,15 +144,29 @@ export const composer = defineDictionary({
       on: "Sí",
       off: "No",
     },
+    /** The right panel: its landmark name (never shown). */
+    panel: { label: "Apariencia" },
     themes: {
-      title: "Temas",
-      hint: "Arrástralo a la página o haz clic.",
+      current: "Actual",
+    },
+    /** «Variantes»: the imported themes (daisyUI, tweakcn) of the current style, painted with the user's palette. */
+    variants: {
+      title: "Variantes",
+      hint: (style: string) => `Otras formas de «${style}» con tu paleta.`,
+      base: "Base",
+      baseLabel: (style: string) => `${style}, sin variante`,
+      cardLabel: (name: string, source: string) => `Variante ${name} (${source})`,
+      applied: (name: string) => `Variante «${name}» aplicada`,
+      current: "Actual",
       more: (n: number) => `Ver ${n} más`,
       less: "Ver menos",
-      card: (style: string, palette: string) => `${style} · ${palette}`,
-      cardLabel: (style: string, palette: string) => `Tema ${style} con paleta ${palette}`,
-      applied: (name: string) => `Tema «${name}» aplicado`,
-      current: "Actual",
+    },
+    /** «Paleta»: the 8 palette styles of the brand's color, in «Ajustar». */
+    palette: {
+      title: "Paleta",
+      hint: "Cómo reparte tu marca el color.",
+      cardLabel: (name: string, description: string) => `Paleta ${name}: ${description}`,
+      applied: (name: string) => `Paleta «${name}» aplicada`,
     },
     buttonColor: {
       title: "Color de botón",
@@ -162,8 +176,6 @@ export const composer = defineDictionary({
       scales: { brand: "Marca", cta: "Acento", neutral: "Neutro" },
     },
     fonts: {
-      title: "Packs de fuentes",
-      suggested: (style: string) => `Sugeridas para «${style}»`,
       sample: "Ejemplo de texto",
     },
     /** «Diseño con IA» in «Ajustar» (track B): the «Bloque de IA» card, «Base | IA» and the redo notices. */
@@ -422,15 +434,26 @@ export const composer = defineDictionary({
       on: "On",
       off: "Off",
     },
+    panel: { label: "Appearance" },
     themes: {
-      title: "Themes",
-      hint: "Drag one onto the page or click it.",
+      current: "Current",
+    },
+    variants: {
+      title: "Variants",
+      hint: (style: string) => `Other takes on “${style}”, with your palette.`,
+      base: "Base",
+      baseLabel: (style: string) => `${style}, no variant`,
+      cardLabel: (name: string, source: string) => `${name} variant (${source})`,
+      applied: (name: string) => `“${name}” variant applied`,
+      current: "Current",
       more: (n: number) => `Show ${n} more`,
       less: "Show less",
-      card: (style: string, palette: string) => `${style} · ${palette}`,
-      cardLabel: (style: string, palette: string) => `${style} theme with ${palette} palette`,
-      applied: (name: string) => `“${name}” theme applied`,
-      current: "Current",
+    },
+    palette: {
+      title: "Palette",
+      hint: "How your brand spreads its color.",
+      cardLabel: (name: string, description: string) => `${name} palette: ${description}`,
+      applied: (name: string) => `“${name}” palette applied`,
     },
     buttonColor: {
       title: "Button color",
@@ -440,8 +463,6 @@ export const composer = defineDictionary({
       scales: { brand: "Brand", cta: "Accent", neutral: "Neutral" },
     },
     fonts: {
-      title: "Font packs",
-      suggested: (style: string) => `Suggested for “${style}”`,
       sample: "Sample text",
     },
     /** «Diseño con IA» in «Ajustar» (track B): the «Bloque de IA» card, «Base | IA» and the redo notices. */

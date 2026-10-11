@@ -26,7 +26,7 @@ import { opensAiMenu } from "./aiWayOut";
 import { BriefPanel } from "./BriefPanel";
 import { Canvas } from "./Canvas";
 import { ComposerTopBar } from "./ComposerTopBar";
-import { DND, THEME_COMBOS } from "./constants";
+import { DND } from "./constants";
 import { DeckFonts } from "./DeckFonts";
 import { canHide, hiddenOps, isHidden, moveOps, pageTarget, type PageTarget } from "./pageOps";
 import { sectionInfo } from "./sectionInfo";
@@ -79,7 +79,7 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
   const store = useDesignDocStore();
   const history = useDesignHistory();
   const ai = useAiCopy();
-  const { applyRecipe, applyPairing, applyTheme } = useComposerActions();
+  const { applyRecipe, applyPairing } = useComposerActions();
 
   const [selection, setSelection] = useState<Selection | null>(null);
   const [revealKey, setRevealKey] = useState(0);
@@ -290,12 +290,8 @@ export function Composer({ onExport, onBack, onEditBrand, onEditLayout, classNam
     (item: DroppedItem) => {
       if (item.type === DND.recipe) applyRecipe(String(item.data.recipeId));
       else if (item.type === DND.pairing) applyPairing(String(item.data.pairingId));
-      else if (item.type === DND.theme) {
-        const combo = THEME_COMBOS.find((c) => c.id === item.data.comboId);
-        if (combo) applyTheme(combo, item.data.mode === "dark" ? "dark" : "light");
-      }
     },
-    [applyRecipe, applyPairing, applyTheme],
+    [applyRecipe, applyPairing],
   );
 
   const target = useMemo(() => (doc && activeKey ? pageTarget(doc, activeKey) : null), [doc, activeKey]);

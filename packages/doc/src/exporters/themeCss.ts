@@ -1,7 +1,7 @@
 import { colorCssVars, tokensToCssVars } from "../compile";
 import type { DesignDoc } from "../schema";
 import { fontsUrlFor } from "../tokens";
-import { resolveExport, type ExportOptions } from "./shared";
+import { recipeIds, resolveExport, type ExportOptions } from "./shared";
 
 export interface ThemeCssOptions extends ExportOptions {
   /** Light block selector (default `:root`). */
@@ -26,9 +26,10 @@ export function toThemeCss(doc: DesignDoc, options: ThemeCssOptions = {}): strin
     ...colorCssVars(doc, { theme: inputs.theme, mode, colorFormat }),
     ...tokensToCssVars(tokens),
   });
+  const ids = recipeIds(inputs.recipe);
   const header = [
     `/* ${doc.brand.name.replace(/\*\//g, "")} · Dialmade theme (DesignDoc v${doc.version}) */`,
-    `/* Recipe: ${inputs.recipe.id} · Type: ${inputs.pairing.id} · Motion: ${inputs.motionTier.id} · Palette: ${inputs.theme.styleId} */`,
+    `/* Recipe: ${ids.recipeId}${ids.themeId ? ` · Theme: ${ids.themeId}` : ""} · Type: ${inputs.pairing.id} · Motion: ${inputs.motionTier.id} · Palette: ${inputs.theme.styleId} */`,
   ];
   const fontsUrl = options.includeFontImport ? fontsUrlFor(doc, inputs.pairing) : null;
   if (fontsUrl) header.push(`@import url("${fontsUrl}");`);

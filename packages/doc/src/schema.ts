@@ -147,6 +147,12 @@ export const BriefSchema = z.strictObject({
   locale: LocaleSchema,
   paletteStyleId: PaletteStyleIdSchema,
   recipeId: z.string().regex(SLUG),
+  /**
+   * Optional variant of `recipeId` from the imported themes (daisyUI, tweakcn: `@dialmade/catalog` `themeShapes`).
+   * It only applies while its archetype is `recipeId`; an unknown or stale id falls back to the recipe, so a doc
+   * never fails to open because a theme left the catalog.
+   */
+  themeId: z.string().regex(SLUG).optional(),
   pairingId: z.string().regex(SLUG),
   motionTier: MotionTierIdSchema,
   dials: DialsSchema,

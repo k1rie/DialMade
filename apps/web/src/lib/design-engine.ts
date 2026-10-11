@@ -4,9 +4,11 @@ import {
   defaultsFor,
   getProductType,
   getStyleRecipe,
+  getThemeRecipe,
   getTypographyPairing,
   type Locale,
   type OutputKind,
+  type StyleRecipe,
 } from "@dialmade/catalog";
 import {
   DesignDocError,
@@ -192,20 +194,50 @@ export function withFocus(doc: DesignDoc, kind: OutputKind): PatchResult {
   return patch(paged.doc, paged.doc.brief.focus === kind ? [] : [{ op: "replace", path: "/brief/focus", value: kind }]);
 }
 
-/** `cascade` also takes the recipe's pairing and motion tier (unless locked: legacy pins and import locks alike). */
+/** The pairing and motion tier a recipe brings with `cascade`, unless locked (legacy pins and import locks alike). */
+function cascadeOps(doc: DesignDoc, recipe: StyleRecipe): PatchOperation[] {
+  const ops: PatchOperation[] = [];
+  if (recipe.pairingId && recipe.pairingId !== doc.brief.pairingId && !isLocked(doc, "/brief/pairingId")) {
+    ops.push({ op: "replace", path: "/brief/pairingId", value: recipe.pairingId });
+  }
+  if (recipe.defaultMotion !== doc.brief.motionTier && !isLocked(doc, "/brief/motionTier")) {
+    ops.push({ op: "replace", path: "/brief/motionTier", value: recipe.defaultMotion });
+  }
+  return ops;
+}
+
+/**
+ * `cascade` also takes the recipe's pairing and motion tier (unless locked). Picking a recipe drops the variant
+ * (`brief.themeId`) on top of the previous one: the recipe itself is what the user chose.
+ */
 export function withRecipe(doc: DesignDoc, recipeId: string, options: { cascade?: boolean } = {}): PatchResult {
   const recipe = getStyleRecipe(recipeId);
   if (!recipe) return failure(`Unknown style recipe "${recipeId}"`);
   const ops: PatchOperation[] = [];
   if (doc.brief.recipeId !== recipe.id) ops.push({ op: "replace", path: "/brief/recipeId", value: recipe.id });
-  if (options.cascade) {
-    if (recipe.pairingId && recipe.pairingId !== doc.brief.pairingId && !isLocked(doc, "/brief/pairingId")) {
-      ops.push({ op: "replace", path: "/brief/pairingId", value: recipe.pairingId });
-    }
-    if (recipe.defaultMotion !== doc.brief.motionTier && !isLocked(doc, "/brief/motionTier")) {
-      ops.push({ op: "replace", path: "/brief/motionTier", value: recipe.defaultMotion });
-    }
+  if (doc.brief.themeId !== undefined) ops.push({ op: "remove", path: "/brief/themeId" });
+  if (options.cascade) ops.push(...cascadeOps(doc, recipe));
+  return patch(doc, ops);
+}
+
+/**
+ * Applies a variant of a recipe (an imported daisyUI/tweakcn theme: shape, never color) or, with `null`, goes back
+ * to the plain recipe. The variant belongs to one recipe, so applying it also sets `brief.recipeId` to that
+ * archetype. `cascade` takes the archetype's pairing and motion tier like `withRecipe` (unless locked).
+ */
+export function withTheme(doc: DesignDoc, themeId: string | null, options: { cascade?: boolean } = {}): PatchResult {
+  if (themeId === null) {
+    return patch(doc, doc.brief.themeId === undefined ? [] : [{ op: "remove", path: "/brief/themeId" }]);
   }
+  const theme = getThemeRecipe(themeId);
+  const archetype = theme ? getStyleRecipe(theme.archetypeId) : undefined;
+  if (!theme || !archetype) return failure(`Unknown theme "${themeId}"`);
+  const ops: PatchOperation[] = [];
+  if (doc.brief.recipeId !== archetype.id) ops.push({ op: "replace", path: "/brief/recipeId", value: archetype.id });
+  if (doc.brief.themeId !== theme.id) {
+    ops.push({ op: doc.brief.themeId === undefined ? "add" : "replace", path: "/brief/themeId", value: theme.id });
+  }
+  if (options.cascade) ops.push(...cascadeOps(doc, archetype));
   return patch(doc, ops);
 }
 
@@ -708,6 +740,7 @@ export const designEngine = {
   withoutPage,
   withFocus,
   withRecipe,
+  withTheme,
   withPairing,
   withPaletteStyle,
   withDials,

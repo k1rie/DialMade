@@ -26,7 +26,7 @@ import {
   type ShadowLayer,
   type ShadowRef,
 } from "../tokens";
-import { resolveExport, splitFontStack, type ExportOptions } from "./shared";
+import { recipeIds, resolveExport, splitFontStack, type ExportOptions } from "./shared";
 
 export interface DtcgToken {
   $type: string;
@@ -293,7 +293,7 @@ export function toDTCGFull(doc: DesignDoc, options: ExportOptions = {}): DtcgFul
         name: doc.brand.name,
         productType: doc.brief.productType,
         focus: doc.brief.focus,
-        recipeId: inputs.recipe.id,
+        ...recipeIds(inputs.recipe),
         pairingId: inputs.pairing.id,
         motionTier: inputs.motionTier.id,
         dials: t.dials,

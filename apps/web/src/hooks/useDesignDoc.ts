@@ -83,6 +83,11 @@ export type DesignDocActions = {
   applyPatch: (ops: unknown, options?: { allowLocked?: boolean }) => PatchResult;
   /** `cascade` also applies the recipe's pairing and motion tier (unless locked). */
   setRecipe: (recipeId: string, options?: { cascade?: boolean }) => PatchResult;
+  /**
+   * A variant of the recipe (`brief.themeId`: an imported theme's shape, never its colors); `null` goes back to the
+   * plain recipe. It also sets `recipeId` to the variant's recipe. `cascade` as in `setRecipe`.
+   */
+  setTheme: (themeId: string | null, options?: { cascade?: boolean }) => PatchResult;
   setPairing: (pairingId: string) => PatchResult;
   setPaletteStyle: (styleId: PaletteStyleId) => PatchResult;
   /** Integers 1–10 (rounded/clamped). `scope` "global" (default) or a page kind (that page's own dials). */
@@ -312,6 +317,7 @@ export function createDesignDocStore(
           unlock: (pointer) => edit((e, doc) => e.withoutLock(doc, pointer)),
           applyPatch: (ops, options) => edit((e, doc) => e.applyPatch(doc, ops, options)),
           setRecipe: (recipeId, options) => edit((e, doc) => e.withRecipe(doc, recipeId, options)),
+          setTheme: (themeId, options) => edit((e, doc) => e.withTheme(doc, themeId, options)),
           setPairing: (pairingId) => edit((e, doc) => e.withPairing(doc, pairingId)),
           setPaletteStyle: (styleId) => edit((e, doc) => e.withPaletteStyle(doc, styleId)),
           setDials: (dials, scope = "global") => edit((e, doc) => e.withDials(doc, dials, scope)),

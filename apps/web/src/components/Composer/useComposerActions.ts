@@ -1,8 +1,8 @@
 "use client";
 
-import { getStyleRecipe, getTypographyPairing } from "@dialmade/catalog";
+import { getStyleRecipe, getThemeShape, getTypographyPairing } from "@dialmade/catalog";
 import { isLocked, lockPointer, type DesignDoc, type PatchOperation, type PatchResult } from "@dialmade/doc";
-import { PALETTE_STYLES } from "@dialmade/palette";
+import { PALETTE_STYLES, type PaletteStyleId } from "@dialmade/palette";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useDndAnnounce } from "@/components/dnd/DndAnnouncer";
@@ -10,15 +10,16 @@ import { useDesignDocActions, useDesignDocStore } from "@/hooks/useDesignDoc";
 import type { PreviewMode } from "@/hooks/usePaletteFlow";
 import { useDictionary, useI18n } from "@/i18n";
 import { composer } from "@/i18n/composer";
-import type { ThemeCombo } from "./constants";
 
 export type ComposerActions = {
   /** Applies a style recipe; its pairing and motion tier follow unless pinned. */
   applyRecipe: (recipeId: string) => void;
   /** Applies a pairing and pins it, so later style changes keep it. */
   applyPairing: (pairingId: string) => void;
-  /** Palette style + recipe in one undo step; the preview switches to the mode the card showed. */
-  applyTheme: (combo: ThemeCombo, mode?: PreviewMode) => void;
+  /** A palette style; the preview switches to the mode the card showed. */
+  applyPalette: (styleId: PaletteStyleId, mode?: PreviewMode) => void;
+  /** A variant of the current style (`brief.themeId`; its shape, not its colors), or `null` for the plain style. */
+  applyVariant: (themeId: string | null, mode?: PreviewMode) => void;
   setPairingLocked: (locked: boolean) => void;
 };
 
@@ -101,20 +102,24 @@ export function useComposerActions(): ComposerActions {
       guard(run(), run, () => announce(t.direction.applied(pairing.label[locale])));
     };
 
-    const applyTheme = (combo: ThemeCombo, mode?: PreviewMode) => {
-      const recipe = getStyleRecipe(combo.recipeId);
-      if (!recipe) return;
-      const run = (): PatchResult => {
-        actions.beginBatch();
-        const palette = actions.setPaletteStyle(combo.paletteStyleId);
-        const style = palette.ok ? actions.setRecipe(combo.recipeId, { cascade: true }) : palette;
-        if (style.ok) actions.commitBatch();
-        else actions.cancelBatch();
-        return style;
-      };
+    const applyPalette = (styleId: PaletteStyleId, mode?: PreviewMode) => {
+      const style = PALETTE_STYLES.find((candidate) => candidate.id === styleId);
+      if (!style) return;
+      const run = () => actions.setPaletteStyle(styleId);
       guard(run(), run, () => {
         if (mode) actions.setPreviewMode(mode);
-        announce(t.themes.applied(t.themes.card(recipe.label[locale], paletteStyleLabel(combo.paletteStyleId, locale))));
+        announce(t.palette.applied(style.label[locale]));
+      });
+    };
+
+    const applyVariant = (themeId: string | null, mode?: PreviewMode) => {
+      const current = doc();
+      const name = themeId ? getThemeShape(themeId)?.label : getStyleRecipe(current?.brief.recipeId ?? "")?.label[locale];
+      if (!current || !name) return;
+      const run = () => actions.setTheme(themeId, { cascade: true });
+      guard(run(), run, () => {
+        if (mode) actions.setPreviewMode(mode);
+        announce(t.variants.applied(name));
       });
     };
 
@@ -129,6 +134,6 @@ export function useComposerActions(): ComposerActions {
       }
     };
 
-    return { applyRecipe, applyPairing, applyTheme, setPairingLocked };
+    return { applyRecipe, applyPairing, applyPalette, applyVariant, setPairingLocked };
   }, [store, actions, announce, locale, t]);
 }
