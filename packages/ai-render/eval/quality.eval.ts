@@ -4,7 +4,7 @@
 //   DIALMADE_EVAL_LIVE=1 DIALMADE_EVAL_OUT=<dir> corepack pnpm --filter @dialmade/ai-render eval:quality   # calls Claude
 //   DIALMADE_EVAL_OUT=<dir> corepack pnpm --filter @dialmade/ai-render eval:quality                        # re-renders, $0
 //
-// Env: DIALMADE_EVAL_MODELS (comma list, default haiku,sonnet,opus), DIALMADE_EVAL_MAX_USD (hard stop, default 2),
+// Env: DIALMADE_EVAL_MODELS (comma list, default haiku,sonnet,opus), DIALMADE_EVAL_BRANDS (default brisa,vectora), DIALMADE_EVAL_MAX_USD (hard stop, default 2),
 // DIALMADE_EVAL_LABEL (folder name under the out dir, default «before»), DIALMADE_EVAL_FORCE=1 (regenerate saved ones).
 // The raw answers are saved BEFORE anything is rendered, so a rendering bug never costs a second call. The key is read
 // from apps/web/.env.local by code and never printed. Output (never committed): per label, `<brand>-<screen>-<model>.json`
@@ -45,8 +45,10 @@ const MODELS = {
 } as const;
 type ModelKey = keyof typeof MODELS;
 const MODEL_KEYS = (process.env.DIALMADE_EVAL_MODELS ?? "haiku,sonnet,opus").split(",").map((m) => m.trim()) as ModelKey[];
-// The two brands with the most different register: Brisa (es, warm soft-ui) and Vectora (en, tech-precision).
-const EVAL_BRANDS = BRANDS.filter((brand) => brand.id === "brisa" || brand.id === "vectora");
+// By default the two brands with the most different register: Brisa (es, warm soft-ui) and Vectora (en,
+// tech-precision). DIALMADE_EVAL_BRANDS=brisa,vectora,ollaria adds the editorial one.
+const BRAND_IDS = (process.env.DIALMADE_EVAL_BRANDS ?? "brisa,vectora").split(",").map((b) => b.trim());
+const EVAL_BRANDS = BRANDS.filter((brand) => BRAND_IDS.includes(brand.id));
 const SCREEN_IDS = [LANDING_ID, DASH_ID] as const;
 
 type Usage = { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null };

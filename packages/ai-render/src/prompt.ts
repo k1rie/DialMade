@@ -13,7 +13,8 @@ import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES 
 export const AI_RENDER_PROMPT_VERSION = "ai-render/3";
 
 /** Output caps (spec §2.1 and §5): one screen, one block action, the direction. */
-export const SCREEN_MAX_TOKENS = 12_000;
+// 16k: Haiku 5.5 cannot turn adaptive thinking off, and a 7-block landing with references needs ≈ 7–10k of HTML.
+export const SCREEN_MAX_TOKENS = 16_000;
 export const BLOCK_MAX_TOKENS = 4_000;
 export const DIRECTION_MAX_TOKENS = 1_500;
 export const MAX_SCREEN_BYTES = 120 * 1024;
@@ -143,25 +144,34 @@ function referenceHtml(entry: LibraryBlock, blockId: string): string {
 export function referencesText(brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput, options: { count?: number; seed?: number } = {}): string {
   // The seed comes from structured traits only (never free text): the same brand always gets the same references.
   const seed = options.seed ?? hash32(`${brand.productType}:${brand.recipe.id}:${brand.palette.hue}`);
+  const count = options.count ?? 2;
   const used = new Set<string>();
+  const blocks = screen.blocks.filter((block) => !block.container);
+  const picked = blocks.map((block) => selectReferences(LIBRARY, block.type, screen.kind, direction.axes, block.id, { count, seed, used }));
+  // The budget is spent in rounds: every block gets its best reference before any block gets a second one, so a long
+  // screen never leaves its last blocks (the call to action, the footer) without an example.
   let budget = MAX_REFERENCE_CHARS;
-  const parts: string[] = [];
-  for (const block of screen.blocks) {
-    if (block.container) continue;
-    const picked = selectReferences(LIBRARY, block.type, screen.kind, direction.axes, block.id, { count: options.count ?? 2, seed, used });
-    const fitting = picked.filter((entry) => {
+  const chosen: LibraryBlock[][] = blocks.map(() => []);
+  for (let round = 0; round < count; round++) {
+    blocks.forEach((block, i) => {
+      const entry = picked[i]![round];
+      if (!entry) return;
       const size = referenceHtml(entry, block.id).length;
-      if (size > budget) return false;
+      if (size > budget) return;
       budget -= size;
-      return true;
+      chosen[i]!.push(entry);
     });
-    if (fitting.length === 0) continue;
-    parts.push(
-      `<references for="${block.id}">\n${fitting.map((entry) => `<reference gesture="${entry.gesture.replace(/"/g, "'")}" pattern="${entry.pattern.replace(/"/g, "'")}">\n${referenceHtml(entry, block.id)}\n</reference>`).join("\n")}\n</references>`,
-    );
   }
+  const parts = blocks.flatMap((block, i) =>
+    chosen[i]!.length === 0
+      ? []
+      : [`<references for="${block.id}">\n${chosen[i]!.map((entry) => `<reference gesture="${entry.gesture.replace(/"/g, "'")}" pattern="${entry.pattern.replace(/"/g, "'")}">\n${referenceHtml(entry, block.id)}\n</reference>`).join("\n")}\n</references>`],
+  );
   if (parts.length === 0) return "";
-  return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Each one names its gesture, the one bold move that makes it work. Take ONE reference per block, the one whose gesture suits the block, and keep that gesture recognisable: when the block's content differs (two buttons instead of an email field, four items instead of three), change the content, not the gesture. Never blend two references into a safer average. Keep the structure, hierarchy and proportions; rewrite every word and number for this brand and product, fit the block's cols and heightPx and show exactly "count" items. The art direction's axes and moves tune the reference's surface (tints, type voice, rules, labels); they never turn its rows, columns or list into a grid of cards. If no reference fits the block's label or note, ignore them. Never reuse their sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\n`;
+  // The same gestures again as a closing list: a small model follows the last thing it read. A plain list on purpose:
+  // asking Haiku 5.5 to «check» each block made its adaptive thinking spend 2–8k tokens and cut the screen short.
+  const checklist = blocks.flatMap((block, i) => (chosen[i]!.length === 0 ? [] : [`- ${block.id}: ${chosen[i]!.map((entry) => entry.gesture).join("  OR  ")}`]));
+  return `<reference_blocks>\nDesigned examples for some of these blocks: the COMPOSITION to reach, not text to copy. Each one names its gesture, the one bold move that makes it work. Build every block that has references on ONE of them, the one whose gesture suits the block, and follow it closely: the same structure, proportions and devices (rules, fills, shapes, mono labels, stickers, overlaps). Its gesture must be recognisable in your answer even when the block's content differs: change the content, never the gesture (no price → the trial length or the first plan's price becomes the giant figure; a physical object → draw this product's own device or screen as the object; two buttons instead of an email field → the buttons go where the field was). Never blend two references into a safer average. Rewrite every word and number for this brand and product, fit the block's cols and heightPx and show exactly "count" items. The art direction's axes and moves tune the reference's surface (tints, type voice, rules, labels); they never turn its rows, columns or list into a grid of cards. Only when a block's label or note asks for something no reference can show, design it from scratch. Never reuse their sample names, companies or numbers.\n${parts.join("\n")}\n</reference_blocks>\n\nGestures to keep, one per block (from the reference you build on):\n${checklist.join("\n")}\n\n`;
 }
 
 /** User message of one screen: the cached art direction, then the screen with its reference blocks. */

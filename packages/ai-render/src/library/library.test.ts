@@ -127,11 +127,18 @@ describe("references in the prompt", () => {
     expect(text).toContain('data-block-id="b-1"');
     expect(text).not.toContain('for="b-7"');
     expect(text).not.toContain('for="b-8"');
-    expect(text.length).toBeLessThan(MAX_REFERENCE_CHARS + 4_000);
+    // The cap counts reference html; each reference adds its gesture and pattern as attributes on top.
+    expect(text.length).toBeLessThan(MAX_REFERENCE_CHARS + 6_000);
     // The hand-written html is part of the prompt, with its line breaks gone.
     expect(text).not.toMatch(/\n\s{2,}</);
     // Every reference names the gesture the model has to keep.
     expect(text.match(/<reference /g)?.length).toBe(text.match(/<reference gesture="[^"]{15,}" pattern="/g)?.length);
+  });
+
+  it("gives every block one reference before any block gets a second, so the last blocks are never left without", () => {
+    const screen = screenOf("landing", ["hero", "hero", "hero", "hero", "hero", "hero", "pricing", "cta", "footer"]);
+    const text = referencesText(brand, { axes, moves: [], rationale: "" }, screen);
+    for (let i = 0; i < screen.blocks.length; i++) expect(text, `b-${i}`).toContain(`<references for="b-${i}">`);
   });
 
   it("depends on structured traits, not on the brand's free text", () => {

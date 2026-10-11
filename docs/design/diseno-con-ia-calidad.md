@@ -168,6 +168,44 @@ cerca de su captura (objeto con pantalla, teclado y pegatinas; impresos grandes 
 celdas y flores de píxel; titular de una palabra por línea y botones con icono; degradado con corte diagonal; panel
 de noche con estrellas; haz de luz) y se marcaron `approved`.
 
+**Por qué el modelo no las usaba al principio** (prompt reconstruido por bloque):
+
+1. **Presupuesto de referencias:** con entradas más grandes, el tope de 30 000 caracteres se agotaba antes del final y
+   el footer se quedaba sin ninguna. Ahora se reparte por rondas: cada bloque recibe su mejor referencia antes de que
+   otro reciba la segunda.
+2. **Vía de escape:** «si ninguna encaja, ignóralas» dejaba que Haiku volviera a su hero de siempre. Ahora construye
+   cada bloque sobre una referencia, la sigue de cerca y traduce el contenido al gesto (sin precio → la prueba o el
+   primer plan son la cifra; sin objeto físico → el dispositivo o la pantalla del producto).
+3. **Lista de gestos al final:** el prompt cierra con el gesto de cada bloque, uno por línea. Haiku sigue mejor lo
+   último que lee: los CTA de las 3 marcas pasaron a «cifra gigante + panel oscuro» y los héroes a dos voces + ficha.
+
+**Medido con Haiku, 3 marcas** (`comparisons/07-*.png`, `08-*.png`): 0 bloques con paneles iguales, 0–3 avisos por
+pantalla, $0,0051 de media por pantalla (+10 %: más referencias en el prompt). Gasto de esta ronda ≈ $0,13.
+**Pendiente:** Haiku a veces pega una pegatina sobre una fila de texto del objeto (la referencia ya lo prohíbe).
+
+## 3 quinquies. Haiku, Sonnet y Opus con la biblioteca de la ronda 3
+
+Mismas 3 marcas, misma dirección, mismo prompt; solo cambia el modelo (`comparisons/09-modelos-*.png`).
+
+| | Haiku 5.5 | Sonnet 5.5 | Opus 5.5 |
+|---|---|---|---|
+| Costo por pantalla | $0,0054 | $0,083 (×15) | $0,176 (×32) |
+| Tiempo medio | 21 s | 25 s | 40 s |
+| Composición | la de la referencia | la misma | la misma |
+| Datos y textos | correctos, genéricos a ratos | parecidos a Haiku; a veces más simple (quita pegatinas) | los más coherentes: etiquetas que cuadran con el gráfico, fechas reales, nº de factura, copy concreto |
+
+**Conclusiones:**
+
+1. Con referencias, **la composición la decide la biblioteca, no el modelo**: los tres hacen casi la misma página.
+2. **Los gráficos son iguales en los tres**, porque los dibuja nuestro runtime (`data-chart`); el modelo solo pone los
+   números, el resaltado y el titular. Mejorar los gráficos es trabajo del renderizador ($0 por uso), no de pagar Opus.
+3. Opus aporta **coherencia de datos y copy**; Sonnet casi no mejora a Haiku por 15× el costo.
+
+**Fallo encontrado y corregido:** la frase «comprueba cada bloque antes de responder» de la lista de gestos activaba el
+razonamiento adaptativo de Haiku 5.5 (no se puede apagar): 0 → 2–8 k tokens de thinking, el doble de tiempo y landings
+cortadas por `max_tokens` (faltaban CTA, footer y pricing). La lista queda como lista simple y `SCREEN_MAX_TOKENS` sube
+de 12 k a 16 k (≈ +$0,002 de reserva por pantalla con Haiku). Gasto de esta comparación ≈ $1,62.
+
 ## 4. Límites honestos
 
 - **Una ejecución por celda**, 2 marcas, 2 pantallas: sin ruido entre ejecuciones ni panel ciego de calidad.

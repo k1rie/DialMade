@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { blockParams, directionParams, screenParams } from "./anthropic";
 import { directionCandidates, defaultPick } from "./direction";
-import { AI_RENDER_SYSTEM_PROMPT, artDirectionText, blockMessage, directionMessage, jsonData, manualBlockPrompt, manualPrompt, screenMessage, type RenderBrandInput, type RenderScreenInput } from "./prompt";
+import { AI_RENDER_SYSTEM_PROMPT, SCREEN_MAX_TOKENS, artDirectionText, blockMessage, directionMessage, jsonData, manualBlockPrompt, manualPrompt, screenMessage, type RenderBrandInput, type RenderScreenInput } from "./prompt";
 
 const brand: RenderBrandInput = {
   name: "Brisa",
@@ -46,7 +46,7 @@ describe("prompt builder (spec §3)", () => {
     expect(content[0]!.cache_control).toEqual({ type: "ephemeral" });
     expect(content[0]!.text).toMatch(/^<art_direction>/);
     expect(content[1]!.cache_control).toBeUndefined();
-    expect(params.max_tokens).toBe(12_000);
+    expect(params.max_tokens).toBe(SCREEN_MAX_TOKENS);
     expect(params.output_config).toEqual({ effort: "low" });
     expect("fallbacks" in params).toBe(false);
   });
