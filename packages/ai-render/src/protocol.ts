@@ -31,6 +31,8 @@ export const ParentMessageSchema = z.discriminatedUnion("type", [
     page: z.boolean().optional(),
     /** Page mode: the screen's page stylesheet (sanitized again in the island). */
     pageCss: z.string().max(32 * 1024).optional(),
+    /** The island fills a slot of the app frame (its sidebar): the block's root is stretched to the island's height. */
+    fill: z.boolean().optional(),
     vars: Vars,
     mode: z.enum(["light", "dark"]),
     fontsHref: FontsHref,

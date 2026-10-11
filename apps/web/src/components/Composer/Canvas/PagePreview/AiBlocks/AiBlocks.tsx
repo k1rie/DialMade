@@ -5,7 +5,16 @@ import { createPortal } from "react-dom";
 import { AiCellBadge, type AiCellBadgeProps } from "./AiCellBadge";
 
 /** A mark of the live generation on one base cell of the page. */
-export type AiCellMark = { id: string; kind: AiCellBadgeProps["kind"]; label: string; busy?: boolean; byok?: boolean; onAction?: () => void };
+export type AiCellMark = {
+  id: string;
+  /** The cell that shows it, when it is not `id`'s own (the app frame's AI pieces show on the frame). */
+  cellId?: string;
+  kind: AiCellBadgeProps["kind"];
+  label: string;
+  busy?: boolean;
+  byok?: boolean;
+  onAction?: () => void;
+};
 
 export type AiBlocksProps = {
   /** The element that holds the rendered page (its cells carry `data-dl-id`). */
@@ -37,7 +46,7 @@ export function AiBlocks({ rootRef, marks }: AiBlocksProps) {
       const next = new Map<string, HTMLElement>();
       if (root) {
         for (const mark of marks) {
-          const cell = root.querySelector<HTMLElement>(`[data-dl-id="${CSS.escape(mark.id)}"]`);
+          const cell = root.querySelector<HTMLElement>(`[data-dl-id="${CSS.escape(mark.cellId ?? mark.id)}"]`);
           if (cell) next.set(mark.id, cell);
         }
       }

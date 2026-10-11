@@ -1,5 +1,6 @@
 "use client";
 
+import { AI_SHELL_ELEMENT_ID, chromeLabel, chromePieces } from "@dialmade/ai-render";
 import type { DesignDoc } from "@dialmade/doc";
 import { VARIANT_PROP } from "@dialmade/sections";
 import { motion } from "motion/react";
@@ -94,12 +95,18 @@ export function SelectionToolbar({
 
   const { page, screen } = target;
   const info = sectionInfo(page, id, locale, screen);
-  // «Diseño con IA»: the stored AI block of this layout block, and what the canvas shows of it.
+  // «Diseño con IA»: the stored AI block of this layout block, and what the canvas shows of it. On the app frame it is
+  // the AI piece the user clicked last (its sidebar or its top bar), or its first designed one.
   const screenId = screen?.id ?? null;
-  const aiBlock = screenId ? aiBlockOf(doc, screenId, id) : undefined;
+  const aiTarget = useAiView((state) => state.target);
+  const framePieces = screen && id === AI_SHELL_ELEMENT_ID ? chromePieces(screen).filter((piece) => screen.aiRender?.blocks[piece.id]) : [];
+  const framePiece = framePieces.find((piece) => aiTarget?.screenId === screenId && aiTarget.blockId === piece.id) ?? framePieces[0];
+  const aiId = framePiece?.id ?? id;
+  const aiLabel = framePiece ? chromeLabel(framePiece.type, locale) : info.label;
+  const aiBlock = screenId ? aiBlockOf(doc, screenId, aiId) : undefined;
   const aiActive = aiBlock?.active === true;
-  const aiView: AiView = useAiView((state) => (screenId && showsAi(state, screenId, id) ? "ai" : "base"));
-  const aiRunning = blockActions.running?.blockId === id && blockActions.running.screenId === screenId;
+  const aiView: AiView = useAiView((state) => (screenId && showsAi(state, screenId, aiId) ? "ai" : "base"));
+  const aiRunning = blockActions.running?.blockId === aiId && blockActions.running.screenId === screenId;
   // On a screen the layout decides the order (it changes in «Editar layout»), and only blocks hide.
   const movable = !screen;
   const hideable = canHide(target, id);
@@ -175,13 +182,13 @@ export function SelectionToolbar({
             <Popover
               open={aiOpen}
               onOpenChange={setAiOpen}
-              label={t.aiBlock.openLabel(info.label)}
+              label={t.aiBlock.openLabel(aiLabel)}
               align="start"
               className="max-h-[min(72vh,38rem)] w-80 overflow-y-auto"
               trigger={(triggerProps) => (
                 <IconButton
                   size="sm"
-                  label={t.aiBlock.openLabel(info.label)}
+                  label={t.aiBlock.openLabel(aiLabel)}
                   icon={<SparklesIcon />}
                   loading={aiRunning}
                   className={cn("text-accent hover:text-fg", aiOpen && "bg-white/[0.08] text-fg")}
@@ -189,14 +196,14 @@ export function SelectionToolbar({
                 />
               )}
             >
-              <AiBlockCard doc={doc} screenId={screenId} blockId={id} label={info.label} blockActions={blockActions} onUseBase={() => setAiOpen(false)} />
+              <AiBlockCard doc={doc} screenId={screenId} blockId={aiId} label={aiLabel} blockActions={blockActions} onUseBase={() => setAiOpen(false)} />
             </Popover>
             <Segmented<AiView>
               label={t.aiBlock.compare.label}
-              layoutId={`ai-compare-${id}`}
+              layoutId={`ai-compare-${aiId}`}
               size="sm"
               value={aiView}
-              onChange={(view) => setBlockView(screenId, id, view)}
+              onChange={(view) => setBlockView(screenId, aiId, view)}
               options={[
                 { value: "base", label: t.aiBlock.compare.base },
                 { value: "ai", label: t.aiBlock.compare.ai },
@@ -243,7 +250,7 @@ export function SelectionToolbar({
                 label={t.aiBlock.useAi}
                 icon={<SparklesIcon />}
                 className="text-accent hover:text-fg"
-                onClick={() => blockActions.setActive(screenId, id, info.label, true)}
+                onClick={() => blockActions.setActive(screenId, aiId, aiLabel, true)}
               />
             )}
           </>

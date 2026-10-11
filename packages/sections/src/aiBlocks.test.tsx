@@ -37,6 +37,21 @@ describe("AI blocks in the renderer", () => {
     expect(frame).not.toContain("inert");
   });
 
+  it("the app frame paints its AI sidebar and top bar in their slots and keeps its widgets", () => {
+    const app = buildDefaultPage("app", contentContextFromDoc(doc));
+    const plain = renderStaticPage(doc, "app", vars, { page: app });
+    const html = renderStaticPage(doc, "app", vars, {
+      page: app,
+      aiChrome: { "shell-nav": '<aside data-block-id="shell-nav">AI nav</aside>', "shell-bar": '<header data-block-id="shell-bar">AI bar</header>' },
+    });
+    expect(plain).toContain("dl-app-shell__sidebar-inner");
+    expect(html).toContain('<div class="dl-app-shell__ai-side" data-dl-ai-chrome="shell-nav"><div data-dl-ai-block=""><aside data-block-id="shell-nav">AI nav</aside>');
+    expect(html).toContain('<div class="dl-app-shell__ai-bar" data-dl-ai-chrome="shell-bar"><div data-dl-ai-block=""><header data-block-id="shell-bar">AI bar</header>');
+    expect(html).not.toContain("dl-app-shell__sidebar-inner");
+    expect(html).not.toMatch(/class="dl-app-shell__topbar[ "]/);
+    expect(html).toContain("dl-app-shell__content");
+  });
+
   it("an underlay is painted first inside a container's frame", () => {
     const html = renderStaticPage(doc, "landing", vars, { page, registry: testRegistry, aiSurfaces: { [second!]: "bg-card rounded-card" } });
     expect(html).toMatch(new RegExp(`data-dl-id="${second}"[^>]*><div data-dl-ai-surface="" aria-hidden="true" class="bg-card rounded-card"></div>`));

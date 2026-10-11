@@ -65,7 +65,9 @@ function render(message: Extract<ParentMessage, { type: "render" }>) {
   // Page mode: the host is where the page stylesheet's scope (`[data-dl-ai-block]`) starts; its CSS is cleaned again.
   if (message.page) host.setAttribute("data-dl-ai-block", "");
   else host.removeAttribute("data-dl-ai-block");
-  style.textContent = message.page ? `${message.css}${PAGE_BASE_CSS}${sanitizeCss(message.pageCss ?? "", { kind: "page" }).css}` : message.css;
+  const css = message.page ? `${message.css}${PAGE_BASE_CSS}${sanitizeCss(message.pageCss ?? "", { kind: "page" }).css}` : message.css;
+  // A slot of the app frame (its sidebar): the island has the slot's height and the block's root fills it.
+  style.textContent = message.fill ? `${css}html,body{height:100%}#dl-island{box-sizing:border-box;height:100%}#dl-island>*{box-sizing:border-box;min-height:100%}` : css;
   insertBlock(host, message.html, { page: message.page === true });
   if (editable) for (const element of host.querySelectorAll<HTMLElement>(FOCUSABLE)) element.tabIndex = -1;
   const again = resume ? texts().find((node) => node.getAttribute("data-dl-t") === resume.t) : undefined;

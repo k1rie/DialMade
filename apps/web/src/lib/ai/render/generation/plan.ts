@@ -2,7 +2,7 @@
 // session), what each screen request carries, and which kit pieces (navbar, footer) are generated once and cloned.
 // Pure: the store, the cost line and the tests share it.
 import { aiDraftOf, aiScreenInputOptions, aiScreenMode } from "../edit";
-import { KIT_TYPES, brandInput, renderableBlocks, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
+import { KIT_TYPES, aiPieceIds, brandInput, chromeLabel, chromePieceOf, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
 import { sameAiContext, type AiContext, type AiDirection, type AiDirectionChip, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../../config";
 import { MAX_RENDER_BLOCKS } from "../api";
@@ -110,7 +110,8 @@ export function planKit(doc: DesignDoc, screenIds: readonly string[], inputs: Re
     const screen = doc.screens[screenId];
     if (!screen || inRun.has(screenId)) continue;
     for (const [blockId, block] of Object.entries(screen.aiRender?.blocks ?? {})) {
-      const layoutBlock = screen.layout.blocks[blockId];
+      const piece = chromePieceOf(screen, blockId);
+      const layoutBlock = piece ? { type: piece.type, label: chromeLabel(piece.type, doc.brief.locale) } : screen.layout.blocks[blockId];
       // A page-mode navbar or footer leans on its page's stylesheet: it is never a kit piece for another screen.
       if (!layoutBlock || !KIT_TYPES.has(layoutBlock.type) || !block.active || !block.html || block.mode === "page" || block.provenance.directionId !== directionId) continue;
       const key = kitKey(layoutBlock);
@@ -144,5 +145,5 @@ export function planKit(doc: DesignDoc, screenIds: readonly string[], inputs: Re
 /** Ids of the renderable blocks of a screen (for counts before calling). */
 export const blockCount = (doc: DesignDoc, screenId: string): number => {
   const screen = doc.screens[screenId];
-  return screen ? renderableBlocks(screen).length : 0;
+  return screen ? aiPieceIds(screen).length : 0;
 };

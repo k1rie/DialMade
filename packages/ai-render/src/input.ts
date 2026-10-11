@@ -5,12 +5,13 @@ import { getProductType, getStyleRecipe } from "@dialmade/catalog";
 import type { DesignDoc, Screen } from "@dialmade/doc";
 import { ROW_UNIT, absorbChildren, inferStructure } from "@dialmade/layout";
 import { hexToOklch } from "@dialmade/palette";
+import { chromeBlockInput, chromePieces, AI_SHELL_ELEMENT_ID, CHROME_TYPES } from "./chrome";
 import type { PageSectionData, RenderBlockInput, RenderBrandInput, RenderScreenInput } from "./prompt";
 
 /** Block types whose children are other blocks: they only get a surface in the MVP (spec §1 [C15]). */
 export const CONTAINER_TYPES: ReadonlySet<string> = new Set(["container", "modal"]);
-/** Block types shared between screens (generated once, cloned: spec §4.3). */
-export const KIT_TYPES: ReadonlySet<string> = new Set(["navbar", "footer"]);
+/** Block types shared between screens (generated once, cloned: spec §4.3), the app frame's pieces (./chrome) included. */
+export const KIT_TYPES: ReadonlySet<string> = new Set(["navbar", "footer", ...CHROME_TYPES]);
 
 const MAX_DRAFT_TEXTS = 40;
 const MAX_DRAFT_LENGTH = 200;
@@ -89,6 +90,8 @@ export type ScreenInputOptions = {
   mode?: "page";
   /** Page mode: the visible props of a block's element (`visibleProps`), read for `pageSectionData`. */
   propsOf?: (blockId: string) => unknown;
+  /** The frame's visible props (`visibleProps` of the `shell` element) for its AI pieces; its stored props otherwise. */
+  shellProps?: unknown;
   /** Block ids that are not sent (already designed: kit pieces cloned from another screen). */
   skip?: ReadonlySet<string>;
   /** Only these block ids (a retry of some blocks). */
@@ -100,6 +103,11 @@ export function renderableBlocks(screen: Pick<Screen, "layout" | "page">): strin
   const { layout } = absorbChildren(screen.layout);
   const order = inferStructure(layout).order;
   return order.filter((id) => Object.hasOwn(screen.page.elements, id) && !layout.blocks[id]?.hidden);
+}
+
+/** Everything «Diseño con IA» designs on a screen, in reading order: the frame's pieces (./chrome), then the blocks. */
+export function aiPieceIds(screen: Pick<Screen, "kind" | "shell" | "layout" | "page">): string[] {
+  return [...chromePieces(screen).map((piece) => piece.id), ...renderableBlocks(screen)];
 }
 
 /** The block that may hold the screen's h1 (gate 6): a landing's hero, else its first non-navigation block. */
@@ -145,8 +153,13 @@ export function screenInput(doc: DesignDoc, screenId: string, options: ScreenInp
   if (!screen) throw new TypeError(`Unknown screen ${screenId}`);
   const ids = renderableBlocks(screen);
   const h1 = h1BlockOf(screen, ids);
+  const wanted = (id: string) => !options.skip?.has(id) && (!options.only || options.only.has(id));
+  const screenIds = new Set(doc.screenOrder);
+  const chrome = chromePieces(screen)
+    .filter((piece) => wanted(piece.id))
+    .map((piece) => chromeBlockInput(piece, options.shellProps ?? screen.page.elements[AI_SHELL_ELEMENT_ID]?.props, { locale: doc.brief.locale, screenIds, brandName: doc.brand.name }));
   const blocks = ids
-    .filter((id) => !options.skip?.has(id) && (!options.only || options.only.has(id)))
+    .filter(wanted)
     .map((id) =>
       options.mode === "page"
         ? blockInput(screen, id, [], id === h1, options.propsOf ? pageSectionData(options.propsOf(id)) : undefined)
@@ -159,7 +172,7 @@ export function screenInput(doc: DesignDoc, screenId: string, options: ScreenInp
     route: screen.route,
     locale: doc.brief.locale,
     screens: doc.screenOrder.filter((other) => other !== screen.id && doc.screens[other]).map((other) => ({ id: other, name: doc.screens[other]!.name })),
-    blocks,
+    blocks: [...chrome, ...blocks],
     ...(options.mode === "page" && { mode: "page" as const }),
   };
 }

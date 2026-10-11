@@ -40,6 +40,8 @@ export interface RenderStaticPageOptions {
   aiBlocks?: Readonly<Record<string, string>>;
   /** «Diseño con IA»: container id → the class list of the surface painted under its children. */
   aiSurfaces?: Readonly<Record<string, string>>;
+  /** «Diseño con IA»: the app frame's AI pieces (`shell-nav`, `shell-bar`) → their sanitized HTML. */
+  aiChrome?: Readonly<Record<string, string>>;
 }
 
 const escapeHtml = (value: string) =>
@@ -118,6 +120,9 @@ export function renderStaticPage(
   const underlay = options.aiSurfaces
     ? new Map(Object.entries(options.aiSurfaces).map(([id, classes]) => [id, createElement("div", { "data-dl-ai-surface": "", "aria-hidden": "true", className: classes })]))
     : undefined;
+  const chrome = options.aiChrome
+    ? new Map(Object.entries(options.aiChrome).map(([id, html]) => [id, createElement("div", { "data-dl-ai-block": "", dangerouslySetInnerHTML: { __html: html } })]))
+    : undefined;
   const base: PageRendererProps & { page: Page } = {
     doc,
     kind,
@@ -131,6 +136,7 @@ export function renderStaticPage(
     ...(options.links && { links: options.links }),
     ...(replace && { replace }),
     ...(underlay && { underlay }),
+    ...(chrome && { chrome }),
   };
   const exclude = failingElements(base, options.onSectionError);
   const body = renderToStaticMarkup(

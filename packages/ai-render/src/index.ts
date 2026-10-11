@@ -34,8 +34,24 @@ export {
   type StructureVerdict,
 } from "./gates";
 export {
+  AI_SHELL_BAR_ID,
+  AI_SHELL_ELEMENT_ID,
+  AI_SHELL_NAV_ID,
+  CHROME_TYPES,
+  chromeBlockInput,
+  chromeLabel,
+  chromePieceOf,
+  chromePieces,
+  chromePiecesFor,
+  isChromeId,
+  isChromeType,
+  type AiChromePiece,
+  type ChromeType,
+} from "./chrome";
+export {
   CONTAINER_TYPES,
   KIT_TYPES,
+  aiPieceIds,
   blockInput,
   brandInput,
   draftTexts,

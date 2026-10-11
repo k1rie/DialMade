@@ -3,6 +3,7 @@
 import { Button } from "@dialmade/ui";
 import { screenLinkProps } from "../../context";
 import { EditInert } from "../../PageRenderer/EditInert";
+import { useAiChrome } from "../../PageRenderer/aiChrome";
 import type { SectionComponentProps } from "../../types";
 import { appStrings } from "../content";
 import type { ShellProps, ShellVariant } from "./schema";
@@ -24,11 +25,18 @@ export function Shell({ variant, ctx, elementId, children, ...props }: SectionCo
   const buttonSize = props.density === "compact" ? "sm" : "md";
   // Nav items whose id is a screen (Layout mode) link to it; the rest keep their in-page anchor.
   const itemLink = (id: string) => screenLinkProps(ctx, id, `#${id}`);
+  // «Diseño con IA»: the AI sidebar and top bar take the base ones' slots (not inert: an island takes its own clicks).
+  const aiNav = useAiChrome("shell-nav");
+  const aiBar = useAiChrome("shell-bar");
 
   return (
     <div className="dl-app-shell" data-mode={ctx.mode}>
-      <div className="dl-app-shell__frame" data-variant={layout} data-tone={props.tone} data-density={props.density}>
-        {layout === "topnav" ? null : (
+      <div className="dl-app-shell__frame" data-variant={layout} data-tone={props.tone} data-density={props.density} data-ai-nav={aiNav !== undefined && layout !== "topnav" ? "" : undefined}>
+        {layout === "topnav" ? null : aiNav !== undefined ? (
+          <div className="dl-app-shell__ai-side" data-dl-ai-chrome="shell-nav">
+            {aiNav}
+          </div>
+        ) : (
           <EditInert ctx={ctx}>
             <ShellSidebar
               brandName={props.brandName}
@@ -43,20 +51,26 @@ export function Shell({ variant, ctx, elementId, children, ...props }: SectionCo
           </EditInert>
         )}
         <div className="dl-app-shell__main">
-          <EditInert ctx={ctx}>
-            <ShellTopbar
-              variant={layout}
-              brandName={props.brandName}
-              nav={props.nav}
-              activeId={props.activeId}
-              user={props.user}
-              searchPlaceholder={props.searchPlaceholder}
-              showSearch={props.showSearch}
-              strings={strings}
-              itemLink={itemLink}
-              {...logo}
-            />
-          </EditInert>
+          {aiBar !== undefined ? (
+            <div className="dl-app-shell__ai-bar" data-dl-ai-chrome="shell-bar">
+              {aiBar}
+            </div>
+          ) : (
+            <EditInert ctx={ctx}>
+              <ShellTopbar
+                variant={layout}
+                brandName={props.brandName}
+                nav={props.nav}
+                activeId={props.activeId}
+                user={props.user}
+                searchPlaceholder={props.searchPlaceholder}
+                showSearch={props.showSearch}
+                strings={strings}
+                itemLink={itemLink}
+                {...logo}
+              />
+            </EditInert>
+          )}
           <section
             className="dl-app-shell__page"
             {...(props.showPageHeader ? { "aria-labelledby": titleId } : { "aria-label": props.title || props.brandName })}

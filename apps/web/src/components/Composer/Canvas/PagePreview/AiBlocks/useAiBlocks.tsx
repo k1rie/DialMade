@@ -1,5 +1,6 @@
 "use client";
 
+import { AI_SHELL_ELEMENT_ID, AI_SHELL_NAV_ID, chromeLabel, chromePieceOf } from "@dialmade/ai-render";
 import type { DesignDoc, Screen } from "@dialmade/doc";
 import { useCallback, useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -38,11 +39,13 @@ export type AiBlockLayers = {
   replace: ReadonlyMap<string, ReactNode> | undefined;
   /** Container id → its AI surface (PageRenderer `underlay`). */
   underlay: ReadonlyMap<string, ReactNode> | undefined;
+  /** The app frame's AI pieces (`shell-nav`, `shell-bar`) → their islands (PageRenderer `chrome`). */
+  chrome: ReadonlyMap<string, ReactNode> | undefined;
   /** Badges on base cells: designing, failed, back on the base design. */
   marks: readonly AiCellMark[];
 };
 
-const NONE: AiBlockLayers = { replace: undefined, underlay: undefined, marks: [] };
+const NONE: AiBlockLayers = { replace: undefined, underlay: undefined, chrome: undefined, marks: [] };
 const RUNNING = new Set(["session", "direction", "screens"]);
 
 /**
@@ -124,15 +127,23 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
     const vars = derived?.vars[mode] ?? {};
     const fontsHref = derived?.fontsUrl?.startsWith("https://fonts.googleapis.com/") ? derived.fontsUrl : null;
     const lang = doc.brief.locale;
-    const labelOf = (id: string) => screen.layout.blocks[id]?.label ?? id;
+    const labelOf = (id: string) => {
+      const piece = chromePieceOf(screen, id);
+      return piece ? chromeLabel(piece.type, lang) : (screen.layout.blocks[id]?.label ?? id);
+    };
+    // The app frame's pieces have no cell of their own: their marks show on the frame (one at a time).
+    const cellOf = (id: string) => (chromePieceOf(screen, id) ? { cellId: AI_SHELL_ELEMENT_ID } : {});
+    const onFrame = (id: string) => chromePieceOf(screen, id) !== undefined && marks.some((mark) => mark.cellId === AI_SHELL_ELEMENT_ID);
     const replace = new Map<string, ReactNode>();
     const underlay = new Map<string, ReactNode>();
+    const chrome = new Map<string, ReactNode>();
     const marks: AiCellMark[] = [];
 
     for (const [id, block] of Object.entries(blocks ?? {})) {
-      if (!screen.page.elements[id]) continue;
+      const piece = chromePieceOf(screen, id);
+      if (!piece && !screen.page.elements[id]) continue;
       if (!block.active) {
-        if (editable) marks.push({ id, kind: "inactive", label: labelOf(id), onAction: () => setActive(id, labelOf(id), true) });
+        if (editable && !onFrame(id)) marks.push({ id, ...cellOf(id), kind: "inactive", label: labelOf(id), onAction: () => setActive(id, labelOf(id), true) });
         continue;
       }
       // «Base» in the comparator: the base section paints, nothing else changes.
@@ -143,6 +154,35 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
         underlay.set(
           id,
           <AiSurfaceIsland key={id} blockId={id} surfaceClasses={block.surfaceClasses} css={css.css} vars={vars} mode={mode} fontsHref={fontsHref} lang={lang} title={t.island(labelOf(id))} />,
+        );
+        continue;
+      }
+      if (piece) {
+        // The app frame's sidebar and top bar: they paint in its slots; a click selects the frame.
+        if (!block.html || !css || !css.covers(classTokens(block.html))) continue;
+        chrome.set(
+          id,
+          <AiBlockIsland
+            key={id}
+            blockId={id}
+            label={labelOf(id)}
+            html={block.html}
+            css={css.css}
+            {...(piece.id === AI_SHELL_NAV_ID && { fill: true })}
+            vars={vars}
+            mode={mode}
+            fontsHref={fontsHref}
+            lang={lang}
+            editable={editable}
+            selected={false}
+            pending={pending}
+            onSelect={() => onSelect(AI_SHELL_ELEMENT_ID)}
+            onSelectText={editable ? (t, text) => handlers.onSelect(id, t, text) : undefined}
+            onNavigate={onNavigate}
+            onTextEdit={editable ? (t, text) => textEdit(id, t, text) : undefined}
+            onUseBase={() => setActive(id, labelOf(id), false)}
+            edit={editable && view.editRequest?.screenId === screenId && view.editRequest.blockId === id ? { n: view.editRequest.n, t: view.editRequest.t } : null}
+          />,
         );
         continue;
       }
@@ -178,12 +218,13 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
 
     // The live run on the base cells.
     for (const [id, state] of Object.entries(run?.blocks ?? {})) {
-      if (replace.has(id) || !screen.page.elements[id] || !editable) continue;
+      const piece = chromePieceOf(screen, id);
+      if (replace.has(id) || chrome.has(id) || (!piece && !screen.page.elements[id]) || !editable || onFrame(id)) continue;
       if (blocks?.[id] && !blocks[id]!.active) continue;
-      if (running && (state.phase === "waiting" || state.phase === "processing")) marks.push({ id, kind: "designing", label: labelOf(id) });
-      else if (state.phase === "failed") marks.push({ id, kind: "failed", label: labelOf(id), busy: state.retrying === true, byok, onAction: () => void retry(id) });
+      if (running && (state.phase === "waiting" || state.phase === "processing")) marks.push({ id, ...cellOf(id), kind: "designing", label: labelOf(id) });
+      else if (state.phase === "failed") marks.push({ id, ...cellOf(id), kind: "failed", label: labelOf(id), busy: state.retrying === true, byok, onAction: () => void retry(id) });
     }
 
-    return { replace: replace.size > 0 ? replace : undefined, underlay: underlay.size > 0 ? underlay : undefined, marks };
+    return { replace: replace.size > 0 ? replace : undefined, underlay: underlay.size > 0 ? underlay : undefined, chrome: chrome.size > 0 ? chrome : undefined, marks };
   }, [available, screen, screenId, derived, mode, doc.brief.locale, blocks, css, editable, selectedId, running, run, onSelect, onNavigate, textEdit, handlers, view, writeVerdict, t, setActive, retry, byok]);
 }

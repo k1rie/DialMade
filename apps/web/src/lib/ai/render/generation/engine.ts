@@ -32,7 +32,7 @@ import {
   type RenderScreenInput,
   type ThemeColors,
 } from "@dialmade/ai-render";
-import { normalizeAiContext, type AiBlock, type AiDirection, type DesignDoc } from "@dialmade/doc";
+import { MAX_AI_BLOCK_BYTES, normalizeAiContext, type AiBlock, type AiDirection, type DesignDoc } from "@dialmade/doc";
 import type { StoreApi } from "zustand/vanilla";
 import { deriveDesign } from "@/lib/design-derived";
 import type { RenderApiError, RenderErrorCode, RenderSessionCounters } from "../api";
@@ -488,16 +488,20 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const input = target ? inputOf(target, screenId, blockId) : undefined;
     if (!target || !full || !input || !block || block.phase !== "failed" || block.retrying) return;
     setBlock(target.id, screenId, blockId, { retrying: true });
-    const { id, name, kind, route, locale, screens } = requestScreen(full);
-    const screen = { id, name, kind, route, locale, screens };
-    const html = deps.getDoc()?.screens[screenId]?.aiRender?.blocks[blockId]?.html ?? "";
+    const { id, name, kind, route, locale, screens, mode } = requestScreen(full);
+    // A section of a page is asked again as a section of that page (its stylesheet travels), like «Otra versión».
+    const page = mode === "page";
+    const stored = deps.getDoc()?.screens[screenId]?.aiRender;
+    const screen = { id, name, kind, route, locale, screens, ...(page && { mode: "page" as const }) };
+    const html = stored?.blocks[blockId]?.html ?? "";
     const answer = await target.transport.block({
       sessionId: target.sessionId,
       brand: target.brand,
       direction: forPrompt(target.direction),
       screen,
       block: input,
-      html: html.slice(0, 16 * 1024),
+      html: html.slice(0, MAX_AI_BLOCK_BYTES),
+      ...(page && { pageCss: stored?.pageCss ?? "" }),
       action: { kind: "reroll", seed: seed() },
     });
     deps.onCounters?.(answer.ok ? answer.value : answer.error);

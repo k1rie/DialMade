@@ -24,6 +24,23 @@ function doc4(): DesignDoc {
   return result.doc;
 }
 
+/** A landing and three app screens with a sidebar (dashboard, settings, list). */
+function appDoc(): DesignDoc {
+  let n = 0;
+  const newId = () => `b-${(++n).toString(36).padStart(4, "0")}`;
+  const screen = (id: string, route: string, templateId: ScreenTemplateId): GeneratedScreenInput => {
+    const template = getScreenTemplate(templateId);
+    const { layout, shell } = instantiateTemplate(template, { label: (type) => type, newId });
+    return { screenId: id, name: id, kind: template.kind ?? "landing", route, shell, layout };
+  };
+  const result = withGeneratedScreens(
+    createDesignDoc({ brand: { name: "Brisa", seeds: { primary: "#0f766e" } }, brief: { productType: "saas-general", locale: "es" }, provenance: { createdAt: "2026-10-10T09:00:00.000Z" } }),
+    [screen("s-home", "/", "home"), screen("s-dash", "/app", "dashboard"), screen("s-set", "/ajustes", "settings"), screen("s-list", "/lista", "list")],
+  );
+  if (!result.ok) throw new Error(result.error.message);
+  return result.doc;
+}
+
 const aiBlock = (html: string, directionId = "d-1"): AiBlock => ({
   html,
   active: true,
@@ -211,5 +228,37 @@ describe("directionReusable", () => {
 
   it("new reference screenshots always ask for a new one", () => {
     expect(directionReusable(direction, "editorial", "Editorial y sobrio", 1, direction.context)).toBe(false);
+  });
+});
+
+describe("the app frame's navigation («Diseño con IA»)", () => {
+  it("every app screen asks for its sidebar and top bar first; one is designed and the others clone it", () => {
+    const doc = appDoc();
+    const ids = ["s-dash", "s-set", "s-list"];
+    const inputs = new Map(ids.map((id) => [id, screenBlocks(doc, id)]));
+    for (const id of ids) expect(inputs.get(id)!.blocks.slice(0, 2).map((block) => [block.id, block.type])).toEqual([["shell-nav", "app-sidebar"], ["shell-bar", "app-topbar"]]);
+    // What the routes accept: the pieces (with their nav items) pass the request schema.
+    for (const block of inputs.get("s-dash")!.blocks) expect(RenderBlockSchema.safeParse(block).success, block.id).toBe(true);
+    expect(inputs.get("s-dash")!.blocks[0]!.nav?.items.length).toBeGreaterThan(0);
+    expect(screenBlocks(doc, "s-home").blocks.some((block) => block.id.startsWith("shell-"))).toBe(false);
+    const plan = planKit(doc, ids, inputs, "d-1");
+    expect(plan.skip.get("s-dash")).toBeUndefined();
+    expect([...plan.skip.get("s-set")!].sort()).toEqual(["shell-bar", "shell-nav"]);
+    expect(plan.clones).toContainEqual({ from: { screenId: "s-dash", blockId: "shell-nav" }, to: { screenId: "s-list", blockId: "shell-nav" } });
+  });
+
+  it("is stored for the frame of an app screen, never on a landing, and a designed one is reused by the next run", () => {
+    let doc = appDoc();
+    const nav = aiBlock('<aside data-block-id="shell-nav" class="@container"></aside>');
+    expect(aiBlockOps(doc, "s-home", "shell-nav", nav)).toBeNull();
+    const result = applyPatch(doc, aiBlockOps(doc, "s-dash", "shell-nav", nav)!);
+    if (!result.ok) throw new Error(result.error.message);
+    doc = result.doc;
+    const ids = ["s-set", "s-list"];
+    const plan = planKit(doc, ids, new Map(ids.map((id) => [id, screenBlocks(doc, id)])), "d-1");
+    expect(plan.existing).toEqual([
+      { from: { screenId: "s-dash", blockId: "shell-nav" }, to: { screenId: "s-set", blockId: "shell-nav" } },
+      { from: { screenId: "s-dash", blockId: "shell-nav" }, to: { screenId: "s-list", blockId: "shell-nav" } },
+    ]);
   });
 });

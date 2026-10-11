@@ -64,6 +64,14 @@ export const RenderBlockSchema = z.strictObject({
       recurring: z.boolean().optional(),
     })
     .optional(),
+  /** The app frame's pieces (@dialmade/ai-render `chromeBlockInput`): the nav items with the href each one keeps. */
+  nav: z
+    .strictObject({
+      items: z
+        .array(z.strictObject({ label: Line(120), href: z.string().regex(/^#(?:screen:[A-Za-z0-9_-]{1,64})?$/), current: z.literal(true).optional() }))
+        .max(12),
+    })
+    .optional(),
 });
 
 export const RenderScreenSchema = z.strictObject({

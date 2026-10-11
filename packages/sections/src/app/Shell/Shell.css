@@ -709,8 +709,50 @@
   }
 }
 
+/* «Diseño con IA»: an AI sidebar keeps its width on tablets (it is not the base icon column) and hides on phones,
+   where the AI top bar carries the menu and the brand. */
+@container dl-app-shell (min-width: 48rem) and (max-width: 63.99rem) {
+  .dl-app-shell__frame[data-ai-nav]:is([data-variant="sidebar"], [data-variant="inset"]) {
+    --_side-w: var(--dl-sidebar-w, 256px);
+  }
+}
+
+@container dl-app-shell (max-width: 47.99rem) {
+  .dl-app-shell__frame .dl-app-shell__ai-side {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dl-app-shell__switcher {
     transition: none;
   }
+}
+
+/* «Diseño con IA»: the frame's AI pieces in the slots of the base sidebar and top bar. The sidebar keeps the column
+   and its full height; the AI root fills it (static HTML; the preview island stretches itself). */
+.dl-app-shell__ai-side {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-width: 0;
+  height: 100vh;
+}
+
+.dl-app-shell__ai-side > [data-dl-ai-block],
+.dl-app-shell__ai-side > [data-dl-ai-block] > * {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.dl-app-shell__ai-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-width: 0;
+}
+
+.dl-app-shell__ai-bar > [data-dl-ai-block] > * {
+  box-sizing: border-box;
+  min-height: var(--dl-nav-h, 60px);
 }

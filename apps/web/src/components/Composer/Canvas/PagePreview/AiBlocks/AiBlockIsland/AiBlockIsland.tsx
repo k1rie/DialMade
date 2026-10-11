@@ -22,6 +22,8 @@ export type AiBlockIslandProps = {
   /** Page mode: a section of the screen's page, styled by the page stylesheet. */
   page?: boolean;
   pageCss?: string;
+  /** The app frame's sidebar slot: the island takes the slot's full height. */
+  fill?: boolean;
   vars: Readonly<Record<string, string>>;
   mode: "light" | "dark";
   fontsHref: string | null;
@@ -55,7 +57,7 @@ export type AiBlockIslandProps = {
 const NO_WIDTHS: CellWidths = {};
 const ignore = () => {};
 
-export function AiBlockIsland({ blockId, label, html, css, page, pageCss, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onSelectText, widths, onVerdict, onNavigate, onTextEdit, onUseBase, edit }: AiBlockIslandProps) {
+export function AiBlockIsland({ blockId, label, html, css, page, pageCss, fill, vars, mode, fontsHref, lang, editable, selected, pending, onSelect, onSelectText, widths, onVerdict, onNavigate, onTextEdit, onUseBase, edit }: AiBlockIslandProps) {
   const root = useRef<HTMLDivElement>(null);
   const t = useDictionary(aiText).aiRender.block;
   const onMeasure = useResponsiveGate(widths ?? NO_WIDTHS, undefined, onVerdict ?? ignore);
@@ -66,7 +68,7 @@ export function AiBlockIsland({ blockId, label, html, css, page, pageCss, vars, 
     <motion.div
       ref={root}
       data-dl-ai-island=""
-      className="group/ai relative min-h-0 flex-1"
+      className={cn("group/ai relative min-h-0 flex-1", fill && "h-full")}
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={tween(0.32)}
@@ -76,6 +78,7 @@ export function AiBlockIsland({ blockId, label, html, css, page, pageCss, vars, 
         html={html}
         css={css}
         {...(page && { page: true, pageCss: pageCss ?? "" })}
+        {...(fill && { fill: true })}
         vars={vars}
         mode={mode}
         fontsHref={fontsHref}

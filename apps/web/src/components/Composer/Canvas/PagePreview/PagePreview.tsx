@@ -81,6 +81,7 @@ export const PagePreview = memo(function PagePreview({ doc, target, mode, select
           {...(screen && layoutCss !== undefined && { layoutCss, linkHref, ...(links && { links }) })}
           {...(ai.replace && { replace: ai.replace })}
           {...(ai.underlay && { underlay: ai.underlay })}
+          {...(ai.chrome && { chrome: ai.chrome })}
         />
       </div>
       <AiBlocks rootRef={pageRef} marks={ai.marks} />

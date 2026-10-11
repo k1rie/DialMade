@@ -11,7 +11,7 @@ import { PLACEHOLDER_KINDS } from "./sanitize";
 import { tierSettings, type AiRenderTier } from "./tier";
 import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES } from "./vocabulary";
 
-export const AI_RENDER_PROMPT_VERSION = "ai-render/5";
+export const AI_RENDER_PROMPT_VERSION = "ai-render/6";
 
 /** Output caps (spec §2.1 and §5): one screen, one block action, the direction. */
 // 16k: Haiku 5.5 cannot turn adaptive thinking off, and a 7-block landing needs ≈ 7–10k of HTML.
@@ -30,6 +30,7 @@ export const AI_RENDER_SYSTEM_PROMPT = `You are the visual designer inside Dialm
 - The root fills its box: never set a width, margin or position on it. The box already sits in the grid; your root only paints inside it.
 - Blocks answer to the width of THEIR box, not the screen: use container-query variants (@sm: @md: @lg: @xl: @2xl: @3xl: @4xl: @5xl:) for responsive changes. Mobile-first: the unprefixed classes are for the narrowest box. Viewport variants (sm: md: lg:) and dark: do not exist here.
 - "cols" (of 12) and "heightPx" say how big the box is on a desktop: a 4-column card is narrow, design it as a narrow card; on app screens respect the height.
+- App navigation pieces are the frame every app screen shares (they never hold an h1 and never repeat the page title): "app-sidebar" (root aside or nav) is the column on the left, stretched to the full height for you (never set its height): the brand on top, the "nav" items as a vertical list, the user at the bottom; "app-rail" is the same as a narrow column of icons (each link keeps its label as aria-label); "app-topbar" (root header) is the bar above the content of a screen that has a sidebar: search when the draft has a search placeholder, then the user; "app-topnav" (root header) is one bar with the brand, the "nav" items in a row, search and the user. Both bars are one row with min-h-16 and their items centered (never h-full: the bar sizes itself). On phones the sidebar is hidden and the bar is the only navigation: below @2xl it starts with a menu button (an icon button with aria-label) and the brand, and the search field and the "nav" items hide (@2xl:flex) behind icon buttons. Every "nav" item is an <a> with exactly its "href"; the one with "current": true carries aria-current="page" and looks selected.
 - A block marked "container": true only gets a surface: answer <div data-block-id="ID" class="@container ..."></div> with ONLY background, border, radius, shadow and padding classes and NOTHING inside (its children are other blocks in their own boxes).
 
 # Styling: Tailwind v4 classes that name the brand's tokens, nothing else
@@ -110,6 +111,8 @@ export type RenderBlockInput = {
   draft: string[];
   /** Page mode: fixed values the section must use as given (plan names and prices). */
   data?: PageSectionData;
+  /** App navigation pieces (./chrome): the items in order, each with the href it must keep, and the current one. */
+  nav?: { items: { label: string; href: string; current?: true }[] };
 };
 
 /** Fixed values of a section in page mode: plan names and prices travel as data; marketing copy never does. */

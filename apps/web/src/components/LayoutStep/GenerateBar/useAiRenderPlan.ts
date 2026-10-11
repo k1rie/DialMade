@@ -1,7 +1,7 @@
 "use client";
 
-import { normalizeAiContext, type AiContext, type AiDirectionChip, type AiRenderTier } from "@dialmade/doc";
-import { TIER_MODEL } from "@dialmade/ai-render";
+import { normalizeAiContext, type AiContext, type AiDirectionChip, type AiRenderTier, type Screen } from "@dialmade/doc";
+import { TIER_MODEL, chromePiecesFor } from "@dialmade/ai-render";
 import { useCallback, useMemo } from "react";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useI18n } from "@/i18n";
@@ -85,10 +85,14 @@ export type AiRenderPlan = {
   startWith: (transport: RenderTransport) => void;
 };
 
-/** Blocks of a draft screen that get their own element (absorbed blocks and hidden ones do not). */
-function renderableCount(screen: Parameters<typeof compileScreenLayout>[0]): number {
+/**
+ * What «Diseño con IA» designs on a draft screen: the blocks that get their own element (absorbed blocks and hidden
+ * ones do not), and the app frame's pieces (its sidebar and top bar).
+ */
+function renderableCount(screen: Parameters<typeof compileScreenLayout>[0] & Pick<Screen, "shell">): number {
   const { absorbed } = compileScreenLayout(screen);
-  return Object.entries(screen.layout.blocks).filter(([id, block]) => !block.hidden && !Object.hasOwn(absorbed, id)).length;
+  const blocks = Object.entries(screen.layout.blocks).filter(([id, block]) => !block.hidden && !Object.hasOwn(absorbed, id)).length;
+  return blocks + chromePiecesFor(screen).length;
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { renderableBlocks } from "@dialmade/ai-render";
+import { aiPieceIds } from "@dialmade/ai-render";
 import { getStyleRecipe } from "@dialmade/catalog";
 import type { DesignDoc } from "@dialmade/doc";
 import { useMemo, useState } from "react";
@@ -46,7 +46,7 @@ export function AiScreenBar({ doc, target, className }: AiScreenBarProps) {
   const screenId = screen?.id ?? null;
   const view: AiView = useAiView((state) => (screenId && state.baseScreens[screenId] ? "base" : "ai"));
 
-  const order = useMemo(() => (screen ? renderableBlocks(screen) : []), [screen]);
+  const order = useMemo(() => (screen ? aiPieceIds(screen) : []), [screen]);
   const plan = useMemo(() => (screenId ? redoPlan(doc, screenId, order) : null), [doc, screenId, order]);
   const activeCount = screen ? Object.values(screen.aiRender?.blocks ?? {}).filter((block) => block.active).length : 0;
   if (!screen || !screenId || !plan || activeCount === 0) return null;

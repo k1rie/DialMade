@@ -6,6 +6,9 @@
 import {
   PAGE_BASE_CSS,
   blockToTsx,
+  chromeLabel,
+  chromePieceOf,
+  isChromeId,
   exportBlockHtml,
   provenanceComment,
   sanitizeBlock,
@@ -32,22 +35,26 @@ export type AiExportBlock = {
 };
 
 /**
- * Active AI blocks of every screen, in screen order and then reading order (rows, then columns). A block whose
- * stored HTML does not survive the sanitizer (or carries hostile markup) is left out: its base design exports.
+ * Active AI blocks of every screen, in screen order and then reading order (the app frame's pieces first, then rows,
+ * then columns). A block whose stored HTML does not survive the sanitizer (or carries hostile markup) is left out: its
+ * base design exports.
  */
 export function aiExportBlocks(doc: DesignDoc): AiExportBlock[] {
   const screenIds = orderedScreens(doc).map((screen) => screen.id);
   return orderedScreens(doc).flatMap((screen) => {
     const stored = screen.aiRender?.blocks ?? {};
     const layout = screen.layout.blocks;
+    const pieceOf = (id: string) => chromePieceOf(screen, id);
+    const rowOf = (id: string) => (pieceOf(id) ? -1 : (layout[id]?.rect.row ?? 0));
     const ids = Object.keys(stored).sort((a, b) => {
       const ra = layout[a]?.rect;
       const rb = layout[b]?.rect;
-      return (ra?.row ?? 0) - (rb?.row ?? 0) || (ra?.col ?? 0) - (rb?.col ?? 0) || (a < b ? -1 : a > b ? 1 : 0);
+      return rowOf(a) - rowOf(b) || (ra?.col ?? 0) - (rb?.col ?? 0) || (a < b ? -1 : a > b ? 1 : 0);
     });
     return ids.flatMap((blockId): AiExportBlock[] => {
       const block = stored[blockId]!;
-      const element = layout[blockId];
+      const piece = pieceOf(blockId);
+      const element = piece ? { label: chromeLabel(piece.type, doc.brief.locale), type: piece.type } : layout[blockId];
       if (!block.active || !element) return [];
       const base = {
         screenId: screen.id,
@@ -87,6 +94,8 @@ export type AiPageParts = {
   aiBlocks: Record<string, string>;
   /** Container id → its surface classes (`aiSurfaces`). */
   aiSurfaces: Record<string, string>;
+  /** The app frame's AI pieces (`shell-nav`, `shell-bar`) → their static HTML (`aiChrome`). */
+  aiChrome: Record<string, string>;
 };
 
 /**
@@ -98,7 +107,7 @@ export function aiPageParts(
   screenId: ScreenId,
   options: { hrefOf: (screenId: ScreenId) => string | null; logoUrl?: string; locale?: string; pageCss?: string },
 ): AiPageParts {
-  const parts: AiPageParts = { aiBlocks: {}, aiSurfaces: {} };
+  const parts: AiPageParts = { aiBlocks: {}, aiSurfaces: {}, aiChrome: {} };
   let pageStyle = false;
   for (const block of blocks) {
     if (block.screenId !== screenId) continue;
@@ -107,7 +116,7 @@ export function aiPageParts(
       const html = exportBlockHtml(block.html, { hrefOf: options.hrefOf, ...(options.logoUrl && { logoUrl: options.logoUrl }), ...(options.locale && { locale: options.locale }) });
       const style = block.page && !pageStyle ? `<style data-dl-page>${PAGE_BASE_CSS}${sanitizeCss(options.pageCss ?? "", { kind: "page" }).css}</style>` : "";
       if (style) pageStyle = true;
-      parts.aiBlocks[block.blockId] = `${provenanceComment(block.model, block.createdAt)}${style}${html}`;
+      (isChromeId(block.blockId) ? parts.aiChrome : parts.aiBlocks)[block.blockId] = `${provenanceComment(block.model, block.createdAt)}${style}${html}`;
     }
   }
   return parts;

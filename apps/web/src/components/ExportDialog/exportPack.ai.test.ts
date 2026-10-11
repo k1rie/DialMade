@@ -153,3 +153,35 @@ describe("AI blocks in the exports", () => {
     expect(tsx).toMatch(/export function Hero[A-Z0-9][a-z0-9]{2}\(\)/);
   });
 });
+
+describe("the app frame's AI navigation in the exports", () => {
+  it("the dashboard's page paints the AI sidebar in the frame's slot and keeps the base top bar", async () => {
+    const { doc: base } = screensFixture(["s-home", "s-dashboard", "s-settings"]);
+    const doc = parseDesignDoc({
+      ...base,
+      screens: {
+        ...base.screens,
+        "s-dashboard": {
+          ...base.screens["s-dashboard"]!,
+          aiRender: {
+            version: 1 as const,
+            blocks: {
+              "shell-nav": aiBlock(
+                '<aside class="@container bg-card p-4" data-block-id="shell-nav"><a class="text-foreground" href="#screen:s-settings" data-dl-t="0">Ajustes</a></aside>',
+              ),
+            },
+          },
+        },
+      },
+    });
+    const blocks = aiExportBlocks(doc);
+    expect(blocks.map((block) => [block.blockId, block.type, block.label])).toEqual([["shell-nav", "app-sidebar", "Barra lateral"]]);
+    const files = unzip(buildCodePack(await input(doc)).bytes);
+    const dashboard = files["app-dashboard/index.html"]!;
+    expect(dashboard).toMatch(/<div class="dl-app-shell__ai-side" data-dl-ai-chrome="shell-nav"><div data-dl-ai-block=""><!-- Dialmade[^>]*--><aside/);
+    expect(dashboard).toContain('href="../app-2/index.html">Ajustes</a>');
+    expect(dashboard).not.toContain("dl-app-shell__sidebar-inner");
+    expect(dashboard).toContain("dl-app-shell__topbar");
+    for (const pattern of RUNNABLE) expect(dashboard).not.toMatch(pattern);
+  });
+});

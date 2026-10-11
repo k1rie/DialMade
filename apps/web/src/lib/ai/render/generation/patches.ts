@@ -1,15 +1,20 @@
 // The DesignDoc writes of «Diseño con IA» as RFC 6902 patches (applied by `applyPatch`: validated, one undo step
 // each). Additive: `screens[id].aiRender` and `aiRender.direction` (packages/doc/src/aiRender.ts); the deterministic
 // page underneath never changes. Pure.
+import { chromePieceOf } from "@dialmade/ai-render";
 import { getThemeRecipe } from "@dialmade/catalog";
 import { isLocked, type AiBlock, type AiDirection, type AiGateWarning, type DesignDoc } from "@dialmade/doc";
 
 export type PatchOp = { op: "add" | "replace" | "remove"; path: string; value?: unknown };
 
-/** Stores (or replaces) the AI block of `blockId` on `screenId`. `null` when the screen or the block is gone. */
+/**
+ * Stores (or replaces) the AI block of `blockId` on `screenId`: a layout block, or a piece of the app frame
+ * (`shell-nav`, `shell-bar`). `null` when the screen or the block is gone.
+ */
 export function aiBlockOps(doc: DesignDoc, screenId: string, blockId: string, block: AiBlock): PatchOp[] | null {
   const screen = doc.screens[screenId];
-  if (!screen || !screen.layout.blocks[blockId] || !screen.page.elements[blockId]) return null;
+  if (!screen) return null;
+  if (!chromePieceOf(screen, blockId) && (!screen.layout.blocks[blockId] || !screen.page.elements[blockId])) return null;
   if (!screen.aiRender) return [{ op: "add", path: `/screens/${screenId}/aiRender`, value: { version: 1, blocks: { [blockId]: block } } }];
   return [{ op: "add", path: `/screens/${screenId}/aiRender/blocks/${blockId}`, value: block }];
 }

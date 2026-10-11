@@ -9,6 +9,7 @@ import { contentContextFromDoc, linkContext } from "../context";
 import { cx } from "../lib/cx";
 import { sectionRegistry, type SectionRegistry } from "../registry";
 import type { ColorMode, RenderContext } from "../types";
+import { AiChromeContext } from "./aiChrome";
 import { ElementView } from "./ElementView";
 import type { RenderScope } from "./types";
 import "./PageRenderer.css";
@@ -48,6 +49,8 @@ export interface PageRendererProps {
   replace?: ReadonlyMap<string, ReactNode>;
   /** «Diseño con IA»: element id → a surface painted under a container's children. */
   underlay?: ReadonlyMap<string, ReactNode>;
+  /** «Diseño con IA»: the app frame's AI pieces (`shell-nav`, `shell-bar`), painted in its slots (./aiChrome). */
+  chrome?: ReadonlyMap<string, ReactNode>;
 }
 
 const preventNavigation = (event: MouseEvent<HTMLDivElement>) => {
@@ -81,6 +84,7 @@ export function PageRenderer({
   layoutCss,
   replace,
   underlay,
+  chrome,
 }: PageRendererProps) {
   const content = useMemo(
     () => contentContextFromDoc(doc, { ...(locale && { locale }), ...(logoUrl && { logoUrl }), ...(seed !== undefined && { seed }) }),
@@ -147,7 +151,9 @@ export function PageRenderer({
         onSubmitCapture={interactive ? (event) => event.preventDefault() : undefined}
       >
         {layoutCss ? <style data-dl-layout="">{layoutCss}</style> : null}
-        <ElementView id={page.root} scope={scope} isRoot />
+        <AiChromeContext.Provider value={chrome}>
+          <ElementView id={page.root} scope={scope} isRoot />
+        </AiChromeContext.Provider>
       </div>
     </UiProvider>
   );

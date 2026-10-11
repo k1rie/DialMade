@@ -6,8 +6,10 @@
 // here too. Updates are immutable: `applyPatch` copies only the path it writes, so the undo history shares every
 // other block's HTML [C13].
 import {
+  AI_SHELL_ELEMENT_ID,
   attr,
   blockBasis,
+  chromePieceOf,
   draftTexts,
   elements,
   parseSanitized,
@@ -76,9 +78,13 @@ export const aiPropsOf =
     return element ? visibleProps(element) : undefined;
   };
 
-/** The options of `screenInput` for a screen in `mode` (page mode: no template copy, the plans as data). */
+/**
+ * The options of `screenInput` for a screen in `mode` (page mode: no template copy, the plans as data). The app
+ * frame's visible props feed its AI pieces (the sidebar and the top bar: @dialmade/ai-render `chromePieces`).
+ */
 export const aiScreenInputOptions = (screen: Pick<Screen, "page">, mode: "page" | undefined) => ({
   draftOf: aiDraftOf(screen),
+  ...(Object.hasOwn(screen.page.elements, AI_SHELL_ELEMENT_ID) && { shellProps: aiPropsOf(screen)(AI_SHELL_ELEMENT_ID) }),
   ...(mode === "page" && { mode: "page" as const, propsOf: aiPropsOf(screen) }),
 });
 
@@ -316,11 +322,12 @@ function copiedRender(doc: DesignDoc, copyOf: NonNullable<AiCarrySource["copyOf"
 }
 
 /**
- * A screen's AI blocks after a build: the blocks whose element is still on the page stay; the others move to the
- * stash (newest last, at most `MAX_AI_STASHED_BLOCKS`); stashed blocks whose element is back return.
+ * A screen's AI blocks after a build: the blocks whose element is still on the page stay (the app frame's pieces while
+ * the frame has that piece); the others move to the stash (newest last, at most `MAX_AI_STASHED_BLOCKS`); stashed
+ * blocks whose element is back return.
  */
-function settleRender(render: AiScreenRender, page: Screen["page"]): AiScreenRender | undefined {
-  const present = (id: string) => Object.hasOwn(page.elements, id);
+function settleRender(render: AiScreenRender, screen: Pick<Screen, "kind" | "shell" | "page">): AiScreenRender | undefined {
+  const present = (id: string) => Object.hasOwn(screen.page.elements, id) || chromePieceOf(screen, id) !== undefined;
   const blocks: Record<string, AiBlock> = {};
   const stash: Record<string, AiBlock> = {};
   for (const [id, block] of Object.entries(render.stash ?? {})) {
@@ -354,7 +361,7 @@ export function carryAiRenderOps(before: DesignDoc, after: DesignDoc, sources?: 
     if (screen.aiRender) continue;
     const copyOf = sourceOf.get(id)?.copyOf;
     const prior = storedRender(before, id) ?? (copyOf && copyOf.screenId !== id ? copiedRender(before, copyOf) : undefined);
-    const settled = prior && settleRender(prior, screen.page);
+    const settled = prior && settleRender(prior, screen);
     if (settled) renders.set(id, settled);
   }
   if (renders.size === 0) return [];

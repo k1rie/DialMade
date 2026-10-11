@@ -137,7 +137,7 @@ type RenderTarget = {
   links?: Readonly<Record<string, string>>;
 };
 
-type RenderOptions = { logoUrl?: string; css?: string[]; stylesheets?: string[]; ai?: { aiBlocks: Record<string, string>; aiSurfaces: Record<string, string> } };
+type RenderOptions = { logoUrl?: string; css?: string[]; stylesheets?: string[]; ai?: { aiBlocks: Record<string, string>; aiSurfaces: Record<string, string>; aiChrome?: Record<string, string> } };
 
 function renderPage(input: PackInput, target: RenderTarget, options: RenderOptions) {
   const { doc, inputs, mode } = input;
@@ -155,6 +155,7 @@ function renderPage(input: PackInput, target: RenderTarget, options: RenderOptio
     ...(options.stylesheets && { stylesheets: options.stylesheets }),
     ...(options.ai && Object.keys(options.ai.aiBlocks).length > 0 && { aiBlocks: options.ai.aiBlocks }),
     ...(options.ai && Object.keys(options.ai.aiSurfaces).length > 0 && { aiSurfaces: options.ai.aiSurfaces }),
+    ...(options.ai?.aiChrome && Object.keys(options.ai.aiChrome).length > 0 && { aiChrome: options.ai.aiChrome }),
     onSectionError: () => {
       skipped++;
     },

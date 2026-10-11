@@ -56,6 +56,12 @@ export const MAX_AI_BLOCK_BYTES = 48 * 1024;
 export const MAX_AI_PAGE_CSS_BYTES = 32 * 1024;
 /** How an AI block was made: token classes inside its cell («blocks», the default) or a section of a page («page»). */
 export const AI_BLOCK_MODES = ["blocks", "page"] as const;
+/**
+ * The AI pieces of an app screen's frame, stored in `blocks` next to the layout blocks: its sidebar (or rail) and its
+ * top bar (@dialmade/ai-render `chromePieces`, painted in the frame's slots by @dialmade/sections).
+ */
+export const AI_SHELL_NAV_ID = "shell-nav";
+export const AI_SHELL_BAR_ID = "shell-bar";
 /** Spec §8.3: 1 MB of `aiRender` in the whole document. */
 export const MAX_AI_RENDER_BYTES = 1024 * 1024;
 export const MAX_AI_REQUEST_LENGTH = 500;
