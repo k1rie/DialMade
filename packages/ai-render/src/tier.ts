@@ -44,14 +44,15 @@ export const TIER_SETTINGS: Readonly<Record<AiRenderTier, TierSettings>> = {
 export const tierSettings = (tier: AiRenderTier | undefined): TierSettings => TIER_SETTINGS[tier ?? "mockup"];
 
 /**
- * The model of each finish (decided on 2026-10-11 from the flow duel, docs/design/prueba-skills.md): «Maqueta» is
- * Haiku 5.5 with the frontend-design guidance, «Presentable» is Sonnet 5.5, and «Producto final» is not one call but
- * an agent (the developer's Claude Code with the design skills), so it has no model here.
+ * The default model of each finish when the caller does not pick one (from the flow duel of 2026-10-11,
+ * docs/design/prueba-skills.md): «Maqueta» is Haiku 5.5 with the frontend-design guidance, «Presentable» and
+ * «Producto final» are Sonnet 5.5 (the final finish with more room and effort). A model picked with the user's key or
+ * «Acceso completo» always wins; «Producto final» can also go to the developer's own agent through «mi Claude».
  */
-export const TIER_MODEL: Readonly<Record<AiRenderTier, string | null>> = {
+export const TIER_MODEL: Readonly<Record<AiRenderTier, string>> = {
   mockup: "claude-haiku-5-5",
   presentable: "claude-sonnet-5-5",
-  final: null,
+  final: "claude-sonnet-5-5",
 };
 
 /** Output room of one page-mode screen: Haiku thinks long before a whole page; Sonnet writes it more tightly. */

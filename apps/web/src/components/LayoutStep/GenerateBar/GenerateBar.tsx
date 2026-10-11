@@ -106,12 +106,6 @@ export function GenerateBar({ className }: GenerateBarProps) {
       if (created.length > 0) announce(t.generate.templateApplied(t.sets[cta.set].name));
       return;
     }
-    // «Producto final»: an agent does it (the developer's Claude Code with the design skills): the «IA» control opens
-    // its job; its pasted answer runs «Generar» and the generation, like «mi Claude».
-    if (designMode && plan.agent) {
-      plan.requestAgent();
-      return;
-    }
     // «Generar con IA» (spec §5.1): the deterministic «Generar» first, then the design session starts right after
     // the write and keeps streaming while the flow moves to «Ajustar» (the generation store survives the step).
     const withDesign = designMode && plan.ready;
@@ -127,7 +121,6 @@ export function GenerateBar({ className }: GenerateBarProps) {
     setReportOpen(true);
   };
 
-  const agentCta = designMode && plan.agent && cta.kind !== "template";
   const designCta = designMode && plan.ready && cta.kind !== "template";
   // «Diseño» picked but no paid path can answer: the CTA says it generates without AI (the hint says why; the «IA»
   // popover offers the key and «mi Claude»), never a silent swap.
@@ -135,9 +128,7 @@ export function GenerateBar({ className }: GenerateBarProps) {
   const ctaLabel =
     cta.kind === "template"
       ? t.generate.useTemplate(t.sets[cta.set].name)
-      : agentCta
-        ? renderT.agentCta
-        : designCta
+      : designCta
         ? renderT.cta
         : designBlocked
           ? renderT.ctaNoAi

@@ -44,19 +44,19 @@ describe("page mode prompts", () => {
   });
 
   it("«Maqueta» reads Anthropic's frontend-design guidance after the contract; «Presentable» does not", () => {
-    const mockup = screenParams({ model: TIER_MODEL.mockup!, effort: "low" }, brand, direction, screen);
+    const mockup = screenParams({ model: TIER_MODEL.mockup, effort: "low" }, brand, direction, screen);
     expect(system(mockup).startsWith(AI_PAGE_SYSTEM_PROMPT)).toBe(true);
     expect(system(mockup)).toContain("frontend-design skill, Apache-2.0");
     expect(mockup.max_tokens).toBe(48_000);
     expect(mockup.output_config?.effort).toBe("medium");
-    const presentable = screenParams({ model: TIER_MODEL.presentable!, effort: "medium", tier: "presentable" }, brand, direction, screen);
+    const presentable = screenParams({ model: TIER_MODEL.presentable, effort: "medium", tier: "presentable" }, brand, direction, screen);
     expect(system(presentable)).toBe(AI_PAGE_SYSTEM_PROMPT);
     expect(presentable.max_tokens).toBe(pageScreenMaxTokens("presentable"));
     expect(text(presentable)).toContain("Quality: presentable");
   });
 
   it("a section's «Otra versión» carries the page stylesheet so its classes stay usable", () => {
-    const params = blockParams({ model: TIER_MODEL.mockup!, effort: "low" }, brand, direction, {
+    const params = blockParams({ model: TIER_MODEL.mockup, effort: "low" }, brand, direction, {
       screen: { id: "s-home", name: "Inicio", kind: "landing", route: "/", locale: "es", screens: [], mode: "page" },
       block: screen.blocks[0]!,
       html: '<section data-block-id="b-hero"><h1>x</h1></section>',
@@ -67,11 +67,11 @@ describe("page mode prompts", () => {
     expect(text(params)).toContain('data-block-id="b-hero"');
   });
 
-  it("the finishes map to Haiku, Sonnet and an agent", () => {
-    expect(TIER_MODEL).toEqual({ mockup: "claude-haiku-5-5", presentable: "claude-sonnet-5-5", final: null });
+  it("the finishes default to Haiku, Sonnet and Sonnet (a picked model wins)", () => {
+    expect(TIER_MODEL).toEqual({ mockup: "claude-haiku-5-5", presentable: "claude-sonnet-5-5", final: "claude-sonnet-5-5" });
   });
 
-  it("«Producto final» is a job for the developer's agent with the design skills, answered in the same contract", () => {
+  it("«Producto final» through «mi Claude» is a job for the developer's agent with the design skills, answered in the same contract", () => {
     const prompt = pageAgentPrompt(brand, direction, [screen]);
     expect(prompt).toContain("pbakaus/impeccable");
     expect(prompt).toContain("Leonxlnx/taste-skill");

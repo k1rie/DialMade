@@ -5,10 +5,12 @@ import { useState } from "react";
 import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
 import { useByokKey } from "@/lib/ai/byokKey";
+import { fullAccessModelName } from "@/lib/ai/render/fullAccessModel";
 import type { AiRenderPlan } from "../../useAiRenderPlan";
 import { AiAccessActions } from "../AiAccessActions";
 import { AiContextBrief } from "../AiContextBrief";
 import { AiDirectionChips } from "../AiDirectionChips";
+import { AiModelPicker } from "../AiModelPicker";
 import { AiRenderCost } from "../AiRenderCost";
 import { AiScreensPicker } from "../AiScreensPicker";
 import { AiStyleBrief } from "../AiStyleBrief";
@@ -41,6 +43,7 @@ export function DesignDetails({ plan, onUseKey, onUseClaude, defaultOptionsOpen 
   const filled = AI_CONTEXT_FIELDS.filter((field) => (plan.context[field] ?? "").trim() !== "").length;
   const summary = [
     t.tiers.options[plan.tier],
+    ...(plan.fullAccess ? [fullAccessModelName(plan.fullAccess.model)] : []),
     t.chips.options[plan.chip],
     ...(filled > 0 ? [t.options.context(filled, AI_CONTEXT_FIELDS.length)] : []),
     ...(plan.style.trim() !== "" || plan.references.length > 0 ? [t.options.style] : []),
@@ -64,6 +67,7 @@ export function DesignDetails({ plan, onUseKey, onUseClaude, defaultOptionsOpen 
             <AiDirectionChips value={plan.chip} onChange={plan.setChip} />
             <AiStyleBrief style={plan.style} onStyleChange={plan.setStyle} references={plan.references} onReferencesChange={plan.setReferences} />
             <AiTierPicker value={plan.tier} onChange={plan.setTier} needsKey={plan.tierNeedsKey} />
+            {plan.fullAccess && <AiModelPicker value={plan.fullAccess.model} onChange={plan.fullAccess.setModel} />}
           </div>
         )}
       </details>

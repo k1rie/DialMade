@@ -13,8 +13,7 @@ import { updateAiCounters } from "@/hooks/useAiStatus";
 import { isAiApiErrorCode, type AiStatusResponse } from "../api";
 import { OFFLINE_AI_STATUS, countersFrom, hostedBlocker, type AiFallbackReason } from "../policy";
 import { DEFAULT_BYOK_RENDER_MODEL } from "./byokModel";
-import { TIER_MODEL } from "@dialmade/ai-render";
-import { isFullAccessRenderModel } from "./fullAccessModel";
+import { getFullAccessRenderModel } from "./fullAccessModelStore";
 import { getRenderTier } from "./renderTier";
 import {
   RENDER_BLOCK_ENDPOINT,
@@ -249,9 +248,8 @@ async function* freeScreen(body: ScreenBody & RenderChoice, options: TransportCa
  */
 export function fullAccessChoice(status: AiStatusResponse | null): RenderChoice {
   if (!status?.fullAccess) return {};
-  const tier = getRenderTier();
-  const model = TIER_MODEL[tier];
-  return { ...(isFullAccessRenderModel(model) && { model }), tier };
+  const model = getFullAccessRenderModel();
+  return { ...(model && { model }), tier: getRenderTier() };
 }
 
 /** The hosted free tier (`model` = the status' `freeModel`), or a full-access account's `choice`. */
@@ -341,9 +339,7 @@ export function renderPathFor(status: AiStatusResponse | null, byokActive: boole
 /** The transport of a paid path: the free tier with the status' model, or BYOK with the chosen model and the tab's key. */
 export function createRenderTransport(path: "free" | "byok", context: { status: AiStatusResponse | null; byokModel?: string; getKey?: () => string | null; tier?: AiRenderTier }): RenderTransport {
   if (path === "free") return freeTransport(context.status?.freeModel ?? OFFLINE_AI_STATUS.freeModel, fullAccessChoice(context.status));
-  // With a key too, the finish decides the model (Maqueta Haiku, Presentable Sonnet); the picked model is the fallback.
-  const tierModel = context.tier ? TIER_MODEL[context.tier] : null;
-  return byokTransport({ getKey: context.getKey ?? (() => null), model: tierModel ?? context.byokModel ?? DEFAULT_BYOK_RENDER_MODEL, ...(context.tier && { tier: context.tier }) });
+  return byokTransport({ getKey: context.getKey ?? (() => null), model: context.byokModel ?? DEFAULT_BYOK_RENDER_MODEL, ...(context.tier && { tier: context.tier }) });
 }
 
 export { MANUAL_MODEL, manualTransport } from "./manual";

@@ -230,7 +230,6 @@ export const ai = defineDictionary({
       offDescription: "Diseño base con textos de ejemplo, sin llamadas a la IA.",
       designDescription: "Claude diseña cada bloque con tu marca. Tu layout no cambia.",
       cta: "Generar con IA",
-      agentCta: "Encargar a tu Claude Code",
       ctaHint: "Primero sale tu diseño base; después Claude diseña cada bloque en Ajustar.",
       ctaNoAi: "Generar sin IA",
       access: {
@@ -249,11 +248,6 @@ export const ai = defineDictionary({
       tiers: {
         label: "Nivel de acabado",
         options: { mockup: "Maqueta", presentable: "Presentable", final: "Producto final" },
-        hints: {
-          mockup: "Haiku, rápido.",
-          presentable: "Sonnet, con más cuidado.",
-          final: "Lo hace un agente: tu Claude Code con las skills de diseño. Copias el encargo y pegas aquí su respuesta.",
-        },
         needsKey: "Este nivel necesita tu key o tu Claude.",
       },
       context: {
@@ -596,7 +590,6 @@ export const ai = defineDictionary({
       offDescription: "Base design with sample copy, no AI calls.",
       designDescription: "Claude designs every block with your brand. Your layout stays the same.",
       cta: "Generate with AI",
-      agentCta: "Hand it to your Claude Code",
       ctaHint: "Your base design comes first; then Claude designs every block in Adjust.",
       ctaNoAi: "Generate without AI",
       access: {
@@ -615,11 +608,6 @@ export const ai = defineDictionary({
       tiers: {
         label: "Finish",
         options: { mockup: "Mockup", presentable: "Presentable", final: "Final product" },
-        hints: {
-          mockup: "Haiku, fast.",
-          presentable: "Sonnet, with more care.",
-          final: "An agent does it: your Claude Code with the design skills. You copy the job and paste its answer here.",
-        },
         needsKey: "This finish needs your key or your Claude.",
       },
       context: {

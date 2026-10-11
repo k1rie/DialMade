@@ -52,9 +52,7 @@ export async function parseRenderRequest<S extends z.ZodType>(
   if ((choice.model !== undefined || choice.tier !== undefined) && !caller?.fullAccess) {
     return { ok: false, response: Response.json({ code: "invalid-request", message: "Only accounts with full access pick the model or the finish" }, { status: 400, headers: NO_STORE }) };
   }
-  // The finish decides the model (@dialmade/ai-render TIER_MODEL): Maqueta Haiku, Presentable Sonnet. «Producto final» is
-  // an agent outside these routes; a call that still asks for it runs as Presentable.
-  const tierModel = choice.tier ? (TIER_MODEL[choice.tier] ?? TIER_MODEL.presentable) : null;
-  const model = tierModel ?? choice.model;
+  // The model the account picked; without one, the finish's default (@dialmade/ai-render TIER_MODEL).
+  const model = choice.model ?? (choice.tier ? TIER_MODEL[choice.tier] : undefined);
   return { ok: true, body: parsed.data, caller, config: model ? { ...config, freeModel: model } : config, tier: choice.tier ?? "mockup" };
 }

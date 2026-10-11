@@ -24,6 +24,7 @@ import {
 } from "@/lib/ai/render/blockAction";
 import { setAiBlockActiveOps, setAiBlockOps, textEditOps } from "@/lib/ai/render/edit";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModelStore";
 import { useRenderTier } from "@/lib/ai/render/renderTier";
 import { createRenderTransport, fullAccessChoice } from "@/lib/ai/render/transport";
 import { getLiveSession, setLiveSession, updateLiveSessionCounters } from "@/lib/ai/render/liveSession";
@@ -59,11 +60,13 @@ function useBlockTransport(): BlockActionTransport {
   const byok = useByokKey();
   const byokModel = useByokRenderModel();
   const { status } = useAiStatus();
-  // The finish decides the model (with a key too); a full-access account's finish travels with each call.
+  // A full-access account's model and finish travel with each call (read when the transport is made).
+  const fullAccessModel = useFullAccessRenderModel();
   const tier = useRenderTier();
   return useMemo(
     () => blockTransportFrom(createRenderTransport(byok.active ? "byok" : "free", { status, byokModel, getKey: getByokKey, tier })),
-    [byok.active, byokModel, status, tier],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the choice is read inside createRenderTransport
+    [byok.active, byokModel, status, fullAccessModel, tier],
   );
 }
 

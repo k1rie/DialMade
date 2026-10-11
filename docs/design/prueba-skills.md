@@ -69,3 +69,4 @@ La tubería nueva del producto genera las páginas 1 a 9: prompt de página, `<s
 - No gana un flujo único. Gana más capacidad (Sonnet o el agente) en 2 de 3 marcas, y la guía de `frontend-design` sube a Haiku en la tercera.
 - No ganaron: color, ui-skills, DESIGN.md, referencias web y Opus en una sola llamada.
 - **Propuesta:** el modo página como base; Haiku + `frontend-design` en «Maqueta»; Sonnet en «Presentable»; el agente para «Producto final» (con key, o entregado a Claude Code).
+- **Aplicado (2026-10-11):** cada acabado tiene un modelo por defecto (`TIER_MODEL`): Haiku + `frontend-design` en «Maqueta», Sonnet en «Presentable» y en «Producto final». El modelo elegido con tu key o con «Acceso completo» siempre manda. Así se puede generar cualquier acabado por la API, aunque gaste créditos. «Producto final» por «mi Claude» copia el encargo para el agente (Claude Code con Impeccable y taste-skill).

@@ -2,13 +2,15 @@
 
 import { normalizeAiContext, type AiContext, type AiDirectionChip, type AiRenderTier } from "@dialmade/doc";
 import { TIER_MODEL } from "@dialmade/ai-render";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useI18n } from "@/i18n";
 import { AI_SESSION_SCREENS } from "@/lib/ai/config";
 import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
+import { isFullAccessRenderModel, type FullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
+import { setFullAccessRenderModel, useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModelStore";
 import { FREE_RENDER_TIERS, setRenderTier, useRenderTier } from "@/lib/ai/render/renderTier";
 import { renderPathFor } from "@/lib/ai/render/transport";
 import {
@@ -53,18 +55,15 @@ export type AiRenderPlan = {
   tier: AiRenderTier;
   setTier: (tier: AiRenderTier) => void;
   /**
-   * The tier asks for more than the free tier runs (Presentable without a key or «Acceso completo»): the key or
-   * «Copiar prompt para mi Claude» is the way to generate it.
+   * The tier asks for more than the free tier runs (Presentable or Producto final without a key in the tab): the
+   * key or «Copiar prompt para mi Claude» is the way to generate it.
    */
   tierNeedsKey: boolean;
   /**
-   * «Producto final» is an agent, not a call: the developer's Claude Code with the design skills
-   * (@dialmade/ai-render `pageAgentPrompt`). «Generar con IA» then hands the job over instead of calling.
+   * «Acceso completo» (the signed-in account, ../../../lib/ai/fullAccess): the hosted path runs every tier and lets
+   * the account pick the model. `null` without it, or when the tab's key takes the call.
    */
-  agent: boolean;
-  /** Asks the «IA» control to open the agent's job (bumps on every request). */
-  agentRequest: number;
-  requestAgent: () => void;
+  fullAccess: { model: FullAccessRenderModel; setModel: (model: FullAccessRenderModel) => void } | null;
   /** Every screen of the draft, in order. */
   screens: AiRenderScreenOption[];
   /** The screens «Generar con IA» designs (the pick, or the first ones without AI). */
@@ -158,12 +157,12 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const tier = useRenderTier();
   const path = renderPathFor(status, byok.active);
   const hostedFull = path.path === "free" && status?.fullAccess === true;
-  // The finish decides the model (Maqueta Haiku, Presentable Sonnet); «Producto final» is the agent (no call here).
-  const agent = mode === "design" && tier === "final";
-  const tierModel = TIER_MODEL[tier] ?? TIER_MODEL.presentable!;
-  const [agentRequest, setAgentRequest] = useState(0);
-  const requestAgent = useCallback(() => setAgentRequest((n) => n + 1), []);
-  const tierNeedsKey = !agent && path.path !== "byok" && !hostedFull && !FREE_RENDER_TIERS.includes(tier);
+  const fullAccessPicked = useFullAccessRenderModel();
+  // Until the account picks, the finish's default model (Maqueta Haiku, Presentable and Producto final Sonnet).
+  const tierModel = TIER_MODEL[tier];
+  const fullAccessModel: FullAccessRenderModel = fullAccessPicked ?? (isFullAccessRenderModel(tierModel) ? tierModel : "claude-haiku-5-5");
+  const fullAccess = useMemo(() => (hostedFull ? { model: fullAccessModel, setModel: setFullAccessRenderModel } : null), [hostedFull, fullAccessModel]);
+  const tierNeedsKey = path.path !== "byok" && !hostedFull && !FREE_RENDER_TIERS.includes(tier);
   const blocked = path.reason;
   const existing = doc.aiRender?.direction;
   // Untouched = what the document's direction already carries, so reopening the popover shows what was used.
@@ -173,11 +172,11 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     if (!wantsList || selected.length === 0 || !status) return null;
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
     return path.path === "byok"
-      ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: TIER_MODEL[tier] ?? byokModel, tier, references: prefs.references.length })
+      ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: byokModel, tier, references: prefs.references.length })
       : hostedFull
-        ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: tierModel, tier, references: prefs.references.length })
+        ? estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: fullAccessModel, tier, references: prefs.references.length })
         : estimateGenerate({ blocksPerScreen: counts, direction: needsDirection, model: status.freeModel, references: prefs.references.length });
-  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier, hostedFull, tierModel, prefs.references.length]);
+  }, [wantsList, selected, screens, status, needsDirection, path.path, byokModel, tier, hostedFull, fullAccessModel, prefs.references.length]);
 
   const cost = useMemo(
     () =>
@@ -194,7 +193,7 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [estimate, status, blocked, tierNeedsKey, locale, path.path],
   );
 
-  const ready = mode === "design" && !agent && selected.length > 0 && blocked === null && !tierNeedsKey && !busy;
+  const ready = mode === "design" && selected.length > 0 && blocked === null && !tierNeedsKey && !busy;
   const start = useCallback(() => {
     if (!store || !ready) return;
     // The screenshots are used once, by this direction, and dropped: only the model's note about them is kept. The
@@ -223,5 +222,5 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     [store, mode, selected, busy, prefs.chip, prefs.style, prefs.references.length, context],
   );
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, style: prefs.style, setStyle, references: prefs.references, setReferences, context, setContext, concept: existing?.concept, tier, setTier: setRenderTier, tierNeedsKey, agent, agentRequest, requestAgent, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, style: prefs.style, setStyle, references: prefs.references, setReferences, context, setContext, concept: existing?.concept, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }
