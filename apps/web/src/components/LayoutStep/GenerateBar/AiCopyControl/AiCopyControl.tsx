@@ -26,9 +26,9 @@ export type AiCopyControlProps = {
 
 /**
  * The «IA» control next to «Generar» (spec §10.1): a popover with a segmented Sin IA · Textos · Diseño. «Textos» is
- * the one copy request after the deterministic pass (critique #7: its cost, scope, BYOK and «mi Claude»). «Diseño»
- * (only with a preview origin) shows the optional art direction chips, the screens it designs and the cost line
- * («≈ $0.013 · 1 uso de 5 · 3 pantallas · ≈ 30 s»); the CTA then becomes «Generar con IA». Choosing a mode is the
+ * the one copy request after the deterministic pass (BYOK and «mi Claude»). «Diseño» (only with a preview origin)
+ * shows the optional art direction chips and the screens it designs; the CTA then becomes «Generar con IA» and its
+ * tooltip carries the cost line. One line of text per mode: the rest is in the controls. Choosing a mode is the
  * consent: nothing is called before «Generar».
  */
 export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps) {
@@ -65,10 +65,9 @@ export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps)
             layoutId={`${layoutId}-mode`}
             size="sm"
             accentBar
-            className="w-fit"
+            className="flex w-full [&>button]:flex-1"
           />
         </div>
-        <AiUsageMeter />
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={plan.mode}
@@ -78,6 +77,8 @@ export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps)
             exit={{ opacity: 0 }}
             transition={tween(0.16)}
           >
+            {/* The free uses only matter when the AI is on. */}
+            {plan.mode !== "off" && <AiUsageMeter />}
             {plan.mode === "off" && <p className="m-0 text-caption text-muted">{t.offDescription}</p>}
             {plan.mode === "copy" && <CopyDetails open={open} close={() => setOpen(false)} />}
             {plan.mode === "design" && <DesignDetails plan={plan} onUseKey={() => openAccess("key")} onUseClaude={() => openAccess("manual")} />}

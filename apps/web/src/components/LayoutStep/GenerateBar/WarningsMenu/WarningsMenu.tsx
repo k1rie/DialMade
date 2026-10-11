@@ -63,10 +63,7 @@ export function WarningsMenu({ groups, count, activeScreenId, onFix }: WarningsM
       )}
     >
       <div className="flex flex-col gap-3">
-        <div>
-          <p className="m-0 text-small font-semibold text-fg">{t.generate.report.warnings}</p>
-          <p className="m-0 mt-0.5 text-caption text-muted">{t.generate.warningsHint}</p>
-        </div>
+        <p className="m-0 text-small font-semibold text-fg">{t.generate.report.warnings}</p>
         <WarningList
           groups={groups}
           onFix={onFix}

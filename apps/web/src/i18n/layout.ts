@@ -844,7 +844,6 @@ export const layout = defineDictionary({
           .filter(Boolean)
           .join(" · "),
       warningsCount: (n: number) => (n === 0 ? "Sin avisos" : plural(n, "aviso", "avisos")),
-      warningsHint: "No bloquean Generar. Arréglalos con un clic o mueve los bloques.",
       templateApplied: (name: string) => `Plantilla ${name} aplicada. Deshacer la quita.`,
       report: {
         title: "Resultado",
@@ -936,7 +935,6 @@ export const layout = defineDictionary({
       open: "Ver atajos",
       singleKey: "Atajos de una tecla (R, V, H, Supr, F2)",
       singleKeyHint: "Solo actúan con el foco en el lienzo. Desactívalos si usas control por voz o un lector de pantalla.",
-      regionsHint: "F6 salta entre zonas.",
       list: (k: ShortcutKeys): readonly ShortcutRow[] => [
         { keys: "F6", action: "Saltar entre Pantallas, Librería, Lienzo e Inspector" },
         { keys: `Tab · ${k.combo(k.shift, "Tab")}`, action: "Bloque siguiente o anterior" },
@@ -1549,7 +1547,6 @@ export const layout = defineDictionary({
           .filter(Boolean)
           .join(" · "),
       warningsCount: (n: number) => (n === 0 ? "No warnings" : plural(n, "warning", "warnings")),
-      warningsHint: "They don't block Generate. Fix them in one click or move the blocks.",
       templateApplied: (name: string) => `${name} template applied. Undo removes it.`,
       report: {
         title: "Result",
@@ -1639,7 +1636,6 @@ export const layout = defineDictionary({
       open: "Show shortcuts",
       singleKey: "Single-key shortcuts (R, V, H, Delete, F2)",
       singleKeyHint: "They only work with focus on the canvas. Turn them off if you use voice control or a screen reader.",
-      regionsHint: "F6 jumps between areas.",
       list: (k: ShortcutKeys): readonly ShortcutRow[] => [
         { keys: "F6", action: "Jump between Screens, Library, Canvas and Inspector" },
         { keys: `Tab · ${k.combo(k.shift, "Tab")}`, action: "Next or previous block" },

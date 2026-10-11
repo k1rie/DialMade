@@ -134,8 +134,7 @@ export const ai = defineDictionary({
       control: "Textos con IA",
       controlState: (on: boolean): string => (on ? "activado" : "desactivado"),
       title: "Escribir textos con IA",
-      description:
-        "Después de generar, la IA reescribe los textos de tus pantallas en una sola petición. Las notas de tus bloques le dicen qué contar. Sin IA, los textos de ejemplo ya quedan listos.",
+      description: "La IA reescribe los textos al generar, guiada por las notas de tus bloques.",
       switchLabel: "Escribir los textos con IA al generar",
       usesLeft: (n: number) => `te ${plural(n, "queda", "quedan")} ${n} ${plural(n, "uso gratis", "usos gratis")}`,
       usesShort: (n: number) => `${n} ${plural(n, "uso gratis", "usos gratis")}`,
@@ -146,10 +145,6 @@ export const ai = defineDictionary({
         "daily-limit": "límite diario de IA gratis alcanzado",
         "not-configured": "IA gratis no disponible en este servidor",
       } satisfies Record<AiFallbackReason, string>,
-      scope: (blocks: number, changedOnly: boolean) =>
-        changedOnly
-          ? `Solo ${plural(blocks, "el bloque que cambió", `los ${blocks} bloques que cambiaron`)}.`
-          : `${blocks} ${plural(blocks, "bloque", "bloques")} con texto, en todas las pantallas.`,
       noFields: "Estas pantallas no tienen textos que escribir.",
       ctaHint: "Genera el diseño y después la IA escribe los textos.",
       useKey: "Usar mi propia key",
@@ -231,38 +226,33 @@ export const ai = defineDictionary({
       title: "IA al generar",
       modesLabel: "Qué hace la IA al generar",
       modes: { off: "Sin IA", copy: "Textos", design: "Diseño" },
-      offDescription: "Generar crea el diseño base con textos de ejemplo. Sin llamadas a la IA.",
-      designDescription:
-        "Claude diseña cada bloque de tu layout con tu marca: el layout sigue siendo tuyo (qué bloques, dónde y en qué orden), la IA decide cómo se ve. Incluye los textos.",
+      offDescription: "Diseño base con textos de ejemplo, sin llamadas a la IA.",
+      designDescription: "Claude diseña cada bloque con tu marca. Tu layout no cambia.",
       cta: "Generar con IA",
       ctaHint: "Primero sale tu diseño base; después Claude diseña cada bloque en Ajustar.",
       ctaNoAi: "Generar sin IA",
       access: {
         useKey: "Usar mi key",
         manageKey: "Gestionar mi key",
-        useClaude: "Copiar prompt para mi Claude",
-        claudeHint: "Gratis con tu cuenta de Claude: copias el prompt, pegas aquí su respuesta y pasa las mismas comprobaciones.",
-        noScreens: "Elige al menos una pantalla para preparar el prompt.",
+        useClaude: "Usar mi Claude",
+        useClaudeHint: "Gratis: copias el prompt, lo pegas en tu cuenta de Claude y traes aquí su respuesta.",
       },
       chips: {
         label: "Dirección de arte",
-        hint: "Opcional. «Automática» deja que tu marca y una semilla elijan.",
         options: { auto: "Automática", editorial: "Editorial", technical: "Técnica", warm: "Cálida", playful: "Juguetona", luxury: "Lujo" },
       },
       screens: {
         label: "Pantallas",
-        hint: (max: number) => `Hasta ${max} por uso.`,
+        count: (n: number, max: number) => `${n}/${max}`,
+        countLabel: (n: number, max: number) => `${n} de ${max} por uso`,
         blocks: (n: number) => `${n} ${plural(n, "bloque", "bloques")}`,
         designed: "ya con IA",
-        more: (total: number, uses: number, max: number) =>
-          `${total} pantallas = ${uses} usos. Elige ${max} ahora y genera las demás después.`,
         none: "Elige al menos una pantalla.",
       },
       cost: {
         line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
           `≈\u00a0${cost} · 1\u00a0uso de ${left} · ${screens}\u00a0${plural(screens, "pantalla", "pantallas")} · ≈\u00a0${seconds}\u00a0s`,
         usesTotal: (total: number) => `Tienes ${total} ${plural(total, "uso gratis", "usos gratis")} al mes.`,
-        session: "El uso incluye 10 cambios por bloque («Otra versión», «Pedir cambio») durante 24 h.",
         withKey: (cost: string, screens: number, seconds: number) =>
           `≈\u00a0${cost} con tu key · ${screens}\u00a0${plural(screens, "pantalla", "pantallas")} · ≈\u00a0${seconds}\u00a0s`,
       },
@@ -469,8 +459,7 @@ export const ai = defineDictionary({
       control: "AI copy",
       controlState: (on: boolean) => (on ? "on" : "off"),
       title: "Write copy with AI",
-      description:
-        "After generating, AI rewrites the copy of your screens in a single request. Your blocks' notes tell it what to say. Without AI, the sample copy is ready anyway.",
+      description: "AI rewrites the copy when generating, guided by your blocks' notes.",
       switchLabel: "Write the copy with AI when generating",
       usesLeft: (n: number) => `${n} free ${plural(n, "use", "uses")} left`,
       usesShort: (n: number) => `${n} free ${plural(n, "use", "uses")}`,
@@ -481,10 +470,6 @@ export const ai = defineDictionary({
         "daily-limit": "daily free AI limit reached",
         "not-configured": "free AI isn't available on this server",
       },
-      scope: (blocks: number, changedOnly: boolean) =>
-        changedOnly
-          ? `Only ${plural(blocks, "the block that changed", `the ${blocks} blocks that changed`)}.`
-          : `${blocks} ${plural(blocks, "block", "blocks")} with copy, across all screens.`,
       noFields: "These screens have no copy to write.",
       ctaHint: "Generates the design, then AI writes the copy.",
       useKey: "Use my own key",
@@ -564,38 +549,33 @@ export const ai = defineDictionary({
       title: "AI when generating",
       modesLabel: "What the AI does when generating",
       modes: { off: "No AI", copy: "Copy", design: "Design" },
-      offDescription: "Generate builds the base design with sample copy. No AI calls.",
-      designDescription:
-        "Claude designs every block of your layout with your brand: the layout stays yours (which blocks, where and in what order), the AI decides how it looks. Copy included.",
+      offDescription: "Base design with sample copy, no AI calls.",
+      designDescription: "Claude designs every block with your brand. Your layout stays the same.",
       cta: "Generate with AI",
       ctaHint: "Your base design comes first; then Claude designs every block in Adjust.",
       ctaNoAi: "Generate without AI",
       access: {
         useKey: "Use my key",
         manageKey: "Manage my key",
-        useClaude: "Copy prompt for my Claude",
-        claudeHint: "Free with your Claude account: copy the prompt, paste its answer here and it goes through the same checks.",
-        noScreens: "Pick at least one screen to prepare the prompt.",
+        useClaude: "Use my Claude",
+        useClaudeHint: "Free: copy the prompt, paste it in your Claude account and bring its answer back here.",
       },
       chips: {
         label: "Art direction",
-        hint: "Optional. «Automatic» lets your brand and a seed choose.",
         options: { auto: "Automatic", editorial: "Editorial", technical: "Technical", warm: "Warm", playful: "Playful", luxury: "Luxury" },
       },
       screens: {
         label: "Screens",
-        hint: (max: number) => `Up to ${max} per use.`,
+        count: (n: number, max: number) => `${n}/${max}`,
+        countLabel: (n: number, max: number) => `${n} of ${max} per use`,
         blocks: (n: number) => `${n} ${plural(n, "block", "blocks")}`,
         designed: "already with AI",
-        more: (total: number, uses: number, max: number) =>
-          `${total} screens = ${uses} uses. Pick ${max} now and generate the rest later.`,
         none: "Pick at least one screen.",
       },
       cost: {
         line: (cost: string, left: number, total: number, screens: number, seconds: number) =>
           `≈\u00a0${cost} · 1\u00a0use of ${left} · ${screens}\u00a0${plural(screens, "screen", "screens")} · ≈\u00a0${seconds}\u00a0s`,
         usesTotal: (total: number) => `You get ${total} free ${plural(total, "use", "uses")} a month.`,
-        session: "The use includes 10 block changes («Another version», «Ask for a change») for 24 h.",
         withKey: (cost: string, screens: number, seconds: number) =>
           `≈\u00a0${cost} with your key · ${screens}\u00a0${plural(screens, "screen", "screens")} · ≈\u00a0${seconds}\u00a0s`,
       },

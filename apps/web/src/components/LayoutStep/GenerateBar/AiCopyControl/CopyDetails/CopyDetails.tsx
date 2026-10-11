@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button } from "@/components/ui/Button";
-import { useDictionary, useI18n } from "@/i18n";
+import { useDictionary } from "@/i18n";
 import { ai as aiText } from "@/i18n/ai";
-import { formatUsd } from "@/lib/money";
 import { compileScreenLayout } from "@/lib/screen-layout";
 import { aiTargetsFor } from "../../../generateFlow";
 import { useGenerateAi } from "../../../useGenerateFlow";
+import { AiAccessActions } from "../AiAccessActions";
 import { documentAfterGenerate } from "../documentAfterGenerate";
 import { selectChangedBlocks, useChangedCount, useHasGenerated, useLayoutEnv, useLayoutStore, type LayoutState } from "../../../useLayoutStore";
 
@@ -18,10 +17,9 @@ export type CopyDetailsProps = {
   close: () => void;
 };
 
-/** «Textos con IA»: the cost and scope of the one copy request (critique #7), as before the «IA» control. */
+/** «Textos con IA»: one line on what it does, a status only when it matters (no texts, no free use, a cut) and the ways to Claude. */
 export function CopyDetails({ open, close }: CopyDetailsProps) {
   const t = useDictionary(aiText).layoutCopy;
-  const { locale } = useI18n();
   const { ai, openKeyDialog, copyPrompt } = useGenerateAi();
   const { doc } = useLayoutEnv();
   const screens = useLayoutStore((state) => state.screens);
@@ -41,61 +39,33 @@ export function CopyDetails({ open, close }: CopyDetailsProps) {
       return screen ? compileScreenLayout(screen).absorbed : {};
     });
     const next = pending ? documentAfterGenerate(doc, screens, order) : doc;
-    return { targets, next, changedOnly: targets.some((target) => target.sectionIds !== undefined) };
+    return { targets, next };
   }, [open, screens, order, prints, pending, doc]);
   const estimate = useMemo(() => (plan ? ai.estimate(plan.targets, plan.next) : null), [plan, ai]);
 
   const blocked = ai.source === null && ai.fallbackReason !== null;
   const noFields = plan !== null && estimate === null;
-  const cost = estimate ? t.estimate(formatUsd(estimate.costUsd, locale)) : null;
-  let costLine: string;
-  if (noFields) costLine = t.noFields;
-  else if (blocked && ai.fallbackReason) costLine = t.blocked[ai.fallbackReason];
-  else if (ai.source === "byok") costLine = cost ? `${cost} · ${t.withKey}` : t.withKey;
-  else if (ai.source === "hosted") {
-    const uses = ai.freeUsesRemaining === null ? t.oneUse : t.usesLeft(ai.freeUsesRemaining);
-    costLine = cost ? `${cost} · ${uses}` : uses;
-  } else costLine = cost ?? "";
+  // Only what changes the choice: no text to write, no free use left, or a cut. The cost and the uses are in the
+  // meter above and in the CTA's tooltip.
+  const status = noFields ? t.noFields : blocked && ai.fallbackReason ? t.blocked[ai.fallbackReason] : estimate?.truncated ? t.truncated(estimate.maxFields) : null;
 
   return (
     <>
       <p className="m-0 text-caption text-muted">{t.description}</p>
-      <div className="flex flex-col gap-1 rounded-control border border-app bg-white/[0.02] px-3 py-2.5">
-        {costLine && <span className="font-mono text-caption text-muted tabular-nums">{costLine}</span>}
-        {estimate && (
-          <span className="text-caption text-muted">
-            {t.scope(estimate.blocks, plan?.changedOnly ?? false)}
-            {ai.source !== "byok" && !blocked && ` ${t.oneUse}`}
-          </span>
-        )}
-        {estimate?.truncated && <span className="text-caption text-fg">{t.truncated(estimate.maxFields)}</span>}
-      </div>
-      <div className="flex flex-col items-start gap-1.5 border-t border-app pt-3">
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={blocked ? "primary" : "secondary"}
-            onClick={() => {
-              close();
-              openKeyDialog();
-            }}
-          >
-            {ai.source === "byok" ? t.manageKey : t.useKey}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={noFields}
-            onClick={() => {
-              close();
-              copyPrompt();
-            }}
-          >
-            {t.useClaude}
-          </Button>
-        </div>
-        <p className="m-0 text-caption text-muted">{t.claudeHint}</p>
-      </div>
+      {status && <p className="m-0 text-caption text-fg">{status}</p>}
+      <AiAccessActions
+        hasKey={ai.source === "byok"}
+        keyFirst={blocked}
+        claudeDisabled={noFields}
+        onUseKey={() => {
+          close();
+          openKeyDialog();
+        }}
+        onUseClaude={() => {
+          close();
+          copyPrompt();
+        }}
+      />
     </>
   );
 }

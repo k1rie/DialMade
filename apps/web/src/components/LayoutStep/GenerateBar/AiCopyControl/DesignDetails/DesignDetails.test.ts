@@ -26,22 +26,29 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
 const render = (p: AiRenderPlan) => renderToStaticMarkup(createElement(I18nProvider, null, createElement(DesignDetails, { plan: p, onUseKey: () => {}, onUseClaude: () => {} })));
 
 describe("DesignDetails («Diseño con IA»)", () => {
-  it("offers the two other ways to Claude: the user's key and «Copiar prompt para mi Claude» (spec §10.3)", () => {
+  it("offers the two other ways to Claude: the user's key and «Usar mi Claude» (spec §10.3)", () => {
     const html = render(plan());
     expect(html).toContain("Usar mi key");
-    expect(html).toContain("Copiar prompt para mi Claude");
+    expect(html).toContain("Usar mi Claude");
+  });
+
+  it("keeps the panel short: no cost line, no session or art direction paragraphs", () => {
+    const html = render(plan({ cost: { cost: "$0.013", left: 5, total: 5, screens: 1, seconds: 30, byok: false } }));
+    expect(html).not.toContain("$0.013");
+    expect(html).not.toContain("10 cambios");
+    expect(html).not.toContain("semilla");
   });
 
   it("with the free tier closed they are the way out (the key is the primary action), never a dead end", () => {
     const html = render(plan({ blocked: "free-tier-exhausted", ready: false }));
     expect(html).toContain("sin usos gratis este mes");
     expect(html).toMatch(/<button[^>]*class="[^"]*bg-accent-cta[^"]*"[^>]*>(<span[^>]*>)?Usar mi key/);
-    expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Copiar prompt/)).toBeNull();
+    expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Usar mi Claude/)).toBeNull();
   });
 
   it("without screens there is nothing to prepare a prompt for", () => {
     const html = render(plan({ selected: [] }));
-    expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Copiar prompt/)).not.toBeNull();
-    expect(html).toContain("Elige al menos una pantalla para preparar el prompt.");
+    expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Usar mi Claude/)).not.toBeNull();
+    expect(html).toContain("Elige al menos una pantalla.");
   });
 });

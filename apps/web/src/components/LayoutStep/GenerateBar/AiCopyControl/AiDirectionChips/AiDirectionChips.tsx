@@ -13,13 +13,12 @@ export type AiDirectionChipsProps = {
 
 /**
  * «Dirección de arte» (spec §4.2, user decision 4): optional chips that fix 2–3 axes of the art direction before the
- * seeded draw; «Automática» (default) leaves every axis to the brand and the seed. One choice: a radio group with
+ * seeded draw; «Automática» (default) leaves every axis to the brand and the seed (no hint: the chip says it). One choice: a radio group with
  * arrow keys (roving tabindex), Home and End.
  */
 export function AiDirectionChips({ value, onChange }: AiDirectionChipsProps) {
   const t = useDictionary(aiText).aiRender.chips;
   const labelId = useId();
-  const hintId = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -40,7 +39,7 @@ export function AiDirectionChips({ value, onChange }: AiDirectionChipsProps) {
       <p id={labelId} className="m-0 text-caption font-medium text-fg">
         {t.label}
       </p>
-      <div role="radiogroup" aria-labelledby={labelId} aria-describedby={hintId} onKeyDown={onKeyDown} className="flex flex-wrap gap-1.5">
+      <div role="radiogroup" aria-labelledby={labelId} onKeyDown={onKeyDown} className="flex flex-wrap gap-1.5">
         {AI_DIRECTION_CHIPS.map((chip, index) => {
           const checked = chip === value;
           return (
@@ -62,9 +61,6 @@ export function AiDirectionChips({ value, onChange }: AiDirectionChipsProps) {
           );
         })}
       </div>
-      <p id={hintId} className="m-0 text-caption text-muted">
-        {t.hint}
-      </p>
     </div>
   );
 }

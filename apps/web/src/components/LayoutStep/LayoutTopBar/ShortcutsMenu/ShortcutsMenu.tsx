@@ -42,7 +42,7 @@ export function ShortcutsMenu() {
     >
       <div className="flex flex-col gap-3">
         <p className="m-0 text-small font-semibold text-fg">{t.shortcuts.title}</p>
-        <div className="flex flex-col gap-1.5 rounded-control border border-app bg-white/[0.02] p-2.5">
+        <div className="rounded-control border border-app bg-white/[0.02] p-2.5">
           <Switch
             size="sm"
             checked={enabled}
@@ -53,7 +53,8 @@ export function ShortcutsMenu() {
             label={t.shortcuts.singleKey}
             aria-describedby={hintId}
           />
-          <p id={hintId} className="m-0 text-caption text-muted">
+          {/* WCAG 2.1.4: why to turn them off, for the voice control and screen reader users it is about. */}
+          <p id={hintId} className="sr-only">
             {t.shortcuts.singleKeyHint}
           </p>
         </div>
@@ -76,7 +77,6 @@ export function ShortcutsMenu() {
             </div>
           ))}
         </dl>
-        <p className="m-0 text-caption text-muted">{t.shortcuts.regionsHint}</p>
       </div>
     </Popover>
   );

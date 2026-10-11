@@ -46,8 +46,8 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
  * Non-modal popover (role="dialog") rendered in a portal with fixed positioning, so it escapes the
  * clipped canvas. Focus moves in on every opening (the first one too, once the panel is measured and shown)
  * and back to the trigger on Esc or when the popover closes with focus inside (an item that closes it);
- * outside clicks, focus elsewhere and Tab out of either end close it (Tab continues from the trigger,
- * Shift+Tab lands on it).
+ * outside clicks (also inside an iframe), focus elsewhere and Tab out of either end close it (Tab continues from the
+ * trigger, Shift+Tab lands on it).
  */
 export function Popover({ open, onOpenChange, trigger, label, align = "start", side = "bottom", className, children }: PopoverProps) {
   const id = useId();
@@ -157,13 +157,28 @@ export function Popover({ open, onOpenChange, trigger, label, align = "start", s
       if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
       onOpenChange(false);
     };
+    // A press inside an iframe (the AI blocks of the canvas) never reaches this document: the window blurs and the
+    // iframe takes focus instead. It closes like any press outside (focus stays where the press put it).
+    let blurTimer: number | undefined;
+    const onWindowBlur = () => {
+      window.clearTimeout(blurTimer);
+      blurTimer = window.setTimeout(() => {
+        const active = document.activeElement;
+        if (!(active instanceof HTMLIFrameElement) || panelRef.current?.contains(active)) return;
+        focus.pressed(false);
+        onOpenChange(false);
+      }, 0);
+    };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown, true);
     document.addEventListener("focusin", onFocusIn, true);
+    window.addEventListener("blur", onWindowBlur);
     return () => {
+      window.clearTimeout(blurTimer);
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown, true);
       document.removeEventListener("focusin", onFocusIn, true);
+      window.removeEventListener("blur", onWindowBlur);
     };
   }, [open, onOpenChange, focus, triggerControl]);
 
