@@ -206,7 +206,8 @@ export function Popover({ open, onOpenChange, trigger, label, align = "start", s
                 aria-label={label}
                 tabIndex={-1}
                 className={cn(
-                  "fixed z-[900] w-72 max-w-[calc(100vw-24px)] rounded-card border border-app-strong bg-app-elevated p-3 text-fg shadow-lift outline-none",
+                  // A panel taller than the window scrolls inside it instead of leaving through the top (MARGIN × 2).
+                  "fixed z-[900] w-72 max-w-[calc(100vw-24px)] max-h-[calc(100dvh-24px)] overflow-y-auto overscroll-contain rounded-card border border-app-strong bg-app-elevated p-3 text-fg shadow-lift outline-none",
                   className,
                 )}
                 style={{ left: position?.left ?? -9999, top: position?.top ?? -9999, visibility: position ? "visible" : "hidden" }}
