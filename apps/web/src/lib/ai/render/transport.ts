@@ -13,7 +13,7 @@ import { updateAiCounters } from "@/hooks/useAiStatus";
 import { isAiApiErrorCode, type AiStatusResponse } from "../api";
 import { OFFLINE_AI_STATUS, countersFrom, hostedBlocker, type AiFallbackReason } from "../policy";
 import { DEFAULT_BYOK_RENDER_MODEL } from "./byokModel";
-import { getFullAccessRenderModel } from "./fullAccessModel";
+import { getFullAccessRenderModel } from "./fullAccessModelStore";
 import { getRenderTier } from "./renderTier";
 import {
   RENDER_BLOCK_ENDPOINT,

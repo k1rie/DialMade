@@ -8,7 +8,8 @@ import { AI_SESSION_SCREENS } from "@/lib/ai/config";
 import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiFallbackReason } from "@/lib/ai/policy";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
-import { isFullAccessRenderModel, setFullAccessRenderModel, useFullAccessRenderModel, type FullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
+import { isFullAccessRenderModel, type FullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
+import { setFullAccessRenderModel, useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModelStore";
 import { FREE_RENDER_TIERS, setRenderTier, useRenderTier } from "@/lib/ai/render/renderTier";
 import { renderPathFor } from "@/lib/ai/render/transport";
 import {

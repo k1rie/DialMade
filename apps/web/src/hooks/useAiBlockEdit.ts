@@ -24,7 +24,7 @@ import {
 } from "@/lib/ai/render/blockAction";
 import { setAiBlockActiveOps, setAiBlockOps, textEditOps } from "@/lib/ai/render/edit";
 import { useByokRenderModel } from "@/lib/ai/render/byokModel";
-import { useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModel";
+import { useFullAccessRenderModel } from "@/lib/ai/render/fullAccessModelStore";
 import { useRenderTier } from "@/lib/ai/render/renderTier";
 import { createRenderTransport, fullAccessChoice } from "@/lib/ai/render/transport";
 import { getLiveSession, setLiveSession, updateLiveSessionCounters } from "@/lib/ai/render/liveSession";
