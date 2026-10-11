@@ -1,6 +1,6 @@
 export { iconSvg, placeholderSvg } from "./assets";
 export { CHART_KINDS, canonicalChartValues, chartFromAttributes, chartSvg, formatChartValue, parseChartValues, type ChartKind } from "./chart";
-export { AI_RENDER_TIERS, TIER_SETTINGS, tierSettings, type AiRenderTier, type TierSettings } from "./tier";
+export { AI_RENDER_TIERS, TIER_MODEL, TIER_SETTINGS, pageScreenMaxTokens, tierSettings, type AiRenderTier, type TierSettings } from "./tier";
 export { contrastIssues, fixContrast, themeColorsFromVars, type ContrastIssue, type ContrastMode, type ContrastResult, type ThemeColors } from "./contrast";
 export {
   AXIS_GLOSSARY,
@@ -40,6 +40,7 @@ export {
   brandInput,
   draftTexts,
   h1BlockOf,
+  pageSectionData,
   renderableBlocks,
   screenInput,
   type ScreenInputOptions,
@@ -55,6 +56,7 @@ export {
   MAX_STYLE_REFERENCES,
   SCREEN_MAX_TOKENS,
   artDirectionText,
+  attachedReferencesText,
   directionForPrompt,
   axesLine,
   blockMessage,
@@ -76,6 +78,7 @@ export {
   ALLOWED_TAGS,
   BLOCK_LIMITS,
   FALLBACK_ICON,
+  PAGE_BLOCK_LIMITS,
   PLACEHOLDER_KINDS,
   ROOT_TAGS,
   droppedClassRatio,
@@ -83,6 +86,7 @@ export {
   sanitizeSurfaceClasses,
   type SanitizeContext,
   type SanitizeFailure,
+  type SanitizeMode,
   type SanitizeReport,
   type SanitizeResult,
 } from "./sanitize";
@@ -93,3 +97,17 @@ export { checkClass, colorOfClass, splitClass, type ClassCheck, type ClassReject
 export { exportBlockHtml, inlineAssets, provenanceComment, type ExportBlockOptions, type InlineAssetsOptions } from "./export";
 export { blockToTsx, componentName, tsxAssetsModule, type TsxOptions } from "./tsx";
 export { pinViewportUnits } from "./viewport";
+export { CSS_LIMITS, PAGE_BASE_CSS, PAGE_SCOPE, oklabMix, sanitizeCss, sanitizeStyleAttr, sectionScope, type CssReport, type CssResult, type CssScope } from "./pageCss";
+export {
+  AI_PAGE_PROMPT_VERSION,
+  AI_PAGE_SYSTEM_PROMPT,
+  PAGE_THEME_VARS,
+  pageBlockMessage,
+  pageAgentPrompt,
+  pageManualPrompt,
+  pageScreenMessage,
+  pageStyleText,
+  type PageBlockActionInput,
+  type PageSectionData,
+} from "./pagePrompt";
+export { SVG_TAGS, checkSvgAttr, isAllowedSvgAttr } from "./svgAllowlist";

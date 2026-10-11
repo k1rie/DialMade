@@ -14,6 +14,14 @@ export function aiBlockOps(doc: DesignDoc, screenId: string, blockId: string, bl
   return [{ op: "add", path: `/screens/${screenId}/aiRender/blocks/${blockId}`, value: block }];
 }
 
+/** Page mode: stores the screen's page stylesheet (already sanitized). `null` when the screen is gone. */
+export function aiPageCssOps(doc: DesignDoc, screenId: string, css: string): PatchOp[] | null {
+  const screen = doc.screens[screenId];
+  if (!screen) return null;
+  if (!screen.aiRender) return [{ op: "add", path: `/screens/${screenId}/aiRender`, value: { version: 1, blocks: {}, pageCss: css } }];
+  return [{ op: "add", path: `/screens/${screenId}/aiRender/pageCss`, value: css }];
+}
+
 /**
  * «Volver al diseño base» (`active: false`: the HTML is kept) and «Usar IA otra vez». `null` when there is no such
  * AI block or nothing changes.

@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brisa · Tu barbería, sin llamadas</title>
+<meta name="description" content="Brisa es la app de reservas para barberías de barrio: agenda semanal, clientes, recordatorios por WhatsApp y cobros. Gratis hasta 5 personas, sin tarjeta.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.147 0.004 164.84);
+  --primary: oklch(0.511 0.086 186.39);
+  --primary-foreground: oklch(1 0 0);
+  --cta: oklch(0.608 0.133 68.71);
+  --cta-foreground: oklch(0.147 0.004 164.84);
+  --accent: oklch(0.95 0.02 189.21);
+  --accent-foreground: oklch(0.394 0.058 185.04);
+  --muted: oklch(0.971 0.003 174.48);
+  --muted-foreground: oklch(0.546 0.004 219.56);
+  --border: oklch(0.922 0.003 174.48);
+
+  --ink-soft: color-mix(in oklch, var(--foreground) 72%, var(--background));
+  --primary-tint: color-mix(in oklch, var(--primary) 10%, var(--background));
+  --primary-line: color-mix(in oklch, var(--primary) 30%, var(--background));
+  --cta-tint: color-mix(in oklch, var(--cta) 16%, var(--background));
+  --cta-deep: color-mix(in oklch, var(--cta) 70%, var(--foreground));
+  --radius: 18px;
+  --wrap: 1140px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Inter",system-ui,sans-serif;
+  font-optical-sizing:auto;
+  background:var(--background);
+  color:var(--foreground);
+  font-size:1.0625rem;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+.wrap{width:min(var(--wrap),100% - 40px);margin-inline:auto}
+h1,h2,h3{font-weight:800;letter-spacing:-0.025em;line-height:1.08;font-variation-settings:"opsz" 32}
+h1 em,h2 em{font-style:italic;font-weight:600;color:var(--primary)}
+h3{font-size:1.25rem;letter-spacing:-0.01em;line-height:1.25}
+p{color:var(--ink-soft)}
+.eyebrow{
+  display:inline-block;font-size:.8125rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent-foreground);background:var(--accent);padding:.35rem .7rem;border-radius:999px;margin-bottom:1.1rem
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+  font:inherit;font-weight:700;font-size:1rem;text-decoration:none;
+  padding:.9rem 1.4rem;border-radius:999px;border:2px solid transparent;cursor:pointer;
+  transition:transform .15s ease, background-color .15s ease;min-height:48px
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible,a:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+.btn-cta{background:var(--cta);color:var(--cta-foreground);box-shadow:0 6px 0 var(--cta-deep)}
+.btn-cta:hover{background:color-mix(in oklch,var(--cta) 90%,white)}
+.btn-primary{background:var(--primary);color:var(--primary-foreground)}
+.btn-primary:hover{background:color-mix(in oklch,var(--primary) 88%,black)}
+.btn-ghost{border-color:var(--border);background:var(--background);color:var(--foreground)}
+.btn-ghost:hover{border-color:var(--primary)}
+.note{font-size:.9rem;color:var(--muted-foreground);display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.note b{color:var(--foreground);font-weight:700}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in oklch,var(--background) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:1rem}
+.logo{display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;font-weight:800;font-size:1.3rem;letter-spacing:-0.03em}
+.logo-mark{width:30px;height:30px;border-radius:9px;background:var(--primary);display:grid;place-items:center}
+.nav-links{display:flex;gap:1.6rem;list-style:none;font-size:.95rem;font-weight:500}
+.nav-links a{text-decoration:none;color:var(--ink-soft)}
+.nav-links a:hover{color:var(--primary)}
+.nav .btn{padding:.6rem 1.05rem;min-height:44px;font-size:.95rem}
+
+/* HERO */
+.hero{padding:clamp(48px,7vw,96px) 0 clamp(56px,7vw,96px);background:
+  radial-gradient(1200px 500px at 90% -10%, var(--primary-tint), transparent 60%),
+  var(--background)}
+.hero-grid{display:grid;gap:56px;align-items:center;grid-template-columns:1fr 1.05fr}
+.hero h1{font-size:clamp(2.6rem,6vw,4.4rem);margin-bottom:1.1rem}
+.hero .lead{font-size:1.15rem;max-width:34ch;margin-bottom:2rem}
+.hero-actions{display:flex;flex-wrap:wrap;gap:1rem 1.25rem;align-items:center;margin-bottom:1.5rem}
+.hero .note{margin-top:.25rem}
+.facts{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;margin-top:2rem}
+.facts li{font-size:.9rem;font-weight:600;border:1px solid var(--border);border-radius:999px;padding:.35rem .8rem;background:var(--background)}
+.facts li span{color:var(--primary)}
+
+/* AGENDA MOCKUP */
+.board{
+  background:var(--background);border:1px solid var(--border);border-radius:24px;
+  box-shadow:0 30px 60px -30px color-mix(in oklch,var(--foreground) 35%,transparent),0 2px 0 var(--border);
+  overflow:hidden;position:relative
+}
+.board-top{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:1rem 1.1rem;border-bottom:1px solid var(--border);background:var(--muted)}
+.board-title{font-weight:800;font-size:1rem;letter-spacing:-0.01em}
+.board-title small{display:block;font-weight:500;font-size:.78rem;color:var(--muted-foreground)}
+.days{display:flex;gap:.3rem}
+.days span{font-size:.78rem;font-weight:700;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--muted-foreground)}
+.days span.on{background:var(--primary);color:var(--primary-foreground)}
+.grid{display:grid;grid-template-columns:52px repeat(3,minmax(0,1fr));font-size:.8rem}
+.grid > div{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:.5rem .45rem;min-height:58px;min-width:0}
+.grid > div:nth-child(4n){border-right:none}
+.chair{font-weight:800;color:var(--foreground);background:var(--background);min-height:auto;font-size:.8rem;line-height:1.2}
+.chair small{display:block;font-weight:500;color:var(--muted-foreground);font-size:.72rem}
+.time{color:var(--muted-foreground);font-weight:600;font-variant-numeric:tabular-nums;font-size:.75rem;background:var(--muted)}
+.appt{
+  border-radius:10px;padding:.4rem .5rem;background:var(--primary-tint);border-left:3px solid var(--primary);
+  color:var(--accent-foreground);font-weight:600;line-height:1.25;min-width:0;overflow-wrap:anywhere
+}
+.appt small{display:block;font-weight:500;color:var(--ink-soft);font-size:.72rem}
+.appt.cta{background:var(--cta-tint);border-left-color:var(--cta);color:var(--foreground)}
+.free{border-radius:10px;border:1.5px dashed var(--primary-line);color:var(--muted-foreground);display:grid;place-items:center;font-size:.72rem;font-weight:600;text-align:center;background:transparent}
+.wa{
+  margin-top:.3rem;display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:700;
+  color:var(--accent-foreground);background:var(--accent);padding:.12rem .4rem;border-radius:999px
+}
+.board-foot{display:flex;gap:.6rem;align-items:flex-start;padding:.9rem 1.1rem;background:var(--background)}
+.board-foot .ico{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
+.board-foot p{font-size:.85rem;line-height:1.45;color:var(--ink-soft)}
+.board-foot p b{color:var(--foreground)}
+.sticker{
+  position:absolute;right:-10px;top:-14px;background:var(--cta);color:var(--cta-foreground);
+  font-weight:800;font-size:.8rem;padding:.45rem .8rem;border-radius:12px;transform:rotate(4deg);
+  box-shadow:0 4px 0 var(--cta-deep)
+}
+
+/* SECTIONS */
+section{padding:clamp(64px,8vw,104px) 0}
+.head{max-width:640px;margin-bottom:clamp(36px,5vw,56px)}
+.head h2{font-size:clamp(2rem,4.4vw,3rem);margin-bottom:.9rem}
+.head p{font-size:1.1rem}
+
+/* FEATURES */
+.features{background:var(--muted)}
+.feat-grid{display:grid;gap:20px;grid-template-columns:repeat(3,1fr)}
+.card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.feat .ico{width:52px;height:52px;border-radius:16px;background:var(--accent);display:grid;place-items:center;margin-bottom:1.25rem;color:var(--accent-foreground)}
+.feat h3{margin-bottom:.6rem}
+.feat p{font-size:.98rem}
+.feat .tag{display:inline-block;margin-top:1rem;font-size:.85rem;font-weight:700;color:var(--primary)}
+
+/* TESTIMONIALS */
+.quotes{display:grid;gap:20px;grid-template-columns:repeat(3,1fr)}
+.quote{display:flex;flex-direction:column;gap:1.25rem}
+.quote blockquote{font-size:1.05rem;line-height:1.55;font-style:italic;font-weight:500;font-variation-settings:"opsz" 20;color:var(--foreground)}
+.quote blockquote::before{content:"“";display:block;font-size:3rem;line-height:.6;color:var(--cta);font-style:normal;font-weight:800;margin-bottom:.4rem}
+.who{display:flex;gap:.8rem;align-items:center;margin-top:auto;padding-top:1rem;border-top:1px solid var(--border)}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.95rem;color:var(--accent-foreground);background:var(--accent);flex:none}
+.who strong{display:block;font-size:.98rem;line-height:1.3}
+.who span{font-size:.88rem;color:var(--muted-foreground)}
+
+/* PRICING */
+.pricing{background:var(--background)}
+.plans{display:grid;gap:20px;grid-template-columns:repeat(3,1fr);align-items:stretch}
+.plan{position:relative;display:flex;flex-direction:column;padding:32px 28px}
+.plan h3{font-size:1.4rem}
+.plan .desc{font-size:.95rem;color:var(--muted-foreground);margin-top:.3rem;min-height:2.6em}
+.price{display:flex;align-items:baseline;gap:.4rem;margin:1.25rem 0 .25rem}
+.price strong{font-size:3.2rem;font-weight:800;letter-spacing:-0.04em;line-height:1;font-variation-settings:"opsz" 32}
+.price span{font-weight:600;color:var(--ink-soft)}
+.per{font-size:.9rem;color:var(--muted-foreground);margin-bottom:1.5rem;min-height:1.4em}
+.plan ul{list-style:none;display:grid;gap:.7rem;margin-bottom:2rem;flex:1}
+.plan li{display:flex;gap:.6rem;font-size:.97rem;color:var(--ink-soft);align-items:flex-start}
+.plan li svg{flex:none;margin-top:.3rem;color:var(--primary)}
+.plan .btn{width:100%}
+.plan.hot{
+  border:2px solid var(--primary);
+  background:linear-gradient(180deg,var(--primary-tint),var(--background) 55%);
+  box-shadow:0 24px 50px -28px color-mix(in oklch,var(--primary) 70%,transparent)
+}
+.badge{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  background:var(--cta);color:var(--cta-foreground);font-weight:800;font-size:.8rem;
+  padding:.4rem .9rem;border-radius:999px;white-space:nowrap;box-shadow:0 3px 0 var(--cta-deep)
+}
+.pricing-foot{margin-top:28px;text-align:center;font-size:.95rem;color:var(--muted-foreground)}
+
+/* CTA */
+.cta{padding:0 0 clamp(64px,8vw,104px)}
+.cta-box{
+  position:relative;overflow:hidden;border-radius:28px;background:var(--primary);color:var(--primary-foreground);
+  padding:clamp(40px,6vw,72px);display:grid;gap:32px;grid-template-columns:1.3fr 1fr;align-items:center
+}
+.cta-box::after{
+  content:"";position:absolute;right:-80px;bottom:-120px;width:340px;height:340px;border-radius:50%;
+  background:color-mix(in oklch,var(--cta) 35%,transparent);pointer-events:none
+}
+.cta-box h2{color:var(--primary-foreground);font-size:clamp(2rem,4.4vw,3rem);margin-bottom:.8rem}
+.cta-box h2 em{color:var(--cta)}
+.cta-box p{color:color-mix(in oklch,var(--primary-foreground) 88%,transparent);font-size:1.08rem}
+.cta-side{position:relative;z-index:1;display:grid;gap:1rem;justify-items:start}
+.cta-side .btn-cta{width:100%;max-width:340px}
+.cta-side .note{color:color-mix(in oklch,var(--primary-foreground) 85%,transparent)}
+.cta-side .note b{color:var(--primary-foreground)}
+.steps{list-style:none;display:grid;gap:.5rem;font-size:.98rem;margin-top:1.25rem;counter-reset:s}
+.steps li{display:flex;gap:.65rem;align-items:center}
+.steps li::before{
+  counter-increment:s;content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-weight:800;font-size:.85rem;background:var(--primary-foreground);color:var(--primary)
+}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:44px 0 36px;background:var(--background)}
+.foot{display:flex;flex-wrap:wrap;gap:28px 48px;justify-content:space-between;align-items:flex-start}
+.foot p{font-size:.92rem;max-width:30ch;margin-top:.8rem;color:var(--muted-foreground)}
+.foot nav{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem}
+.foot nav a{text-decoration:none;font-size:.95rem;color:var(--ink-soft);font-weight:500}
+.foot nav a:hover{color:var(--primary)}
+.legal{margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-size:.85rem;color:var(--muted-foreground);display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem}
+
+/* RESPONSIVE */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:48px}
+  .hero .lead{max-width:none}
+  .feat-grid,.quotes{grid-template-columns:1fr}
+  .plans{grid-template-columns:1fr;max-width:460px;margin-inline:auto}
+  .plan.hot{order:-1}
+  .cta-box{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+@media (max-width:600px){
+  body{font-size:1rem}
+  .wrap{width:min(var(--wrap),100% - 32px)}
+  .hero h1{font-size:2.5rem}
+  .nav .btn{padding:.55rem .9rem;font-size:.9rem}
+  .board-top{padding:.85rem}
+  .days span{width:26px;height:26px;font-size:.72rem}
+  .grid{grid-template-columns:40px repeat(3,minmax(0,1fr));font-size:.72rem}
+  .grid > div{padding:.35rem .3rem;min-height:50px}
+  .appt{padding:.3rem .35rem;font-size:.72rem}
+  .appt small{font-size:.66rem}
+  .chair small{display:none}
+  .wa{font-size:.6rem;padding:.1rem .3rem}
+  .sticker{right:8px;top:-16px}
+  .card,.plan{padding:24px 22px}
+  .btn{width:100%}
+  .hero-actions .btn{width:100%}
+  .cta-side .btn-cta{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="#inicio" class="logo" aria-label="Brisa, inicio">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 8c3-3 6-3 8 0s5 3 8 0"/><path d="M4 16c3-3 6-3 8 0s5 3 8 0"/></svg>
+      </span>
+      Brisa
+    </a>
+    <ul class="nav-links">
+      <li><a href="#funciones">Funciones</a></li>
+      <li><a href="#opiniones">Opiniones</a></li>
+      <li><a href="#precios">Precios</a></li>
+    </ul>
+    <a href="#empezar" class="btn btn-primary">Abrir cuenta gratis</a>
+  </div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section class="hero" id="inicio" style="padding-bottom:clamp(56px,7vw,96px)">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Para barberías de barrio</span>
+      <h1>Tu barbería, <em>sin llamadas.</em></h1>
+      <p class="lead">Pasa la agenda de papel y WhatsApp a una sola pantalla. Ves las sillas, las horas y quién viene hoy, y los recordatorios salen solos.</p>
+      <div class="hero-actions">
+        <a href="#empezar" class="btn btn-cta">Abre tu cuenta gratis</a>
+        <a href="#funciones" class="btn btn-ghost">Cómo funciona</a>
+      </div>
+      <p class="note"><b>Sin tarjeta.</b> Gratis hasta 5 personas. Lo usan ya 1.200 barberías.</p>
+      <ul class="facts" aria-label="Datos clave">
+        <li><span>Gratis</span> hasta 5 personas</li>
+        <li><span>12 €</span> al mes por equipo</li>
+        <li>Sin tarjeta</li>
+      </ul>
+    </div>
+
+    <figure class="board" role="img" aria-label="Agenda de la semana con tres sillas, citas de las 10:00 a las 11:30 y recordatorios enviados por WhatsApp">
+      <span class="sticker" aria-hidden="true">¡Así de fácil!</span>
+      <div class="board-top">
+        <div class="board-title">Agenda de la semana<small>Barbería Ruiz · Lunes</small></div>
+        <div class="days" aria-hidden="true"><span>L</span><span class="on">M</span><span>X</span><span>J</span><span>V</span></div>
+      </div>
+      <div class="grid">
+        <div class="chair" style="background:var(--muted)">Hora</div>
+        <div class="chair">Silla 1<small>Javi</small></div>
+        <div class="chair">Silla 2<small>Marta</small></div>
+        <div class="chair">Silla 3<small>Dani</small></div>
+
+        <div class="time">10:00</div>
+        <div><div class="appt">Corte<small>Pablo</small><span class="wa">WhatsApp ✓</span></div></div>
+        <div><div class="appt">Barba<small>Luis</small></div></div>
+        <div><div class="free">Hueco libre</div></div>
+
+        <div class="time">10:30</div>
+        <div><div class="free">Hueco libre</div></div>
+        <div><div class="appt cta">Corte + barba<small>Sergio</small><span class="wa">Recordatorio ✓</span></div></div>
+        <div><div class="appt">Corte<small>Nico</small></div></div>
+
+        <div class="time">11:00</div>
+        <div><div class="appt">Degradado<small>Álex</small><span class="wa">WhatsApp ✓</span></div></div>
+        <div><div class="appt">Arreglo<small>Hugo</small></div></div>
+        <div><div class="free">Hueco libre</div></div>
+
+        <div class="time">11:30</div>
+        <div><div class="free">Hueco libre</div></div>
+        <div><div class="appt">Corte<small>Rubén</small></div></div>
+        <div><div class="appt cta">Corte + barba<small>Iván</small><span class="wa">Recordatorio ✓</span></div></div>
+      </div>
+      <div class="board-foot">
+        <span class="ico" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-foreground)"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <p><b>Sergio</b> ya tiene su recordatorio por WhatsApp. Tú no tienes que escribir a nadie.</p>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="funciones" aria-labelledby="f-title">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Lo que necesitas</span>
+      <h2 id="f-title">Todo lo de tu libreta, <em>en el móvil.</em></h2>
+      <p>Sin menús raros ni cosas que aprender. Si sabes usar WhatsApp, sabes usar Brisa.</p>
+    </div>
+    <div class="feat-grid">
+      <article class="card feat">
+        <div class="ico" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4M8 14h2M14 14h2M8 18h2"/></svg>
+        </div>
+        <h3>La semana de un vistazo</h3>
+        <p>Cada silla con sus horas. Ves los huecos libres de un golpe de ojo y añades una cita en dos toques, incluso con las manos llenas de jabón.</p>
+        <span class="tag">Agenda semanal</span>
+      </article>
+      <article class="card feat">
+        <div class="ico" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21c0-3.1-1.8-5.8-4.5-6.8"/></svg>
+        </div>
+        <h3>Cada cliente, con su historial</h3>
+        <p>Qué corte le gusta a cada uno, cuánto le gusta la máquina, cuándo volvió la última vez. Nada se pierde entre papeles.</p>
+        <span class="tag">Clientes</span>
+      </article>
+      <article class="card feat">
+        <div class="ico" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 12h5"/></svg>
+        </div>
+        <h3>Recordatorios por WhatsApp</h3>
+        <p>Brisa avisa a tus clientes el día antes. Menos huecos sin avisar y menos llamadas para confirmar citas.</p>
+        <span class="tag">Recordatorios</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="opiniones" aria-labelledby="o-title">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Desde la silla</span>
+      <h2 id="o-title">Lo cuentan los que <em>barren pelo</em> cada día.</h2>
+    </div>
+    <div class="quotes">
+      <figure class="card quote">
+        <blockquote>Antes me pasaba el día contestando el teléfono entre cliente y cliente. Ahora la agenda se lleva sola y yo me centro en las tijeras.</blockquote>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">JR</span>
+          <span><strong>Javi Ruiz</strong><span>Barbería Ruiz, dueño</span></span>
+        </figcaption>
+      </figure>
+      <figure class="card quote">
+        <blockquote>Mis clientes reciben el aviso por WhatsApp y ya no me llaman para confirmar. Y el que no viene, lo veo al momento y lo cambio.</blockquote>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">MC</span>
+          <span><strong>Marta Cano</strong><span>Silla 2, barbería de barrio</span></span>
+        </figcaption>
+      </figure>
+      <figure class="card quote">
+        <blockquote>Tenía la agenda en una libreta llena de tachones. Lo pasamos en una tarde y el equipo entero la usa desde el móvil.</blockquote>
+        <figcaption class="who">
+          <span class="avatar" aria-hidden="true">DN</span>
+          <span><strong>Dani Navarro</strong><span>Barbería La Esquina, socio</span></span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="precios" aria-labelledby="p-title" style="background:var(--muted)">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Precios</span>
+      <h2 id="p-title">Empieza gratis. <em>Paga cuando te compense.</em></h2>
+      <p>Sin tarjeta para abrir la cuenta. Cambias de plan cuando quieras.</p>
+    </div>
+
+    <div class="plans">
+      <article class="card plan">
+        <h3>Básico</h3>
+        <p class="desc">Para ti y hasta 4 más.</p>
+        <div class="price"><strong>0 €</strong><span>/mes</span></div>
+        <p class="per">Hasta 5 personas</p>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Hasta 5 personas</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Agenda y clientes ilimitados</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Recordatorios básicos</li>
+        </ul>
+        <a href="#empezar" class="btn btn-ghost">Abrir cuenta gratis</a>
+      </article>
+
+      <article class="card plan hot">
+        <span class="badge">MÁS POPULAR</span>
+        <h3>Equipo</h3>
+        <p class="desc">Para la barbería con varias sillas.</p>
+        <div class="price"><strong>12 €</strong><span>/mes</span></div>
+        <p class="per">por equipo</p>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Todo lo del Básico</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Recordatorios por WhatsApp</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Cobros y resumen semanal</li>
+        </ul>
+        <a href="#empezar" class="btn btn-cta">Empezar con Equipo</a>
+      </article>
+
+      <article class="card plan">
+        <h3>Empresa</h3>
+        <p class="desc">Para cadenas con varias sedes.</p>
+        <div class="price"><strong>29 €</strong><span>/mes</span></div>
+        <p class="per">&nbsp;</p>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Todo lo del plan Equipo</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Varias sedes con permisos</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Gestor de cuenta dedicado</li>
+        </ul>
+        <a href="#empezar" class="btn btn-ghost">Hablar con nosotros</a>
+      </article>
+    </div>
+    <p class="pricing-foot">Todos los precios sin tarjeta. El Básico no caduca.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="empezar" aria-labelledby="c-title" style="padding-top:clamp(64px,8vw,104px)">
+  <div class="wrap">
+    <div class="cta-box">
+      <div>
+        <h2 id="c-title">Pasa tu agenda de papel <em>esta semana.</em></h2>
+        <p>Abre la cuenta, mete a tus clientes y tu semana. Si en una hora no te convence, no pasa nada: no has pagado nada.</p>
+        <ol class="steps">
+          <li>Abre tu cuenta con el móvil</li>
+          <li>Añade tus sillas y tus clientes</li>
+          <li>Deja que Brisa avise por WhatsApp</li>
+        </ol>
+      </div>
+      <div class="cta-side">
+        <a href="#empezar" class="btn btn-cta">Abre tu cuenta gratis</a>
+        <p class="note"><b>Sin tarjeta.</b> Gratis hasta 5 personas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a href="#inicio" class="logo" aria-label="Brisa, inicio">
+          <span class="logo-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 8c3-3 6-3 8 0s5 3 8 0"/><path d="M4 16c3-3 6-3 8 0s5 3 8 0"/></svg>
+          </span>
+          Brisa
+        </a>
+        <p>Tu barbería, sin llamadas. Hecha para barberías de barrio.</p>
+      </div>
+      <nav aria-label="Pie de página">
+        <a href="#funciones">Funciones</a>
+        <a href="#opiniones">Opiniones</a>
+        <a href="#precios">Precios</a>
+        <a href="#empezar">Abrir cuenta</a>
+        <a href="#inicio">Contacto</a>
+      </nav>
+    </div>
+    <div class="legal">
+      <span>© Brisa. Todos los derechos reservados.</span>
+      <span>Aviso legal · Privacidad · Cookies</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

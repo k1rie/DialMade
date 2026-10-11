@@ -1,0 +1,295 @@
+<section data-block-id="b-nav">
+<style>
+[data-block-id="b-nav"]{container-type:inline-size;background:var(--background);color:var(--foreground);font-family:var(--dl-font-body)}
+[data-block-id="b-nav"] header{height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;border-bottom:1px solid var(--border);box-sizing:border-box}
+[data-block-id="b-nav"] .wm{font-family:var(--dl-font-heading);font-size:22px;letter-spacing:-0.01em;color:var(--foreground);text-decoration:none}
+[data-block-id="b-nav"] .wm em{font-style:italic;color:var(--primary)}
+[data-block-id="b-nav"] ul{display:none;list-style:none;margin:0;padding:0;gap:28px}
+[data-block-id="b-nav"] ul a,[data-block-id="b-nav"] .acc{font-size:14px;color:var(--muted-foreground);text-decoration:none}
+[data-block-id="b-nav"] .right{display:flex;align-items:center;gap:16px}
+[data-block-id="b-nav"] .btn{font-family:var(--dl-font-body);font-size:13px;padding:9px 16px;border-radius:var(--dl-button-radius);background:var(--cta);color:var(--cta-foreground);border:1px solid var(--cta);cursor:pointer}
+@container (min-width: 760px){
+[data-block-id="b-nav"] header{padding:0 40px}
+[data-block-id="b-nav"] ul{display:flex}
+}
+</style>
+<header>
+<a class="wm" href="#">Ollaria<em>.</em></a>
+<ul>
+<li><a href="#">New in</a></li>
+<li><a href="#">Collections</a></li>
+<li><a href="#">About</a></li>
+<li><a href="#">Help</a></li>
+</ul>
+<div class="right">
+<a class="acc" href="#screen:s-dash">Account</a>
+<button class="btn" type="button">Shop the collection</button>
+</div>
+</header>
+</section>
+
+<section data-block-id="b-hero">
+<style>
+[data-block-id="b-hero"]{container-type:inline-size;background:var(--background);color:var(--foreground);font-family:var(--dl-font-body);position:relative;overflow:hidden;min-height:512px}
+[data-block-id="b-hero"] .art{position:absolute;inset:0;background:color-mix(in oklch, var(--primary) 14%, var(--background));border-bottom:1px solid var(--border)}
+[data-block-id="b-hero"] .art svg{position:absolute;color:var(--primary);fill:none;stroke:currentColor;stroke-width:1}
+[data-block-id="b-hero"] .pill{position:absolute;font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:6px 12px;border-radius:var(--dl-radius-full);background:var(--background);color:var(--foreground);border:1px solid var(--border)}
+[data-block-id="b-hero"] .card{position:relative;margin:300px 16px 24px;background:var(--card);color:var(--card-foreground);border:1px solid var(--border);border-radius:var(--dl-card-radius);padding:28px 22px;box-sizing:border-box}
+[data-block-id="b-hero"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 14px}
+[data-block-id="b-hero"] h1{font-family:var(--dl-font-heading);font-weight:400;font-size:38px;line-height:1.05;letter-spacing:-0.02em;margin:0 0 16px}
+[data-block-id="b-hero"] h1 em{font-style:italic}
+[data-block-id="b-hero"] p{font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:0 0 22px;max-width:44ch}
+[data-block-id="b-hero"] .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+[data-block-id="b-hero"] .btn{font-size:14px;padding:12px 20px;border-radius:var(--dl-button-radius);background:var(--cta);color:var(--cta-foreground);border:1px solid var(--cta);cursor:pointer}
+[data-block-id="b-hero"] .ghost{font-size:14px;color:var(--foreground);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--border)}
+[data-block-id="b-hero"] .ret{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);margin:18px 0 0}
+@container (min-width: 760px){
+[data-block-id="b-hero"]{min-height:512px}
+[data-block-id="b-hero"] .card{position:absolute;left:56px;bottom:48px;margin:0;width:440px;padding:36px 36px 32px}
+[data-block-id="b-hero"] h1{font-size:56px}
+}
+</style>
+<div class="art" aria-hidden="true">
+<svg style="left:52%;top:18%;width:38%;height:62%" viewBox="0 0 300 260" preserveAspectRatio="none"><path d="M40 60 H260 C260 170 220 230 150 230 C80 230 40 170 40 60 Z"/><ellipse cx="150" cy="60" rx="110" ry="14"/><path d="M60 110 C120 130 180 90 240 120"/></svg>
+<svg style="left:70%;top:46%;width:18%;height:34%" viewBox="0 0 120 180" preserveAspectRatio="none"><path d="M40 10 H80 V40 C110 60 110 120 80 170 H40 C10 120 10 60 40 40 Z"/><path d="M30 90 H90"/></svg>
+</div>
+<span class="pill" style="left:20px;top:20px">Batch of 40</span>
+<span class="pill" style="right:20px;top:64px">Glazes mixed in-house</span>
+<div class="card">
+<p class="eyebrow">Free shipping over $50</p>
+<h1>Stoneware, <em>fired</em> in batches of forty.</h1>
+<p>Each piece is glazed by hand in our studio, then kiln-fired with its batch. Look closely, and you will see the difference.</p>
+<div class="actions">
+<button class="btn" type="button">Shop the collection</button>
+<a class="ghost" href="#">See what's new</a>
+</div>
+<p class="ret">Free returns within 30 days</p>
+</div>
+</section>
+
+<section data-block-id="b-features">
+<style>
+[data-block-id="b-features"]{container-type:inline-size;background:var(--background);color:var(--foreground);font-family:var(--dl-font-body);padding:56px 20px;box-sizing:border-box}
+[data-block-id="b-features"] .head{border-top:1px solid var(--border);padding-top:18px;margin-bottom:40px}
+[data-block-id="b-features"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 12px}
+[data-block-id="b-features"] h2{font-family:var(--dl-font-heading);font-weight:400;font-size:34px;line-height:1.1;margin:0;max-width:18ch;letter-spacing:-0.015em}
+[data-block-id="b-features"] ol{list-style:none;margin:0;padding:0;display:grid;gap:0}
+[data-block-id="b-features"] li{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:28px 0;border-top:1px solid var(--border)}
+[data-block-id="b-features"] li:last-child{border-bottom:1px solid var(--border)}
+[data-block-id="b-features"] .num{font-family:var(--dl-font-mono);font-size:13px;color:var(--primary);padding-top:4px}
+[data-block-id="b-features"] h3{font-family:var(--dl-font-heading);font-weight:400;font-size:24px;line-height:1.2;margin:0 0 8px}
+[data-block-id="b-features"] p{font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:0;max-width:46ch}
+@container (min-width: 760px){
+[data-block-id="b-features"]{padding:72px 40px}
+[data-block-id="b-features"] .head{display:grid;grid-template-columns:4fr 8fr;gap:40px;align-items:start}
+[data-block-id="b-features"] .head .eyebrow{grid-column:1}
+[data-block-id="b-features"] .head p.lead{margin:0}
+[data-block-id="b-features"] ol{grid-template-columns:repeat(3,1fr);gap:40px}
+[data-block-id="b-features"] li{grid-template-columns:1fr;gap:10px;padding:28px 0 0;border-bottom:none}
+[data-block-id="b-features"] li:last-child{border-bottom:none}
+}
+</style>
+<div class="head">
+<div>
+<p class="eyebrow">Our shop</p>
+</div>
+<div>
+<h2>Shopping here is easier</h2>
+<p class="lead" style="font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:14px 0 0;max-width:46ch">We take care of every detail, from the catalog to your door.</p>
+</div>
+</div>
+<ol>
+<li><span class="num">01</span><div><h3>Secure checkout</h3><p>Pay by card or in three interest-free installments.</p></div></li>
+<li><span class="num">02</span><div><h3>Free returns</h3><p>You have 30 days to change your mind, no questions asked.</p></div></li>
+<li><span class="num">03</span><div><h3>Curated quality</h3><p>We test every product before selling it. If it doesn't convince us, it doesn't make the catalog.</p></div></li>
+</ol>
+</section>
+
+<section data-block-id="b-proof">
+<style>
+[data-block-id="b-proof"]{container-type:inline-size;background:var(--card);color:var(--card-foreground);font-family:var(--dl-font-body);padding:56px 20px;box-sizing:border-box;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+[data-block-id="b-proof"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 12px}
+[data-block-id="b-proof"] h2{font-family:var(--dl-font-heading);font-weight:400;font-size:32px;line-height:1.1;margin:0 0 14px;letter-spacing:-0.015em}
+[data-block-id="b-proof"] .lead{font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:0 0 36px;max-width:46ch}
+[data-block-id="b-proof"] .grid{display:grid;gap:32px}
+[data-block-id="b-proof"] figure{margin:0;padding-top:24px;border-top:1px solid var(--border)}
+[data-block-id="b-proof"] blockquote{margin:0 0 16px;font-family:var(--dl-font-heading);font-style:italic;font-size:20px;line-height:1.4}
+[data-block-id="b-proof"] figure.big blockquote{font-size:28px;line-height:1.25}
+[data-block-id="b-proof"] figcaption{font-size:14px;color:var(--foreground)}
+[data-block-id="b-proof"] .role{display:inline-block;margin-top:8px;font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;padding:4px 10px;border-radius:var(--dl-radius-full);border:1px solid var(--border);color:var(--muted-foreground)}
+[data-block-id="b-proof"] .intro{font-family:var(--dl-font-heading);font-size:20px;line-height:1.4;margin:0 0 28px;color:var(--foreground);max-width:36ch}
+@container (min-width: 760px){
+[data-block-id="b-proof"]{padding:72px 40px}
+[data-block-id="b-proof"] .grid{grid-template-columns:7fr 5fr;gap:48px 56px}
+[data-block-id="b-proof"] .side{display:grid;gap:40px}
+[data-block-id="b-proof"] figure.big{grid-row:span 2}
+}
+</style>
+<p class="eyebrow">Testimonials</p>
+<h2>What people are saying</h2>
+<p class="lead">Stories from our community.</p>
+<div class="grid">
+<figure class="big">
+<p class="intro">You can tell they choose every product with care. Nothing like the big stores.</p>
+<blockquote>"I swapped a size for free without waiting weeks. That's how shopping should feel."</blockquote>
+<figcaption>Maya Park</figcaption>
+<span class="role">Verified buyer</span>
+</figure>
+<div class="side">
+<figure>
+<blockquote>"My order arrived the next day, beautifully packed. I'm already on my third purchase."</blockquote>
+<figcaption>Nora Bennett</figcaption>
+<span class="role">Customer since 2023</span>
+</figure>
+<figure>
+<blockquote>"The glaze on my mug shifts with the light. I bought a second set for my sister."</blockquote>
+<figcaption>Marcus Hayes</figcaption>
+<span class="role">Repeat customer</span>
+</figure>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-pricing">
+<style>
+[data-block-id="b-pricing"]{container-type:inline-size;background:var(--background);color:var(--foreground);font-family:var(--dl-font-body);padding:56px 20px;box-sizing:border-box}
+[data-block-id="b-pricing"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 12px}
+[data-block-id="b-pricing"] h2{font-family:var(--dl-font-heading);font-weight:400;font-size:34px;line-height:1.1;margin:0 0 12px;letter-spacing:-0.015em}
+[data-block-id="b-pricing"] .lead{font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:0 0 6px;max-width:46ch}
+[data-block-id="b-pricing"] .fine{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);margin:0 0 36px}
+[data-block-id="b-pricing"] .plans{display:grid;gap:0;border-top:1px solid var(--border)}
+[data-block-id="b-pricing"] .plan{position:relative;padding:28px 0;border-bottom:1px solid var(--border);display:grid;gap:14px}
+[data-block-id="b-pricing"] .plan.hot{background:var(--card);padding-left:18px;padding-right:18px;margin:0 -18px;border:1px solid var(--border);border-radius:var(--dl-card-radius);border-bottom:1px solid var(--border)}
+[data-block-id="b-pricing"] .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+[data-block-id="b-pricing"] .name{font-family:var(--dl-font-heading);font-size:26px;line-height:1.1}
+[data-block-id="b-pricing"] .price{font-family:var(--dl-font-heading);font-size:40px;line-height:1;letter-spacing:-0.02em}
+[data-block-id="b-pricing"] .price small{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);letter-spacing:0;margin-left:4px}
+[data-block-id="b-pricing"] .desc{font-size:14px;color:var(--muted-foreground);margin:0}
+[data-block-id="b-pricing"] ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:14px}
+[data-block-id="b-pricing"] ul li{padding-left:16px;position:relative}
+[data-block-id="b-pricing"] ul li::before{content:"";position:absolute;left:0;top:0.6em;width:6px;height:1px;background:var(--primary)}
+[data-block-id="b-pricing"] .pill{position:absolute;right:18px;top:-12px;font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;padding:5px 12px;border-radius:var(--dl-radius-full);background:var(--primary);color:var(--primary-foreground)}
+[data-block-id="b-pricing"] .btn{justify-self:start;font-size:14px;padding:11px 18px;border-radius:var(--dl-button-radius);border:1px solid var(--border);background:transparent;color:var(--foreground);cursor:pointer}
+[data-block-id="b-pricing"] .plan.hot .btn{background:var(--cta);color:var(--cta-foreground);border-color:var(--cta)}
+@container (min-width: 760px){
+[data-block-id="b-pricing"]{padding:72px 40px}
+[data-block-id="b-pricing"] .plans{grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border)}
+[data-block-id="b-pricing"] .plan{padding:32px 28px 32px 0;border-bottom:none;border-right:1px solid var(--border);align-content:start}
+[data-block-id="b-pricing"] .plan:not(.hot)+.plan{padding-left:28px}
+[data-block-id="b-pricing"] .plan:last-child{border-right:none;padding-right:0}
+[data-block-id="b-pricing"] .plan.hot{margin:0;padding:32px 28px;border-radius:var(--dl-card-radius);border-right:1px solid var(--border)}
+[data-block-id="b-pricing"] .plan.hot{margin:0 4px}
+}
+</style>
+<p class="eyebrow">Bundles</p>
+<h2>Pick your bundle</h2>
+<p class="lead">Bundles made for gifting or treating yourself.</p>
+<p class="fine">Taxes included. Free shipping over $50. Free returns for 30 days.</p>
+<div class="plans">
+<div class="plan">
+<div class="top"><span class="name">Essential</span><span class="price">$39</span></div>
+<p class="desc">The basics, done right.</p>
+<ul><li>2 products of your choice</li><li>Free shipping</li><li>30-day returns</li></ul>
+<button class="btn" type="button">Choose Essential</button>
+</div>
+<div class="plan hot">
+<span class="pill">Most popular</span>
+<div class="top"><span class="name">Complete</span><span class="price">$79</span></div>
+<p class="desc">Our best-selling bundle.</p>
+<ul><li>4 products of your choice</li><li>24-hour shipping</li><li>Gift wrapping</li></ul>
+<button class="btn" type="button">Choose Complete</button>
+</div>
+<div class="plan">
+<div class="top"><span class="name">Premium</span><span class="price">$129</span></div>
+<p class="desc">For those who want it all.</p>
+<ul><li>6 products of your choice</li><li>Limited edition included</li><li>Express shipping</li><li>Personal shopper</li></ul>
+<button class="btn" type="button">Choose Premium</button>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-cta">
+<style>
+[data-block-id="b-cta"]{container-type:inline-size;background:var(--background);color:var(--foreground);font-family:var(--dl-font-body);padding:48px 20px;box-sizing:border-box;border-top:1px solid var(--border)}
+[data-block-id="b-cta"] .wrap{display:grid;gap:24px}
+[data-block-id="b-cta"] h2{font-family:var(--dl-font-heading);font-weight:400;font-size:32px;line-height:1.1;margin:0;letter-spacing:-0.015em}
+[data-block-id="b-cta"] h2 em{font-style:italic;color:var(--primary)}
+[data-block-id="b-cta"] p{font-size:15px;line-height:1.6;color:var(--muted-foreground);margin:0;max-width:44ch}
+[data-block-id="b-cta"] form{display:grid;gap:10px}
+[data-block-id="b-cta"] label{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)}
+[data-block-id="b-cta"] .row{display:grid;gap:10px}
+[data-block-id="b-cta"] input{font-family:var(--dl-font-body);font-size:15px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--dl-radius-md);background:transparent;color:var(--foreground);min-width:0}
+[data-block-id="b-cta"] .btn{font-size:14px;padding:12px 18px;border-radius:var(--dl-button-radius);background:var(--cta);color:var(--cta-foreground);border:1px solid var(--cta);cursor:pointer}
+[data-block-id="b-cta"] .meta{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;font-size:13px}
+[data-block-id="b-cta"] .meta a{color:var(--foreground);text-underline-offset:4px;text-decoration-color:var(--border)}
+[data-block-id="b-cta"] .meta span{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground)}
+@container (min-width: 760px){
+[data-block-id="b-cta"]{padding:64px 40px}
+[data-block-id="b-cta"] .wrap{grid-template-columns:6fr 5fr;align-items:end;gap:56px}
+[data-block-id="b-cta"] .row{grid-template-columns:1fr auto;gap:10px}
+}
+</style>
+<div class="wrap">
+<div>
+<h2>Your next favorite is <em>waiting</em></h2>
+<p style="margin-top:14px">Subscribe to get Ollaria's new arrivals and limited editions before anyone else.</p>
+</div>
+<div>
+<form onsubmit="return false">
+<label for="cta-email">Email address</label>
+<div class="row">
+<input id="cta-email" type="email" placeholder="you@example.com" autocomplete="email">
+<button class="btn" type="button">Join the studio list</button>
+</div>
+</form>
+<div class="meta" style="margin-top:14px">
+<span>No spam. Unsubscribe anytime.</span>
+<a href="#">See what's new</a>
+</div>
+</div>
+</div>
+</section>
+
+<footer data-block-id="b-footer">
+<style>
+[data-block-id="b-footer"]{container-type:inline-size;background:var(--card);color:var(--card-foreground);font-family:var(--dl-font-body);padding:40px 20px 28px;box-sizing:border-box;border-top:1px solid var(--border)}
+[data-block-id="b-footer"] .top{display:grid;gap:32px}
+[data-block-id="b-footer"] .wm{font-family:var(--dl-font-heading);font-size:28px;letter-spacing:-0.01em;margin:0 0 8px}
+[data-block-id="b-footer"] .wm em{font-style:italic;color:var(--primary)}
+[data-block-id="b-footer"] .tag{font-size:14px;color:var(--muted-foreground);margin:0;max-width:30ch}
+[data-block-id="b-footer"] .cols{display:grid;grid-template-columns:1fr 1fr;gap:28px 24px}
+[data-block-id="b-footer"] h3{font-family:var(--dl-font-mono);font-weight:400;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 12px}
+[data-block-id="b-footer"] ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+[data-block-id="b-footer"] a{font-size:14px;color:var(--foreground);text-decoration:none}
+[data-block-id="b-footer"] .bottom{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground)}
+@container (min-width: 760px){
+[data-block-id="b-footer"]{padding:48px 40px 32px}
+[data-block-id="b-footer"] .top{grid-template-columns:4fr 8fr;gap:48px}
+[data-block-id="b-footer"] .cols{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+<div class="top">
+<div>
+<p class="wm">Ollaria<em>.</em></p>
+<p class="tag">Handmade stoneware, fired in small batches.</p>
+</div>
+<nav class="cols">
+<div>
+<h3>Product</h3>
+<ul><li><a href="#">New in</a></li><li><a href="#">Collections</a></li><li><a href="#">About</a></li><li><a href="#">Help</a></li></ul>
+</div>
+<div>
+<h3>Company</h3>
+<ul><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li></ul>
+</div>
+<div>
+<h3>Legal</h3>
+<ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Cookies</a></li></ul>
+</div>
+</nav>
+</div>
+<div class="bottom">
+<span>Ollaria</span>
+<span>All rights reserved.</span>
+</div>
+</footer>

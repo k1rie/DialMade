@@ -106,8 +106,16 @@ export type RenderBlockInput = {
   linksTo?: string;
   container?: true;
   h1?: true;
-  /** Visible copy of the deterministic page for this block. */
+  /** Visible copy of the deterministic page for this block (empty in page mode: the page is written from the brief). */
   draft: string[];
+  /** Page mode: fixed values the section must use as given (plan names and prices). */
+  data?: PageSectionData;
+};
+
+/** Fixed values of a section in page mode: plan names and prices travel as data; marketing copy never does. */
+export type PageSectionData = {
+  plans?: { name: string; price: number; highlighted: boolean }[];
+  recurring?: boolean;
 };
 
 export type RenderScreenInput = {
@@ -119,6 +127,8 @@ export type RenderScreenInput = {
   /** Other screens of the document a link may open. */
   screens: { id: string; name: string }[];
   blocks: RenderBlockInput[];
+  /** «page»: the screen is designed as one page from the brief and the outline (./pagePrompt). */
+  mode?: "page";
 };
 
 export type DirectionForPrompt = Pick<AiDirection, "axes" | "moves" | "rationale" | "style" | "references" | "context" | "concept">;
@@ -175,6 +185,8 @@ export type BlockActionInput = {
   html: string;
   /** «Otra versión»: a different take; «Pedir cambio»: the developer's request (data). */
   action: { kind: "reroll"; seed: number } | { kind: "change"; request: string; target?: { text: string } };
+  /** Page mode: the screen's page stylesheet (the section may reuse its classes). */
+  pageCss?: string;
 };
 
 /** User message of «Otra versión» / «Pedir cambio» (spec §5.4). */
@@ -283,7 +295,7 @@ export function directionMessage(
  * «mi Claude»: the developer attaches their reference screenshots to the conversation themselves (they never travel in
  * the copied text). Same rule as the API path: take the look, never the content.
  */
-function attachedReferencesText(count: number): string {
+export function attachedReferencesText(count: number): string {
   const what = count === 1 ? "The image attached to this conversation is a reference screenshot" : `The ${count} images attached to this conversation are reference screenshots`;
   return `${what} of a look the developer likes. Take from ${count === 1 ? "it" : "them"} the composition, type voice and scale, decoration, density, shapes and color used as a gesture, in every block; never their text, names, logos, products or exact colors (the palette is fixed).`;
 }

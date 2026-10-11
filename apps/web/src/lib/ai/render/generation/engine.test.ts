@@ -146,20 +146,26 @@ describe("«Generar con IA» (engine)", () => {
     expect(state.costUsd).toBeCloseTo(0.0095);
   });
 
-  it("the kit is asked for once and cloned, with the clone's own screen as the current link", async () => {
-    const { transport, screens } = fakeTransport();
+  it("landings are designed as pages: every screen asks for its own navbar and footer, with its page stylesheet", async () => {
+    const script: ScreenScript = async function* (body) {
+      yield { type: "block", blockId: null, html: "<style data-dl-page>.btn{background:var(--primary);color:#fff}</style>", forced: false };
+      for (const block of body.screen.blocks) yield { type: "block", blockId: block.id, html: blockHtml(block.id, block.type), forced: false };
+      yield { type: "done", session: COUNTERS };
+    };
+    const { transport, screens } = fakeTransport(script);
     const { engine, store, doc } = setup(transport);
     await engine.start({ screenIds: ["s-home", "s-pricing"], chip: "auto" });
     const pricing = screens.find((body) => body.screen.id === "s-pricing")!;
-    expect(pricing.screen.blocks.map((block) => block.type)).not.toContain("navbar");
-    expect(pricing.screen.blocks.map((block) => block.type)).not.toContain("footer");
-    const layout = doc().screens["s-pricing"]!.layout;
-    const navId = Object.keys(layout.blocks).find((id) => layout.blocks[id]!.type === "navbar")!;
-    const nav = doc().screens["s-pricing"]!.aiRender!.blocks[navId]!;
-    expect(nav.html).toContain(`data-block-id="${navId}"`);
-    expect(nav.html).toMatch(/<a [^>]*href="#screen:s-pricing"[^>]*aria-current="page"/);
-    expect(nav.html.match(/aria-current/g)).toHaveLength(1);
-    expect(store.getState().screens["s-pricing"]!.blocks[navId]).toMatchObject({ phase: "done", cloneOf: { screenId: "s-home" } });
+    expect(pricing.screen.mode).toBe("page");
+    expect(pricing.screen.blocks.map((block) => block.type)).toEqual(expect.arrayContaining(["navbar", "footer"]));
+    expect(pricing.screen.blocks.every((block) => block.draft.length === 0)).toBe(true);
+    const screen = doc().screens["s-pricing"]!;
+    const navId = Object.keys(screen.layout.blocks).find((id) => screen.layout.blocks[id]!.type === "navbar")!;
+    expect(screen.aiRender!.blocks[navId]).toMatchObject({ mode: "page", active: true, provenance: { promptVersion: "ai-page/1" } });
+    // The page stylesheet is sanitized and scoped: the literal color is gone.
+    expect(screen.aiRender!.pageCss).toBe(":where([data-dl-ai-block]) .btn{background:var(--primary)}");
+    expect(store.getState().screens["s-pricing"]!.blocks[navId]).toMatchObject({ phase: "done" });
+    expect(store.getState().screens["s-pricing"]!.blocks[navId]).not.toHaveProperty("cloneOf");
   });
 
   it("a block that fails the gates or never arrives stays on the base design with its failure", async () => {

@@ -9,6 +9,7 @@ import type { AiRenderTier } from "@dialmade/doc";
 import {
   DIRECTION_MAX_TOKENS,
   directionCandidates,
+  pageScreenMaxTokens,
   tierSettings,
   type RenderScreenInput,
 } from "@dialmade/ai-render";
@@ -101,7 +102,8 @@ const callOptions = (config: AiServerConfig, tier: AiRenderTier = "mockup") => (
 export function sessionWorstCaseUsd(model: string, screens: number, tier: AiRenderTier = "mockup"): number {
   const fallbacks = supportsDefaultFallbacks(model);
   const one = (maxOutputTokens: number) => maxRequestCostUsd({ model, inputTokens: TYPICAL_SESSION_INPUT_TOKENS, maxOutputTokens, fallbacks });
-  return roundUsd(one(DIRECTION_MAX_TOKENS) + screens * one(tierSettings(tier).screenMaxTokens));
+  // Landings are designed in page mode (a whole page per call: more room than a screen of token blocks).
+  return roundUsd(one(DIRECTION_MAX_TOKENS) + screens * one(Math.max(pageScreenMaxTokens(tier), tierSettings(tier).screenMaxTokens)));
 }
 
 /** POST /api/ai/render/session. */
@@ -334,6 +336,7 @@ export async function renderBlock(body: RenderBlockBody, context: RenderContext)
     screen: body.screen,
     block: body.block,
     html: body.html,
+    ...(body.pageCss !== undefined && { pageCss: body.pageCss }),
     action: body.action.kind === "reroll" ? body.action : { kind: "change", request: body.action.request, ...(body.action.target && { target: body.action.target }) },
   });
   const call = await reserveCall({ ...context, config }, body.sessionId, "action", params);

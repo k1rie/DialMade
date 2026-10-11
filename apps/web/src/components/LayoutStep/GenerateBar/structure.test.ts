@@ -10,7 +10,8 @@ function componentFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return componentFiles(path);
-    return entry.name.endsWith(".tsx") && !entry.name.includes(".test.") ? [path] : [];
+    // `icons.tsx` is the accepted exception: the SVG icons of a component, as an asset of its folder.
+    return entry.name.endsWith(".tsx") && !entry.name.includes(".test.") && entry.name !== "icons.tsx" ? [path] : [];
   });
 }
 
@@ -27,7 +28,7 @@ describe("GenerateBar folder structure", () => {
 
   it("finds the bar and its subcomponents", () => {
     const names = files.map((file) => basename(file, ".tsx"));
-    for (const name of ["GenerateBar", "GenerateReport", "ReportBody", "ViewPanel", "WarningCount", "WarningList", "WarningRow", "AiCopyTrigger", "AiAccessActions", "AiDirectionChips", "AiModelPicker", "AiRenderCost", "AiScreensPicker", "CopyDetails", "DesignDetails"]) {
+    for (const name of ["GenerateBar", "GenerateReport", "ReportBody", "ViewPanel", "WarningCount", "WarningList", "WarningRow", "AiCopyTrigger", "AiAccessActions", "AiDirectionChips", "AiRenderCost", "AiScreensPicker", "CopyDetails", "DesignDetails"]) {
       expect(names).toContain(name);
     }
   });

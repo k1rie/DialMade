@@ -25,8 +25,12 @@ export const ParentMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("render"),
     v: z.literal(ISLAND_PROTOCOL_VERSION),
     blockId: BlockId,
-    html: z.string().max(24 * 1024),
+    html: z.string().max(48 * 1024),
     css: z.string().max(512 * 1024),
+    /** Page mode: the block is a section of a page (its own CSS and SVG pass the island's second wall). */
+    page: z.boolean().optional(),
+    /** Page mode: the screen's page stylesheet (sanitized again in the island). */
+    pageCss: z.string().max(32 * 1024).optional(),
     vars: Vars,
     mode: z.enum(["light", "dark"]),
     fontsHref: FontsHref,

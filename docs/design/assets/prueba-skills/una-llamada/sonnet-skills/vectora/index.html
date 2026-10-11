@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vectora: Cash-flow forecasts for freelancers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+--background:oklch(1 0 0);--foreground:oklch(0.145 0.007 270.47);
+--primary:oklch(0.511 0.23 276.97);--primary-foreground:oklch(1 0 0);
+--cta:oklch(0.6094 0.1334 162.114);--cta-foreground:oklch(0.145 0.007 270.47);
+--accent:oklch(0.951 0.023 275.36);--accent-foreground:oklch(0.392 0.152 277.27);
+--muted:oklch(0.971 0.005 274.97);--muted-foreground:oklch(0.547 0.011 279.53);
+--border:oklch(0.923 0.007 277.16);
+--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:"IBM Plex Sans",system-ui,sans-serif;background:var(--background);color:var(--foreground);line-height:1.55;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--accent-foreground)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-foreground)}
+/* nav */
+header{border-bottom:1px solid var(--border);position:sticky;top:0;background:color-mix(in oklch,var(--background) 94%,transparent);z-index:5}
+nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-weight:600;font-size:1.15rem;text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:-.01em}
+.logo svg{width:22px;height:22px}
+nav ul{display:flex;gap:28px;list-style:none;padding:0}
+nav ul a{text-decoration:none;font-size:.95rem;color:var(--muted-foreground)}
+nav ul a:hover{color:var(--foreground)}
+.btn{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:12px 22px;border-radius:6px;font-weight:500;text-decoration:none;font-size:1rem;border:1px solid transparent;transition:transform .15s,background .2s}
+.btn:active{transform:translateY(1px)}
+.btn-cta{background:var(--cta);color:var(--cta-foreground)}
+.btn-cta:hover{background:color-mix(in oklch,var(--cta) 88%,white)}
+.btn-ghost{border-color:var(--border);background:var(--background)}
+.btn-ghost:hover{background:var(--muted)}
+.btn-sm{padding:8px 16px;font-size:.92rem}
+/* hero */
+.hero{padding:72px 0 80px;display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center}
+h1{font-size:clamp(2.2rem,4.6vw,3.7rem);line-height:1.05;letter-spacing:-.03em;font-weight:600;max-width:14ch}
+h1 em{font-style:italic;font-weight:500;color:var(--primary);padding-bottom:.08em}
+.lede{font-size:1.15rem;color:var(--muted-foreground);max-width:46ch;margin:22px 0 30px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.fine{margin-top:18px;font-size:.88rem;color:var(--muted-foreground)}
+/* console */
+.console{border:1px solid var(--border);border-radius:10px;background:var(--background);box-shadow:0 1px 2px oklch(0.3 0.05 277/.06),0 18px 40px -18px oklch(0.3 0.08 277/.22);overflow:hidden}
+.c-top{display:flex;justify-content:space-between;padding:12px 20px;background:var(--muted);border-bottom:1px solid var(--border);font-size:.78rem;color:var(--muted-foreground)}
+.c-fig{padding:26px 24px 8px}
+.c-fig small{font-size:.8rem;color:var(--muted-foreground);display:block}
+.big{font-family:var(--mono);font-size:clamp(2.3rem,5vw,3.3rem);font-weight:500;letter-spacing:-.03em;line-height:1.1;margin-top:4px}
+.c-fig p{font-size:.85rem;margin-top:4px}
+.chart{padding:4px 12px 0}
+.chart svg{width:100%;height:auto;display:block}
+.rows{list-style:none;padding:0;border-top:1px solid var(--border)}
+.rows li{display:grid;grid-template-columns:62px 1fr auto;gap:12px;padding:12px 24px;font-size:.88rem;border-bottom:1px solid var(--border);align-items:center}
+.rows li:last-child{border-bottom:0}
+.rows .late{background:var(--accent);color:var(--accent-foreground)}
+.rows .late b{font-weight:500}
+.tag{font-size:.7rem;border:1px solid currentColor;border-radius:3px;padding:0 6px;margin-left:8px;font-family:var(--mono)}
+.neg{color:var(--accent-foreground)}
+.pos{color:oklch(0.42 0.1 162)}
+/* facts */
+.facts{border-block:1px solid var(--border);background:var(--muted)}
+.facts ul{list-style:none;padding:0;display:grid;grid-template-columns:repeat(4,1fr)}
+.facts li{padding:22px 20px;border-left:1px solid var(--border)}
+.facts li:first-child{border-left:0;padding-left:0}
+.facts b{display:block;font-family:var(--mono);font-weight:500;font-size:1.35rem}
+.facts span{font-size:.86rem;color:var(--muted-foreground)}
+section{padding:96px 0}
+h2{font-size:clamp(1.8rem,3.2vw,2.5rem);letter-spacing:-.025em;line-height:1.12;font-weight:600;max-width:20ch}
+.sec-lede{margin-top:14px;color:var(--muted-foreground);max-width:52ch}
+/* features */
+.feat{margin-top:56px;border-top:1px solid var(--foreground)}
+.f{display:grid;grid-template-columns:1fr 1.2fr;gap:48px;padding:40px 0;border-bottom:1px solid var(--border);align-items:center}
+.f:nth-child(2){grid-template-columns:1.2fr 1fr}
+.f:nth-child(2) .ft{order:2}
+.f h3{font-size:1.5rem;letter-spacing:-.02em;font-weight:600;margin-bottom:10px}
+.f p{color:var(--muted-foreground);max-width:44ch}
+.demo{background:var(--muted);border:1px solid var(--border);border-radius:8px;padding:22px;font-size:.9rem}
+.demo .r{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--border)}
+.demo .r:last-child{border:0}
+.bar{height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--primary)}
+/* testimonials */
+.tm{background:var(--accent)}
+.tm h2{color:var(--accent-foreground)}
+.quotes{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-top:48px}
+blockquote{background:var(--background);border-radius:8px;padding:30px;border:1px solid color-mix(in oklch,var(--accent-foreground) 14%,transparent)}
+blockquote p{font-size:1.2rem;line-height:1.45;letter-spacing:-.01em}
+blockquote p em{font-style:italic}
+blockquote footer{margin-top:20px;font-size:.88rem;color:var(--muted-foreground)}
+blockquote footer b{color:var(--foreground);font-weight:500}
+.q2 p{font-size:1.05rem}
+.tnote{margin-top:16px;font-size:.82rem;color:var(--accent-foreground)}
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;align-items:stretch}
+.plan{border:1px solid var(--border);border-radius:10px;padding:30px 26px;display:flex;flex-direction:column;background:var(--background)}
+.plan.pop{border:2px solid var(--primary);position:relative}
+.badge{position:absolute;top:-13px;left:24px;background:var(--primary);color:var(--primary-foreground);font-family:var(--mono);font-size:.72rem;padding:3px 10px;border-radius:4px;letter-spacing:.04em}
+.plan h3{font-size:1.1rem;font-weight:600}
+.price{font-family:var(--mono);font-size:2.6rem;font-weight:500;letter-spacing:-.03em;margin:14px 0 4px}
+.price small{font-size:.95rem;color:var(--muted-foreground);letter-spacing:0}
+.plan ul{list-style:none;padding:0;margin:20px 0 28px;flex:1}
+.plan li{padding:9px 0 9px 26px;border-top:1px solid var(--border);font-size:.95rem;position:relative}
+.plan li::before{content:"";position:absolute;left:2px;top:15px;width:10px;height:5px;border-left:2px solid var(--primary);border-bottom:2px solid var(--primary);transform:rotate(-45deg)}
+.plan .btn{width:100%}
+/* cta */
+.cta{background:var(--primary);color:var(--primary-foreground)}
+.cta .wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:48px;align-items:center}
+.cta h2{max-width:16ch}
+.cta p{color:color-mix(in oklch,var(--primary-foreground) 82%,var(--primary));margin-top:14px;max-width:46ch}
+.cta .box{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.cta .fine{color:color-mix(in oklch,var(--primary-foreground) 82%,var(--primary));margin:0}
+footer.site{padding:56px 0 40px;border-top:1px solid var(--border)}
+.fgrid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:32px}
+.fgrid h4{font-size:.85rem;font-weight:500;margin-bottom:12px}
+.fgrid ul{list-style:none;padding:0;display:grid;gap:8px}
+.fgrid a{text-decoration:none;color:var(--muted-foreground);font-size:.92rem}
+.fgrid a:hover{color:var(--foreground)}
+.legal{margin-top:40px;padding-top:20px;border-top:1px solid var(--border);font-size:.82rem;color:var(--muted-foreground);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(prefers-reduced-motion:no-preference){
+.console{animation:rise .8s cubic-bezier(.16,1,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.late-line{stroke-dasharray:400;animation:draw 1.6s .4s cubic-bezier(.16,1,.3,1) both}
+@keyframes draw{from{stroke-dashoffset:400}}
+}
+@media(max-width:900px){
+nav ul{display:none}
+.hero,.f,.f:nth-child(2),.quotes,.cta .wrap{grid-template-columns:1fr}
+.f:nth-child(2) .ft{order:0}
+.hero{padding-top:44px;gap:40px}
+.plans{grid-template-columns:1fr}
+.facts ul{grid-template-columns:1fr 1fr}
+.facts li:nth-child(3){border-left:0;padding-left:0}
+.fgrid{grid-template-columns:1fr 1fr}
+section{padding:68px 0}
+}
+@media(max-width:430px){
+.rows li{grid-template-columns:50px 1fr auto;padding:12px 16px;font-size:.8rem}
+.c-fig{padding:22px 16px 8px}
+.btn{width:100%}
+.nav-btn{width:auto}
+}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap"><nav aria-label="Main">
+<a class="logo" href="#top"><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M2 5l9 13 9-13" fill="none" stroke="oklch(0.511 0.23 276.97)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>Vectora</a>
+<ul><li><a href="#features">Features</a></li><li><a href="#proof">Customers</a></li><li><a href="#pricing">Pricing</a></li></ul>
+<a class="btn btn-cta btn-sm nav-btn" href="#start">Connect a bank</a>
+</nav></div>
+</header>
+<main id="top">
+<div class="wrap hero">
+<div>
+<h1>See the gap <em>before</em> it hurts.</h1>
+<p class="lede">Vectora turns every unpaid invoice into a dated line in your forecast, so a late client shows up as a number, not a surprise.</p>
+<div class="actions"><a class="btn btn-cta" href="#start">Connect a bank account</a><a class="btn btn-ghost" href="#pricing">See pricing</a></div>
+<p class="fine">Read-only bank sync. 5-minute setup. Free for 1 bank.</p>
+</div>
+<div class="console" role="img" aria-label="Sample forecast: next 90 days of cash, with a late client payment shown as a dip below the plan">
+<div class="c-top mono"><span>NEXT 90 DAYS</span><span>SAMPLE DATA</span></div>
+<div class="c-fig"><small>Projected cash on day 90</small><div class="big">$12,480</div><p class="muted mono">Lowest point: $1,920 on Mar 14</p></div>
+<div class="chart"><svg viewBox="0 0 480 170" aria-hidden="true">
+<line x1="0" y1="130" x2="480" y2="130" stroke="oklch(0.923 0.007 277.16)"/>
+<line x1="0" y1="70" x2="480" y2="70" stroke="oklch(0.923 0.007 277.16)" stroke-dasharray="3 4"/>
+<path d="M0 60 L90 52 L150 66 L230 40 L320 34 L400 24 L480 18" fill="none" stroke="oklch(0.547 0.011 279.53)" stroke-width="1.5" stroke-dasharray="4 4"/>
+<path class="late-line" d="M0 60 L90 52 L150 66 L200 110 L240 122 L290 118 L330 84 L400 52 L480 40" fill="none" stroke="oklch(0.511 0.23 276.97)" stroke-width="2.6" stroke-linejoin="round"/>
+<rect x="196" y="20" width="62" height="110" fill="oklch(0.951 0.023 275.36)" opacity=".7"/>
+<circle cx="240" cy="122" r="5" fill="oklch(0.511 0.23 276.97)"/>
+<text x="206" y="38" font-family="IBM Plex Mono" font-size="10" fill="oklch(0.392 0.152 277.27)">late: -$4,200</text>
+<text x="4" y="160" font-family="IBM Plex Mono" font-size="10" fill="oklch(0.547 0.011 279.53)">Today</text>
+<text x="226" y="160" font-family="IBM Plex Mono" font-size="10" fill="oklch(0.547 0.011 279.53)">Day 45</text>
+<text x="436" y="160" font-family="IBM Plex Mono" font-size="10" fill="oklch(0.547 0.011 279.53)">Day 90</text>
+</svg></div>
+<ul class="rows mono">
+<li><span class="muted">Mar 02</span><span>Studio rent</span><span>-$1,350.00</span></li>
+<li class="late"><span>Mar 08</span><span><b>Harbor &amp; Co. invoice #214</b><span class="tag">LATE</span></span><span class="neg">$4,200.00</span></li>
+<li><span class="muted">Mar 21</span><span>Brightline retainer</span><span class="pos">+$2,800.00</span></li>
+</ul>
+</div>
+</div>
+<div class="facts"><div class="wrap"><ul>
+<li><b>$0</b><span>Free for 1 bank</span></li>
+<li><b>2,400</b><span>banks supported</span></li>
+<li><b>5 min</b><span>from sign-up to forecast</span></li>
+<li><b>Read-only</b><span>we can see, never move</span></li>
+</ul></div></div>
+
+<section id="features"><div class="wrap">
+<h2>One question, answered daily: what will I have?</h2>
+<p class="sec-lede">Every screen opens on the next 90 days of cash. The details sit underneath, in dates and amounts.</p>
+<div class="feat">
+<div class="f"><div class="ft"><h3>Late payments become lines</h3><p>When a client misses a due date, the invoice moves on your forecast and the dip appears where it will land.</p></div>
+<div class="demo mono"><div class="r"><span>Invoice #214 due</span><span>Mar 08</span></div><div class="r"><span>Expected now</span><span>Mar 29</span></div><div class="r"><span>Cash impact</span><span class="neg">-$4,200.00</span></div></div></div>
+<div class="f"><div class="ft"><h3>Bank sync that only reads</h3><p>Connect any of 2,400 supported banks. Vectora reads balances and transactions. It can never move money.</p></div>
+<div class="demo mono"><div class="r"><span>Permission</span><span>Read-only</span></div><div class="r"><span>Banks supported</span><span>2,400</span></div><div class="r"><span>Setup</span><span>5 minutes</span></div></div></div>
+<div class="f"><div class="ft"><h3>Alerts before the day, not after</h3><p>Basic late-payment alerts are in every plan, so you chase an invoice while there is still time to act.</p></div>
+<div class="demo"><div class="mono">Savings goal: tax set-aside</div><div class="bar"><i style="width:62%"></i></div><div class="r mono"><span>Alert</span><span>Invoice #214 is 3 days late</span></div></div></div>
+</div>
+</div></section>
+
+<section class="tm" id="proof"><div class="wrap">
+<h2>Calmer Mondays for people who invoice.</h2>
+<div class="quotes">
+<blockquote><p>I used to find out a client was late when my card was declined. Now I see it three weeks out, <em>and I send the reminder that day.</em></p><footer><b>Marta Okonkwo</b>, freelance illustrator</footer></blockquote>
+<blockquote class="q2"><p>The 90-day figure is the first thing I open. It is plain and it is accurate to the date.</p><footer><b>Daniel Reyes</b>, partner at a three-person studio</footer></blockquote>
+</div>
+<p class="tnote">Sample testimonials for this fictional brand.</p>
+</div></section>
+
+<section id="pricing"><div class="wrap">
+<h2>Start free. Pay when you need more.</h2>
+<p class="sec-lede">Prices are per month. Cancel any time.</p>
+<div class="plans">
+<article class="plan"><h3>Standard</h3><div class="price">$0<small>/mo</small></div><p class="muted">For one bank account.</p>
+<ul><li>1 bank</li><li>Read-only sync</li><li>Basic late-payment alerts</li></ul><a class="btn btn-ghost" href="#start">Start free</a></article>
+<article class="plan pop"><span class="badge">MOST POPULAR</span><h3>Plus</h3><div class="price">$5<small>/mo</small></div><p class="muted">For the full forecast.</p>
+<ul><li>Everything in Standard</li><li>More banks</li><li>90-day forecast</li><li>Savings goals</li></ul><a class="btn btn-cta" href="#start">Choose Plus</a></article>
+<article class="plan"><h3>Business</h3><div class="price">$19<small>/mo</small></div><p class="muted">For studios with a team.</p>
+<ul><li>Invoicing and collections</li><li>Team</li><li>Accounting export</li></ul><a class="btn btn-ghost" href="#start">Choose Business</a></article>
+</div>
+</div></section>
+
+<section class="cta" id="start"><div class="wrap">
+<div><h2>Know your next 90 days by lunch.</h2><p>Connect a bank, and your forecast is ready in about 5 minutes. Read-only, so nothing can move.</p></div>
+<div class="box"><a class="btn btn-cta" href="#start">Connect a bank account</a><p class="fine">Free for 1 bank. No card needed.</p></div>
+</div></section>
+</main>
+<footer class="site"><div class="wrap">
+<div class="fgrid">
+<div><a class="logo" href="#top"><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M2 5l9 13 9-13" fill="none" stroke="oklch(0.511 0.23 276.97)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>Vectora</a><p class="muted" style="margin-top:12px;font-size:.92rem;max-width:30ch">Cash-flow forecasts for freelancers.</p></div>
+<div><h4>Product</h4><ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#start">Connect a bank</a></li></ul></div>
+<div><h4>Company</h4><ul><li><a href="#proof">Customers</a></li><li><a href="#top">About</a></li><li><a href="#top">Contact</a></li></ul></div>
+<div><h4>Legal</h4><ul><li><a href="#top">Privacy</a></li><li><a href="#top">Terms</a></li><li><a href="#top">Security</a></li></ul></div>
+</div>
+<div class="legal"><span>© Vectora. A fictional brand.</span><span class="mono">Read-only bank sync</span></div>
+</div></footer>
+</body>
+</html>

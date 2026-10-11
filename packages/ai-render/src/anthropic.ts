@@ -24,8 +24,10 @@ import {
   type RenderBrandInput,
   type RenderScreenInput,
 } from "./prompt";
+import { AI_PAGE_SYSTEM_PROMPT, pageBlockMessage, pageScreenMessage } from "./pagePrompt";
 import { BlockStreamParser, type StreamBlock } from "./stream";
-import { tierSettings, type AiRenderTier } from "./tier";
+import { pageScreenMaxTokens, tierSettings, type AiRenderTier } from "./tier";
+import { FRONTEND_DESIGN_GUIDANCE } from "./guidance/frontendDesign";
 
 type Params = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
 type Message = Anthropic.Beta.Messages.BetaMessage;
@@ -45,17 +47,33 @@ export type CallOptions = {
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 const SYSTEM: Anthropic.Beta.Messages.BetaTextBlockParam[] = [{ type: "text", text: AI_RENDER_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
+const PAGE_SYSTEM: Anthropic.Beta.Messages.BetaTextBlockParam[] = [{ type: "text", text: AI_PAGE_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
+
+/** Page mode writes a whole page (≈ 8–10k tokens of HTML and CSS) and thinks before it: it needs this room and effort. */
+export const PAGE_SCREEN_MAX_TOKENS = 48_000;
+/** «Maqueta» in page mode also reads Anthropic's frontend-design guidance (./guidance): it lifted Haiku in the duel. */
+const PAGE_SYSTEM_MOCKUP: Anthropic.Beta.Messages.BetaTextBlockParam[] = [{ type: "text", text: `${AI_PAGE_SYSTEM_PROMPT}\n\n${FRONTEND_DESIGN_GUIDANCE}`, cache_control: { type: "ephemeral" } }];
+const pageSystem = (tier: AiRenderTier | undefined) => ((tier ?? "mockup") === "mockup" ? PAGE_SYSTEM_MOCKUP : PAGE_SYSTEM);
+export const PAGE_BLOCK_MAX_TOKENS = 12_000;
+const pageEffort = (effort: CallOptions["effort"]): CallOptions["effort"] => (effort === "low" ? "medium" : effort);
 
 const content = (blocks: MessageContent): Anthropic.Beta.Messages.BetaTextBlockParam[] =>
   blocks.map((block) => ({ type: "text", text: block.text, ...(block.cache && { cache_control: { type: "ephemeral" as const } }) }));
 
 type ImageBlock = Anthropic.Beta.Messages.BetaImageBlockParam;
 
-function base(options: CallOptions, maxTokens: number, user: MessageContent, format?: Anthropic.Beta.Messages.BetaJSONOutputFormat, images: ImageBlock[] = []): Params {
+function base(
+  options: CallOptions,
+  maxTokens: number,
+  user: MessageContent,
+  format?: Anthropic.Beta.Messages.BetaJSONOutputFormat,
+  images: ImageBlock[] = [],
+  system: Anthropic.Beta.Messages.BetaTextBlockParam[] = SYSTEM,
+): Params {
   return {
     model: options.model,
     max_tokens: maxTokens,
-    system: SYSTEM,
+    system,
     // Images before the text that talks about them.
     messages: [{ role: "user", content: [...images, ...content(user)] }],
     ...((options.effortSupported !== false || format) && {
@@ -87,10 +105,28 @@ export function directionParams(
 }
 
 export const screenParams = (options: CallOptions, brand: RenderBrandInput, direction: DirectionForPrompt, screen: RenderScreenInput): Params =>
-  base(options, options.tier ? tierSettings(options.tier).screenMaxTokens : SCREEN_MAX_TOKENS, screenMessage(brand, direction, screen, { ...(options.tier && { tier: options.tier }) }));
+  screen.mode === "page"
+    ? base(
+        { ...options, effort: pageEffort(options.effort) },
+        pageScreenMaxTokens(options.tier),
+        pageScreenMessage(brand, direction, screen, { ...(options.tier && { tier: options.tier }) }),
+        undefined,
+        [],
+        pageSystem(options.tier),
+      )
+    : base(options, options.tier ? tierSettings(options.tier).screenMaxTokens : SCREEN_MAX_TOKENS, screenMessage(brand, direction, screen, { ...(options.tier && { tier: options.tier }) }));
 
 export const blockParams = (options: CallOptions, brand: RenderBrandInput, direction: DirectionForPrompt, input: BlockActionInput): Params =>
-  base(options, options.tier ? tierSettings(options.tier).blockMaxTokens : BLOCK_MAX_TOKENS, blockMessage(brand, direction, input, options.tier));
+  input.screen.mode === "page"
+    ? base(
+        { ...options, effort: pageEffort(options.effort) },
+        Math.max(PAGE_BLOCK_MAX_TOKENS, tierSettings(options.tier).blockMaxTokens),
+        pageBlockMessage(brand, direction, { ...input, pageCss: input.pageCss ?? "" }, options.tier),
+        undefined,
+        [],
+        pageSystem(options.tier),
+      )
+    : base(options, options.tier ? tierSettings(options.tier).blockMaxTokens : BLOCK_MAX_TOKENS, blockMessage(brand, direction, input, options.tier));
 
 /** The model answered, but not with something usable. `message` carries the billed usage. */
 export class RenderOutputError extends Error {

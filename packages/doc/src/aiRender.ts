@@ -50,8 +50,12 @@ export const AI_GATE_CODES = [
   "foreign-script",
 ] as const;
 
-/** Spec §2.1: 16 KB of sanitized HTML per block. */
-export const MAX_AI_BLOCK_BYTES = 16 * 1024;
+/** Spec §2.1: 16 KB of sanitized HTML per block; a page-mode section draws its own SVG and carries its own rules (48 KB). */
+export const MAX_AI_BLOCK_BYTES = 48 * 1024;
+/** Page mode: the screen's page stylesheet (sanitized and scoped by @dialmade/ai-render). */
+export const MAX_AI_PAGE_CSS_BYTES = 32 * 1024;
+/** How an AI block was made: token classes inside its cell («blocks», the default) or a section of a page («page»). */
+export const AI_BLOCK_MODES = ["blocks", "page"] as const;
 /** Spec §8.3: 1 MB of `aiRender` in the whole document. */
 export const MAX_AI_RENDER_BYTES = 1024 * 1024;
 export const MAX_AI_REQUEST_LENGTH = 500;
@@ -180,6 +184,8 @@ export const AiBlockSchema = z.strictObject({
   /** Containers (spec §1 [C15]): only the classes of their surface. */
   surfaceClasses: z.array(Text(64)).max(40).optional(),
   active: z.boolean(),
+  /** «page»: a section of the screen's page (its own CSS and SVG; the screen's `pageCss` styles it). Absent: «blocks». */
+  mode: z.enum(AI_BLOCK_MODES).optional(),
   /** Hash of what the block was made from (type, label, note, count, size, copy, language, direction). */
   basis: Text(64),
   gates: z.strictObject({
@@ -195,6 +201,11 @@ export const AiBlockSchema = z.strictObject({
 export const AiScreenRenderSchema = z.strictObject({
   version: z.literal(1),
   blocks: z.record(z.string().regex(ELEMENT_ID), AiBlockSchema),
+  /** Page mode: the page stylesheet the screen's «page» blocks share (sanitized, scoped to the AI blocks). */
+  pageCss: z
+    .string()
+    .refine((css) => utf8ByteLength(css) <= MAX_AI_PAGE_CSS_BYTES, `At most ${MAX_AI_PAGE_CSS_BYTES} bytes of page CSS`)
+    .optional(),
   /**
    * AI blocks of layout blocks a «Generar» removed, by their id (at most `MAX_AI_STASHED_BLOCKS`, oldest first):
    * when the block comes back (a Layout undo), its AI block comes back with it. Never rendered.
@@ -219,6 +230,7 @@ export type AiScreenRender = z.output<typeof AiScreenRenderSchema>;
 export type DocAiRender = z.output<typeof DocAiRenderSchema>;
 export type AiRenderPath = (typeof AI_RENDER_PATHS)[number];
 export type AiRenderKind = (typeof AI_RENDER_KINDS)[number];
+export type AiBlockMode = (typeof AI_BLOCK_MODES)[number];
 
 /**
  * UTF-8 bytes of the `aiRender` members of a stored document: top level, every screen and every stashed screen

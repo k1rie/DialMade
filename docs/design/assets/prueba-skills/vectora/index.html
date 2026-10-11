@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vectora: cash-flow forecasts for freelancers</title>
+<meta name="description" content="Connect a bank read-only and see the next 90 days of cash, with every late invoice drawn into the forecast. Free for 1 bank.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0.007 270.47);
+  --primary: oklch(0.511 0.23 276.97);
+  --primary-foreground: oklch(1 0 0);
+  --cta: oklch(0.6094 0.1334 162.114);
+  --cta-foreground: oklch(0.145 0.007 270.47);
+  --accent: oklch(0.951 0.023 275.36);
+  --accent-foreground: oklch(0.392 0.152 277.27);
+  --muted: oklch(0.971 0.005 274.97);
+  --muted-foreground: oklch(0.547 0.011 279.53);
+  --border: oklch(0.923 0.007 277.16);
+
+  /* Derived only from the hues above */
+  --ink-2: color-mix(in oklab, var(--muted-foreground) 74%, var(--foreground));
+  --line-strong: color-mix(in oklab, var(--border) 45%, var(--muted-foreground));
+  --primary-wash: color-mix(in oklab, var(--primary) 8%, var(--background));
+  --primary-gap: color-mix(in oklab, var(--primary) 16%, var(--background));
+  --primary-deep: color-mix(in oklab, var(--primary) 80%, var(--foreground));
+  --cta-hover: color-mix(in oklab, var(--cta) 86%, var(--background));
+
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --r: 8px;
+  --r-in: 5px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --max: 1184px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scrollbar-color: var(--line-strong) var(--background); -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font: 400 1.0625rem/1.6 var(--sans);
+  caret-color: var(--primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+::selection { background: color-mix(in oklab, var(--primary) 20%, var(--background)); color: var(--foreground); }
+.on-primary ::selection { background: var(--background); color: var(--primary); }
+a { color: inherit; text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+.on-primary :focus-visible { outline-color: var(--primary-foreground); }
+h1, h2, h3 { margin: 0; font-weight: 560; text-wrap: balance; }
+p, ul, ol, figure, blockquote { margin: 0; padding: 0; }
+p { text-wrap: pretty; }
+ul, ol { list-style: none; }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.wrap { width: 100%; max-width: calc(var(--max) + 2 * var(--gutter)); margin-inline: auto; padding-inline: var(--gutter); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: var(--gutter); top: -60px; z-index: 20; background: var(--foreground); color: var(--background); padding: 10px 14px; border-radius: var(--r); text-decoration: none; }
+.skip:focus { top: 10px; }
+.icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Buttons and fields */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 18px; border-radius: var(--r); border: 1px solid transparent;
+  font: 500 0.9375rem/1 var(--sans); text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background-color .18s var(--ease), border-color .18s var(--ease), transform .12s var(--ease);
+}
+.btn:active { transform: translateY(1px); }
+.btn-cta { background: var(--cta); color: var(--cta-foreground); }
+.btn-cta:hover { background: var(--cta-hover); }
+.btn-line { background: var(--background); color: var(--foreground); border-color: var(--line-strong); }
+.btn-line:hover { border-color: var(--foreground); }
+
+.bank label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 8px; }
+.bank-row { display: flex; gap: 8px; }
+.field { position: relative; flex: 0 1 320px; }
+.field .icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ink-2); pointer-events: none; }
+.bank input {
+  width: 100%; height: 48px; padding: 0 14px 0 42px;
+  font: 400 1rem/1 var(--sans); color: var(--foreground);
+  background: var(--background); border: 1px solid var(--line-strong); border-radius: var(--r);
+  transition: border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.bank input::placeholder { color: var(--ink-2); opacity: 1; }
+.bank input:hover { border-color: var(--muted-foreground); }
+.bank input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 22%, transparent); }
+.bank .btn { height: 48px; padding: 0 22px; }
+
+/* Nav */
+.nav { position: sticky; top: 0; z-index: 10; background: var(--background); border-bottom: 1px solid var(--border); }
+.nav .wrap { display: flex; align-items: center; gap: 40px; height: 64px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.0625rem; letter-spacing: -0.01em; text-decoration: none; }
+.brand svg { width: 26px; height: 26px; }
+.nav-links { display: flex; gap: 28px; font-size: 0.9375rem; }
+.nav-links a, .signin { color: var(--ink-2); text-decoration: none; transition: color .18s var(--ease); }
+.nav-links a:hover, .signin:hover { color: var(--foreground); }
+.nav-actions { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 0.9375rem; }
+.nav .btn { height: 40px; }
+
+/* Hero */
+.hero { padding-top: clamp(28px, 5vh, 48px); padding-bottom: clamp(36px, 6vh, 64px); }
+.hero-top { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: end; }
+.hero-copy { grid-column: 1 / span 7; }
+.hero h1 { font-size: clamp(2.25rem, 1.1rem + 3.4vw, 3.75rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 18ch; }
+.hero-sub { margin-top: 20px; max-width: 46ch; font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem); color: var(--ink-2); }
+.hero .bank { margin-top: 30px; }
+
+.hero-figure { grid-column: 8 / span 5; }
+.fig-label { font-size: 0.9375rem; color: var(--ink-2); }
+.fig, .fig-note { display: grid; }
+.fig > span, .fig-note > span { grid-area: 1 / 1; transition: opacity .28s var(--ease), transform .28s var(--ease), visibility 0s linear 0s; }
+.fig { margin-top: 6px; font: 400 clamp(3.25rem, 1.4rem + 4.6vw, 5.5rem)/1 var(--mono); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.fig-note { margin-top: 10px; font-size: 0.9375rem; color: var(--ink-2); }
+.scenario { margin: 22px 0 0; padding: 0; border: 0; min-width: 0; }
+.scenario legend { padding: 0; margin-bottom: 8px; font-size: 0.875rem; color: var(--ink-2); }
+.seg { display: inline-grid; grid-auto-flow: column; padding: 3px; background: var(--muted); border: 1px solid var(--border); border-radius: var(--r); }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg label { padding: 8px 16px; border-radius: var(--r-in); font-size: 0.875rem; font-weight: 500; color: var(--ink-2); cursor: pointer; transition: background-color .18s var(--ease), color .18s var(--ease), box-shadow .18s var(--ease); }
+.seg label:hover { color: var(--foreground); }
+.seg input:checked + label { background: var(--background); color: var(--foreground); box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 12%, transparent), 0 0 0 1px var(--border); }
+.seg input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Scenario switching: late is the default, on time via :has() */
+.when-ontime { opacity: 0; visibility: hidden; }
+.hero:has(#sc-ontime:checked) .when-ontime { opacity: 1; visibility: visible; }
+.hero:has(#sc-ontime:checked) .when-late { opacity: 0; visibility: hidden; }
+.fig > .when-ontime, .fig-note > .when-ontime { transform: translateY(6px); }
+.hero:has(#sc-ontime:checked) .fig > .when-ontime, .hero:has(#sc-ontime:checked) .fig-note > .when-ontime { transform: none; }
+.hero:has(#sc-ontime:checked) .fig > .when-late, .hero:has(#sc-ontime:checked) .fig-note > .when-late { transform: translateY(-6px); }
+.when-late, .when-ontime { transition: opacity .28s var(--ease), transform .28s var(--ease), visibility 0s linear .28s; }
+.hero:has(#sc-ontime:checked) .when-ontime,
+.hero:not(:has(#sc-ontime:checked)) .when-late { transition-delay: 0s; }
+
+/* Forecast chart */
+.chart { margin-top: clamp(28px, 4.5vh, 44px); }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-bottom: 14px; font-size: 0.8125rem; color: var(--ink-2); }
+.legend .mono { color: var(--foreground); font-weight: 500; }
+.lg { display: inline-flex; align-items: center; gap: 8px; }
+.lg::before { content: ""; width: 22px; border-top: 2px solid var(--primary); }
+.lg-dash::before { border-top: 1.5px dashed var(--muted-foreground); }
+.plot { position: relative; height: clamp(240px, calc(100svh - 560px), 400px); overflow: clip; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.g-h, .g-v { stroke: var(--border); stroke-width: 1; }
+.g-zero { stroke: var(--foreground); stroke-width: 1; }
+.line { fill: none; stroke: var(--primary); stroke-width: 2.25; stroke-linejoin: round; }
+.ghost { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 5 5; }
+.area { fill: var(--primary-wash); }
+.gap { fill: url(#days); }
+.day-bg { fill: var(--primary-gap); }
+.day-tick { fill: var(--primary); }
+.series { transition: opacity .32s var(--ease); }
+.s-ontime { opacity: 0; }
+.hero:has(#sc-ontime:checked) .s-ontime { opacity: 1; }
+.hero:has(#sc-ontime:checked) .s-late { opacity: 0; }
+
+.overlays { position: absolute; inset: 0; font: 500 0.75rem/1.2 var(--mono); }
+.ylab { position: absolute; left: 0; color: var(--ink-2); transform: translateY(calc(-100% - 5px)); }
+.mk { position: absolute; top: 0; bottom: 18.52%; left: 55.06%; border-left: 1px dashed var(--line-strong); }
+.mk-label { position: absolute; top: 0; white-space: nowrap; }
+.mk-due .mk-label { right: 8px; color: var(--foreground); }
+.mk-paid { border-left: 1.5px solid var(--primary); }
+.mk-paid .mk-label { left: 8px; color: var(--primary-deep); display: grid; }
+.mk-paid .mk-label > span { grid-area: 1 / 1; }
+.paid-layer { position: absolute; inset: 0; transform: translateX(23.59%); transition: transform .42s var(--ease); }
+.hero:has(#sc-ontime:checked) .paid-layer { transform: none; }
+.bracket { position: absolute; left: 55.06%; width: 23.59%; top: 30px; border-top: 1.5px solid var(--primary); transform-origin: left center; transition: transform .42s var(--ease), opacity .2s var(--ease); }
+.bracket::before, .bracket::after { content: ""; position: absolute; top: -4px; height: 7px; border-left: 1.5px solid var(--primary); }
+.bracket::before { left: 0; }
+.bracket::after { right: 0; }
+.bracket span { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); white-space: nowrap; color: var(--primary-deep); }
+.hero:has(#sc-ontime:checked) .bracket { transform: scaleX(0); opacity: 0; }
+.hero:has(#sc-ontime:checked) .mk-due { opacity: 0; }
+.mk-due { transition: opacity .2s var(--ease); }
+.dot { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--background); border: 2px solid var(--primary); transform: translate(-50%, -50%); }
+.dot-late { left: 78.65%; top: 90.73%; }
+.dot-ontime { left: 37.08%; top: 67.07%; }
+.gap-label { position: absolute; left: 63%; top: calc(90.73% + 6px); color: var(--primary-deep); }
+.axis { position: relative; height: 30px; font: 500 0.75rem/1 var(--mono); color: var(--ink-2); }
+.axis > span { position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap; }
+.axis > span:first-child { transform: none; }
+.axis > span:last-child { transform: translateX(-100%); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .plot .data { animation: draw .8s var(--ease) backwards; }
+}
+@keyframes draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* Sections */
+section[id] { scroll-margin-top: 80px; }
+.sec { padding-block: clamp(72px, 9vw, 112px); }
+.sec h2 { font-size: clamp(1.875rem, 1.15rem + 2.3vw, 2.75rem); line-height: 1.1; letter-spacing: -0.025em; max-width: 22ch; }
+.sec-lede { margin-top: 16px; max-width: 52ch; font-size: 1.125rem; color: var(--ink-2); }
+
+/* Features */
+.bento { margin-top: 56px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.cell { border-radius: var(--r); padding: clamp(24px, 3vw, 40px); display: flex; flex-direction: column; gap: 32px; }
+.cell h3 { font-size: 1.375rem; line-height: 1.2; letter-spacing: -0.015em; }
+.cell-text p { margin-top: 10px; max-width: 46ch; color: var(--ink-2); }
+.c-sync { grid-column: 1 / span 7; background: var(--accent); }
+.c-inv { grid-column: 8 / span 5; grid-row: 1 / span 2; border: 1px solid var(--border); }
+.c-alert { grid-column: 1 / span 7; background: var(--muted); }
+
+.perm { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; margin-top: auto; }
+.perm-h { font: 500 0.8125rem/1.2 var(--mono); color: var(--accent-foreground); padding-bottom: 12px; border-bottom: 1px solid color-mix(in oklab, var(--accent-foreground) 24%, transparent); }
+.perm li { display: flex; align-items: center; gap: 10px; padding-top: 12px; font-weight: 500; }
+.perm .yes .icon { color: var(--accent-foreground); }
+.perm .no { color: var(--ink-2); font-weight: 400; }
+
+.inv { display: grid; gap: 26px; margin-top: auto; }
+.inv-meta { display: flex; justify-content: space-between; gap: 12px; font: 500 0.875rem/1.3 var(--mono); }
+.inv-meta .who { font-family: var(--sans); font-weight: 400; color: var(--ink-2); margin-left: 8px; }
+.track { position: relative; height: 18px; margin-top: 10px; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--border); }
+.track .due { position: absolute; left: var(--x); top: 1px; bottom: 1px; border-left: 1px solid var(--foreground); }
+.track .paid, .track .soon { position: absolute; left: var(--x); top: 50%; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--primary); }
+.track .soon { background: var(--background); border: 1.5px solid var(--primary); }
+.track .late { position: absolute; left: var(--a); width: var(--w); top: 4px; bottom: 4px; background-image: linear-gradient(90deg, var(--primary) 0 45%, transparent 45%); background-size: calc(100% / 21) 100%; }
+.inv-state { margin-top: 6px; font-size: 0.875rem; color: var(--ink-2); }
+.inv-state strong { color: var(--primary-deep); font-weight: 500; }
+.inv-scale { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border); font: 500 0.75rem/1 var(--mono); color: var(--ink-2); }
+
+.alert { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line-strong); }
+.alert .icon { color: var(--primary); margin-top: 3px; }
+.alert-time { font: 500 0.8125rem/1.4 var(--mono); color: var(--ink-2); }
+.alert-title { font-weight: 560; font-size: 1.125rem; margin-top: 4px; }
+.alert-body { color: var(--ink-2); margin-top: 2px; }
+.alert-body .num { color: var(--foreground); }
+
+/* Testimonials */
+.q-lead { margin-top: 56px; }
+.q-lead blockquote p { max-width: 42ch; font-size: clamp(1.5rem, 1.05rem + 1.6vw, 2.125rem); line-height: 1.3; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+figcaption { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.9375rem; }
+.q-name { font-weight: 560; }
+.q-role { color: var(--ink-2); }
+.q-pair { margin-top: 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; }
+.q-pair figure { padding-top: 22px; border-top: 1px solid var(--border); }
+.q-pair figure:first-child { grid-column: 4 / span 4; }
+.q-pair figure:last-child { grid-column: 9 / span 4; }
+.q-pair blockquote p { font-size: 1.125rem; line-height: 1.5; font-style: italic; }
+.q-note { margin-top: 48px; font-size: 0.8125rem; color: var(--ink-2); }
+
+/* Pricing */
+.sec-pricing { background: var(--muted); }
+.plans { margin-top: 64px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--background); border: 1px solid var(--border); border-radius: var(--r); }
+.plan { display: flex; flex-direction: column; padding: 36px 32px; }
+.plan + .plan { border-left: 1px solid var(--border); }
+.plan h3 { font-size: 1.25rem; }
+.plan-desc { margin-top: 6px; color: var(--ink-2); font-size: 0.9375rem; min-height: 3.2em; }
+.price { margin-top: 22px; display: flex; align-items: baseline; gap: 4px; }
+.price .num { font-size: 3.5rem; line-height: 1; letter-spacing: -0.04em; }
+.price .per { font: 400 1rem/1 var(--mono); color: var(--ink-2); }
+.plan .btn { margin-top: 26px; width: 100%; }
+.feat { margin-top: 28px; display: grid; gap: 12px; font-size: 0.9375rem; }
+.feat li { display: flex; gap: 10px; align-items: flex-start; }
+.feat .icon { margin-top: 2px; color: var(--primary); }
+.feat .lead { font-weight: 500; }
+.plan-plus { position: relative; margin-block: -18px; padding-block: 54px; background: var(--primary); color: var(--primary-foreground); border-radius: var(--r); box-shadow: 0 22px 44px -20px color-mix(in oklab, var(--primary) 70%, transparent); }
+.plan + .plan-plus, .plan-plus + .plan { border-left: 0; }
+.plan-plus .plan-desc, .plan-plus .price .per { color: var(--accent); }
+.plan-plus .feat .icon { color: var(--primary-foreground); }
+.plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.badge { font: 500 0.75rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 8px; border-radius: var(--r-in); background: var(--background); color: var(--primary-deep); }
+
+/* Call to action */
+.cta { background: var(--primary); color: var(--primary-foreground); padding-block: clamp(72px, 9vw, 120px); }
+.cta-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: end; }
+.cta-copy { grid-column: 1 / span 7; }
+.cta h2 { font-size: clamp(2rem, 1.1rem + 3vw, 3.5rem); line-height: 1.05; letter-spacing: -0.03em; max-width: 15ch; }
+.cta-copy p { margin-top: 18px; font-size: 1.125rem; color: var(--accent); }
+.cta .bank { grid-column: 8 / span 5; }
+.cta .bank-row { flex-wrap: wrap; }
+.cta .field { flex: 1 1 220px; }
+.cta .bank input { border-color: transparent; }
+.cta .bank input:focus { border-color: var(--primary-foreground); box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary-foreground) 45%, transparent); }
+
+/* Footer */
+.foot { padding-block: 48px 40px; }
+.foot-grid { display: grid; grid-template-columns: 1fr auto; gap: 28px 40px; align-items: start; }
+.foot-tag { margin-top: 10px; font-size: 0.9375rem; color: var(--ink-2); }
+.foot nav { display: flex; gap: 28px; font-size: 0.9375rem; }
+.foot nav a { color: var(--ink-2); text-decoration: none; }
+.foot nav a:hover { color: var(--foreground); text-decoration: underline; }
+.foot-legal { grid-column: 1 / -1; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--ink-2); }
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .hero-copy, .hero-figure { grid-column: 1 / -1; }
+  .hero-figure { margin-top: 40px; }
+  .c-sync, .c-inv, .c-alert { grid-column: 1 / -1; grid-row: auto; }
+  .q-pair figure:first-child { grid-column: 1 / span 6; }
+  .q-pair figure:last-child { grid-column: 7 / span 6; }
+  .plans { grid-template-columns: 1fr; }
+  .plan + .plan { border-left: 0; border-top: 1px solid var(--border); }
+  .plan + .plan-plus, .plan-plus + .plan { border-top: 0; }
+  .plan-plus { margin-block: 0; padding-block: 36px; }
+  .plan-desc { min-height: 0; }
+  .cta-copy, .cta .bank { grid-column: 1 / -1; }
+  .cta .bank { margin-top: 36px; max-width: 560px; }
+}
+@media (max-width: 720px) {
+  .nav-links { display: none; }
+  .q-pair { grid-template-columns: 1fr; row-gap: 32px; }
+  .q-pair figure:first-child, .q-pair figure:last-child { grid-column: 1; }
+  .gap-label { display: none; }
+  .mk-paid .mk-label { left: auto; right: 6px; }
+  .perm { column-gap: 20px; }
+}
+@media (max-width: 560px) {
+  .bank-row { flex-direction: column; }
+  .field { flex: none; }
+  .bank .btn { width: 100%; }
+  .plot { height: 240px; }
+  .axis .wide { display: none; }
+  .nav .wrap { gap: 16px; }
+  .nav-actions { gap: 16px; }
+  .nav .btn { padding: 0 14px; }
+  .plan { padding: 30px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Vectora home">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="6" fill="var(--primary)"/><path d="M6 8.5 11.2 18l2.8-5 2.2 2.2L20.5 7" fill="none" stroke="var(--primary-foreground)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Vectora
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="signin" href="#signin">Sign in</a>
+      <a class="btn btn-cta" href="#bank-q">Connect a bank</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-h">
+    <div class="wrap">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <h1 id="hero-h">Late payments, drawn into your forecast.</h1>
+          <p class="hero-sub">Connect your bank read-only. Vectora forecasts the next 90 days of cash and marks every late invoice on the line.</p>
+          <form class="bank" action="#" role="search" aria-label="Connect a bank">
+            <label for="bank-q">Find your bank</label>
+            <div class="bank-row">
+              <div class="field">
+                <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.2 13.2 3.8 3.8"/></svg>
+                <input id="bank-q" name="bank" type="search" placeholder="Search 2,400 banks" autocomplete="off">
+              </div>
+              <button class="btn btn-cta" type="submit">Connect a bank</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="hero-figure">
+          <p class="fig-label">Lowest balance in the next 90 days</p>
+          <p class="fig" aria-live="polite">
+            <span class="when-late">&minus;$1,250</span>
+            <span class="when-ontime">$1,945</span>
+          </p>
+          <p class="fig-note">
+            <span class="when-late">Dec 21, just before the late $6,400 lands</span>
+            <span class="when-ontime">Nov 14, just before a $1,900 payment lands</span>
+          </p>
+          <fieldset class="scenario">
+            <legend>Merrow &amp; Cole pays invoice INV-0142</legend>
+            <div class="seg">
+              <input type="radio" name="scenario" id="sc-ontime" value="ontime">
+              <label for="sc-ontime">On time</label>
+              <input type="radio" name="scenario" id="sc-late" value="late" checked>
+              <label for="sc-late">21 days late</label>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="chart">
+        <div class="legend" aria-hidden="true">
+          <span class="mono">Sample forecast</span>
+          <span class="lg">Balance</span>
+          <span class="lg lg-dash when-late">If paid on time</span>
+        </div>
+        <div class="plot" role="img" aria-labelledby="plot-desc">
+          <svg class="grid" viewBox="0 0 890 300" preserveAspectRatio="none" aria-hidden="true">
+            <line class="g-h" x1="0" x2="890" y1="133.3" y2="133.3" vector-effect="non-scaling-stroke"/>
+            <line class="g-v" x1="200" x2="200" y1="0" y2="300" vector-effect="non-scaling-stroke"/>
+            <line class="g-v" x1="500" x2="500" y1="0" y2="300" vector-effect="non-scaling-stroke"/>
+            <line class="g-v" x1="810" x2="810" y1="0" y2="300" vector-effect="non-scaling-stroke"/>
+            <line class="g-zero" x1="0" x2="890" y1="244.4" y2="244.4" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <svg class="data" viewBox="0 0 890 300" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <pattern id="days" width="10" height="300" patternUnits="userSpaceOnUse">
+                <rect class="day-bg" width="10" height="300"/>
+                <rect class="day-tick" x="3" width="3.5" height="300"/>
+              </pattern>
+              <clipPath id="above"><rect x="0" y="0" width="890" height="244.4"/></clipPath>
+              <clipPath id="below"><rect x="0" y="244.4" width="890" height="55.6"/></clipPath>
+            </defs>
+            <g class="series s-late">
+              <path class="area" clip-path="url(#above)" d="M0 157.8 L110 178.6 L110 116.3 L200 133.3 L200 176.7 L330 201.2 L330 159 L500 191.1 L500 234.4 L700 272.2 L700 130 L810 150.8 L810 194.1 L840 199.8 L840 122 L890 131.4 L890 244.4 L0 244.4 Z"/>
+              <path class="gap" clip-path="url(#below)" d="M0 157.8 L110 178.6 L110 116.3 L200 133.3 L200 176.7 L330 201.2 L330 159 L500 191.1 L500 234.4 L700 272.2 L700 130 L810 150.8 L810 194.1 L840 199.8 L840 122 L890 131.4 L890 244.4 L0 244.4 Z"/>
+              <path class="ghost" d="M490 189.2 L490 47 L500 48.9 L500 92.2 L700 130" vector-effect="non-scaling-stroke"/>
+              <path class="line" d="M0 157.8 L110 178.6 L110 116.3 L200 133.3 L200 176.7 L330 201.2 L330 159 L500 191.1 L500 234.4 L700 272.2 L700 130 L810 150.8 L810 194.1 L840 199.8 L840 122 L890 131.4" vector-effect="non-scaling-stroke"/>
+            </g>
+            <g class="series s-ontime">
+              <path class="area" clip-path="url(#above)" d="M0 157.8 L110 178.6 L110 116.3 L200 133.3 L200 176.7 L330 201.2 L330 159 L490 189.2 L490 47 L500 48.9 L500 92.2 L810 150.8 L810 194.1 L840 199.8 L840 122 L890 131.4 L890 244.4 L0 244.4 Z"/>
+              <path class="line" d="M0 157.8 L110 178.6 L110 116.3 L200 133.3 L200 176.7 L330 201.2 L330 159 L490 189.2 L490 47 L500 48.9 L500 92.2 L810 150.8 L810 194.1 L840 199.8 L840 122 L890 131.4" vector-effect="non-scaling-stroke"/>
+            </g>
+          </svg>
+          <div class="overlays" aria-hidden="true">
+            <span class="ylab" style="top:44.44%">$5,000</span>
+            <span class="ylab" style="top:81.48%">$0</span>
+            <div class="mk mk-due"><span class="mk-label">Due Nov 30</span></div>
+            <div class="paid-layer">
+              <div class="mk mk-paid"><span class="mk-label"><span class="when-late">Paid Dec 21</span><span class="when-ontime">Paid Nov 30</span></span></div>
+            </div>
+            <div class="bracket"><span>21 days late</span></div>
+            <span class="dot dot-late when-late"></span>
+            <span class="dot dot-ontime when-ontime"></span>
+            <span class="gap-label when-late">Two weeks below $0</span>
+          </div>
+        </div>
+        <div class="axis" aria-hidden="true">
+          <span style="left:0">Today<span class="wide">, Oct 12</span></span>
+          <span style="left:22.47%">Nov 1</span>
+          <span style="left:56.18%">Dec 1</span>
+          <span class="wide" style="left:91.01%">Jan 1</span>
+          <span style="left:100%">Jan 9</span>
+        </div>
+        <p id="plot-desc" class="sr-only">Sample 90-day forecast from Oct 12 to Jan 9. If Merrow &amp; Cole pays its $6,400 invoice 21 days late, on Dec 21 instead of Nov 30, the balance stays below $0 for about two weeks in December and bottoms out at minus $1,250. Paid on time, the lowest balance is $1,945 on Nov 14.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="features" aria-labelledby="features-h">
+    <div class="wrap">
+      <h2 id="features-h">Built around the day money actually arrives.</h2>
+      <div class="bento">
+        <article class="cell c-sync">
+          <div class="cell-text">
+            <h3>Read-only sync with 2,400 banks</h3>
+            <p>Setup takes 5 minutes. Vectora reads your balances and transactions, and has no way to move money.</p>
+          </div>
+          <div class="perm">
+            <div>
+              <p class="perm-h">Vectora reads</p>
+              <ul>
+                <li class="yes"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Balances</li>
+                <li class="yes"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Transactions</li>
+              </ul>
+            </div>
+            <div>
+              <p class="perm-h">Vectora can&rsquo;t</p>
+              <ul>
+                <li class="no"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9m0-9-9 9"/></svg>Move money</li>
+                <li class="no"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 5.5 9 9m0-9-9 9"/></svg>Make payments</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="cell c-inv">
+          <div class="cell-text">
+            <h3>Every invoice is a date on the line</h3>
+            <p>Add who owes you and when. When a client pays late, the forecast moves with them.</p>
+          </div>
+          <ol class="inv" aria-label="Sample invoices">
+            <li>
+              <div class="inv-meta"><span>INV-0139</span><span>$2,800</span></div>
+              <div class="track" aria-hidden="true"><span class="due" style="--x:12.36%"></span><span class="paid" style="--x:12.36%"></span></div>
+              <p class="inv-state">Paid Oct 23, on time</p>
+            </li>
+            <li>
+              <div class="inv-meta"><span>INV-0141</span><span>$1,900</span></div>
+              <div class="track" aria-hidden="true"><span class="due" style="--x:37.08%"></span><span class="paid" style="--x:37.08%"></span></div>
+              <p class="inv-state">Paid Nov 14, on time</p>
+            </li>
+            <li>
+              <div class="inv-meta"><span>INV-0142<span class="who">Merrow &amp; Cole</span></span><span>$6,400</span></div>
+              <div class="track" aria-hidden="true"><span class="due" style="--x:55.06%"></span><span class="late" style="--a:55.06%;--w:23.59%"></span><span class="paid" style="--x:78.65%"></span></div>
+              <p class="inv-state">Due Nov 30. <strong>Paid Dec 21, 21 days late.</strong></p>
+            </li>
+            <li>
+              <div class="inv-meta"><span>INV-0144</span><span>$3,500</span></div>
+              <div class="track" aria-hidden="true"><span class="due" style="--x:94.38%"></span><span class="soon" style="--x:94.38%"></span></div>
+              <p class="inv-state">Due Jan 4</p>
+            </li>
+            <li class="inv-scale" aria-hidden="true"><span>Oct 12</span><span>Jan 9</span></li>
+          </ol>
+        </article>
+
+        <article class="cell c-alert">
+          <div class="cell-text">
+            <h3>An alert before the balance dips</h3>
+            <p>Vectora flags an invoice the day it goes late. On Plus, it also tells you the day the gap would open.</p>
+          </div>
+          <div class="alert">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8.5a5 5 0 0 1 10 0c0 4 1.5 5.5 1.5 5.5h-13S5 12.5 5 8.5Z"/><path d="M8.3 16.5a1.8 1.8 0 0 0 3.4 0"/></svg>
+            <div>
+              <p class="alert-time">Dec 3, sample alert</p>
+              <p class="alert-title">Merrow &amp; Cole is 3 days late on <span class="num">$6,400</span>.</p>
+              <p class="alert-body">Without it, your balance goes below <span class="num">$0</span> on <span class="num">Dec 7</span>.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec-quotes" id="testimonials" aria-labelledby="quotes-h">
+    <div class="wrap">
+      <h2 id="quotes-h">Freelancers who saw the gap in time.</h2>
+      <figure class="q-lead">
+        <blockquote><p>&ldquo;I used to learn a client was late when my rent bounced. Now I see the dip weeks ahead and chase the invoice while it still matters.&rdquo;</p></blockquote>
+        <figcaption><span class="q-name">Dagny Ferreira</span><span class="q-role">Freelance illustrator</span></figcaption>
+      </figure>
+      <div class="q-pair">
+        <figure>
+          <blockquote><p>&ldquo;Our studio runs on a few large clients. Vectora shows us which one is holding our cash, and for how long.&rdquo;</p></blockquote>
+          <figcaption><span class="q-name">Tomasz Brenner</span><span class="q-role">Co-founder, brand studio</span></figcaption>
+        </figure>
+        <figure>
+          <blockquote><p>&ldquo;Read-only was the reason I connected my bank at all. It watches the money and never touches it.&rdquo;</p></blockquote>
+          <figcaption><span class="q-name">Amara Lindqvist</span><span class="q-role">Motion designer</span></figcaption>
+        </figure>
+      </div>
+      <p class="q-note">Sample quotes written for this concept page.</p>
+    </div>
+  </section>
+
+  <section class="sec sec-pricing" id="pricing" aria-labelledby="pricing-h">
+    <div class="wrap">
+      <h2 id="pricing-h">Start free with one bank.</h2>
+      <p class="sec-lede">Move to Plus when you want the full 90-day forecast.</p>
+      <div class="plans">
+        <article class="plan" aria-labelledby="p-std">
+          <div class="plan-head"><h3 id="p-std">Standard</h3></div>
+          <p class="plan-desc">One bank, with alerts when a client pays late.</p>
+          <p class="price"><span class="num">$0</span><span class="per">/mo</span></p>
+          <a class="btn btn-line" href="#bank-q">Connect a bank</a>
+          <ul class="feat">
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>1 bank</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Read-only sync</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Basic late-payment alerts</li>
+          </ul>
+        </article>
+        <article class="plan plan-plus on-primary" aria-labelledby="p-plus">
+          <div class="plan-head"><h3 id="p-plus">Plus</h3><span class="badge">Most popular</span></div>
+          <p class="plan-desc">The next 90 days of cash, across all your banks.</p>
+          <p class="price"><span class="num">$5</span><span class="per">/mo</span></p>
+          <a class="btn btn-cta" href="#plus">Start Plus</a>
+          <ul class="feat">
+            <li class="lead"><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Everything in Standard</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>More banks</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>90-day forecast</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Savings goals</li>
+          </ul>
+        </article>
+        <article class="plan" aria-labelledby="p-biz">
+          <div class="plan-head"><h3 id="p-biz">Business</h3></div>
+          <p class="plan-desc">Send invoices and chase them from Vectora, as a team.</p>
+          <p class="price"><span class="num">$19</span><span class="per">/mo</span></p>
+          <a class="btn btn-line" href="#business">Start Business</a>
+          <ul class="feat">
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Invoicing and collections</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Team</li>
+            <li><svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>Accounting export</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta on-primary" aria-labelledby="cta-h">
+    <div class="wrap cta-grid">
+      <div class="cta-copy">
+        <h2 id="cta-h">See your next 90 days in 5 minutes.</h2>
+        <p>Read-only sync with 2,400 banks. Free for one bank.</p>
+      </div>
+      <form class="bank" action="#" role="search" aria-label="Connect a bank">
+        <label for="bank-q2">Find your bank</label>
+        <div class="bank-row">
+          <div class="field">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.2 13.2 3.8 3.8"/></svg>
+            <input id="bank-q2" name="bank" type="search" placeholder="Search 2,400 banks" autocomplete="off">
+          </div>
+          <button class="btn btn-cta" type="submit">Connect a bank</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div>
+      <a class="brand" href="#top" aria-label="Vectora home">
+        <svg viewBox="0 0 26 26" aria-hidden="true"><rect width="26" height="26" rx="6" fill="var(--primary)"/><path d="M6 8.5 11.2 18l2.8-5 2.2 2.2L20.5 7" fill="none" stroke="var(--primary-foreground)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Vectora
+      </a>
+      <p class="foot-tag">Cash-flow forecasts for freelancers</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#signin">Sign in</a>
+    </nav>
+    <p class="foot-legal">&copy; 2026 Vectora. A fictional product.</p>
+  </div>
+</footer>
+</body>
+</html>

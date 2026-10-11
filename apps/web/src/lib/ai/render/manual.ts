@@ -4,10 +4,14 @@
 // gates. It is the most hostile path (anyone can paste anything), so it takes no shortcut: a size cap, the roots of
 // the requested blocks only, the first copy of each, and everything else dropped. Client-safe.
 import {
+  attachedReferencesText,
   defaultPick,
   directionCandidates,
   manualBlockPrompt,
   manualPrompt,
+  pageAgentPrompt,
+  pageManualPrompt,
+  pageStyleText,
   splitBlocks,
   type BlockActionInput,
   type RenderBrandInput,
@@ -46,7 +50,7 @@ function prepare(text: string): Prepared {
  * The roots of `text` that belong to `screens`: each requested block id once (the first copy wins), assigned to its
  * screen. `dropped` counts roots without an id, of blocks that were not asked for, and repeated copies.
  */
-export function parseManualRender(text: string, screens: readonly Pick<RenderScreenInput, "id" | "blocks">[]): ManualParseResult<ManualRenderAnswer> {
+export function parseManualRender(text: string, screens: readonly Pick<RenderScreenInput, "id" | "blocks" | "mode">[]): ManualParseResult<ManualRenderAnswer> {
   const prepared = prepare(text);
   if (!prepared.ok) return prepared.result;
   const owner = new Map<string, string>();
@@ -55,9 +59,23 @@ export function parseManualRender(text: string, screens: readonly Pick<RenderScr
   if (roots.length === 0) return { ok: false, error: "not-json" };
   const out: Record<string, StreamBlock[]> = Object.fromEntries(screens.map((screen) => [screen.id, [] as StreamBlock[]]));
   const seen = new Set<string>();
+  const page = new Set(screens.filter((screen) => screen.mode === "page").map((screen) => screen.id));
+  const styled = new Set<string>();
+  // Page mode: each screen's `<style data-dl-page>` comes before its roots; it goes to the next page screen that has none.
+  let pendingStyle: StreamBlock | null = null;
   let dropped = 0;
   for (const root of roots) {
+    if (root.blockId === null && page.size > 0 && pageStyleText(root.html) !== null) {
+      if (pendingStyle) dropped++;
+      pendingStyle = root;
+      continue;
+    }
     const screenId = root.blockId === null ? undefined : owner.get(root.blockId);
+    if (pendingStyle && screenId && page.has(screenId) && !styled.has(screenId)) {
+      out[screenId]!.unshift(pendingStyle);
+      styled.add(screenId);
+      pendingStyle = null;
+    }
     if (!screenId || seen.has(root.blockId!)) {
       dropped++;
       continue;
@@ -79,8 +97,18 @@ export function manualRenderJob(input: {
   references?: readonly { name: string }[];
 }): ManualJob<ManualRenderAnswer> {
   const references = input.references ?? [];
+  // Landings go as pages (their own contract), the other screens block by block: a mixed pick gets both parts.
+  const pages = input.screens.filter((screen) => screen.mode === "page");
+  const blocks = input.screens.filter((screen) => screen.mode !== "page");
+  const attached = references.length > 0 ? attachedReferencesText(references.length) : undefined;
+  const prompt = [
+    ...(pages.length > 0
+      ? [input.tier === "final" ? pageAgentPrompt(input.brand, input.direction, pages, attached) : pageManualPrompt(input.brand, input.direction, pages, input.tier, attached)]
+      : []),
+    ...(blocks.length > 0 ? [manualPrompt(input.brand, input.direction, blocks, input.tier, { references: pages.length > 0 ? 0 : references.length })] : []),
+  ].join("\n\n---\n\nThen, for the next screens, follow this second contract:\n\n");
   return {
-    prompt: manualPrompt(input.brand, input.direction, input.screens, input.tier, { references: references.length }),
+    prompt,
     attachments: references.map((reference, index) => promptFileName(reference.name || `reference-${index + 1}`)),
     format: "html",
     parse: (text) => parseManualRender(text, input.screens),
@@ -130,7 +158,9 @@ export function manualTransport(input: { direction: RenderDirectionAnswer; answe
       }
       const wanted = new Set(body.screen.blocks.map((block) => block.id));
       yield { type: "progress", received: 0 };
-      for (const root of roots) if (root.blockId !== null && wanted.has(root.blockId)) yield { type: "block", ...root };
+      for (const root of roots) {
+        if (root.blockId !== null ? wanted.has(root.blockId) : body.screen.mode === "page") yield { type: "block", ...root };
+      }
       yield { type: "done", session: null };
     },
     async block(): Promise<TransportBlock> {

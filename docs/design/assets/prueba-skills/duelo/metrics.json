@@ -1,0 +1,21 @@
+{
+ "spent": 0.011951924999999999,
+ "rows": [
+  {
+   "brand": "brisa",
+   "arm": "page-color",
+   "costUsd": 0.012,
+   "seconds": 88.3,
+   "outputTokens": 22928,
+   "stop": "end_turn",
+   "pageCssBytes": 6695,
+   "cssDropped": {
+    "droppedDeclarations": 0,
+    "droppedRules": 0
+   },
+   "sections": 7,
+   "failed": [],
+   "warnings": 0
+  }
+ ]
+}

@@ -56,11 +56,26 @@ describe("the request", () => {
   });
 });
 
+/** The kit applies to screens designed block by block (page mode designs its navbar and footer with the page). */
+const blockMode = (input: ReturnType<typeof screenBlocks>) => {
+  const { mode: _mode, ...rest } = input;
+  return rest;
+};
+
 describe("the shared kit", () => {
-  it("first occurrence is asked for, the others clone it", () => {
+  it("landings are designed as pages: each one asks for its own navbar and footer, nothing is cloned", () => {
     const doc = doc4();
     const ids = ["s-a", "s-b", "s-c"];
     const inputs = new Map(ids.map((id) => [id, screenBlocks(doc, id)]));
+    expect([...inputs.values()].every((input) => input.mode === "page" && input.blocks.every((block) => block.draft.length === 0))).toBe(true);
+    const plan = planKit(doc, ids, inputs, "d-1");
+    expect(plan).toEqual({ skip: new Map(), clones: [], existing: [] });
+  });
+
+  it("first occurrence is asked for, the others clone it", () => {
+    const doc = doc4();
+    const ids = ["s-a", "s-b", "s-c"];
+    const inputs = new Map(ids.map((id) => [id, blockMode(screenBlocks(doc, id))]));
     const plan = planKit(doc, ids, inputs, "d-1");
     expect(plan.skip.get("s-a")).toBeUndefined();
     expect([...plan.skip.get("s-b")!].sort()).toEqual([typeOf(doc, "s-b", "navbar"), typeOf(doc, "s-b", "footer")].sort());
@@ -75,7 +90,7 @@ describe("the shared kit", () => {
     if (!result.ok) throw new Error(result.error.message);
     doc = result.doc;
     const ids = ["s-a", "s-b"];
-    const inputs = new Map(ids.map((id) => [id, screenBlocks(doc, id)]));
+    const inputs = new Map(ids.map((id) => [id, blockMode(screenBlocks(doc, id))]));
     const plan = planKit(doc, ids, inputs, "d-1");
     expect(plan.existing.map((clone) => clone.to.screenId)).toEqual(["s-a", "s-b"]);
     expect(plan.existing.every((clone) => clone.from.blockId === nav)).toBe(true);

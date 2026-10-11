@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vectora: Cash-flow forecasts for freelancers</title>
+<meta name="description" content="Connect a bank account and see the next 90 days of cash. Free for 1 bank, read-only sync, 5-minute setup.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0.007 270.47);
+    --primary: oklch(0.511 0.23 276.97);
+    --primary-foreground: oklch(1 0 0);
+    --cta: oklch(0.6094 0.1334 162.114);
+    --cta-foreground: oklch(0.145 0.007 270.47);
+    --accent: oklch(0.951 0.023 275.36);
+    --accent-foreground: oklch(0.392 0.152 277.27);
+    --muted: oklch(0.971 0.005 274.97);
+    --muted-foreground: oklch(0.547 0.011 279.53);
+    --border: oklch(0.923 0.007 277.16);
+
+    /* Tints and shades derived from the palette only */
+    --ink-soft: color-mix(in oklch, var(--foreground) 72%, var(--background));
+    --primary-deep: color-mix(in oklch, var(--primary) 78%, var(--foreground));
+    --primary-wash: color-mix(in oklch, var(--primary) 6%, var(--background));
+    --cta-wash: color-mix(in oklch, var(--cta) 16%, var(--background));
+    --band: color-mix(in oklch, var(--foreground) 94%, var(--primary));
+
+    --radius: 10px;
+    --wrap: 1160px;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--foreground);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-underline-offset: 0.2em; }
+  ::selection { background: var(--accent); color: var(--accent-foreground); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+
+  .wrap { width: min(100% - 2.5rem, var(--wrap)); margin-inline: auto; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+  p { margin: 0; text-wrap: pretty; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 48px; padding: 0 1.25rem; border-radius: 999px;
+    font: 500 0.975rem/1 var(--sans); text-decoration: none; white-space: nowrap;
+    border: 1px solid transparent; cursor: pointer;
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+  .btn:active { transform: translateY(1px) scale(0.99); }
+  .btn-cta { background: var(--cta); color: var(--cta-foreground); }
+  .btn-cta:hover { background: color-mix(in oklch, var(--cta) 88%, var(--foreground)); }
+  .btn-ghost { background: transparent; color: var(--foreground); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--foreground); }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+  .btn-primary:hover { background: var(--primary-deep); }
+  .btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-sm { min-height: 40px; padding: 0 1rem; font-size: 0.9rem; }
+
+  /* Navbar */
+  .nav {
+    height: 68px; display: flex; align-items: center;
+    border-bottom: 1px solid var(--border); background: var(--background);
+  }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+  .brand { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; font-weight: 600; font-size: 1.125rem; letter-spacing: -0.01em; }
+  .brand-mark { width: 28px; height: 28px; flex: none; }
+  .nav-links { display: flex; gap: 1.75rem; list-style: none; margin: 0; padding: 0; }
+  .nav-links a { text-decoration: none; color: var(--ink-soft); font-size: 0.95rem; }
+  .nav-links a:hover { color: var(--foreground); }
+  .nav-actions { display: flex; align-items: center; gap: 1rem; }
+  .nav-actions .signin { text-decoration: none; font-size: 0.95rem; color: var(--ink-soft); }
+  .nav-actions .signin:hover { color: var(--foreground); }
+
+  /* Hero */
+  .hero { padding: clamp(3.5rem, 7vw, 6.5rem) 0 clamp(4rem, 8vw, 7rem); }
+  .hero-grid { display: grid; gap: 3.5rem; align-items: center; }
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.4vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 600;
+    max-width: 14ch;
+  }
+  .hero h1 em { font-style: italic; font-weight: 500; color: var(--primary); }
+  .hero-sub { margin-top: 1.5rem; font-size: 1.1875rem; line-height: 1.55; color: var(--ink-soft); max-width: 36ch; }
+  .hero-actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; }
+  .hero-actions .link { text-decoration: none; font-weight: 500; color: var(--primary); }
+  .hero-actions .link:hover { text-decoration: underline; }
+
+  /* Forecast console */
+  .console {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem 1.25rem;
+    box-shadow: 0 1px 0 var(--border), 0 24px 60px -32px color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+  .console-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .console-label { font: 400 0.8125rem/1.4 var(--mono); color: var(--muted-foreground); letter-spacing: 0.02em; }
+  .console-tag { font: 500 0.75rem/1 var(--mono); color: var(--accent-foreground); background: var(--accent); padding: 0.4rem 0.6rem; border-radius: 999px; }
+  .figure {
+    margin-top: 1rem;
+    font: 500 clamp(2.6rem, 5vw, 3.5rem)/1 var(--mono);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure-note { margin-top: 0.5rem; font-size: 0.9375rem; color: var(--ink-soft); }
+  .chart { margin-top: 1.25rem; width: 100%; height: auto; }
+  .chart .grid { stroke: var(--border); stroke-width: 1; }
+  .chart .axis { font: 400 11px var(--mono); fill: var(--muted-foreground); }
+  .chart .wash { fill: var(--primary-wash); }
+  .chart .gap-band { fill: var(--cta-wash); }
+  .chart .as-invoiced { fill: none; stroke: var(--muted-foreground); stroke-width: 1.5; stroke-dasharray: 5 6; }
+  .chart .forecast { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart .dot { fill: var(--background); stroke: var(--primary); stroke-width: 2; }
+  .chart .callout { font: 500 12px var(--sans); fill: var(--foreground); }
+  .chart .callout-mono { font: 400 11px var(--mono); fill: var(--ink-soft); }
+  .draw { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: draw 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 0.5rem; }
+  .swatch { width: 18px; height: 0; border-top: 2.5px solid var(--primary); display: inline-block; }
+  .swatch.dash { border-top: 1.5px dashed var(--muted-foreground); }
+
+  .ledger { margin-top: 1.25rem; border-top: 1px solid var(--border); }
+  .ledger li {
+    list-style: none; display: grid; grid-template-columns: 4.5rem 1fr auto; gap: 1rem;
+    padding: 0.7rem 0; border-bottom: 1px solid var(--border); font-size: 0.9375rem; align-items: baseline;
+  }
+  .ledger ul { margin: 0; padding: 0; }
+  .ledger .day { font: 400 0.8125rem var(--mono); color: var(--muted-foreground); }
+  .ledger .amt { font: 500 0.9375rem var(--mono); text-align: right; }
+  .ledger .late { color: var(--accent-foreground); }
+  .ledger .late .amt { color: var(--accent-foreground); }
+  .sample { margin-top: 0.875rem; font: 400 0.75rem var(--mono); color: var(--muted-foreground); }
+
+  /* Sections */
+  section { position: relative; }
+  .section { padding: clamp(4.5rem, 9vw, 7.5rem) 0; border-top: 1px solid var(--border); }
+  .section-head { max-width: 40rem; }
+  .section-head h2 { font-size: clamp(2rem, 3.6vw, 2.9rem); line-height: 1.1; }
+  .section-head p { margin-top: 1rem; color: var(--ink-soft); font-size: 1.0625rem; }
+
+  /* Features */
+  .feature-list { margin-top: clamp(2.5rem, 5vw, 4rem); display: grid; }
+  .feature {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 2rem;
+    padding: 2.25rem 0; border-top: 1px solid var(--border); align-items: start;
+  }
+  .feature:last-child { border-bottom: 1px solid var(--border); }
+  .feature-fig { font: 500 clamp(2.6rem, 5.4vw, 4rem)/1 var(--mono); letter-spacing: -0.03em; color: var(--primary); }
+  .feature-fig small { display: block; margin-top: 0.75rem; font: 400 0.8125rem var(--mono); color: var(--muted-foreground); letter-spacing: 0.02em; }
+  .feature h3 { font-size: 1.375rem; line-height: 1.25; }
+  .feature p { margin-top: 0.75rem; color: var(--ink-soft); max-width: 46ch; }
+
+  /* Testimonials */
+  .quotes { margin-top: clamp(2.5rem, 5vw, 4rem); display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+  .quote { margin: 0; padding: 1.75rem; border-radius: var(--radius); background: var(--muted); }
+  .quote blockquote { margin: 0; font-size: 1.0625rem; line-height: 1.55; }
+  .quote.lead { background: var(--foreground); color: var(--background); padding: clamp(2rem, 4vw, 3rem); }
+  .quote.lead blockquote { font-size: clamp(1.375rem, 2.6vw, 1.875rem); line-height: 1.35; letter-spacing: -0.015em; font-weight: 500; }
+  .quote.lead blockquote em { font-style: italic; color: color-mix(in oklch, var(--cta) 70%, var(--background)); }
+  .quote figcaption { margin-top: 1.25rem; font-size: 0.9rem; color: var(--ink-soft); }
+  .quote.lead figcaption { color: color-mix(in oklch, var(--background) 72%, var(--foreground)); }
+  .quote figcaption strong { display: block; font-weight: 500; color: var(--foreground); }
+  .quote.lead figcaption strong { color: var(--background); }
+  .quotes-small { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+
+  /* Pricing */
+  .pricing { margin-top: clamp(2.5rem, 5vw, 4rem); display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: stretch; }
+  .plan {
+    position: relative; display: flex; flex-direction: column;
+    padding: 2rem 1.75rem; border-radius: 14px; background: var(--background);
+    border: 1px solid var(--border);
+  }
+  .plan.featured { border: 2px solid var(--primary); padding: 2.0rem 1.75rem; }
+  .plan-badge {
+    position: absolute; top: -0.75rem; left: 1.75rem;
+    font: 500 0.75rem/1 var(--mono); letter-spacing: 0.06em;
+    background: var(--primary); color: var(--primary-foreground);
+    padding: 0.42rem 0.7rem; border-radius: 999px;
+  }
+  .plan h3 { font-size: 1.25rem; font-weight: 600; }
+  .plan-desc { margin-top: 0.4rem; font-size: 0.9375rem; color: var(--ink-soft); min-height: 2.8em; }
+  .price { margin-top: 1.5rem; display: flex; align-items: baseline; gap: 0.35rem; }
+  .price .amount { font: 500 3rem/1 var(--mono); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .price .unit { font: 400 0.9375rem var(--mono); color: var(--muted-foreground); }
+  .plan ul { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: 0.7rem; }
+  .plan li { display: grid; grid-template-columns: 1.1rem 1fr; gap: 0.6rem; font-size: 0.975rem; line-height: 1.4; }
+  .plan li svg { margin-top: 0.2rem; color: var(--primary); }
+  .plan .btn { margin-top: auto; width: 100%; }
+  .plan-foot { margin-top: 1.75rem; }
+  .plan-foot .btn { margin-top: 0; }
+  .pricing-note { margin-top: 1.5rem; font-size: 0.9375rem; color: var(--ink-soft); }
+  .pricing-note .mono { color: var(--foreground); }
+
+  /* CTA band */
+  .cta { background: var(--band); color: var(--background); padding: clamp(4.5rem, 9vw, 7rem) 0; }
+  .cta-grid { display: grid; gap: 2.5rem; align-items: end; }
+  .cta h2 { font-size: clamp(2.2rem, 4.6vw, 3.6rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 16ch; }
+  .cta h2 em { font-style: italic; font-weight: 500; color: color-mix(in oklch, var(--cta) 70%, var(--background)); }
+  .cta-side p { color: color-mix(in oklch, var(--background) 76%, var(--foreground)); font-size: 1.0625rem; max-width: 34ch; }
+  .cta-side .btn { margin-top: 1.5rem; }
+  .cta-facts { margin-top: 1.25rem; font: 400 0.8125rem/1.6 var(--mono); color: color-mix(in oklch, var(--background) 66%, var(--foreground)); }
+
+  /* Footer */
+  .footer { padding: 3.5rem 0 2.5rem; border-top: 1px solid var(--border); }
+  .footer-grid { display: grid; gap: 2rem; }
+  .footer p { margin: 0; color: var(--ink-soft); font-size: 0.9375rem; max-width: 30ch; margin-top: 0.75rem; }
+  .footer-links { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; list-style: none; margin: 0; padding: 0; }
+  .footer-links a { text-decoration: none; color: var(--ink-soft); font-size: 0.95rem; }
+  .footer-links a:hover { color: var(--foreground); text-decoration: underline; }
+  .footer-base { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font: 400 0.8125rem var(--mono); color: var(--muted-foreground); display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: space-between; }
+
+  /* Responsive */
+  @media (min-width: 760px) {
+    .nav-links { display: flex; }
+    .quotes { grid-template-columns: 1.35fr 1fr; }
+    .quotes-small { gap: 1.5rem; }
+    .footer-grid { grid-template-columns: 1fr auto; align-items: start; }
+  }
+  @media (min-width: 900px) {
+    .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 4rem; }
+    .pricing { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .plan.featured { transform: translateY(-0.5rem); }
+    .cta-grid { grid-template-columns: 1.3fr 1fr; }
+    .quotes { grid-template-columns: 1.35fr 1fr; }
+  }
+  @media (max-width: 759px) {
+    .nav-links { display: none; }
+    .nav-actions .signin { display: none; }
+    .feature { grid-template-columns: 1fr; gap: 1rem; }
+    .ledger li { grid-template-columns: 3.75rem 1fr auto; }
+    .console { padding: 1.25rem; }
+  }
+  @media (max-width: 380px) {
+    .btn { white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .draw { animation: none; stroke-dashoffset: 0; }
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Vectora home">
+      <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true">
+        <rect width="28" height="28" rx="8" fill="oklch(0.511 0.23 276.97)"/>
+        <path d="M6 9.5 L14 20 L22 9.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Vectora
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#stories">Stories</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a class="signin" href="#">Sign in</a>
+      <a class="btn btn-cta btn-sm" href="#connect">Connect a bank account</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div>
+        <h1 id="hero-title">Cash-flow forecasts for <em>freelancers</em></h1>
+        <p class="hero-sub">Connect a bank account and see when each client payment lands, and where a late one opens a gap.</p>
+        <div class="hero-actions" id="connect">
+          <a class="btn btn-cta" href="#pricing">Connect a bank account</a>
+          <a class="link" href="#pricing">See plans</a>
+        </div>
+      </div>
+
+      <figure class="console" aria-labelledby="forecast-label" style="margin-left:0;margin-right:0">
+        <div class="console-top">
+          <p class="console-label" id="forecast-label">Projected cash, next 90 days</p>
+          <span class="console-tag">Sample</span>
+        </div>
+        <p class="figure mono" aria-label="$12,480 projected balance">$12,480</p>
+        <p class="figure-note">Projected balance, day 90, with one late invoice included.</p>
+
+        <svg class="chart" viewBox="0 0 640 250" role="img" aria-labelledby="chart-title chart-desc">
+          <title id="chart-title">Forecast of cash over 90 days</title>
+          <desc id="chart-desc">A solid line shows the forecast with a late client payment, which dips below the dashed line showing the balance as invoiced between day 30 and day 60.</desc>
+
+          <line class="grid" x1="0" y1="60" x2="640" y2="60"/>
+          <line class="grid" x1="0" y1="120" x2="640" y2="120"/>
+          <line class="grid" x1="0" y1="180" x2="640" y2="180"/>
+          <line class="grid" x1="0" y1="206" x2="640" y2="206"/>
+
+          <rect class="gap-band" x="262" y="20" width="118" height="186" rx="0"/>
+
+          <path class="as-invoiced" d="M24 176 L96 150 C140 136 170 118 220 112 C262 106 300 110 330 112 C380 116 420 96 470 84 C520 72 560 56 616 44"/>
+          <path class="forecast draw" d="M24 176 L96 150 C140 136 170 118 220 112 C262 106 280 156 316 164 C350 172 380 120 430 104 C480 88 520 70 616 52"/>
+
+          <circle class="dot" cx="316" cy="164" r="5"/>
+
+          <text class="callout" x="272" y="38">Late invoice</text>
+          <text class="callout-mono" x="272" y="54">gap before payment</text>
+
+          <text class="axis" x="24" y="230">Today</text>
+          <text class="axis" x="222" y="230">Day 30</text>
+          <text class="axis" x="420" y="230">Day 60</text>
+          <text class="axis" x="580" y="230" text-anchor="end">Day 90</text>
+        </svg>
+
+        <div class="legend">
+          <span><i class="swatch"></i>Forecast</span>
+          <span><i class="swatch dash"></i>As invoiced</span>
+        </div>
+
+        <ul class="ledger" aria-label="Upcoming items">
+          <li><span class="day">Day 12</span><span>Retainer, Harbor Studio</span><span class="amt">+$2,400</span></li>
+          <li class="late"><span class="day">Day 38</span><span>Invoice 1042, paid late</span><span class="amt">+$1,850</span></li>
+          <li><span class="day">Day 61</span><span>Software, annual plan</span><span class="amt">-$240</span></li>
+        </ul>
+        <p class="sample">Sample data for illustration. Your figures come from your connected account.</p>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="features-title">Know about the gap before it hurts.</h2>
+        <p>A forecast is only useful if it reads the way your money actually moves. Vectora keeps it precise and quiet.</p>
+      </div>
+
+      <div class="feature-list">
+        <article class="feature">
+          <div class="feature-fig mono">2,400<small>banks supported</small></div>
+          <div>
+            <h3>Connect the account you already use</h3>
+            <p>Vectora syncs with 2,400 banks, so your balances and incoming payments show up in one forecast without manual entry.</p>
+          </div>
+        </article>
+        <article class="feature">
+          <div class="feature-fig mono">Read-only<small>bank sync</small></div>
+          <div>
+            <h3>It can see your money, not move it</h3>
+            <p>The connection reads balances and transactions. Vectora cannot send payments or change anything in your bank.</p>
+          </div>
+        </article>
+        <article class="feature">
+          <div class="feature-fig mono">5 min<small>setup time</small></div>
+          <div>
+            <h3>From sign-up to your first 90 days</h3>
+            <p>Connect a bank, mark the invoices you are waiting on, and the forecast draws the late payments as a visible line.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" id="stories" aria-labelledby="stories-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="stories-title">Used by people who wait on other people's payments.</h2>
+      </div>
+
+      <div class="quotes">
+        <figure class="quote lead">
+          <blockquote>
+            <p>I stopped checking my balance every morning. The forecast shows the week a <em>late client</em> will leave me short, while I still have time to follow up.</p>
+          </blockquote>
+          <figcaption>
+            <strong>Maya R.</strong>
+            Freelance illustrator
+          </figcaption>
+        </figure>
+
+        <div class="quotes-small">
+          <figure class="quote">
+            <blockquote>
+              <p>Two of us run a small design studio. We see the gap on the chart and send the reminder that same day.</p>
+            </blockquote>
+            <figcaption>
+              <strong>Tomas L.</strong>
+              Co-founder, two-person studio
+            </figcaption>
+          </figure>
+          <figure class="quote">
+            <blockquote>
+              <p>I used to learn about late payments at month end. Now the forecast shows them in the first week.</p>
+            </blockquote>
+            <figcaption>
+              <strong>Dana K.</strong>
+              Freelance developer
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="pricing-title">Start free with one bank.</h2>
+        <p>Pay for more banks and longer forecasts when your work needs them. Prices are per month.</p>
+      </div>
+
+      <div class="pricing">
+        <article class="plan" aria-labelledby="plan-standard">
+          <h3 id="plan-standard">Standard</h3>
+          <p class="plan-desc">The basics for one account and late-payment awareness.</p>
+          <p class="price"><span class="amount">$0</span><span class="unit">/mo</span></p>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              1 bank
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Read-only bank sync
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Basic late-payment alerts
+            </li>
+          </ul>
+          <div class="plan-foot">
+            <a class="btn btn-outline" href="#connect">Start free</a>
+          </div>
+        </article>
+
+        <article class="plan featured" aria-labelledby="plan-plus">
+          <span class="plan-badge">MOST POPULAR</span>
+          <h3 id="plan-plus">Plus</h3>
+          <p class="plan-desc">The 90-day view for freelancers with several accounts.</p>
+          <p class="price"><span class="amount">$5</span><span class="unit">/mo</span></p>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Everything in Standard
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              More banks
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              90-day forecast
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Savings goals
+            </li>
+          </ul>
+          <div class="plan-foot">
+            <a class="btn btn-primary" href="#connect">Choose Plus</a>
+          </div>
+        </article>
+
+        <article class="plan" aria-labelledby="plan-business">
+          <h3 id="plan-business">Business</h3>
+          <p class="plan-desc">Collections and shared access for small studios.</p>
+          <p class="price"><span class="amount">$19</span><span class="unit">/mo</span></p>
+          <ul>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Invoicing and collections
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Team access
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Accounting export
+            </li>
+          </ul>
+          <div class="plan-foot">
+            <a class="btn btn-outline" href="#connect">Choose Business</a>
+          </div>
+        </article>
+      </div>
+      <p class="pricing-note">Bank sync is <span class="mono">read-only</span> on every plan. Setup takes <span class="mono">5 minutes</span>.</p>
+    </div>
+  </section>
+
+  <!-- Call to action -->
+  <section class="cta" aria-labelledby="cta-title">
+    <div class="wrap cta-grid">
+      <h2 id="cta-title">See the next 90 days <em>before</em> the next late payment.</h2>
+      <div class="cta-side">
+        <p>Connect one bank account for free. Read-only sync, and your first forecast is ready in about five minutes.</p>
+        <a class="btn btn-cta" href="#connect">Connect a bank account</a>
+        <p class="cta-facts">Free for 1 bank · Read-only sync · 2,400 banks · 5-minute setup</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="#top" aria-label="Vectora home">
+        <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true">
+          <rect width="28" height="28" rx="8" fill="oklch(0.511 0.23 276.97)"/>
+          <path d="M6 9.5 L14 20 L22 9.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Vectora
+      </a>
+      <p>Cash-flow forecasts for freelancers and small studios.</p>
+    </div>
+    <nav aria-label="Footer">
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#stories">Stories</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap">
+    <div class="footer-base">
+      <span>© Vectora</span>
+      <span>Read-only bank sync. We never move money.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

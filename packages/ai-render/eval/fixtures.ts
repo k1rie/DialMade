@@ -61,29 +61,41 @@ const row = (type: LibraryBlockType, label: string, rowAt: number, h: number, z:
   ...extra,
 });
 
-/** The same 5-block landing for every brand. */
-export function evalLayout(locale: "es" | "en"): LayoutDoc {
+/** The same 5-block landing for every brand («seven»: plus testimonials and a call to action, as the quality tests). */
+export function evalLayout(locale: "es" | "en", size: "five" | "seven" = "five"): LayoutDoc {
   const layout = emptyLayout();
   const es = locale === "es";
-  layout.blocks = {
-    "b-nav": row("navbar", es ? "Navegación" : "Navigation", 0, 8, 1),
-    "b-hero": row("hero", "Hero", 8, 64, 2),
-    "b-features": row("features", es ? "Ventajas" : "Features", 72, 44, 3, { count: 3 }),
-    "b-pricing": row("pricing", es ? "Precios" : "Pricing", 116, 56, 4, { count: 3 }),
-    "b-footer": row("footer", es ? "Pie" : "Footer", 172, 20, 5),
-  } as LayoutDoc["blocks"];
+  layout.blocks = (
+    size === "five"
+      ? {
+          "b-nav": row("navbar", es ? "Navegación" : "Navigation", 0, 8, 1),
+          "b-hero": row("hero", "Hero", 8, 64, 2),
+          "b-features": row("features", es ? "Ventajas" : "Features", 72, 44, 3, { count: 3 }),
+          "b-pricing": row("pricing", es ? "Precios" : "Pricing", 116, 56, 4, { count: 3 }),
+          "b-footer": row("footer", es ? "Pie" : "Footer", 172, 20, 5),
+        }
+      : {
+          "b-nav": row("navbar", es ? "Navegación" : "Navigation", 0, 8, 1),
+          "b-hero": row("hero", "Hero", 8, 64, 2),
+          "b-features": row("features", es ? "Ventajas" : "Features", 72, 44, 3, { count: 3 }),
+          "b-proof": row("testimonials", es ? "Opiniones" : "Testimonials", 116, 36, 4, { count: 3 }),
+          "b-pricing": row("pricing", es ? "Precios" : "Pricing", 152, 56, 5, { count: 3 }),
+          "b-cta": row("cta", es ? "Llamada a la acción" : "Call to action", 208, 24, 6),
+          "b-footer": row("footer", es ? "Pie" : "Footer", 232, 20, 7),
+        }
+  ) as LayoutDoc["blocks"];
   return layout;
 }
 
 export type EvalDoc = { doc: DesignDoc; screenId: string; layoutCss: string; theme: ThemeColors; draftOf: (id: string) => string[] };
 
-export function evalDoc(brand: EvalBrand): EvalDoc {
+export function evalDoc(brand: EvalBrand, size: "five" | "seven" = "five"): EvalDoc {
   const base = createDesignDoc({
     brand: { name: brand.name, tagline: brand.tagline, seeds: { primary: brand.primary, ...(brand.secondary && { secondary: brand.secondary }) } },
     brief: { productType: brand.productType, focus: "landing", locale: brand.locale, recipeId: brand.recipeId },
     provenance: { createdAt: "2026-10-10T12:00:00.000Z", layoutBrief: { description: brand.description, source: "fallback" } },
   });
-  const layout = evalLayout(brand.locale);
+  const layout = evalLayout(brand.locale, size);
   const ctx = contentContextFromDoc(base);
   const screenId = "s-home";
   const built = buildPageFromLayout(layout, "landing", null, ctx, { screenId, screenTitle: brand.locale === "es" ? "Inicio" : "Home" });

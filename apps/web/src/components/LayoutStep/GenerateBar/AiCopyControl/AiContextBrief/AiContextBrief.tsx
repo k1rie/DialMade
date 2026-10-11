@@ -23,8 +23,9 @@ const inputClass =
 export function AiContextBrief({ context, onContextChange, concept }: AiContextBriefProps) {
   const t = useDictionary(aiText).aiRender.context;
   const id = useId();
-  const [open, setOpen] = useState(true);
   const filled = AI_CONTEXT_FIELDS.filter((field) => (context[field] ?? "").trim() !== "").length;
+  // Folded until there is something to show: the five questions are optional, not the first thing to read.
+  const [open, setOpen] = useState(filled > 0);
 
   const set = (field: AiContextField, value: string) => onContextChange({ ...context, [field]: value });
 

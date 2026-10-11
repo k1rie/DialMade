@@ -61,13 +61,40 @@ export const aiDraftOf =
     return element ? draftTexts(visibleProps(element)) : [];
   };
 
-/** The prompt input of the screen's blocks (all of them, or `only`), by id. Empty for an unknown screen. */
-export function aiBlockInputs(doc: DesignDoc, screenId: string, only?: ReadonlySet<string>): Map<string, RenderBlockInput> {
+/**
+ * How «Diseño con IA» designs a screen now: landing screens as ONE page from the brief (@dialmade/ai-render
+ * pagePrompt: own CSS and SVG, measured better on 2026-10-11, docs/design/prueba-skills.md); app screens block by
+ * block with token classes, as before.
+ */
+export const aiScreenMode = (screen: Pick<Screen, "kind">): "page" | undefined => (screen.kind === "landing" ? "page" : undefined);
+
+/** The visible props of a block's element (page mode reads its plans as fixed data). */
+export const aiPropsOf =
+  (screen: Pick<Screen, "page">) =>
+  (blockId: string): unknown => {
+    const element = Object.hasOwn(screen.page.elements, blockId) ? screen.page.elements[blockId] : undefined;
+    return element ? visibleProps(element) : undefined;
+  };
+
+/** The options of `screenInput` for a screen in `mode` (page mode: no template copy, the plans as data). */
+export const aiScreenInputOptions = (screen: Pick<Screen, "page">, mode: "page" | undefined) => ({
+  draftOf: aiDraftOf(screen),
+  ...(mode === "page" && { mode: "page" as const, propsOf: aiPropsOf(screen) }),
+});
+
+/**
+ * The prompt input of the screen's blocks (all of them, or `only`), by id, as `mode` builds it (default «blocks»:
+ * token blocks with their draft; «page»: the outline of page mode). Empty for an unknown screen.
+ */
+export function aiBlockInputs(doc: DesignDoc, screenId: string, only?: ReadonlySet<string>, mode: "page" | "blocks" = "blocks"): Map<string, RenderBlockInput> {
   const screen = doc.screens[screenId];
   if (!screen) return new Map();
-  const input = screenInput(doc, screenId, { draftOf: aiDraftOf(screen), ...(only && { only }) });
+  const input = screenInput(doc, screenId, { ...aiScreenInputOptions(screen, mode === "page" ? "page" : undefined), ...(only && { only }) });
   return new Map(input.blocks.map((block) => [block.id, block]));
 }
+
+/** The mode an AI block was made in (its basis was hashed from that mode's input). */
+const blockModeOf = (block: AiBlock): "page" | "blocks" => (block.mode === "page" ? "page" : "blocks");
 
 /** The basis a block would get if it were designed now (spec §8.4): its layout, its copy, the language, the direction. */
 export const currentBasis = (doc: DesignDoc, block: RenderBlockInput): string => blockBasis(block, doc.brief.locale, doc.aiRender?.direction?.id ?? "");
@@ -80,10 +107,10 @@ export const currentBasis = (doc: DesignDoc, block: RenderBlockInput): string =>
 export function staleAiBlocks(doc: DesignDoc, screenId: string): Set<string> {
   const blocks = doc.screens[screenId]?.aiRender?.blocks;
   if (!blocks) return new Set();
-  const inputs = aiBlockInputs(doc, screenId);
+  const inputs = { page: aiBlockInputs(doc, screenId, undefined, "page"), blocks: aiBlockInputs(doc, screenId, undefined, "blocks") };
   const out = new Set<string>();
   for (const [id, block] of Object.entries(blocks)) {
-    const input = inputs.get(id);
+    const input = inputs[blockModeOf(block)].get(id);
     // A block that is no longer rendered (hidden) is not «stale»: it is not shown at all.
     if (input && currentBasis(doc, input) !== block.basis) out.add(id);
   }
@@ -93,7 +120,7 @@ export function staleAiBlocks(doc: DesignDoc, screenId: string): Set<string> {
 /** Whether ONE block is «Desactualizado» (cheaper than `staleAiBlocks` for a single block). */
 export function isAiBlockStale(doc: DesignDoc, screenId: string, blockId: string): boolean {
   const block = aiBlockOf(doc, screenId, blockId);
-  const input = block && aiBlockInputs(doc, screenId, new Set([blockId])).get(blockId);
+  const input = block && aiBlockInputs(doc, screenId, new Set([blockId]), blockModeOf(block)).get(blockId);
   return !!block && !!input && currentBasis(doc, input) !== block.basis;
 }
 

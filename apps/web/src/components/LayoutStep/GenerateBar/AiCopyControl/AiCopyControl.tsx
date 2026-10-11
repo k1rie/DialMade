@@ -42,6 +42,13 @@ export function AiCopyControl({ plan, onIntent, className }: AiCopyControlProps)
   };
   const layoutId = useId();
   const modes: AiGenerateMode[] = plan.designAvailable ? ["off", "copy", "design"] : ["off", "copy"];
+  // «Producto final»: the CTA asks for the agent's job (the copy-and-paste dialog, with the agent's prompt).
+  // Adjusted during render (not in an effect): a new request opens the dialog in the same commit.
+  const [seenAgentRequest, setSeenAgentRequest] = useState(plan.agentRequest);
+  if (plan.agentRequest !== seenAgentRequest) {
+    setSeenAgentRequest(plan.agentRequest);
+    if (plan.designAvailable) openAccess("manual");
+  }
 
   return (
     <>

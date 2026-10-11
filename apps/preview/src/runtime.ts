@@ -5,6 +5,7 @@
 // (`?parent=`), which the CSP's `frame-ancestors` already pins, and validates every message with the shared schemas.
 import "./zodConfig";
 import { ISLAND_BLEED, IslandMessageSchema, MAX_ISLAND_HEIGHT, ParentMessageSchema, type IslandMessage, type ParentMessage } from "@dialmade/ai-render/protocol";
+import { PAGE_BASE_CSS, sanitizeCss } from "@dialmade/ai-render/runtime";
 import { insertBlock } from "./insert";
 import { measureAtWidths, measureBlock } from "./measure";
 
@@ -61,8 +62,11 @@ function render(message: Extract<ParentMessage, { type: "render" }>) {
   editing = null;
   document.documentElement.lang = message.lang;
   setTheme(message.vars, message.mode, message.fontsHref);
-  style.textContent = message.css;
-  insertBlock(host, message.html);
+  // Page mode: the host is where the page stylesheet's scope (`[data-dl-ai-block]`) starts; its CSS is cleaned again.
+  if (message.page) host.setAttribute("data-dl-ai-block", "");
+  else host.removeAttribute("data-dl-ai-block");
+  style.textContent = message.page ? `${message.css}${PAGE_BASE_CSS}${sanitizeCss(message.pageCss ?? "", { kind: "page" }).css}` : message.css;
+  insertBlock(host, message.html, { page: message.page === true });
   if (editable) for (const element of host.querySelectorAll<HTMLElement>(FOCUSABLE)) element.tabIndex = -1;
   const again = resume ? texts().find((node) => node.getAttribute("data-dl-t") === resume.t) : undefined;
   if (resume && again) {

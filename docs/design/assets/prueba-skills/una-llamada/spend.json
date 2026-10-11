@@ -1,0 +1,263 @@
+{
+ "total": 0.516992405,
+ "runs": [
+  {
+   "arm": "haiku-skills",
+   "brand": "brisa",
+   "model": "claude-haiku-5-5",
+   "usd": 0.0215,
+   "seconds": 109.7,
+   "usage": {
+    "input_tokens": 1090,
+    "cache_creation_input_tokens": 62209,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 62209,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 27176,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 14519
+    }
+   },
+   "stop": "end_turn",
+   "chars": 28055
+  },
+  {
+   "arm": "haiku-skills",
+   "brand": "vectora",
+   "model": "claude-haiku-5-5",
+   "usd": 0.0094,
+   "seconds": 66.6,
+   "usage": {
+    "input_tokens": 1006,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 62209,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 17262,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 4758
+    }
+   },
+   "stop": "end_turn",
+   "chars": 28447
+  },
+  {
+   "arm": "haiku-skills",
+   "brand": "ollaria",
+   "model": "claude-haiku-5-5",
+   "usd": 0.01,
+   "seconds": 71.6,
+   "usage": {
+    "input_tokens": 920,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 62209,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 18517,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 5476
+    }
+   },
+   "stop": "end_turn",
+   "chars": 29274
+  },
+  {
+   "arm": "haiku-plain",
+   "brand": "brisa",
+   "model": "claude-haiku-5-5",
+   "usd": 0.0077,
+   "seconds": 54.9,
+   "usage": {
+    "input_tokens": 1421,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 15032,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 2103
+    }
+   },
+   "stop": "end_turn",
+   "chars": 27493
+  },
+  {
+   "arm": "haiku-plain",
+   "brand": "vectora",
+   "model": "claude-haiku-5-5",
+   "usd": 0.0065,
+   "seconds": 46.2,
+   "usage": {
+    "input_tokens": 1337,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 12722,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 1586
+    }
+   },
+   "stop": "end_turn",
+   "chars": 24878
+  },
+  {
+   "arm": "haiku-plain",
+   "brand": "ollaria",
+   "model": "claude-haiku-5-5",
+   "usd": 0.0071,
+   "seconds": 50.9,
+   "usage": {
+    "input_tokens": 1251,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 14014,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "output_tokens_details": {
+     "thinking_tokens": 1269
+    }
+   },
+   "stop": "end_turn",
+   "chars": 27207
+  },
+  {
+   "arm": "sonnet-skills",
+   "brand": "brisa",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.2487,
+   "seconds": 51.7,
+   "usage": {
+    "input_tokens": 1090,
+    "cache_creation_input_tokens": 62209,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 62209,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 9097,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 1090,
+      "output_tokens": 9097,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 62209,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 62209,
+       "ephemeral_1h_input_tokens": 0
+      },
+      "type": "message",
+      "model": null
+     }
+    ],
+    "output_tokens_details": {
+     "thinking_tokens": 0
+    }
+   },
+   "stop": "end_turn",
+   "chars": 19121
+  },
+  {
+   "arm": "sonnet-skills",
+   "brand": "vectora",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.0968,
+   "seconds": 47,
+   "usage": {
+    "input_tokens": 1006,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 62209,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 8235,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 1006,
+      "output_tokens": 8235,
+      "cache_read_input_tokens": 62209,
+      "cache_creation_input_tokens": 0,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 0
+      },
+      "type": "message",
+      "model": null
+     }
+    ],
+    "output_tokens_details": {
+     "thinking_tokens": 0
+    }
+   },
+   "stop": "end_turn",
+   "chars": 17426
+  },
+  {
+   "arm": "sonnet-skills",
+   "brand": "ollaria",
+   "model": "claude-sonnet-5-5",
+   "usd": 0.1094,
+   "seconds": 53.4,
+   "usage": {
+    "input_tokens": 920,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 62209,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 9515,
+    "service_tier": "standard",
+    "inference_geo": "global",
+    "iterations": [
+     {
+      "input_tokens": 920,
+      "output_tokens": 9515,
+      "cache_read_input_tokens": 62209,
+      "cache_creation_input_tokens": 0,
+      "cache_creation": {
+       "ephemeral_5m_input_tokens": 0,
+       "ephemeral_1h_input_tokens": 0
+      },
+      "type": "message",
+      "model": null
+     }
+    ],
+    "output_tokens_details": {
+     "thinking_tokens": 0
+    }
+   },
+   "stop": "end_turn",
+   "chars": 20406
+  }
+ ]
+}

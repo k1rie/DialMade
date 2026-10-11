@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brisa · Tu barbería, sin llamadas</title>
+<meta name="description" content="App de reservas para barberías de barrio: agenda semanal, clientes, recordatorios por WhatsApp y cobros. Gratis hasta 5 personas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:oklch(1 0 0);
+  --foreground:oklch(0.147 0.004 164.84);
+  --primary:oklch(0.511 0.086 186.39);
+  --primary-foreground:oklch(1 0 0);
+  --cta:oklch(0.608 0.133 68.71);
+  --cta-foreground:oklch(0.147 0.004 164.84);
+  --accent:oklch(0.95 0.02 189.21);
+  --accent-foreground:oklch(0.394 0.058 185.04);
+  --muted:oklch(0.971 0.003 174.48);
+  --muted-foreground:oklch(0.546 0.004 219.56);
+  --border:oklch(0.922 0.003 174.48);
+  --ink2:color-mix(in oklch,var(--foreground) 72%,white);
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;font-optical-sizing:auto;color:var(--foreground);background:var(--background);line-height:1.55;font-size:17px;-webkit-font-smoothing:antialiased}
+::selection{background:var(--cta);color:var(--cta-foreground)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--cta);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{line-height:1.05;letter-spacing:-.03em;text-wrap:balance}
+h1{font-size:clamp(2.6rem,6.2vw,5rem);font-weight:800}
+h2{font-size:clamp(2rem,4vw,3.1rem);font-weight:750}
+h3{font-size:1.25rem;letter-spacing:-.015em;font-weight:700}
+em{font-style:italic;font-weight:600;color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:var(--r);font-weight:700;text-decoration:none;white-space:nowrap;border:2px solid transparent;transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn-cta{background:var(--cta);color:var(--cta-foreground);box-shadow:0 2px 0 color-mix(in oklch,var(--cta) 60%,black),0 10px 22px -10px color-mix(in oklch,var(--cta) 80%,black)}
+.btn-cta:hover{transform:translateY(-2px)}
+.btn-ghost{border-color:var(--foreground);background:transparent}
+.btn-ghost:hover{background:var(--foreground);color:var(--background)}
+
+/* nav */
+header{position:sticky;top:0;z-index:20;background:color-mix(in oklch,var(--background) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;text-decoration:none;color:var(--primary)}
+.logo svg{width:30px;height:30px}
+nav ul{display:flex;gap:30px;list-style:none;padding:0}
+nav ul a{text-decoration:none;font-weight:550;font-size:.95rem}
+nav ul a:hover{color:var(--primary)}
+nav .btn{min-height:44px;padding:0 20px;font-size:.95rem}
+
+/* hero */
+.hero{padding:56px 0 80px;background:linear-gradient(var(--accent),var(--background) 85%)}
+.hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center}
+.hero p.lead{font-size:1.25rem;color:var(--ink2);max-width:34ch;margin:24px 0 32px}
+.hero .cta-row{display:flex;gap:14px;flex-wrap:wrap}
+.hero small{display:block;margin-top:18px;color:var(--accent-foreground);font-weight:600;font-size:.95rem}
+
+/* agenda */
+.agenda{background:var(--background);border:2px solid var(--foreground);border-radius:16px;box-shadow:0 30px 60px -30px color-mix(in oklch,var(--primary) 60%,black);overflow:hidden}
+.ag-top{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--foreground);color:var(--background);font-weight:650;font-size:.95rem}
+.ag-top span:last-child{color:var(--cta)}
+.ag-cols{display:grid;grid-template-columns:48px repeat(3,1fr);font-size:.8rem}
+.ag-head{padding:10px 8px;font-weight:700;color:var(--accent-foreground);background:var(--accent);border-bottom:1px solid var(--border);text-align:center}
+.ag-head:first-child{background:var(--accent)}
+.ag-h{padding:0 6px;height:54px;display:flex;align-items:flex-start;justify-content:flex-end;padding-top:6px;color:var(--muted-foreground);font-variant-numeric:tabular-nums;border-bottom:1px solid var(--border);font-size:.75rem}
+.ag-c{border-bottom:1px solid var(--border);border-left:1px solid var(--border);height:54px;padding:4px;position:relative}
+.slot{height:100%;border-radius:7px;padding:5px 8px;font-size:.78rem;line-height:1.25;font-weight:650;background:var(--accent);color:var(--accent-foreground);overflow:hidden}
+.slot.tall{height:calc(200% + 9px);position:relative;z-index:2}
+.slot.p{background:var(--primary);color:var(--primary-foreground)}
+.slot.c{background:var(--cta);color:var(--cta-foreground)}
+.slot small{display:block;font-weight:500;opacity:.9}
+.wa{margin:14px;padding:12px 14px;border-radius:12px;background:var(--muted);border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;font-size:.88rem}
+.wa b{display:block;font-size:.78rem;color:var(--primary);margin-bottom:2px}
+.wa i{flex:none;width:32px;height:32px;border-radius:50%;background:var(--primary);display:grid;place-items:center}
+.wa i svg{width:16px;height:16px}
+.sample{padding:0 16px 12px;font-size:.72rem;color:var(--muted-foreground)}
+
+/* strip */
+.strip{background:var(--foreground);color:var(--background)}
+.strip .wrap{display:flex;flex-wrap:wrap;gap:12px 48px;justify-content:space-between;padding-top:22px;padding-bottom:22px;font-weight:650}
+.strip span b{color:var(--cta);font-size:1.15em}
+
+section{padding:96px 0}
+.head{max-width:680px;margin-bottom:52px}
+.head p{color:var(--ink2);margin-top:14px;font-size:1.1rem}
+
+/* features */
+.feat{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:20px}
+.f{padding:30px;border-radius:16px;border:1px solid var(--border);background:var(--muted);display:flex;flex-direction:column;gap:12px}
+.f:first-child{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)}
+.f:first-child p{color:color-mix(in oklch,var(--primary-foreground) 88%,var(--primary))}
+.f p{color:var(--ink2)}
+.f .ic{width:48px;height:48px;border-radius:12px;background:var(--accent);display:grid;place-items:center;margin-bottom:12px}
+.f:first-child .ic{background:var(--cta)}
+.f .ic svg{width:26px;height:26px;stroke:var(--accent-foreground);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.f:first-child .ic svg{stroke:var(--cta-foreground)}
+
+/* testimonials */
+.tes{background:var(--muted)}
+.tgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+blockquote{background:var(--background);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+blockquote p{font-size:1.2rem;font-weight:500;letter-spacing:-.01em;line-height:1.4}
+blockquote.big p{font-size:1.7rem;line-height:1.25;letter-spacing:-.02em}
+blockquote footer{font-size:.92rem;color:var(--ink2)}
+blockquote footer b{color:var(--foreground);display:block}
+.tstack{display:grid;gap:20px}
+.note{margin-top:20px;font-size:.8rem;color:var(--muted-foreground)}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.plan{border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:18px;background:var(--background)}
+.plan.pop{border:2px solid var(--primary);background:var(--accent);position:relative;box-shadow:0 24px 50px -28px var(--primary)}
+.tag{position:absolute;top:-14px;left:28px;background:var(--cta);color:var(--cta-foreground);font-weight:800;font-size:.78rem;letter-spacing:.04em;padding:5px 12px;border-radius:99px}
+.price{font-size:3.2rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+.price small{font-size:1rem;font-weight:550;letter-spacing:0;color:var(--ink2)}
+.plan .sub{color:var(--ink2);font-size:.92rem;margin-top:-8px}
+.plan ul{list-style:none;padding:0;display:grid;gap:11px;flex:1}
+.plan li{display:flex;gap:10px;font-size:.98rem}
+.plan li::before{content:"";flex:none;width:18px;height:18px;margin-top:3px;border-radius:50%;background:var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.4l2.6 2.6L13 6.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.plan .btn{width:100%}
+.btn-pri{background:var(--primary);color:var(--primary-foreground)}
+.btn-pri:hover{background:color-mix(in oklch,var(--primary) 85%,black)}
+
+/* cta */
+.final{background:var(--primary);color:var(--primary-foreground);text-align:left;padding:88px 0}
+.final .wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:center}
+.final h2{font-size:clamp(2.2rem,5vw,4rem)}
+.final em{color:var(--cta)}
+.final p{margin-top:16px;font-size:1.15rem;color:color-mix(in oklch,var(--primary-foreground) 90%,var(--primary))}
+.final .right{display:grid;gap:14px;justify-items:start}
+.final .right span{font-size:.95rem;font-weight:600}
+
+footer.site{background:var(--foreground);color:color-mix(in oklch,var(--background) 80%,var(--foreground));padding:56px 0 32px;font-size:.95rem}
+.fgrid{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;padding-bottom:32px;border-bottom:1px solid color-mix(in oklch,var(--background) 20%,var(--foreground))}
+.fgrid .logo{color:var(--background)}
+.fgrid p{max-width:30ch;margin-top:12px}
+.fgrid ul{list-style:none;padding:0;display:grid;gap:8px}
+.fgrid h4{color:var(--background);margin-bottom:12px;font-size:.95rem}
+.fgrid a{text-decoration:none}
+.fgrid a:hover{color:var(--cta)}
+.copy{padding-top:24px;font-size:.85rem}
+
+@media (prefers-reduced-motion:no-preference){
+  .agenda{animation:rise .8s cubic-bezier(.16,1,.3,1) both}
+  .wa{animation:rise .8s .5s cubic-bezier(.16,1,.3,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}}
+}
+@media (max-width:960px){
+  .hero-grid,.tgrid,.final .wrap{grid-template-columns:1fr}
+  .feat,.plans{grid-template-columns:1fr}
+  nav ul{display:none}
+  section{padding:68px 0}
+}
+@media (max-width:480px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .ag-cols{grid-template-columns:40px repeat(3,1fr)}
+  .slot{font-size:.7rem;padding:4px 5px}
+  .hero .btn{width:100%}
+  blockquote.big p{font-size:1.4rem}
+  .plan{padding:26px}
+  .strip .wrap{gap:8px 28px;font-size:.92rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <nav aria-label="Principal">
+      <a class="logo" href="#top" aria-label="Brisa, inicio">
+        <svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="currentColor"/><path d="M7 11h11a3 3 0 100-3M7 16h15a3 3 0 11-3 3M7 21h8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Brisa
+      </a>
+      <ul>
+        <li><a href="#funciones">Qué hace</a></li>
+        <li><a href="#barberos">Barberos</a></li>
+        <li><a href="#precios">Precios</a></li>
+      </ul>
+      <a class="btn btn-cta" href="#empezar">Empieza gratis</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero" style="padding-bottom:80px">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Tu barbería, <em>sin llamadas.</em></h1>
+      <p class="lead">Pasa la agenda del cuaderno a Brisa esta semana. Tus clientes reservan solos y reciben el recordatorio por WhatsApp.</p>
+      <div class="cta-row">
+        <a class="btn btn-cta" href="#empezar">Abre tu cuenta gratis</a>
+        <a class="btn btn-ghost" href="#precios">Ver precios</a>
+      </div>
+      <small>Gratis hasta 5 personas. Sin tarjeta.</small>
+    </div>
+
+    <div>
+      <div class="agenda" role="img" aria-label="Ejemplo de agenda semanal de Brisa con tres sillas, horas y un recordatorio de WhatsApp">
+        <div class="ag-top"><span>Agenda · esta semana</span><span>Jueves</span></div>
+        <div class="ag-cols" aria-hidden="true">
+          <div class="ag-head">Hora</div><div class="ag-head">Silla 1</div><div class="ag-head">Silla 2</div><div class="ag-head">Silla 3</div>
+
+          <div class="ag-h">10:00</div>
+          <div class="ag-c"><div class="slot p">Corte<small>Marcos</small></div></div>
+          <div class="ag-c"><div class="slot">Barba<small>Iván</small></div></div>
+          <div class="ag-c"></div>
+
+          <div class="ag-h">10:30</div>
+          <div class="ag-c"></div>
+          <div class="ag-c"><div class="slot tall c">Corte y barba<small>Don Ramón</small></div></div>
+          <div class="ag-c"><div class="slot p">Corte<small>Hugo</small></div></div>
+
+          <div class="ag-h">11:00</div>
+          <div class="ag-c"><div class="slot">Rapado<small>Álex</small></div></div>
+          <div class="ag-c"></div>
+          <div class="ag-c"></div>
+
+          <div class="ag-h">11:30</div>
+          <div class="ag-c"></div>
+          <div class="ag-c"></div>
+          <div class="ag-c"><div class="slot">Corte<small>Nico</small></div></div>
+        </div>
+        <div class="wa">
+          <i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 14l1-3.4A6 6 0 118 14a6 6 0 01-2.7-.7z" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></i>
+          <div><b>Recordatorio por WhatsApp</b>Hola Hugo, mañana a las 10:30 te espera la silla 3. ¿Confirmas con un «sí»?</div>
+        </div>
+        <p class="sample">Ejemplo con nombres inventados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="strip">
+  <div class="wrap">
+    <span><b>1.200</b> barberías ya la usan</span>
+    <span><b>Gratis</b> hasta 5 personas</span>
+    <span><b>12 €</b> al mes por equipo</span>
+    <span><b>Sin</b> tarjeta</span>
+  </div>
+</div>
+
+<section id="funciones">
+  <div class="wrap">
+    <div class="head">
+      <h2>Lo que hacía el cuaderno, pero sin <em>perder citas.</em></h2>
+    </div>
+    <div class="feat">
+      <article class="f">
+        <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+        <h3>Agenda de la semana, por sillas</h3>
+        <p>Ves de un vistazo quién viene, a qué hora y en qué silla. Tus clientes reservan a cualquier hora y no te suena el teléfono con las manos ocupadas.</p>
+      </article>
+      <article class="f">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.900 1.900 6.500 5.500M16 5a3.500 3.500 0 010 6.500M18.500 14.800c1.800.8 2.800 2.500 3 5.200"/></svg></div>
+        <h3>Tus clientes, con su historial</h3>
+        <p>Cómo le gusta el corte a cada uno, cuándo vino por última vez y su teléfono. Todo en un sitio.</p>
+      </article>
+      <article class="f">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 20l1.300-4.200A8 8 0 1112 20a8 8 0 01-3.700-.9z"/><path d="M9 10c.5 2.500 2.500 4.500 5 5"/></svg></div>
+        <h3>Recordatorios que sí leen</h3>
+        <p>Un WhatsApp antes de la cita y se acabaron los plantones. Cobras desde la misma ficha.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="tes" id="barberos">
+  <div class="wrap">
+    <div class="head"><h2>Lo cuentan desde la silla</h2></div>
+    <div class="tgrid">
+      <blockquote class="big">
+        <p>«Llevaba la agenda en una libreta y en WhatsApp. El primer sábado con Brisa dejé de contestar llamadas con la maquinilla en la mano.»</p>
+        <footer><b>Julián Ortega</b>Barbería de barrio, 2 sillas</footer>
+      </blockquote>
+      <div class="tstack">
+        <blockquote>
+          <p>«Los recordatorios por WhatsApp se leen. Ya casi no tengo huecos vacíos.»</p>
+          <footer><b>Rafa Domínguez</b>Barbero, 3 sillas</footer>
+        </blockquote>
+        <blockquote>
+          <p>«Pasé la agenda en una tarde. Mi socio lo entendió a la primera.»</p>
+          <footer><b>Lucía Marín</b>Dueña, 4 sillas</footer>
+        </blockquote>
+      </div>
+    </div>
+    <p class="note">Testimonios de ejemplo para esta maqueta.</p>
+  </div>
+</section>
+
+<section id="precios">
+  <div class="wrap">
+    <div class="head">
+      <h2>Precios de barrio, <em>sin letra pequeña.</em></h2>
+      <p>Empieza gratis y sin tarjeta. Pasas a Equipo cuando quieras.</p>
+    </div>
+    <div class="plans">
+      <article class="plan">
+        <h3>Básico</h3>
+        <div class="price">0 €<small> /mes</small></div>
+        <ul>
+          <li>Hasta 5 personas</li>
+          <li>Agenda y clientes ilimitados</li>
+          <li>Recordatorios básicos</li>
+        </ul>
+        <a class="btn btn-ghost" href="#empezar">Empezar gratis</a>
+      </article>
+      <article class="plan pop">
+        <span class="tag">MÁS POPULAR</span>
+        <h3>Equipo</h3>
+        <div class="price">12 €<small> /mes por equipo</small></div>
+        <ul>
+          <li>Todo lo del Básico</li>
+          <li>Recordatorios por WhatsApp</li>
+          <li>Cobros y resumen semanal</li>
+        </ul>
+        <a class="btn btn-cta" href="#empezar">Probar Equipo</a>
+      </article>
+      <article class="plan">
+        <h3>Empresa</h3>
+        <div class="price">29 €<small> /mes</small></div>
+        <ul>
+          <li>Todo lo del plan Equipo</li>
+          <li>Varias sedes con permisos</li>
+          <li>Gestor de cuenta dedicado</li>
+        </ul>
+        <a class="btn btn-ghost" href="#empezar">Hablar con Brisa</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="empezar">
+  <div class="wrap">
+    <div>
+      <h2>Esta semana, pasa la agenda. <em>Sin llamadas.</em></h2>
+      <p>Crea tu cuenta, apunta a tus clientes y deja que Brisa les escriba. Sin tarjeta.</p>
+    </div>
+    <div class="right">
+      <a class="btn btn-cta" href="#empezar">Abre tu cuenta gratis</a>
+      <span>Gratis hasta 5 personas · Únete a 1.200 barberías</span>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <a class="logo" href="#top"><svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="currentColor"/><path d="M7 11h11a3 3 0 100-3M7 16h15a3 3 0 11-3 3M7 21h8" fill="none" stroke="oklch(0.147 0.004 164.84)" stroke-width="2.2" stroke-linecap="round"/></svg>Brisa</a>
+        <p>Tu barbería, sin llamadas.</p>
+      </div>
+      <div><h4>Producto</h4><ul><li><a href="#funciones">Qué hace</a></li><li><a href="#precios">Precios</a></li><li><a href="#empezar">Crear cuenta</a></li></ul></div>
+      <div><h4>Ayuda</h4><ul><li><a href="#empezar">Pasar mi agenda</a></li><li><a href="#empezar">Contacto</a></li></ul></div>
+      <div><h4>Legal</h4><ul><li><a href="#top">Privacidad</a></li><li><a href="#top">Condiciones</a></li></ul></div>
+    </div>
+    <p class="copy">© Brisa. Marca ficticia creada para una maqueta.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { MAX_AI_RENDER_BYTES, MAX_AI_STASHED_BLOCKS, aiRenderBytes, applyPatch, type AiBlock, type DesignDoc } from "@dialmade/doc";
+import { MAX_AI_BLOCK_BYTES, MAX_AI_RENDER_BYTES, MAX_AI_STASHED_BLOCKS, aiRenderBytes, applyPatch, type AiBlock, type DesignDoc } from "@dialmade/doc";
 import type { LayoutBlock } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { withContentLocale, withGeneratedScreens, type GeneratedScreenInput } from "@/lib/design-engine";
@@ -57,10 +57,10 @@ describe("inline text of an AI block", () => {
     expect(textEditOps(doc, "s-home", hero, 2, "Email")).toEqual([]);
   });
 
-  it("refuses an edit that would pass the 16 KB cap of a block", () => {
+  it("refuses an edit that would pass the cap of a block", () => {
     const big = `<section class="@container" data-block-id="b"><p data-dl-t="0">x</p>${'<p class="p-4 text-body text-foreground">' + "y".repeat(100) + "</p>".repeat(1)}</section>`;
     expect(replaceBlockText(big, 0, "z".repeat(1990))).not.toBeNull();
-    const near = `<section class="@container" data-block-id="b"><p data-dl-t="0">x</p><p>${"y".repeat(16 * 1024 - 120)}</p></section>`;
+    const near = `<section class="@container" data-block-id="b"><p data-dl-t="0">x</p><p>${"y".repeat(MAX_AI_BLOCK_BYTES - 120)}</p></section>`;
     expect(replaceBlockText(near, 0, "z".repeat(1990))).toBeNull();
   });
 });

@@ -4,10 +4,12 @@
 // exported files and inlines icons and placeholders as SVG. No scripts. Shared by the packs (exportPack) and «Copiar
 // HTML / TSX» (AiBlocksCard). Pure: same document, same output.
 import {
+  PAGE_BASE_CSS,
   blockToTsx,
   exportBlockHtml,
   provenanceComment,
   sanitizeBlock,
+  sanitizeCss,
   sanitizeSurfaceClasses,
 } from "@dialmade/ai-render";
 import { orderedScreens, type DesignDoc, type ScreenId } from "@dialmade/doc";
@@ -23,6 +25,8 @@ export type AiExportBlock = {
   html?: string;
   /** A container's surface classes (spec §1 [C15]). */
   surface?: string[];
+  /** Page mode: a section of its screen's page (its own CSS and SVG; the screen's page stylesheet styles it). */
+  page?: true;
   model?: string;
   createdAt: string;
 };
@@ -58,9 +62,10 @@ export function aiExportBlocks(doc: DesignDoc): AiExportBlock[] {
         const surface = sanitizeSurfaceClasses(block.surfaceClasses ?? []);
         return surface.length > 0 ? [{ ...base, surface }] : [];
       }
-      const sanitized = sanitizeBlock(block.html, { blockId, screenIds });
+      const page = block.mode === "page";
+      const sanitized = sanitizeBlock(block.html, { blockId, screenIds, ...(page && { mode: "page" as const }) });
       if (!sanitized.ok || sanitized.report.hostile > 0) return [];
-      return [{ ...base, html: sanitized.html }];
+      return [{ ...base, html: sanitized.html, ...(page && { page: true as const }) }];
     });
   });
 }
@@ -69,6 +74,8 @@ export function aiExportBlocks(doc: DesignDoc): AiExportBlock[] {
 export function aiClassTokens(blocks: readonly AiExportBlock[]): string[] {
   const tokens = new Set<string>();
   for (const block of blocks) {
+    // Page-mode sections bring their own CSS: their class names are not Tailwind's.
+    if (block.page) continue;
     for (const token of block.surface ?? []) tokens.add(token);
     for (const match of (block.html ?? "").matchAll(/\sclass="([^"]*)"/g)) for (const token of match[1]!.split(/\s+/)) if (token) tokens.add(token);
   }
@@ -82,19 +89,25 @@ export type AiPageParts = {
   aiSurfaces: Record<string, string>;
 };
 
-/** The `aiBlocks`/`aiSurfaces` of one screen's page in a pack. */
+/**
+ * The `aiBlocks`/`aiSurfaces` of one screen's page in a pack. Page mode: the screen's page stylesheet (sanitized
+ * again, scoped to the AI blocks) travels in a `<style>` with the first section of the page.
+ */
 export function aiPageParts(
   blocks: readonly AiExportBlock[],
   screenId: ScreenId,
-  options: { hrefOf: (screenId: ScreenId) => string | null; logoUrl?: string; locale?: string },
+  options: { hrefOf: (screenId: ScreenId) => string | null; logoUrl?: string; locale?: string; pageCss?: string },
 ): AiPageParts {
   const parts: AiPageParts = { aiBlocks: {}, aiSurfaces: {} };
+  let pageStyle = false;
   for (const block of blocks) {
     if (block.screenId !== screenId) continue;
     if (block.surface) parts.aiSurfaces[block.blockId] = block.surface.join(" ");
     if (block.html) {
       const html = exportBlockHtml(block.html, { hrefOf: options.hrefOf, ...(options.logoUrl && { logoUrl: options.logoUrl }), ...(options.locale && { locale: options.locale }) });
-      parts.aiBlocks[block.blockId] = `${provenanceComment(block.model, block.createdAt)}${html}`;
+      const style = block.page && !pageStyle ? `<style data-dl-page>${PAGE_BASE_CSS}${sanitizeCss(options.pageCss ?? "", { kind: "page" }).css}</style>` : "";
+      if (style) pageStyle = true;
+      parts.aiBlocks[block.blockId] = `${provenanceComment(block.model, block.createdAt)}${style}${html}`;
     }
   }
   return parts;
@@ -112,7 +125,8 @@ export function blockHtmlText(block: AiExportBlock, routes: Readonly<Record<Scre
 
 /** «Copiar TSX»: one React component for the block (`blockToTsx`). */
 export function blockTsxText(block: AiExportBlock, routes: Readonly<Record<ScreenId, string>>, locale?: string): string {
-  if (!block.html) return "";
+  // Page-mode sections (own CSS and SVG) export as HTML for now; TSX of them is pending.
+  if (!block.html || block.page) return "";
   return blockToTsx(block.html, block.blockId, {
     label: block.label,
     routes,

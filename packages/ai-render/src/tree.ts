@@ -53,7 +53,9 @@ export function serialize(nodes: readonly AiNode[]): string {
     for (const [name, value] of node.attrs) out += value === "" && BOOLEAN_ATTRS.has(name) ? ` ${name}` : ` ${name}="${escapeAttr(value)}"`;
     out += ">";
     if (VOID_TAGS.has(node.tag)) continue;
-    out += serialize(node.children);
+    // A page-mode <style> holds CSS the CSS sanitizer re-serialized (never a `</`): raw text, as the HTML parser reads it.
+    if (node.tag === "style") out += node.children.map((child) => (child.type === "text" ? child.value : "")).join("");
+    else out += serialize(node.children);
     out += `</${node.tag}>`;
   }
   return out;
@@ -61,16 +63,17 @@ export function serialize(nodes: readonly AiNode[]): string {
 
 const BOOLEAN_ATTRS: ReadonlySet<string> = new Set(["checked", "disabled"]);
 
-/** Parses HTML this package serialized (already sanitized) back into a tree. Comments and other namespaces go. */
+/** Parses HTML this package serialized (already sanitized) back into a tree. Comments and other namespaces go (SVG stays: page mode keeps a sanitized subset). */
 export function parseSanitized(html: string): AiNode[] {
   const strip = (nodes: RawNode[]): AiNode[] =>
     nodes.flatMap((node): AiNode[] =>
-      node.type === "text" ? [node] : node.namespace === HTML_NS ? [{ type: "element", tag: node.tag, attrs: node.attrs, children: strip(node.children) }] : [],
+      node.type === "text" ? [node] : node.namespace === HTML_NS || node.namespace === SVG_NS ? [{ type: "element", tag: node.tag, attrs: node.attrs, children: strip(node.children) }] : [],
     );
   return strip(parseRaw(html).nodes);
 }
 
 export const HTML_NS = "http://www.w3.org/1999/xhtml";
+export const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** Depth-first walk over the elements. */
 export function* elements(nodes: readonly AiNode[]): Generator<AiElement> {

@@ -6,7 +6,7 @@ import { fixContrast, type ThemeColors } from "./contrast";
 import { hash32 } from "./direction";
 import { extraGateWarnings, fixHeadings, newContacts, snippet, warning } from "./gates";
 import type { RenderBlockInput } from "./prompt";
-import { droppedClassRatio, sanitizeBlock, sanitizeSurfaceClasses, type SanitizeFailure, type SanitizeReport } from "./sanitize";
+import { droppedClassRatio, sanitizeBlock, sanitizeSurfaceClasses, type SanitizeFailure, type SanitizeMode, type SanitizeReport } from "./sanitize";
 import { attr, elements, parseSanitized, serialize } from "./tree";
 
 /** Gate 2: above this share of dropped class tokens the block is not trusted. */
@@ -16,6 +16,8 @@ export type BlockContext = {
   block: RenderBlockInput;
   screenIds: readonly string[];
   theme: ThemeColors;
+  /** «page»: own CSS and SVG (no token contrast fixes: the colors live in the stylesheet, not in classes). */
+  mode?: SanitizeMode;
 };
 
 export type ProcessedBlock =
@@ -29,7 +31,8 @@ const droppedCount = (report: SanitizeReport) =>
 
 export function processBlock(raw: string, context: BlockContext): ProcessedBlock {
   const { block } = context;
-  const sanitized = sanitizeBlock(raw, { blockId: block.id, screenIds: context.screenIds });
+  const page = context.mode === "page";
+  const sanitized = sanitizeBlock(raw, { blockId: block.id, screenIds: context.screenIds, ...(page && { mode: "page" as const }) });
   if (!sanitized.ok) return { ok: false, failure: sanitized.failure, report: sanitized.report };
   const { report, tree } = sanitized;
   if (report.hostile > 0) return { ok: false, failure: "hostile", report };
@@ -48,6 +51,14 @@ export function processBlock(raw: string, context: BlockContext): ProcessedBlock
 
   const headings = fixHeadings(tree, block.h1 === true);
   if (headings > 0) warnings.push(warning("heading-fixed", String(headings)));
+
+  if (page) {
+    // Page mode: the CSS decides colors and focus styles, so the token gates (contrast, focus classes) do not apply.
+    if (report.cssDropped > 0) warnings.push(warning("classes-dropped", `css:${report.cssDropped}`));
+    const contacts = newContacts(tree, [block.label, block.note ?? ""]);
+    for (const contact of contacts.slice(0, 3)) warnings.push(warning("new-contact", contact));
+    return { ok: true, html: serialize([tree]), gates: { contrast: "ok", responsive: "ok", dropped, warnings: warnings.slice(0, 16) }, report };
+  }
 
   const contrast = fixContrast(tree, context.theme);
   if (contrast.fixed > 0) warnings.push(warning("contrast-fixed", String(contrast.fixed)));

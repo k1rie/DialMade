@@ -315,8 +315,10 @@ describe("«Acceso completo» (full-access accounts)", () => {
     expect(stream.mock.calls[0]![0]).toMatchObject({ fallbacks: "default" });
   });
 
-  it("a session's worst case grows with the finish", () => {
-    expect(sessionWorstCaseUsd("claude-opus-5-5", 3, "final")).toBeGreaterThan(sessionWorstCaseUsd("claude-opus-5-5", 3));
+  it("a session's worst case follows the finish's model and always covers a whole page per screen", () => {
+    // Presentable runs Sonnet (its own page room); Maqueta runs Haiku with the largest page room (it thinks long).
+    expect(sessionWorstCaseUsd("claude-sonnet-5-5", 3, "presentable")).toBeGreaterThan(sessionWorstCaseUsd("claude-haiku-5-5", 3));
+    expect(sessionWorstCaseUsd("claude-haiku-5-5", 3)).toBeGreaterThan(sessionWorstCaseUsd("claude-haiku-5-5", 1));
   });
 });
 

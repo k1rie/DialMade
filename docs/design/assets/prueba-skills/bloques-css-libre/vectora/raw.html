@@ -1,0 +1,362 @@
+<section data-block-id="b-nav">
+<style>
+[data-block-id="b-nav"]{container-type:inline-size;display:block;background:var(--background);border-bottom:1px solid var(--border);}
+[data-block-id="b-nav"] .nv{height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;box-sizing:border-box;}
+[data-block-id="b-nav"] .brand{display:flex;align-items:center;gap:10px;color:var(--foreground);text-decoration:none;font-family:var(--dl-font-heading);font-weight:700;font-size:17px;letter-spacing:-0.01em;}
+[data-block-id="b-nav"] .mark{width:24px;height:24px;color:var(--primary);}
+[data-block-id="b-nav"] .links{display:none;gap:4px;}
+[data-block-id="b-nav"] .links a{color:var(--muted-foreground);text-decoration:none;font-family:var(--dl-font-body);font-size:14px;padding:6px 10px;border-radius:var(--dl-radius-sm);}
+[data-block-id="b-nav"] .links a:hover{color:var(--foreground);background:color-mix(in oklch, var(--card) 80%, var(--background));}
+[data-block-id="b-nav"] .acts{display:flex;align-items:center;gap:8px;}
+[data-block-id="b-nav"] .signin{color:var(--foreground);text-decoration:none;font-family:var(--dl-font-body);font-size:14px;padding:8px 10px;}
+[data-block-id="b-nav"] .btn{font-family:var(--dl-font-body);font-size:14px;font-weight:600;color:var(--cta-foreground);background:var(--cta);border:0;border-radius:var(--dl-button-radius);padding:9px 14px;cursor:pointer;box-shadow:0 0 0 1px color-mix(in oklch, var(--cta) 60%, var(--background)),0 6px 20px -8px var(--cta);}
+@container (min-width: 720px){
+[data-block-id="b-nav"] .links{display:flex;}
+}
+</style>
+<header class="nv">
+<a class="brand" href="#"><svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6l9 14 9-14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 6h10" stroke="currentColor" stroke-width="2"/></svg>Vectora</a>
+<nav class="links" aria-label="Main">
+<a href="#">Accounts</a>
+<a href="#">Cards</a>
+<a href="#">Business</a>
+<a href="#">Security</a>
+</nav>
+<div class="acts">
+<a class="signin" href="#">Sign in</a>
+<button type="button" class="btn">Open an account</button>
+</div>
+</header>
+</section>
+
+<section data-block-id="b-hero">
+<style>
+[data-block-id="b-hero"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);position:relative;overflow:hidden;}
+[data-block-id="b-hero"] .wrap{padding:28px 20px 32px;display:flex;flex-direction:column;gap:28px;box-sizing:border-box;}
+[data-block-id="b-hero"] .copy{display:flex;flex-direction:column;gap:14px;}
+[data-block-id="b-hero"] .eyebrow{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);}
+[data-block-id="b-hero"] h1{margin:0;font-family:var(--dl-font-heading);font-weight:700;font-size:38px;line-height:1.02;letter-spacing:-0.03em;}
+[data-block-id="b-hero"] .lede{margin:0;font-family:var(--dl-font-body);font-size:15px;line-height:1.5;color:var(--muted-foreground);max-width:44ch;}
+[data-block-id="b-hero"] .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;}
+[data-block-id="b-hero"] .btn{font-family:var(--dl-font-body);font-size:15px;font-weight:600;color:var(--cta-foreground);background:var(--cta);border:0;border-radius:var(--dl-button-radius);padding:12px 18px;cursor:pointer;box-shadow:0 0 0 1px color-mix(in oklch, var(--cta) 60%, var(--background)),0 10px 30px -10px var(--cta);}
+[data-block-id="b-hero"] .ghost{font-family:var(--dl-font-body);font-size:15px;color:var(--foreground);background:transparent;border:1px solid var(--border);border-radius:var(--dl-button-radius);padding:11px 16px;cursor:pointer;}
+[data-block-id="b-hero"] .note{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);}
+[data-block-id="b-hero"] .frame{border:1px solid var(--border);border-radius:var(--dl-radius-xl);background:var(--card);color:var(--card-foreground);overflow:hidden;box-shadow:0 0 0 1px color-mix(in oklch, var(--primary) 18%, transparent),0 30px 80px -40px color-mix(in oklch, var(--primary) 50%, transparent);}
+[data-block-id="b-hero"] .bar{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground);}
+[data-block-id="b-hero"] .dot{width:8px;height:8px;border-radius:var(--dl-radius-full);background:var(--border);}
+[data-block-id="b-hero"] .url{margin-left:auto;}
+[data-block-id="b-hero"] .body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+[data-block-id="b-hero"] .kpi-label{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground);}
+[data-block-id="b-hero"] .kpi{font-family:var(--dl-font-heading);font-weight:700;font-size:56px;line-height:1;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
+[data-block-id="b-hero"] .chart{width:100%;height:auto;display:block;}
+[data-block-id="b-hero"] .ln{fill:none;stroke:var(--primary);stroke-width:2;}
+[data-block-id="b-hero"] .fc{fill:none;stroke:var(--primary);stroke-width:2;stroke-dasharray:4 4;opacity:0.7;}
+[data-block-id="b-hero"] .area{fill:color-mix(in oklch, var(--primary) 22%, transparent);}
+[data-block-id="b-hero"] .gap{stroke:var(--cta);stroke-width:1;stroke-dasharray:2 3;}
+[data-block-id="b-hero"] .axis{font-family:var(--dl-font-mono);font-size:10px;fill:var(--muted-foreground);}
+[data-block-id="b-hero"] .hit{fill:var(--cta);}
+[data-block-id="b-hero"] .rows{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-family:var(--dl-font-mono);font-size:12px;border-top:1px solid var(--border);padding-top:12px;}
+[data-block-id="b-hero"] .rows .late{color:var(--cta);}
+[data-block-id="b-hero"] .corner{position:absolute;font-family:var(--dl-font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);top:12px;right:20px;}
+@container (min-width: 760px){
+[data-block-id="b-hero"] .wrap{flex-direction:row;align-items:center;padding:48px 40px;gap:48px;}
+[data-block-id="b-hero"] .copy{flex:0 0 42%;}
+[data-block-id="b-hero"] h1{font-size:56px;}
+[data-block-id="b-hero"] .frame{flex:1;}
+[data-block-id="b-hero"] .kpi{font-size:72px;}
+}
+</style>
+<div class="corner" aria-hidden="true">Forecast v1.4 · 90 days</div>
+<div class="wrap">
+<div class="copy">
+<span class="eyebrow">Cash-flow forecast</span>
+<h1>See the next 90 days of cash before a late client hurts.</h1>
+<p class="lede">Vectora reads your bank, tracks every open invoice and shows when money will really land, with a warning the day a payment slips.</p>
+<div class="ctas">
+<button type="button" class="btn">Open an account</button>
+<button type="button" class="ghost">How it works</button>
+</div>
+<span class="note">Free for 1 bank · 5-minute setup · Read-only sync</span>
+</div>
+<div class="frame" role="img" aria-label="Forecast chart showing projected cash over 90 days with a late invoice gap">
+<div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">vectora.app/forecast</span></div>
+<div class="body">
+<div>
+<div class="kpi-label">Projected cash · next 90 days</div>
+<div class="kpi">$14,280</div>
+</div>
+<svg class="chart" viewBox="0 0 480 190" aria-hidden="true">
+<path class="area" d="M0 130 L60 118 L120 104 L180 112 L240 84 L290 96 L300 150 L360 132 L420 112 L480 92 L480 190 L0 190 Z"/>
+<path class="ln" d="M0 130 L60 118 L120 104 L180 112 L240 84 L290 96 L300 150"/>
+<path class="fc" d="M300 150 L360 132 L420 112 L480 92"/>
+<line class="gap" x1="300" y1="20" x2="300" y2="180"/>
+<circle class="hit" cx="300" cy="150" r="4"/>
+<text class="axis" x="0" y="186">Mar 1</text>
+<text class="axis" x="410" y="186">May 30</text>
+<text class="axis" x="200" y="26">Invoice #1042 late · −$3,200</text>
+</svg>
+<div class="rows">
+<span>Jun 12 · Northwind retainer</span><span>+$4,800</span>
+<span class="late">Jun 14 · Invoice #1042 (late)</span><span class="late">−$3,200</span>
+<span>Jun 20 · Studio rent</span><span>−$1,900</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-features">
+<style>
+[data-block-id="b-features"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);}
+[data-block-id="b-features"] .wrap{padding:48px 20px;display:flex;flex-direction:column;gap:28px;box-sizing:border-box;}
+[data-block-id="b-features"] .head{display:flex;flex-direction:column;gap:10px;max-width:52ch;}
+[data-block-id="b-features"] .eyebrow{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--secondary-foreground);}
+[data-block-id="b-features"] h2{margin:0;font-family:var(--dl-font-heading);font-weight:700;font-size:30px;line-height:1.1;letter-spacing:-0.02em;}
+[data-block-id="b-features"] .sub{margin:0;font-family:var(--dl-font-body);font-size:15px;color:var(--muted-foreground);}
+[data-block-id="b-features"] .grid{display:grid;gap:12px;grid-template-columns:1fr;}
+[data-block-id="b-features"] .tile{border:1px solid var(--border);border-radius:var(--dl-card-radius);background:var(--card);color:var(--card-foreground);padding:20px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;}
+[data-block-id="b-features"] .tile.lead{background:color-mix(in oklch, var(--primary) 14%, var(--background));border-color:color-mix(in oklch, var(--primary) 35%, var(--border));}
+[data-block-id="b-features"] .idx{font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground);}
+[data-block-id="b-features"] .num{font-family:var(--dl-font-heading);font-weight:700;font-size:44px;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;}
+[data-block-id="b-features"] h3{margin:0;font-family:var(--dl-font-heading);font-weight:600;font-size:18px;letter-spacing:-0.01em;}
+[data-block-id="b-features"] p{margin:0;font-family:var(--dl-font-body);font-size:14px;line-height:1.5;color:var(--muted-foreground);}
+[data-block-id="b-features"] .mono{font-family:var(--dl-font-mono);font-size:12px;color:var(--secondary-foreground);}
+[data-block-id="b-features"] .lock{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:auto;}
+[data-block-id="b-features"] .lock span{height:28px;border-radius:var(--dl-radius-sm);border:1px solid var(--border);background:color-mix(in oklch, var(--secondary) 18%, var(--background));}
+[data-block-id="b-features"] .lock span.on{background:color-mix(in oklch, var(--secondary) 45%, var(--background));border-color:color-mix(in oklch, var(--secondary) 60%, var(--border));}
+@container (min-width: 720px){
+[data-block-id="b-features"] .wrap{padding:64px 40px;}
+[data-block-id="b-features"] .grid{grid-template-columns:1.3fr 1fr;grid-template-rows:auto auto;}
+[data-block-id="b-features"] .tile.lead{grid-row:span 2;}
+}
+</style>
+<div class="wrap">
+<div class="head">
+<span class="eyebrow">Features</span>
+<h2>Built to show money before it moves.</h2>
+<p class="sub">Three things that matter every week, and nothing that gets in the way.</p>
+</div>
+<div class="grid">
+<article class="tile lead">
+<span class="idx">01 · FORECAST</span>
+<div class="num">41 days</div>
+<h3>Late-payment alerts</h3>
+<p>Each open invoice becomes a dated line in your 90-day forecast. When a client slips past the due date, the gap moves into view with the amount and the new date.</p>
+<div class="lock" aria-hidden="true"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+</article>
+<article class="tile">
+<span class="idx">02 · INVOICES</span>
+<h3>Invoices matched to deposits</h3>
+<p>Bank payments are matched to the invoice they pay, so paid and unpaid work never gets mixed up.</p>
+<span class="mono">Matched · 37 of 39 this month</span>
+</article>
+<article class="tile">
+<span class="idx">03 · ACCESS</span>
+<h3>Read-only by design</h3>
+<p>Vectora sees your balances and transactions, never your money. Freeze a card in one tap if something looks wrong.</p>
+<span class="mono">Read-only sync · 2,400 banks</span>
+</article>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-proof">
+<style>
+[data-block-id="b-proof"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);border-top:1px solid var(--border);}
+[data-block-id="b-proof"] .wrap{padding:48px 20px;display:flex;flex-direction:column;gap:24px;box-sizing:border-box;}
+[data-block-id="b-proof"] .head{display:flex;flex-direction:column;gap:8px;}
+[data-block-id="b-proof"] .eyebrow{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--secondary-foreground);}
+[data-block-id="b-proof"] h2{margin:0;font-family:var(--dl-font-heading);font-weight:700;font-size:26px;line-height:1.1;letter-spacing:-0.02em;}
+[data-block-id="b-proof"] .sub{margin:0;font-size:14px;color:var(--muted-foreground);font-family:var(--dl-font-body);}
+[data-block-id="b-proof"] .grid{display:grid;gap:12px;grid-template-columns:1fr;}
+[data-block-id="b-proof"] .q{border:1px solid var(--border);border-radius:var(--dl-card-radius);background:var(--card);color:var(--card-foreground);padding:18px;display:flex;flex-direction:column;gap:14px;margin:0;box-sizing:border-box;}
+[data-block-id="b-proof"] .q.big{background:color-mix(in oklch, var(--accent) 16%, var(--background));border-color:color-mix(in oklch, var(--accent) 35%, var(--border));padding:24px;}
+[data-block-id="b-proof"] blockquote{margin:0;font-family:var(--dl-font-heading);font-weight:500;font-size:18px;line-height:1.35;letter-spacing:-0.01em;}
+[data-block-id="b-proof"] .q.big blockquote{font-size:26px;line-height:1.2;}
+[data-block-id="b-proof"] .who{margin-top:auto;display:flex;flex-direction:column;gap:2px;font-family:var(--dl-font-body);font-size:13px;}
+[data-block-id="b-proof"] .who b{font-weight:600;}
+[data-block-id="b-proof"] .who span{font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground);}
+[data-block-id="b-proof"] .stat{font-family:var(--dl-font-heading);font-weight:700;font-size:48px;line-height:1;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;color:var(--accent-foreground);}
+[data-block-id="b-proof"] .statlbl{font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.06em;}
+@container (min-width: 720px){
+[data-block-id="b-proof"] .wrap{padding:64px 40px;}
+[data-block-id="b-proof"] .grid{grid-template-columns:1.4fr 1fr;}
+[data-block-id="b-proof"] .q.big{grid-row:span 2;}
+}
+</style>
+<div class="wrap">
+<div class="head">
+<span class="eyebrow">Testimonials</span>
+<h2>What people are saying</h2>
+<p class="sub">Stories from our community.</p>
+</div>
+<div class="grid">
+<figure class="q big">
+<span class="statlbl">Late invoices caught early</span>
+<span class="stat">3 days</span>
+<blockquote>The alerts caught a duplicate charge I would have missed.</blockquote>
+<figcaption class="who"><b>Nora Murphy</b><span>Startup founder</span></figcaption>
+</figure>
+<figure class="q">
+<blockquote>For the first time I know exactly what I spend each month without opening a spreadsheet.</blockquote>
+<figcaption class="who"><b>Priya Moreau</b><span>Finance Director</span></figcaption>
+</figure>
+<figure class="q">
+<blockquote>Closing the quarter with my accountant now takes minutes.</blockquote>
+<figcaption class="who"><b>Ruby Reyes</b><span>Personal customer</span></figcaption>
+</figure>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-pricing">
+<style>
+[data-block-id="b-pricing"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);border-top:1px solid var(--border);}
+[data-block-id="b-pricing"] .wrap{padding:48px 20px;display:flex;flex-direction:column;gap:24px;box-sizing:border-box;}
+[data-block-id="b-pricing"] .head{display:flex;flex-direction:column;gap:8px;}
+[data-block-id="b-pricing"] .eyebrow{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--secondary-foreground);}
+[data-block-id="b-pricing"] h2{margin:0;font-family:var(--dl-font-heading);font-weight:700;font-size:30px;line-height:1.1;letter-spacing:-0.02em;}
+[data-block-id="b-pricing"] .sub{margin:0;font-size:14px;color:var(--muted-foreground);font-family:var(--dl-font-body);}
+[data-block-id="b-pricing"] .yr{font-family:var(--dl-font-mono);font-size:12px;color:var(--secondary-foreground);}
+[data-block-id="b-pricing"] .grid{display:grid;gap:12px;grid-template-columns:1fr;}
+[data-block-id="b-pricing"] .plan{position:relative;border:1px solid var(--border);border-radius:var(--dl-card-radius);background:var(--card);color:var(--card-foreground);padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box;}
+[data-block-id="b-pricing"] .plan.hot{background:color-mix(in oklch, var(--primary) 14%, var(--background));border-color:color-mix(in oklch, var(--primary) 45%, var(--border));box-shadow:0 0 40px -18px var(--primary);}
+[data-block-id="b-pricing"] .tag{position:absolute;top:-1px;right:16px;transform:translateY(-50%);font-family:var(--dl-font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;padding:4px 8px;border-radius:var(--dl-radius-full);background:var(--primary);color:var(--primary-foreground);}
+[data-block-id="b-pricing"] .pname{font-family:var(--dl-font-mono);font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted-foreground);}
+[data-block-id="b-pricing"] .price{display:flex;align-items:baseline;gap:4px;}
+[data-block-id="b-pricing"] .cur{font-family:var(--dl-font-heading);font-size:24px;font-weight:600;}
+[data-block-id="b-pricing"] .amt{font-family:var(--dl-font-heading);font-weight:700;font-size:64px;line-height:0.95;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
+[data-block-id="b-pricing"] .per{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);}
+[data-block-id="b-pricing"] .desc{margin:0;font-size:14px;color:var(--muted-foreground);font-family:var(--dl-font-body);}
+[data-block-id="b-pricing"] ul{list-style:none;margin:0;padding:12px 0 0;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+[data-block-id="b-pricing"] li{font-family:var(--dl-font-body);font-size:14px;display:flex;gap:8px;align-items:center;}
+[data-block-id="b-pricing"] li::before{content:"";width:6px;height:6px;border-radius:var(--dl-radius-full);background:var(--secondary);flex:0 0 auto;}
+[data-block-id="b-pricing"] .btn{margin-top:auto;font-family:var(--dl-font-body);font-size:14px;font-weight:600;padding:11px 14px;border-radius:var(--dl-button-radius);cursor:pointer;border:1px solid var(--border);background:var(--secondary);color:var(--secondary-foreground);}
+[data-block-id="b-pricing"] .btn.cta{background:var(--cta);color:var(--cta-foreground);border-color:transparent;box-shadow:0 8px 24px -10px var(--cta);}
+@container (min-width: 720px){
+[data-block-id="b-pricing"] .wrap{padding:64px 40px;}
+[data-block-id="b-pricing"] .grid{grid-template-columns:repeat(3,1fr);align-items:stretch;}
+[data-block-id="b-pricing"] .amt{font-size:84px;}
+}
+</style>
+<div class="wrap">
+<div class="head">
+<span class="eyebrow">Pricing</span>
+<h2>Simple, transparent pricing</h2>
+<p class="sub">Start free and switch plans whenever you need to.</p>
+<span class="yr">No commitment. Switch plans anytime. · Save 15% yearly</span>
+</div>
+<div class="grid">
+<article class="plan">
+<span class="pname">Standard</span>
+<div class="price"><span class="cur">$</span><span class="amt">0</span><span class="per">/mo</span></div>
+<p class="desc">Everything you need day to day.</p>
+<ul>
+<li>Account and card</li>
+<li>Instant payments</li>
+<li>Basic alerts</li>
+</ul>
+<button type="button" class="btn">Open an account</button>
+</article>
+<article class="plan hot">
+<span class="tag">Most popular</span>
+<span class="pname">Plus</span>
+<div class="price"><span class="cur">$</span><span class="amt">5</span><span class="per">/mo</span></div>
+<p class="desc">More control, more protection.</p>
+<ul>
+<li>Everything in Standard</li>
+<li>Savings goals</li>
+<li>Purchase protection</li>
+<li>Free withdrawals worldwide</li>
+</ul>
+<button type="button" class="btn cta">Choose Plus</button>
+</article>
+<article class="plan">
+<span class="pname">Business</span>
+<div class="price"><span class="cur">$</span><span class="amt">19</span><span class="per">/mo</span></div>
+<p class="desc">For freelancers and small businesses.</p>
+<ul>
+<li>Invoicing and collections</li>
+<li>Team cards</li>
+<li>Accounting export</li>
+<li>Priority support</li>
+</ul>
+<button type="button" class="btn">Choose Business</button>
+</article>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-cta">
+<style>
+[data-block-id="b-cta"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);padding:20px;box-sizing:border-box;}
+[data-block-id="b-cta"] .band{position:relative;border:1px solid color-mix(in oklch, var(--primary) 40%, var(--border));border-radius:var(--dl-radius-xl);background:color-mix(in oklch, var(--primary) 16%, var(--background));padding:28px 22px;display:flex;flex-direction:column;gap:18px;box-sizing:border-box;overflow:hidden;}
+[data-block-id="b-cta"] .meta{position:absolute;top:12px;right:16px;font-family:var(--dl-font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted-foreground);}
+[data-block-id="b-cta"] h2{margin:0;font-family:var(--dl-font-heading);font-weight:700;font-size:28px;line-height:1.05;letter-spacing:-0.03em;max-width:20ch;}
+[data-block-id="b-cta"] p{margin:0;font-family:var(--dl-font-body);font-size:15px;color:var(--muted-foreground);max-width:48ch;}
+[data-block-id="b-cta"] .ctas{display:flex;flex-wrap:wrap;gap:10px;}
+[data-block-id="b-cta"] .btn{font-family:var(--dl-font-body);font-size:15px;font-weight:600;color:var(--cta-foreground);background:var(--cta);border:0;border-radius:var(--dl-button-radius);padding:12px 18px;cursor:pointer;box-shadow:0 10px 30px -10px var(--cta);}
+[data-block-id="b-cta"] .ghost{font-family:var(--dl-font-body);font-size:15px;color:var(--foreground);background:transparent;border:1px solid var(--border);border-radius:var(--dl-button-radius);padding:11px 16px;cursor:pointer;}
+@container (min-width: 720px){
+[data-block-id="b-cta"]{padding:32px 40px;}
+[data-block-id="b-cta"] .band{flex-direction:row;align-items:center;justify-content:space-between;padding:36px 40px;}
+[data-block-id="b-cta"] h2{font-size:38px;}
+}
+</style>
+<div class="band">
+<span class="meta">Status: open · ID check 5 min</span>
+<div style="display:flex;flex-direction:column;gap:10px">
+<h2>Take control of your finances</h2>
+<p>Download Vectora, verify your identity and start using it today.</p>
+</div>
+<div class="ctas">
+<button type="button" class="btn">Open a free account</button>
+<button type="button" class="ghost">How it works</button>
+</div>
+</div>
+</section>
+
+<footer data-block-id="b-footer">
+<style>
+[data-block-id="b-footer"]{container-type:inline-size;display:block;background:var(--background);color:var(--foreground);border-top:1px solid var(--border);}
+[data-block-id="b-footer"] .wrap{padding:28px 20px;display:flex;flex-direction:column;gap:24px;box-sizing:border-box;}
+[data-block-id="b-footer"] .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;}
+[data-block-id="b-footer"] .col{display:flex;flex-direction:column;gap:8px;}
+[data-block-id="b-footer"] .h{font-family:var(--dl-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted-foreground);}
+[data-block-id="b-footer"] a{font-family:var(--dl-font-body);font-size:14px;color:var(--foreground);text-decoration:none;}
+[data-block-id="b-footer"] a:hover{color:var(--primary);}
+[data-block-id="b-footer"] .base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding-top:16px;font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground);}
+@container (min-width: 720px){
+[data-block-id="b-footer"] .wrap{padding:32px 40px;}
+[data-block-id="b-footer"] .cols{grid-template-columns:repeat(3,1fr);max-width:640px;}
+}
+</style>
+<div class="wrap">
+<div class="cols">
+<div class="col">
+<span class="h">Product</span>
+<a href="#">Accounts</a>
+<a href="#">Cards</a>
+<a href="#">Business</a>
+<a href="#">Security</a>
+</div>
+<div class="col">
+<span class="h">Company</span>
+<a href="#">About</a>
+<a href="#">Careers</a>
+<a href="#">Blog</a>
+<a href="#">Contact</a>
+</div>
+<div class="col">
+<span class="h">Legal</span>
+<a href="#">Privacy</a>
+<a href="#">Terms</a>
+<a href="#">Cookies</a>
+</div>
+</div>
+<div class="base">
+<span>Vectora · Read-only bank sync</span>
+<span>All rights reserved.</span>
+</div>
+</div>
+</footer>

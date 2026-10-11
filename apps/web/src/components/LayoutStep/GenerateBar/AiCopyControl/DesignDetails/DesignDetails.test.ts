@@ -21,7 +21,9 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
   tier: "mockup",
   setTier: () => {},
   tierNeedsKey: false,
-  fullAccess: null,
+  agent: false,
+  agentRequest: 0,
+  requestAgent: () => {},
   screens: [{ id: "s-home", name: "Inicio", blocks: 5, designed: false }],
   selected: ["s-home"],
   toggleScreen: () => {},
@@ -34,7 +36,8 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
   ...over,
 });
 
-const render = (p: AiRenderPlan) => renderToStaticMarkup(createElement(I18nProvider, null, createElement(DesignDetails, { plan: p, onUseKey: () => {}, onUseClaude: () => {} })));
+const render = (p: AiRenderPlan, defaultOptionsOpen = false) =>
+  renderToStaticMarkup(createElement(I18nProvider, null, createElement(DesignDetails, { plan: p, onUseKey: () => {}, onUseClaude: () => {}, defaultOptionsOpen })));
 
 describe("DesignDetails («Diseño con IA»)", () => {
   it("offers the two other ways to Claude: the user's key and «Usar mi Claude» (spec §10.3)", () => {
@@ -57,8 +60,18 @@ describe("DesignDetails («Diseño con IA»)", () => {
     expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Usar mi Claude/)).toBeNull();
   });
 
-  it("offers «Maqueta · Presentable · Producto final»; a tier the free plan does not make points to the key", () => {
+  it("keeps every optional question in one closed «Personalizar» that says what is set", () => {
     const html = render(plan());
+    expect(html).toContain("Personalizar");
+    expect(html).toContain("Maqueta · Automática");
+    for (const label of ["¿Para quién es?", "Dirección de arte", "Adjuntar capturas", "Presentable"]) expect(html).not.toContain(label);
+    expect(html.indexOf("Pantallas")).toBeLessThan(html.indexOf("Personalizar"));
+    const set = render(plan({ tier: "presentable", chip: "warm", context: { audience: "Barberos", facts: "12 €/mes" }, style: "Mucho aire" }));
+    expect(set).toContain("Presentable · Cálida · contexto 2/5 · estilo");
+  });
+
+  it("offers «Maqueta · Presentable · Producto final»; a tier the free plan does not make points to the key", () => {
+    const html = render(plan(), true);
     for (const label of ["Nivel de acabado", "Maqueta", "Presentable", "Producto final"]) expect(html).toContain(label);
     expect(html).not.toContain("Este nivel necesita");
     const needsKey = render(plan({ tier: "final", tierNeedsKey: true }));
@@ -73,7 +86,7 @@ describe("DesignDetails («Diseño con IA»)", () => {
   });
 
   it("asks for the context before the direction and the style, with every field", () => {
-    const html = render(plan());
+    const html = render(plan(), true);
     for (const label of ["Contexto", "¿Para quién es?", "¿Qué debe provocar?", "Tono", "Datos reales", "¿Qué NO debe parecer?"]) expect(html).toContain(label);
     expect(html).toContain("Cuanto más sepa Claude de tu producto, menos genérico sale.");
     expect(html).toContain("0 de 5");
@@ -82,7 +95,7 @@ describe("DesignDetails («Diseño con IA»)", () => {
   });
 
   it("shows what was filled, the field caps and what Claude understood", () => {
-    const html = render(plan({ context: { audience: "Dueños de barberías", facts: "Desde 19 USD al mes" }, concept: "Una agenda que se siente como una libreta." }));
+    const html = render(plan({ context: { audience: "Dueños de barberías", facts: "Desde 19 USD al mes" }, concept: "Una agenda que se siente como una libreta." }), true);
     expect(html).toContain("2 de 5");
     expect(html).toContain('value="Dueños de barberías"');
     expect(html).toContain("Desde 19 USD al mes");
@@ -93,6 +106,6 @@ describe("DesignDetails («Diseño con IA»)", () => {
   });
 
   it("does not claim an understanding before there is one", () => {
-    expect(render(plan())).not.toContain("Lo que entendió Claude");
+    expect(render(plan(), true)).not.toContain("Lo que entendió Claude");
   });
 });

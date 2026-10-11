@@ -4,7 +4,7 @@
 //
 // The transport is an interface: the free tier (POST /api/ai/render/block with the live session) is here; BYOK and
 // «Copiar prompt para mi Claude» come with track C's `transport.ts` and plug in as other `BlockActionTransport`s.
-import { AI_RENDER_PROMPT_VERSION, brandInput, directionForPrompt, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
+import { AI_PAGE_PROMPT_VERSION, AI_RENDER_PROMPT_VERSION, brandInput, directionForPrompt, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
 import { MAX_AI_REQUEST_LENGTH, compileThemeVars, type AiBlock, type AiRenderPath, type AiRenderTier, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import {
@@ -21,7 +21,7 @@ import {
 import { DEFAULT_BYOK_RENDER_MODEL } from "./byokModel";
 import { estimateBlockAction, type CostRange } from "./estimate";
 import { RenderTransportError, type RenderTransport as AccessTransport } from "./transport";
-import { aiBlockInputs, aiBlockOf, aiDraftOf, currentBasis } from "./edit";
+import { aiBlockInputs, aiBlockOf, aiScreenInputOptions, currentBasis } from "./edit";
 
 /** What the user asked for: a new take with the same direction, or a change (≤ 500 characters, data for the model). */
 export type BlockActionRequest = { kind: "reroll" } | { kind: "change"; request: string; target?: { text: string } };
@@ -123,9 +123,11 @@ export function blockActionBody(doc: DesignDoc, screenId: string, blockId: strin
   const direction = doc.aiRender?.direction;
   if (!direction) throw new BlockActionError("no-direction", "The document has no art direction");
   const screen = doc.screens[screenId]!;
-  const input = aiBlockInputs(doc, screenId, new Set([blockId])).get(blockId);
+  // A section of a page is redone as a section of that page (its stylesheet travels); a token block as before.
+  const page = block.mode === "page";
+  const input = aiBlockInputs(doc, screenId, new Set([blockId]), page ? "page" : "blocks").get(blockId);
   if (!input) throw new BlockActionError("no-ai-block", "The block is not on the screen");
-  const { id, name, kind, route, locale, screens } = screenInput(doc, screenId, { draftOf: aiDraftOf(screen), only: new Set([blockId]) });
+  const { id, name, kind, route, locale, screens } = screenInput(doc, screenId, { ...aiScreenInputOptions(screen, page ? "page" : undefined), only: new Set([blockId]) });
   const brand = brandInput(doc);
   // A container's surface travels as its root, so the model sees what it has.
   const html = block.html || `<div data-block-id="${blockId}" class="${["@container", ...(block.surfaceClasses ?? [])].join(" ")}"></div>`;
@@ -134,9 +136,10 @@ export function blockActionBody(doc: DesignDoc, screenId: string, blockId: strin
     brand: { ...brand, ...(brand.description && { description: brand.description.slice(0, 500) }) },
     // The same parts the screens got: the developer's words, their screenshots' note, context and concept.
     direction: directionForPrompt(direction),
-    screen: { id, name, kind, route, locale, screens },
+    screen: { id, name, kind, route, locale, screens, ...(page && { mode: "page" as const }) },
     block: input,
     html,
+    ...(page && { pageCss: screen.aiRender?.pageCss ?? "" }),
     action:
       request.kind === "reroll"
         ? { kind: "reroll", seed: options.seed }
@@ -200,13 +203,15 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
   const body = blockActionBody(doc, screenId, blockId, request, { sessionId: deps.sessionId ?? crypto.randomUUID(), seed });
   const answer = await deps.transport.run(body, deps.signal);
   if (answer.html === null) throw new BlockActionError("invalid-response", "The answer had no block", answer.session ?? undefined);
-  const processed = await deps.process(answer.html, { block: body.block, screenIds: doc.screenOrder, theme: docThemeColors(doc) });
+  const page = body.screen.mode === "page";
+  const processed = await deps.process(answer.html, { block: body.block, screenIds: doc.screenOrder, theme: docThemeColors(doc), ...(page && { mode: "page" as const }) });
   if (!processed.ok) throw new BlockActionError("gates-failed", processed.failure, answer.session ?? undefined);
   const direction = doc.aiRender!.direction!;
   const block: AiBlock = {
     html: processed.html,
     ...(processed.surfaceClasses && { surfaceClasses: processed.surfaceClasses }),
     active: true,
+    ...(page && { mode: "page" as const }),
     basis: currentBasis(doc, body.block),
     gates: processed.gates,
     provenance: {
@@ -216,7 +221,7 @@ export async function runBlockAction(doc: DesignDoc, screenId: string, blockId: 
       ...(deps.transport.tier && deps.transport.tier !== "mockup" && { tier: deps.transport.tier }),
       createdAt: (deps.now?.() ?? new Date()).toISOString(),
       ...(answer.usage && { costUsd: answer.usage.costUsd, inputTokens: answer.usage.inputTokens, outputTokens: answer.usage.outputTokens }),
-      promptVersion: AI_RENDER_PROMPT_VERSION,
+      promptVersion: page ? AI_PAGE_PROMPT_VERSION : AI_RENDER_PROMPT_VERSION,
       directionId: direction.id,
       seed,
       ...(body.action.kind === "change" && { request: body.action.request }),

@@ -1,0 +1,1 @@
+Source: https://github.com/ibelick/ui-skills (skills/baseline-ui) @ d036a68, MIT. Pulled 2026-10-11.

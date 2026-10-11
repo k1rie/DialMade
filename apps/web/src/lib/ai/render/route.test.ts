@@ -24,14 +24,20 @@ describe("«Acceso completo» on the render routes", () => {
     expect(parsed.ok && { tier: parsed.tier, full: parsed.caller?.fullAccess ?? false }).toEqual({ tier: "mockup", full: false });
   });
 
-  it("a full-access account picks both, and gets its own limits (same budget)", async () => {
+  it("a full-access account picks the finish, the finish decides the model, and it gets its own limits (same budget)", async () => {
     vi.mocked(hasFullAccess).mockResolvedValue(true);
-    const parsed = await parseRenderRequest(post({ screens: 3, model: "claude-opus-5-5", tier: "final" }), RenderSessionBodySchema, "{ screens }");
+    const parsed = await parseRenderRequest(post({ screens: 3, model: "claude-haiku-5-5", tier: "presentable" }), RenderSessionBodySchema, "{ screens }");
     if (!parsed.ok) throw new Error("refused");
     expect(parsed.caller?.fullAccess).toBe(true);
-    expect(parsed.tier).toBe("final");
-    expect(parsed.config.freeModel).toBe("claude-opus-5-5");
+    expect(parsed.tier).toBe("presentable");
+    expect(parsed.config.freeModel).toBe("claude-sonnet-5-5");
     expect(parsed.config.freeUsesPerMonth).toBeGreaterThanOrEqual(FULL_ACCESS_USES_PER_MONTH);
+    // «Producto final» is the developer's agent; a call that still asks for it runs as Presentable.
+    const final = await parseRenderRequest(post({ screens: 1, model: "claude-opus-5-5", tier: "final" }), RenderSessionBodySchema, "{ screens }");
+    expect(final.ok && final.config.freeModel).toBe("claude-sonnet-5-5");
+    // Without a finish, the model a full-access account picked still counts.
+    const picked = await parseRenderRequest(post({ screens: 1, model: "claude-opus-5-5" }), RenderSessionBodySchema, "{ screens }");
+    expect(picked.ok && picked.config.freeModel).toBe("claude-opus-5-5");
   });
 
   it("an unknown model is refused even with full access", async () => {

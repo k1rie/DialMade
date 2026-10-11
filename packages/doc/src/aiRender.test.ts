@@ -55,7 +55,7 @@ describe("«Diseño con IA» storage (additive, versioned, with provenance)", ()
     expect(bad({ version: 1, blocks: { "b-hero": { ...block(), provenance: { ...provenance, request: "x".repeat(501) } } } })).toBe(false);
   });
 
-  it("caps a block at 16 KB and the document's AI blocks at 1 MB", () => {
+  it("caps a block at 48 KB and the document's AI blocks at 1 MB", () => {
     const doc = screensDoc();
     const big = block(`<section data-block-id="b-hero">${"x".repeat(MAX_AI_BLOCK_BYTES)}</section>`);
     expect(applyPatch(doc, [{ op: "add", path: "/screens/s-home/aiRender", value: { version: 1, blocks: { "b-hero": big } } }]).ok).toBe(false);

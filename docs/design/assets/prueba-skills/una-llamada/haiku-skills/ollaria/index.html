@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ollaria · Handmade stoneware, fired in small batches</title>
+<meta name="description" content="Ollaria is a ceramics studio selling handmade stoneware fired in batches of 40, and running weekend pottery workshops every Saturday.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..600&family=Work+Sans:ital,wght@0,300..600;1,300..600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.144 0.005 17.79);
+    --primary: oklch(0.557 0.137 41.94);
+    --primary-foreground: oklch(1 0 0);
+    --cta: oklch(0.557 0.137 41.94);
+    --cta-foreground: oklch(1 0 0);
+    --accent: oklch(0.947 0.027 40.2);
+    --accent-foreground: oklch(0.38 0.08 41.53);
+    --muted: oklch(0.97 0.005 34.31);
+    --muted-foreground: oklch(0.547 0.008 28.87);
+    --border: oklch(0.922 0.005 34.31);
+
+    /* Derived tints and shades of the same hues only */
+    --primary-deep: color-mix(in oklch, var(--primary) 82%, black);
+    --primary-soft: color-mix(in oklch, var(--primary) 18%, white);
+    --primary-mid: color-mix(in oklch, var(--primary) 55%, var(--accent));
+    --ink-soft: color-mix(in oklch, var(--foreground) 74%, white);
+    --focus: color-mix(in oklch, var(--primary) 55%, white);
+
+    --radius-lg: 28px;
+    --radius-md: 16px;
+    --wrap: min(1200px, calc(100% - 2 * clamp(20px, 5vw, 56px)));
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Work Sans", system-ui, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    font-optical-sizing: auto;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--accent); color: var(--accent-foreground); }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-underline-offset: 0.2em; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+
+  h1, h2, h3, .display, .wordmark, .price, .btn, .nav-links a {
+    font-family: "Outfit", system-ui, sans-serif;
+    font-style: normal;
+    letter-spacing: -0.02em;
+  }
+  h1, h2, h3 { margin: 0; line-height: 1.04; font-weight: 500; text-wrap: balance; }
+  p { margin: 0; text-wrap: pretty; }
+
+  .wrap { width: var(--wrap); margin-inline: auto; }
+  section { position: relative; }
+
+  /* Navigation */
+  .site-header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in oklch, var(--background) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav {
+    height: 72px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .wordmark { font-size: 1.5rem; font-weight: 600; text-decoration: none; color: var(--foreground); }
+  .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; margin: 0; padding: 0; }
+  .nav-links a { text-decoration: none; font-size: 0.97rem; font-weight: 450; color: var(--foreground); }
+  .nav-links a:hover { color: var(--primary); }
+  .nav-links .btn { padding: 10px 18px; font-size: 0.95rem; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px; padding: 14px 26px;
+    border-radius: 999px; border: 1px solid transparent;
+    font-weight: 500; font-size: 1rem; text-decoration: none; white-space: nowrap;
+    transition: background-color .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease);
+    cursor: pointer;
+  }
+  .btn:active { transform: translateY(1px) scale(0.99); }
+  .btn-primary { background: var(--cta); color: var(--cta-foreground); }
+  .btn-primary:hover { background: var(--primary-deep); }
+  .btn-ghost { background: transparent; color: var(--foreground); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--foreground); }
+  .btn-light { background: var(--background); color: var(--primary-deep); }
+  .btn-light:hover { background: var(--accent); color: var(--accent-foreground); }
+  .btn-outline-light { background: transparent; color: var(--primary-foreground); border-color: color-mix(in oklch, var(--primary-foreground) 60%, transparent); }
+  .btn-outline-light:hover { border-color: var(--primary-foreground); }
+  .btn-block { width: 100%; }
+
+  /* Hero */
+  .hero { padding: clamp(56px, 9vw, 120px) 0 clamp(72px, 10vw, 128px); }
+  .hero-grid {
+    display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(40px, 6vw, 96px); align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.6vw, 4.9rem);
+    font-weight: 500;
+    max-width: 13ch;
+  }
+  .hero-lede {
+    margin-top: 28px; max-width: 46ch;
+    font-size: 1.15rem; color: var(--ink-soft);
+  }
+  .hero-actions {
+    margin-top: 40px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px 16px;
+  }
+  .returns {
+    margin-top: 28px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.97rem; color: var(--foreground);
+  }
+  .returns svg { flex: none; color: var(--primary); }
+
+  .hero-visual {
+    position: relative;
+    background: var(--accent);
+    border-radius: var(--radius-lg);
+    padding: clamp(28px, 4vw, 48px);
+    overflow: hidden;
+    animation: rise 1.1s var(--ease) both;
+  }
+  .hero-visual figcaption {
+    margin-top: 26px;
+    font-size: 0.95rem; color: var(--accent-foreground);
+    font-style: italic;
+  }
+  .piece-svg { width: min(100%, 300px); margin: 0 auto 28px; }
+
+  /* Batch of 40 */
+  .batch {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(6px, 1vw, 10px);
+  }
+  .batch li {
+    aspect-ratio: 1;
+    border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%;
+    background: var(--primary-mid);
+    box-shadow: inset 0 -3px 0 color-mix(in oklch, var(--primary-deep) 35%, transparent);
+  }
+  .batch li:nth-child(5n + 2) { background: var(--primary); }
+  .batch li:nth-child(7n + 3) { background: color-mix(in oklch, var(--accent-foreground) 30%, var(--accent)); }
+  .batch li:nth-child(4n + 1) { background: var(--primary-soft); }
+  .batch li:nth-child(11) {
+    box-shadow: 0 0 0 3px var(--accent), 0 0 0 5px var(--accent-foreground);
+  }
+  .batch-meta {
+    margin-top: 22px;
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    font-size: 0.95rem; color: var(--accent-foreground);
+  }
+
+  /* Features */
+  .features { background: var(--muted); padding: clamp(88px, 12vw, 160px) 0; }
+  .section-head { max-width: 640px; margin-bottom: clamp(56px, 8vw, 104px); }
+  .section-head h2 { font-size: clamp(2.1rem, 4vw, 3.4rem); }
+  .section-head p { margin-top: 18px; color: var(--ink-soft); font-size: 1.1rem; }
+
+  .feature {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(40px, 7vw, 112px); align-items: center;
+  }
+  .feature + .feature { margin-top: clamp(80px, 11vw, 150px); }
+  .feature:nth-of-type(even) .feature-visual { order: -1; }
+  .feature h3 { font-size: clamp(1.7rem, 3vw, 2.4rem); }
+  .feature p { margin-top: 20px; max-width: 46ch; color: var(--ink-soft); }
+  .feature .fine { margin-top: 18px; font-size: 0.95rem; color: var(--muted-foreground); }
+  .feature .fine { color: var(--ink-soft); }
+
+  .feature-visual {
+    background: var(--background);
+    border-radius: var(--radius-lg);
+    padding: clamp(32px, 4vw, 56px);
+    min-height: 320px;
+    display: flex; flex-direction: column; justify-content: center;
+    border: 1px solid var(--border);
+  }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: flex-end; }
+  .swatches span {
+    display: block; width: clamp(54px, 9vw, 74px); height: clamp(70px, 11vw, 96px);
+    border-radius: 50% 50% 16px 16px / 40% 40% 16px 16px;
+    box-shadow: inset 0 -6px 0 color-mix(in oklch, #000 10%, transparent), inset 4px 0 0 color-mix(in oklch, #fff 20%, transparent);
+  }
+  .swatches span:nth-child(1) { background: var(--primary-soft); }
+  .swatches span:nth-child(2) { background: var(--accent); }
+  .swatches span:nth-child(3) { background: color-mix(in oklch, var(--primary) 40%, var(--accent)); }
+  .swatches span:nth-child(4) { background: var(--primary-mid); }
+  .swatches span:nth-child(5) { background: var(--primary); }
+  .swatches span:nth-child(6) { background: var(--primary-deep); }
+  .swatch-note { margin-top: 28px; text-align: center; font-size: 0.95rem; color: var(--ink-soft); }
+
+  .week {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+    list-style: none; margin: 0; padding: 0;
+  }
+  .week li {
+    aspect-ratio: 0.85;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    font-family: "Outfit", sans-serif; font-weight: 500; font-size: 1rem;
+    color: var(--ink-soft);
+  }
+  .week li.sat { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+  .week-note { margin-top: 26px; text-align: center; font-size: 0.95rem; color: var(--ink-soft); }
+
+  .kiln-line {
+    display: flex; align-items: flex-end; gap: 10px; height: 150px; justify-content: center;
+  }
+  .kiln-line span { display: block; width: 26%; border-radius: 12px 12px 6px 6px; background: var(--primary-soft); }
+  .kiln-line span:nth-child(2) { background: var(--primary-mid); }
+  .kiln-line span:nth-child(3) { background: var(--primary); }
+  .kiln-line span:nth-child(4) { background: var(--accent); }
+  .kiln-caption { margin-top: 26px; text-align: center; font-size: 0.95rem; color: var(--ink-soft); }
+
+  /* Testimonials */
+  .testimonials { padding: clamp(88px, 12vw, 160px) 0; }
+  .quotes {
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: clamp(48px, 7vw, 104px); align-items: start;
+  }
+  .quote-main blockquote {
+    margin: 0;
+    font-family: "Work Sans", sans-serif;
+    font-style: italic;
+    font-weight: 350;
+    font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .quote-main blockquote::before { content: "\201C"; color: var(--primary); }
+  .quote-main blockquote::after { content: "\201D"; color: var(--primary); }
+  .attrib { margin-top: 32px; font-size: 0.97rem; color: var(--ink-soft); }
+  .attrib strong { font-family: "Outfit", sans-serif; font-weight: 500; color: var(--foreground); font-size: 1.02rem; }
+
+  .quote-stack { display: grid; gap: 0; }
+  .quote-stack figure {
+    margin: 0; padding: 32px 0;
+    border-top: 1px solid var(--border);
+  }
+  .quote-stack figure:last-child { border-bottom: 1px solid var(--border); }
+  .quote-stack blockquote { margin: 0; font-size: 1.08rem; color: var(--foreground); }
+  .quote-stack figcaption { margin-top: 14px; font-size: 0.94rem; color: var(--ink-soft); }
+  .quote-stack figcaption strong { font-family: "Outfit", sans-serif; font-weight: 500; color: var(--foreground); }
+
+  /* Pricing */
+  .pricing { background: var(--background); padding: clamp(88px, 12vw, 160px) 0; border-top: 1px solid var(--border); }
+  .pricing-head {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; flex-wrap: wrap;
+    margin-bottom: clamp(48px, 7vw, 88px);
+  }
+  .pricing-head h2 { font-size: clamp(2.1rem, 4vw, 3.4rem); max-width: 16ch; }
+  .pricing-head p { max-width: 38ch; color: var(--ink-soft); font-size: 1.05rem; }
+
+  .plans {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;
+    align-items: stretch;
+  }
+  .plan {
+    position: relative;
+    display: flex; flex-direction: column;
+    padding: clamp(28px, 3vw, 40px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--background);
+  }
+  .plan h3 { font-size: 1.45rem; font-weight: 500; }
+  .price {
+    margin-top: 26px;
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: clamp(3rem, 5vw, 4rem); font-weight: 500; line-height: 1;
+  }
+  .price small { font-size: 1rem; font-weight: 400; font-family: "Work Sans", sans-serif; letter-spacing: 0; color: var(--ink-soft); }
+  .plan-list {
+    list-style: none; margin: 32px 0 36px; padding: 0;
+    display: grid; gap: 16px;
+    border-top: 1px solid var(--border); padding-top: 28px;
+  }
+  .plan-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 1rem; }
+  .plan-list svg { flex: none; margin-top: 4px; color: var(--primary); }
+  .plan .btn { margin-top: auto; }
+
+  .plan-featured {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 30px 60px -30px color-mix(in oklch, var(--primary-deep) 70%, transparent);
+  }
+  .plan-featured .price small,
+  .plan-featured .plan-list li { color: var(--primary-foreground); }
+  .plan-featured .plan-list { border-top-color: color-mix(in oklch, var(--primary-foreground) 28%, transparent); }
+  .plan-featured .plan-list svg { color: var(--primary-foreground); }
+  .badge {
+    position: absolute; top: -14px; left: 40px;
+    padding: 6px 14px; border-radius: 999px;
+    background: var(--accent); color: var(--accent-foreground);
+    font-family: "Outfit", sans-serif; font-weight: 500; font-size: 0.8rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .plan-note { margin-top: 36px; font-size: 0.97rem; color: var(--ink-soft); text-align: center; }
+
+  /* Call to action */
+  .cta { background: var(--primary); color: var(--primary-foreground); padding: clamp(88px, 12vw, 152px) 0; }
+  .cta-grid {
+    display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: clamp(40px, 6vw, 88px); align-items: end;
+  }
+  .cta h2 { font-size: clamp(2.3rem, 5vw, 4.2rem); max-width: 14ch; }
+  .cta p { margin-top: 24px; max-width: 46ch; font-size: 1.12rem; color: color-mix(in oklch, var(--primary-foreground) 88%, transparent); }
+  .cta-actions { display: grid; gap: 14px; justify-items: stretch; }
+  .cta-actions .returns { color: var(--primary-foreground); margin-top: 10px; justify-content: center; }
+  .cta-actions .returns svg { color: var(--primary-foreground); }
+
+  /* Footer */
+  .site-footer { background: var(--foreground); color: color-mix(in oklch, var(--background) 78%, var(--foreground)); padding: 80px 0 40px; }
+  .footer-top {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 40px;
+    padding-bottom: 56px; border-bottom: 1px solid color-mix(in oklch, var(--background) 16%, transparent);
+  }
+  .site-footer .wordmark { color: var(--background); font-size: 1.8rem; }
+  .footer-tag { margin-top: 14px; max-width: 30ch; font-size: 0.98rem; }
+  .footer-col h2 {
+    font-family: "Outfit", sans-serif; font-weight: 500; font-size: 1rem;
+    color: var(--background); margin-bottom: 16px; letter-spacing: 0;
+  }
+  .footer-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .footer-col a { text-decoration: none; font-size: 0.97rem; color: inherit; }
+  .footer-col a:hover { color: var(--background); text-decoration: underline; }
+  .footer-bottom {
+    margin-top: 32px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    font-size: 0.9rem;
+  }
+
+  /* Motion */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* Responsive */
+  @media (max-width: 960px) {
+    .hero-grid, .feature, .quotes, .cta-grid { grid-template-columns: 1fr; }
+    .feature:nth-of-type(even) .feature-visual { order: 0; }
+    .plans { grid-template-columns: 1fr; max-width: 520px; }
+    .plan-featured { order: -1; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .footer-top > div:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 720px) {
+    .nav-links a:not(.btn) { display: none; }
+    .nav-links { gap: 0; }
+    .hero-actions .btn { width: 100%; }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .returns { justify-content: center; }
+    .hero-visual { border-radius: 22px; }
+    .feature-visual { min-height: 0; border-radius: 22px; }
+    .batch { gap: 6px; }
+    .badge { left: 24px; }
+  }
+  @media (max-width: 420px) {
+    .footer-top { grid-template-columns: 1fr; }
+    .btn { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="wrap nav" aria-label="Primary">
+    <a class="wordmark" href="#top" aria-label="Ollaria, back to top">Ollaria</a>
+    <ul class="nav-links">
+      <li><a href="#features">How it's made</a></li>
+      <li><a href="#testimonials">Stories</a></li>
+      <li><a href="#pricing">Pieces and seats</a></li>
+      <li><a class="btn btn-primary" href="#cta">Book a seat</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div>
+        <h1 id="hero-title">Handmade stoneware, fired in small batches.</h1>
+        <p class="hero-lede">Every piece leaves the kiln with 39 others, glazed in colors we mix ourselves in the studio. Take your time with them. Or come to a weekend workshop and make a few of your own.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#pricing">Shop the pieces</a>
+          <a class="btn btn-ghost" href="#cta">Book a Saturday seat</a>
+        </div>
+        <p class="returns">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+          Free 30-day returns on every order
+        </p>
+      </div>
+
+      <figure class="hero-visual" aria-label="A batch of 40 stoneware pieces, with one bowl in focus">
+        <svg class="piece-svg" viewBox="0 0 220 170" aria-hidden="true">
+          <defs>
+            <linearGradient id="bowlGlaze" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="oklch(0.62 0.137 41.94)"/>
+              <stop offset="1" stop-color="oklch(0.557 0.137 41.94)"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="110" cy="152" rx="84" ry="9" fill="oklch(0.38 0.08 41.53)" opacity="0.14"/>
+          <path d="M22 52 H198 C198 112 162 146 110 146 C58 146 22 112 22 52 Z" fill="url(#bowlGlaze)"/>
+          <ellipse cx="110" cy="52" rx="88" ry="16" fill="oklch(0.947 0.027 40.2)"/>
+          <ellipse cx="110" cy="54" rx="72" ry="10" fill="oklch(0.38 0.08 41.53)" opacity="0.35"/>
+          <path d="M40 66 C46 92 52 104 54 116 C55 122 62 122 62 116 C62 100 62 84 64 68 Z" fill="oklch(0.947 0.027 40.2)" opacity="0.55"/>
+          <path d="M150 70 C152 84 152 96 150 108 C149 114 156 114 157 108 C159 96 160 84 160 72 Z" fill="oklch(0.947 0.027 40.2)" opacity="0.4"/>
+        </svg>
+        <ol class="batch" aria-hidden="true">
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+        </ol>
+        <div class="batch-meta">
+          <span>One batch, fired together</span>
+          <span>Batches of 40</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <header class="section-head">
+        <h2 id="features-title">Made slowly, on purpose</h2>
+        <p>Three things shape every piece we sell and every seat we book. None of them are rushed.</p>
+      </header>
+
+      <article class="feature">
+        <div>
+          <h3>Fired in batches of 40</h3>
+          <p>We load the kiln once and fire forty pieces together. Each bowl, mug, and plate shares its firing with its neighbors, so you own a piece of a specific batch, not a line in a catalog.</p>
+          <p class="fine">Batches are listed by their firing on each product page.</p>
+        </div>
+        <div class="feature-visual">
+          <div class="kiln-line" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <p class="kiln-caption">Four pieces from one shelf, same heat, same night.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div>
+          <h3>Glazes mixed in-house</h3>
+          <p>Every glaze starts as raw minerals weighed and blended at the studio bench. The colors shift a little from batch to batch, which is why no two firings look exactly alike.</p>
+        </div>
+        <div class="feature-visual">
+          <div class="swatches" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <p class="swatch-note">Swatches from the studio bench, fired and unfired.</p>
+        </div>
+      </article>
+
+      <article class="feature">
+        <div>
+          <h3>Workshops every Saturday</h3>
+          <p>Come in on a Saturday, sit at the wheel, and take home what you make. Workshops run every week, so you can book the seat that fits your calendar and let the morning be slow.</p>
+        </div>
+        <div class="feature-visual">
+          <ol class="week" aria-label="Week view: Saturday is highlighted">
+            <li>S</li><li>M</li><li>T</li><li>W</li><li>T</li><li>F</li><li class="sat" aria-label="Saturday">S</li>
+          </ol>
+          <p class="week-note">Workshops run every Saturday.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials" id="testimonials" aria-labelledby="testimonials-title">
+    <div class="wrap">
+      <header class="section-head">
+        <h2 id="testimonials-title">In the words of people who keep them</h2>
+      </header>
+
+      <div class="quotes">
+        <figure class="quote-main" style="margin:0">
+          <blockquote>The bowl arrived with exactly the glaze I saw on the page. I have eaten breakfast out of it every morning since.</blockquote>
+          <figcaption class="attrib"><strong>Maren L.</strong><br>Portland, Oregon</figcaption>
+        </figure>
+
+        <div class="quote-stack">
+          <figure>
+            <blockquote>I booked a Saturday seat on a whim and left with three cups I still can't stop picking up.</blockquote>
+            <figcaption><strong>Tomas B.</strong>, Austin</figcaption>
+          </figure>
+          <figure>
+            <blockquote>Knowing each plate came out of a batch of 40 made me look at it differently. It feels made with care, not stamped out.</blockquote>
+            <figcaption><strong>Priya S.</strong>, Brooklyn</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap">
+      <div class="pricing-head">
+        <h2 id="pricing-title">Pieces and seats, by plan</h2>
+        <p>Choose how many pieces from the current batches you want to take home. Every order ships with free 30-day returns.</p>
+      </div>
+
+      <ul class="plans">
+        <li class="plan">
+          <h3>Essential</h3>
+          <div class="price">$39</div>
+          <ul class="plan-list">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>2 products of your choice</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>Free shipping</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>30-day returns</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href="#cta">Choose Essential</a>
+        </li>
+
+        <li class="plan plan-featured">
+          <span class="badge">Most popular</span>
+          <h3>Complete</h3>
+          <div class="price">$79</div>
+          <ul class="plan-list">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>4 products</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>24-hour shipping</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>Gift wrapping</li>
+          </ul>
+          <a class="btn btn-light btn-block" href="#cta">Choose Complete</a>
+        </li>
+
+        <li class="plan">
+          <h3>Premium</h3>
+          <div class="price">$129</div>
+          <ul class="plan-list">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>6 products</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>Limited edition piece included</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7.5"/></svg>Express shipping</li>
+          </ul>
+          <a class="btn btn-ghost btn-block" href="#cta">Choose Premium</a>
+        </li>
+      </ul>
+      <p class="plan-note">Free returns for 30 days, on every plan.</p>
+    </div>
+  </section>
+
+  <!-- Call to action -->
+  <section class="cta" id="cta" aria-labelledby="cta-title">
+    <div class="wrap cta-grid">
+      <div>
+        <h2 id="cta-title">Your seat at the Saturday wheel is open.</h2>
+        <p>Bring an hour and nothing else. We provide the clay, the glazes we mixed ourselves, and the time to get your hands into it.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-light" href="#pricing">Book a Saturday seat</a>
+        <a class="btn btn-outline-light" href="#pricing">Shop the pieces</a>
+        <p class="returns">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+          Free 30-day returns on every order
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <a class="wordmark" href="#top">Ollaria</a>
+        <p class="footer-tag">Handmade stoneware, fired in small batches. Workshops every Saturday.</p>
+      </div>
+      <nav class="footer-col" aria-labelledby="f-shop">
+        <h2 id="f-shop">Shop</h2>
+        <ul>
+          <li><a href="#pricing">Pieces and seats</a></li>
+          <li><a href="#pricing">Essential</a></li>
+          <li><a href="#pricing">Complete</a></li>
+          <li><a href="#pricing">Premium</a></li>
+        </ul>
+      </nav>
+      <nav class="footer-col" aria-labelledby="f-studio">
+        <h2 id="f-studio">Studio</h2>
+        <ul>
+          <li><a href="#features">How it's made</a></li>
+          <li><a href="#cta">Workshops</a></li>
+          <li><a href="#testimonials">Stories</a></li>
+        </ul>
+      </nav>
+      <nav class="footer-col" aria-labelledby="f-help">
+        <h2 id="f-help">Help</h2>
+        <ul>
+          <li><a href="#pricing">Returns</a></li>
+          <li><a href="#pricing">Shipping</a></li>
+          <li><a href="#cta">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>Ollaria. Glazes mixed in-house, fired in batches of 40.</span>
+      <span>Free 30-day returns on every order.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

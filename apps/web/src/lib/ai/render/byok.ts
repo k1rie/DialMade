@@ -169,6 +169,7 @@ export async function byokBlock(body: BlockBody, call: ByokCall): Promise<Transp
     screen: body.screen,
     block: body.block,
     html: body.html,
+    ...(body.pageCss !== undefined && { pageCss: body.pageCss }),
     action: body.action.kind === "reroll" ? body.action : { kind: "change", request: body.action.request, ...(body.action.target && { target: body.action.target }) },
   });
   try {

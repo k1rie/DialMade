@@ -1,0 +1,317 @@
+<header data-block-id="b-nav">
+<style>
+[data-block-id="b-nav"]{container-type:inline-size}
+[data-block-id="b-nav"] .bar{display:flex;align-items:center;gap:16px;height:64px;padding:0 20px;background:var(--background);border-bottom:1px solid color-mix(in oklch,var(--border) 70%,var(--background))}
+[data-block-id="b-nav"] .brand{display:flex;align-items:center;gap:10px;font-family:var(--dl-font-heading);font-weight:600;font-size:20px;color:var(--foreground);text-decoration:none;letter-spacing:-0.01em}
+[data-block-id="b-nav"] .links{display:none;gap:24px;margin-left:auto}
+[data-block-id="b-nav"] .links a{font-family:var(--dl-font-body);font-size:15px;color:var(--muted-foreground);text-decoration:none}
+[data-block-id="b-nav"] .links a:hover{color:var(--foreground)}
+[data-block-id="b-nav"] .acts{display:flex;align-items:center;gap:8px;margin-left:auto}
+[data-block-id="b-nav"] .links + .acts{margin-left:0}
+[data-block-id="b-nav"] .login{font-family:var(--dl-font-body);font-size:15px;color:var(--foreground);text-decoration:none;padding:8px 12px;border-radius:var(--dl-button-radius)}
+[data-block-id="b-nav"] .btn-cta{font-family:var(--dl-font-body);font-weight:600;font-size:15px;background:var(--cta);color:var(--cta-foreground);border:0;border-radius:var(--dl-button-radius);padding:10px 16px;cursor:pointer;box-shadow:0 10px 24px -12px color-mix(in oklch,var(--cta) 70%,var(--background))}
+@container (min-width:720px){
+[data-block-id="b-nav"] .links{display:flex}
+}
+</style>
+<div class="bar">
+<a class="brand" href="#"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="22" height="22" rx="8" fill="var(--primary)"/><path d="M8 17 C12 9, 16 9, 18 9" stroke="var(--primary-foreground)" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Brisa</a>
+<nav class="links" aria-label="Principal"><a href="#">Producto</a><a href="#">Precios</a><a href="#">Clientes</a><a href="#">Recursos</a></nav>
+<div class="acts"><a class="login" href="#">Iniciar sesión</a><button class="btn-cta" type="button">Empieza gratis</button></div>
+</div>
+</header>
+
+<section data-block-id="b-hero">
+<style>
+[data-block-id="b-hero"]{container-type:inline-size;background:var(--background)}
+[data-block-id="b-hero"] .wrap{position:relative;display:grid;gap:40px;padding:64px 20px 48px;min-height:100%;box-sizing:border-box}
+[data-block-id="b-hero"] .tag{position:absolute;font-family:var(--dl-font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground)}
+[data-block-id="b-hero"] .tl{top:18px;left:20px}
+[data-block-id="b-hero"] .tr{top:18px;right:20px}
+[data-block-id="b-hero"] .new{display:inline-block;align-self:start;font-family:var(--dl-font-body);font-size:13px;font-weight:500;color:var(--primary-foreground);background:var(--primary);padding:6px 12px;border-radius:var(--dl-radius-full);margin:0}
+[data-block-id="b-hero"] h1{font-family:var(--dl-font-heading);font-weight:600;font-size:38px;line-height:1.05;letter-spacing:-0.02em;color:var(--foreground);margin:18px 0 0}
+[data-block-id="b-hero"] h1 span{display:block}
+[data-block-id="b-hero"] h1 .muted{color:var(--muted-foreground)}
+[data-block-id="b-hero"] .lead{font-family:var(--dl-font-body);font-size:17px;line-height:1.55;color:var(--muted-foreground);max-width:44ch;margin:18px 0 0}
+[data-block-id="b-hero"] .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+[data-block-id="b-hero"] .btn-cta,[data-block-id="b-hero"] .btn-sec{font-family:var(--dl-font-body);font-weight:600;font-size:16px;border-radius:var(--dl-button-radius);padding:13px 20px;text-decoration:none;cursor:pointer;border:0}
+[data-block-id="b-hero"] .btn-cta{background:var(--cta);color:var(--cta-foreground);box-shadow:0 14px 28px -14px color-mix(in oklch,var(--cta) 75%,var(--background))}
+[data-block-id="b-hero"] .btn-sec{background:var(--secondary);color:var(--secondary-foreground)}
+[data-block-id="b-hero"] .note{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);margin:18px 0 0}
+[data-block-id="b-hero"] .panel{position:relative;padding:20px 16px 28px;border-radius:var(--dl-radius-xl);background:color-mix(in oklch,var(--primary) 12%,var(--background))}
+[data-block-id="b-hero"] .frame{border-radius:var(--dl-radius-lg);background:var(--card);border:1px solid var(--border);overflow:hidden;box-shadow:0 34px 60px -30px color-mix(in oklch,var(--foreground) 40%,var(--background))}
+[data-block-id="b-hero"] .bar{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);background:color-mix(in oklch,var(--muted) 60%,var(--card))}
+[data-block-id="b-hero"] .dot{width:9px;height:9px;border-radius:50%;background:color-mix(in oklch,var(--muted-foreground) 35%,var(--card))}
+[data-block-id="b-hero"] .url{margin-left:10px;font-family:var(--dl-font-mono);font-size:11px;color:var(--muted-foreground)}
+[data-block-id="b-hero"] .cal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
+[data-block-id="b-hero"] .day{display:flex;flex-direction:column;gap:6px}
+[data-block-id="b-hero"] .day:nth-child(n+4){display:none}
+[data-block-id="b-hero"] .day > b{font-family:var(--dl-font-heading);font-weight:600;font-size:12px;color:var(--foreground);padding:0 2px 4px}
+[data-block-id="b-hero"] .chip{display:block;font-family:var(--dl-font-body);font-size:11px;line-height:1.3;padding:7px 8px;border-radius:var(--dl-radius-sm);background:color-mix(in oklch,var(--primary) 16%,var(--card));color:var(--foreground)}
+[data-block-id="b-hero"] .chip time{display:block;font-family:var(--dl-font-mono);font-size:10px;color:var(--muted-foreground)}
+[data-block-id="b-hero"] .chip.s{background:color-mix(in oklch,var(--secondary) 35%,var(--card))}
+[data-block-id="b-hero"] .chip.p{background:var(--primary);color:var(--primary-foreground)}
+[data-block-id="b-hero"] .chip.p time{color:var(--primary-foreground)}
+[data-block-id="b-hero"] .over{position:absolute;right:12px;bottom:-14px;font-family:var(--dl-font-body);font-size:12px;font-weight:500;color:var(--cta-foreground);background:var(--cta);padding:7px 12px;border-radius:var(--dl-radius-full);box-shadow:0 12px 24px -12px color-mix(in oklch,var(--foreground) 45%,var(--background))}
+@container (min-width:560px){
+[data-block-id="b-hero"] h1{font-size:52px}
+[data-block-id="b-hero"] .day:nth-child(n+4){display:flex}
+[data-block-id="b-hero"] .cal{grid-template-columns:repeat(4,1fr)}
+}
+@container (min-width:860px){
+[data-block-id="b-hero"] .wrap{grid-template-columns:1.05fr .95fr;align-items:center;padding:88px 48px 64px;gap:56px}
+[data-block-id="b-hero"] h1{font-size:64px}
+[data-block-id="b-hero"] .tl{left:48px}
+[data-block-id="b-hero"] .tr{right:48px}
+}
+</style>
+<div class="wrap">
+<span class="tag tl">Agenda · en vivo</span>
+<span class="tag tr">Hecho en el barrio</span>
+<div class="copy">
+<p class="new">Nuevo: recordatorios por WhatsApp</p>
+<h1><span>La agenda de tu barbería,</span> <span class="muted">sin libreta ni llamadas</span></h1>
+<p class="lead">Sillas, horas y clientes en una sola vista. Brisa manda el recordatorio por WhatsApp para que nadie se olvide de su cita. Pasa tu agenda de papel en minutos.</p>
+<div class="ctas"><button class="btn-cta" type="button">Empieza gratis</button><a class="btn-sec" href="#screen:s-dash">Ver demo</a></div>
+<p class="note">Gratis hasta 5 personas · Sin tarjeta de crédito</p>
+</div>
+<div class="panel">
+<div class="frame">
+<div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">brisa.app/agenda</span></div>
+<div class="cal">
+<div class="day"><b>Lun</b>
+<span class="chip"><time>10:00</time>Marcos · Corte · Silla 1</span>
+<span class="chip s"><time>11:00</time>Dani · Barba · Silla 2</span>
+<span class="chip p"><time>12:30</time>Iván · Corte · Silla 1</span>
+</div>
+<div class="day"><b>Mar</b>
+<span class="chip s"><time>09:30</time>Pablo · Degradado</span>
+<span class="chip"><time>17:30</time>Libre · Silla 2</span>
+<span class="chip p"><time>18:00</time>Ramón · Corte</span>
+</div>
+<div class="day"><b>Mié</b>
+<span class="chip"><time>10:30</time>Luis · Corte · Silla 2</span>
+<span class="chip s"><time>12:00</time>Samu · Barba</span>
+</div>
+<div class="day"><b>Jue</b>
+<span class="chip p"><time>11:00</time>Marcos · Corte</span>
+<span class="chip"><time>16:00</time>Adrián · Corte · Silla 1</span>
+</div>
+</div>
+</div>
+<span class="over">Recordatorio enviado a Marcos</span>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-features">
+<style>
+[data-block-id="b-features"]{container-type:inline-size;background:var(--background)}
+[data-block-id="b-features"] .wrap{display:grid;gap:36px;padding:56px 20px;box-sizing:border-box}
+[data-block-id="b-features"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0}
+[data-block-id="b-features"] h2{font-family:var(--dl-font-heading);font-weight:600;font-size:34px;line-height:1.1;letter-spacing:-0.02em;color:var(--foreground);margin:12px 0 0}
+[data-block-id="b-features"] h2 span{display:block}
+[data-block-id="b-features"] h2 .muted{color:var(--muted-foreground)}
+[data-block-id="b-features"] .lead{font-family:var(--dl-font-body);font-size:16px;line-height:1.55;color:var(--muted-foreground);margin:14px 0 0;max-width:40ch}
+[data-block-id="b-features"] .panel{padding:8px 24px;border-radius:var(--dl-radius-xl);background:color-mix(in oklch,var(--secondary) 28%,var(--background))}
+[data-block-id="b-features"] .list{list-style:none;margin:0;padding:0}
+[data-block-id="b-features"] .item{display:grid;grid-template-columns:44px 1fr;gap:4px 14px;padding:20px 0;border-top:1px solid color-mix(in oklch,var(--foreground) 12%,var(--background))}
+[data-block-id="b-features"] .item:first-child{border-top:0}
+[data-block-id="b-features"] .idx{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);padding-top:4px}
+[data-block-id="b-features"] h3{grid-column:2;font-family:var(--dl-font-heading);font-weight:600;font-size:20px;line-height:1.2;color:var(--foreground);margin:0}
+[data-block-id="b-features"] .item p{grid-column:2;font-family:var(--dl-font-body);font-size:15px;line-height:1.55;color:var(--muted-foreground);margin:0}
+@container (min-width:860px){
+[data-block-id="b-features"] .wrap{grid-template-columns:.9fr 1.1fr;gap:64px;padding:72px 48px;align-items:start}
+[data-block-id="b-features"] h2{font-size:48px}
+[data-block-id="b-features"] .panel{padding:12px 32px}
+}
+</style>
+<div class="wrap">
+<div class="intro">
+<p class="eyebrow">Funciones</p>
+<h2><span>Lo justo para llevar</span> <span class="muted">la barbería</span></h2>
+<p class="lead">Pensado para el día a día de una barbería de barrio y listo desde el primer minuto.</p>
+</div>
+<div class="panel">
+<ol class="list">
+<li class="item"><span class="idx">01</span><h3>Tu agenda, siempre a mano</h3><p>Cada silla, cada hora y cada cliente. La ves desde el móvil o desde el mostrador, sin buscar en la libreta.</p></li>
+<li class="item"><span class="idx">02</span><h3>Recordatorios por WhatsApp</h3><p>Brisa avisa al cliente la víspera y a ti si alguien cancela. Menos huecos vacíos al final del día.</p></li>
+<li class="item"><span class="idx">03</span><h3>Clientes con historial</h3><p>Cada corte, cada preferencia y cada visita. Tu cliente de siempre entra y ya sabes cómo lo quiere.</p></li>
+</ol>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-proof">
+<style>
+[data-block-id="b-proof"]{container-type:inline-size;background:var(--background)}
+[data-block-id="b-proof"] .wrap{display:grid;gap:28px;padding:56px 20px;box-sizing:border-box}
+[data-block-id="b-proof"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0}
+[data-block-id="b-proof"] h2{font-family:var(--dl-font-heading);font-weight:600;font-size:32px;line-height:1.1;letter-spacing:-0.02em;color:var(--foreground);margin:12px 0 0}
+[data-block-id="b-proof"] h2 span{display:block}
+[data-block-id="b-proof"] h2 .muted{color:var(--muted-foreground)}
+[data-block-id="b-proof"] .lead{font-family:var(--dl-font-body);font-size:16px;color:var(--muted-foreground);margin:12px 0 0}
+[data-block-id="b-proof"] .feat{margin:0;padding:28px 24px;border-radius:var(--dl-radius-xl);background:color-mix(in oklch,var(--primary) 12%,var(--background))}
+[data-block-id="b-proof"] .feat blockquote{margin:0;font-family:var(--dl-font-heading);font-style:italic;font-weight:500;font-size:24px;line-height:1.3;color:var(--foreground)}
+[data-block-id="b-proof"] .small{display:grid;gap:14px;margin:0}
+[data-block-id="b-proof"] .small blockquote{margin:0;padding:18px 20px;border-radius:var(--dl-radius-lg);background:var(--card);box-shadow:0 18px 36px -24px color-mix(in oklch,var(--foreground) 35%,var(--background));font-family:var(--dl-font-body);font-size:16px;line-height:1.5;color:var(--foreground)}
+[data-block-id="b-proof"] cite{display:block;font-style:normal;font-family:var(--dl-font-body);font-size:14px;color:var(--muted-foreground);margin-top:14px}
+[data-block-id="b-proof"] cite b{display:block;font-weight:600;color:var(--foreground)}
+@container (min-width:860px){
+[data-block-id="b-proof"] .wrap{grid-template-columns:1.2fr .8fr;gap:40px;padding:72px 48px;align-items:start}
+[data-block-id="b-proof"] h2{font-size:44px}
+[data-block-id="b-proof"] .feat{padding:48px 44px}
+[data-block-id="b-proof"] .feat blockquote{font-size:36px;line-height:1.2}
+}
+</style>
+<div class="wrap">
+<div class="intro">
+<p class="eyebrow">Opiniones</p>
+<h2><span>Lo que dicen quienes</span> <span class="muted">ya lo usan</span></h2>
+<p class="lead">Historias de barberos de barrio que ya pasaron su agenda a Brisa.</p>
+</div>
+<figure class="feat">
+<blockquote>“Por fin sé quién viene cada día sin preguntar en el grupo de WhatsApp.”</blockquote>
+<figcaption><cite><b>Javier Ruiz</b>Barbero · Barbería La Esquina</cite></figcaption>
+</figure>
+<div class="small">
+<figure style="margin:0">
+<blockquote>“La pusimos un lunes y el viernes ya la usaba el chico nuevo sin que se lo explicara.”<cite><b>Marta Soler</b>Dueña · Barbería Norte</cite></blockquote>
+</figure>
+<figure style="margin:0">
+<blockquote>“Dejé la libreta de papel. Con los recordatorios se acabaron los huecos vacíos.”<cite><b>Hugo Benítez</b>Barbero · Barbería Triángulo</cite></blockquote>
+</figure>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-pricing">
+<style>
+[data-block-id="b-pricing"]{container-type:inline-size;background:var(--background)}
+[data-block-id="b-pricing"] .wrap{display:grid;gap:28px;padding:56px 20px;box-sizing:border-box}
+[data-block-id="b-pricing"] .eyebrow{font-family:var(--dl-font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0}
+[data-block-id="b-pricing"] h2{font-family:var(--dl-font-heading);font-weight:600;font-size:34px;line-height:1.1;letter-spacing:-0.02em;color:var(--foreground);margin:12px 0 0}
+[data-block-id="b-pricing"] h2 span{display:block}
+[data-block-id="b-pricing"] h2 .muted{color:var(--muted-foreground)}
+[data-block-id="b-pricing"] .lead{font-family:var(--dl-font-body);font-size:16px;color:var(--muted-foreground);margin:12px 0 0}
+[data-block-id="b-pricing"] .save{display:inline-block;margin-top:16px;font-family:var(--dl-font-body);font-size:13px;font-weight:500;color:var(--secondary-foreground);background:var(--secondary);padding:6px 12px;border-radius:var(--dl-radius-full)}
+[data-block-id="b-pricing"] .plans{display:grid;gap:14px}
+[data-block-id="b-pricing"] .plan{position:relative;display:flex;flex-direction:column;padding:24px;border-radius:var(--dl-card-radius,var(--dl-radius-xl));background:var(--card);border:1px solid var(--border);box-shadow:0 20px 40px -28px color-mix(in oklch,var(--foreground) 35%,var(--background))}
+[data-block-id="b-pricing"] .plan.hi{background:color-mix(in oklch,var(--primary) 12%,var(--background));border-color:color-mix(in oklch,var(--primary) 35%,var(--background))}
+[data-block-id="b-pricing"] .plan h3{font-family:var(--dl-font-heading);font-weight:600;font-size:22px;color:var(--foreground);margin:0}
+[data-block-id="b-pricing"] .desc{font-family:var(--dl-font-body);font-size:14px;color:var(--muted-foreground);margin:6px 0 0;min-height:2.6em}
+[data-block-id="b-pricing"] .price{font-family:var(--dl-font-heading);font-weight:600;font-size:48px;letter-spacing:-0.02em;color:var(--foreground);margin:16px 0 0;line-height:1}
+[data-block-id="b-pricing"] .price small{font-family:var(--dl-font-body);font-size:14px;font-weight:400;color:var(--muted-foreground);letter-spacing:0;margin-left:4px}
+[data-block-id="b-pricing"] ul{list-style:none;margin:20px 0 22px;padding:0;display:grid;gap:10px}
+[data-block-id="b-pricing"] li{position:relative;padding-left:20px;font-family:var(--dl-font-body);font-size:15px;color:var(--foreground)}
+[data-block-id="b-pricing"] li::before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+[data-block-id="b-pricing"] .btn{margin-top:auto;font-family:var(--dl-font-body);font-weight:600;font-size:15px;border:0;border-radius:var(--dl-button-radius);padding:12px 16px;cursor:pointer;background:var(--secondary);color:var(--secondary-foreground)}
+[data-block-id="b-pricing"] .plan.hi .btn{background:var(--cta);color:var(--cta-foreground)}
+[data-block-id="b-pricing"] .tag{position:absolute;top:-12px;right:20px;font-family:var(--dl-font-body);font-size:12px;font-weight:500;background:var(--primary);color:var(--primary-foreground);padding:5px 12px;border-radius:var(--dl-radius-full)}
+[data-block-id="b-pricing"] .fine{font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);margin:0}
+@container (min-width:860px){
+[data-block-id="b-pricing"] .wrap{padding:72px 48px;gap:44px}
+[data-block-id="b-pricing"] h2{font-size:46px}
+[data-block-id="b-pricing"] .plans{grid-template-columns:repeat(3,1fr);align-items:stretch;gap:18px}
+[data-block-id="b-pricing"] .plan{padding:30px}
+}
+</style>
+<div class="wrap">
+<div class="intro">
+<p class="eyebrow">Precios</p>
+<h2><span>Precios simples</span> <span class="muted">y transparentes</span></h2>
+<p class="lead">Empieza gratis y cambia de plan cuando lo necesites.</p>
+<span class="save">Ahorra 20% pagando al año</span>
+</div>
+<div class="plans">
+<article class="plan">
+<h3>Básico</h3>
+<p class="desc">Para barberías que empiezan con una o dos sillas.</p>
+<p class="price">0 €<small>/ mes</small></p>
+<ul><li>Hasta 5 personas</li><li>Agenda semanal sin límite</li><li>Ficha de clientes básica</li></ul>
+<button class="btn" type="button">Empieza gratis</button>
+</article>
+<article class="plan hi">
+<span class="tag">Más popular</span>
+<h3>Equipo</h3>
+<p class="desc">Para barberías con varias sillas que se coordinan a diario.</p>
+<p class="price">12 €<small>/ mes por equipo</small></p>
+<ul><li>Todo lo del plan Básico</li><li>Recordatorios por WhatsApp</li><li>Cobro de la cita desde la agenda</li><li>Soporte prioritario</li></ul>
+<button class="btn" type="button">Elegir Equipo</button>
+</article>
+<article class="plan">
+<h3>Empresa</h3>
+<p class="desc">Para cadenas con varias sedes y necesidades especiales.</p>
+<p class="price">29 €<small>/ mes por equipo</small></p>
+<ul><li>Todo lo del plan Equipo</li><li>Varias sedes en una cuenta</li><li>Informes avanzados</li><li>Gestor de cuenta dedicado</li></ul>
+<button class="btn" type="button">Elegir Empresa</button>
+</article>
+</div>
+</div>
+</section>
+
+<section data-block-id="b-cta">
+<style>
+[data-block-id="b-cta"]{container-type:inline-size;background:var(--background)}
+[data-block-id="b-cta"] .band{position:relative;margin:0;padding:52px 24px;box-sizing:border-box;border-radius:var(--dl-radius-xl);background:var(--primary);color:var(--primary-foreground);overflow:hidden;box-shadow:0 30px 60px -32px color-mix(in oklch,var(--primary) 70%,var(--background))}
+[data-block-id="b-cta"] .tag{position:absolute;font-family:var(--dl-font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+[data-block-id="b-cta"] .tl{top:16px;left:24px}
+[data-block-id="b-cta"] .br{bottom:16px;right:24px}
+[data-block-id="b-cta"] h2{font-family:var(--dl-font-heading);font-weight:600;font-size:36px;line-height:1.05;letter-spacing:-0.02em;margin:0;color:var(--primary-foreground)}
+[data-block-id="b-cta"] h2 span{display:block}
+[data-block-id="b-cta"] h2 .muted{color:color-mix(in oklch,var(--primary-foreground) 65%,var(--primary))}
+[data-block-id="b-cta"] .lead{font-family:var(--dl-font-body);font-size:16px;line-height:1.5;margin:16px 0 0;max-width:40ch;color:color-mix(in oklch,var(--primary-foreground) 85%,var(--primary))}
+[data-block-id="b-cta"] .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+[data-block-id="b-cta"] .btn-cta,[data-block-id="b-cta"] .btn-sec{font-family:var(--dl-font-body);font-weight:600;font-size:16px;border-radius:var(--dl-button-radius);padding:13px 20px;text-decoration:none;cursor:pointer;border:0}
+[data-block-id="b-cta"] .btn-cta{background:var(--cta);color:var(--cta-foreground)}
+[data-block-id="b-cta"] .btn-sec{background:color-mix(in oklch,var(--primary-foreground) 16%,var(--primary));color:var(--primary-foreground)}
+[data-block-id="b-cta"] .fine{font-family:var(--dl-font-body);font-size:13px;margin:16px 0 0;color:color-mix(in oklch,var(--primary-foreground) 80%,var(--primary))}
+@container (min-width:860px){
+[data-block-id="b-cta"] .band{padding:64px 64px;margin:0 48px}
+[data-block-id="b-cta"] h2{font-size:52px}
+[data-block-id="b-cta"] .tl{left:64px}
+[data-block-id="b-cta"] .br{right:64px}
+}
+</style>
+<div class="band">
+<span class="tag tl">Gratis hasta 5 personas</span>
+<span class="tag br">1.200 barberías ya lo usan</span>
+<h2><span>Empieza hoy,</span> <span class="muted">sin tarjeta</span></h2>
+<p class="lead">Prueba Brisa gratis durante 14 días. Importa tus datos en minutos.</p>
+<div class="ctas"><button class="btn-cta" type="button">Crear cuenta gratis</button><a class="btn-sec" href="#screen:s-dash">Ver demo</a></div>
+<p class="fine">Configuración en 2 minutos. Cancela cuando quieras.</p>
+</div>
+</section>
+
+<footer data-block-id="b-footer">
+<style>
+[data-block-id="b-footer"]{container-type:inline-size;background:var(--muted);color:var(--foreground)}
+[data-block-id="b-footer"] .wrap{display:grid;gap:32px;padding:44px 20px 28px;box-sizing:border-box}
+[data-block-id="b-footer"] .top{display:grid;gap:4px}
+[data-block-id="b-footer"] .brand{display:flex;align-items:center;gap:10px;font-family:var(--dl-font-heading);font-weight:600;font-size:20px;color:var(--foreground)}
+[data-block-id="b-footer"] .tagline{font-family:var(--dl-font-body);font-size:14px;color:var(--muted-foreground);margin:0}
+[data-block-id="b-footer"] .cols{display:grid;grid-template-columns:1fr 1fr;gap:28px 20px}
+[data-block-id="b-footer"] .lbl{font-family:var(--dl-font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground);margin:0 0 10px}
+[data-block-id="b-footer"] ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+[data-block-id="b-footer"] a{font-family:var(--dl-font-body);font-size:15px;color:var(--foreground);text-decoration:none}
+[data-block-id="b-footer"] a:hover{color:var(--primary)}
+[data-block-id="b-footer"] .base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding-top:20px;border-top:1px solid color-mix(in oklch,var(--foreground) 12%,var(--muted));font-family:var(--dl-font-mono);font-size:12px;color:var(--muted-foreground);margin:0}
+@container (min-width:720px){
+[data-block-id="b-footer"] .wrap{grid-template-columns:1.2fr 2.8fr;padding:52px 48px 32px;gap:40px}
+[data-block-id="b-footer"] .cols{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+<div class="wrap">
+<div class="top">
+<span class="brand"><svg width="22" height="22" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="22" height="22" rx="8" fill="var(--primary)"/><path d="M8 17 C12 9, 16 9, 18 9" stroke="var(--primary-foreground)" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>Brisa</span>
+<p class="tagline">Tu barbería, sin llamadas.</p>
+</div>
+<div class="cols">
+<nav aria-label="Producto"><p class="lbl">Producto</p><ul><li><a href="#">Producto</a></li><li><a href="#">Precios</a></li><li><a href="#">Clientes</a></li><li><a href="#">Recursos</a></li></ul></nav>
+<nav aria-label="Empresa"><p class="lbl">Empresa</p><ul><li><a href="#">Sobre nosotros</a></li><li><a href="#">Empleo</a></li><li><a href="#">Blog</a></li><li><a href="#">Contacto</a></li></ul></nav>
+<nav aria-label="Legal"><p class="lbl">Legal</p><ul><li><a href="#">Privacidad</a></li><li><a href="#">Términos</a></li><li><a href="#">Cookies</a></li></ul></nav>
+<div><p class="lbl">Hecho en el barrio</p><ul><li><a href="#">WhatsApp de soporte</a></li></ul></div>
+</div>
+<p class="base"><span>© Brisa · Todos los derechos reservados.</span><span>Gratis hasta 5 personas</span></p>
+</div>
+</footer>

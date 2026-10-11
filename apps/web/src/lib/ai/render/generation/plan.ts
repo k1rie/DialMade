@@ -1,7 +1,7 @@
 // What one «Generar con IA» asks for, built from the DesignDoc (spec §3.1, §4.3, §5.2): which screens (≤ 3 per
 // session), what each screen request carries, and which kit pieces (navbar, footer) are generated once and cloned.
 // Pure: the store, the cost line and the tests share it.
-import { aiDraftOf } from "../edit";
+import { aiDraftOf, aiScreenInputOptions, aiScreenMode } from "../edit";
 import { KIT_TYPES, brandInput, renderableBlocks, screenInput, type RenderBlockInput, type RenderBrandInput, type RenderScreenInput } from "@dialmade/ai-render";
 import { sameAiContext, type AiContext, type AiDirection, type AiDirectionChip, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../../config";
@@ -65,9 +65,10 @@ export function draftOf(doc: DesignDoc, screenId: string): (blockId: string) => 
   return screen ? aiDraftOf(screen) : () => [];
 }
 
-/** Every renderable block of a screen as the prompt describes it (also the ones a request skips). */
+/** Every renderable block of a screen as the prompt describes it (also the ones a request skips); landings in page mode. */
 export function screenBlocks(doc: DesignDoc, screenId: string): RenderScreenInput {
-  return screenInput(doc, screenId, { draftOf: draftOf(doc, screenId) });
+  const screen = doc.screens[screenId];
+  return screen ? screenInput(doc, screenId, aiScreenInputOptions(screen, aiScreenMode(screen))) : screenInput(doc, screenId, { draftOf: () => [] });
 }
 
 /** The screen request: `skip` (kit clones) and `only` (a retry) applied, capped like the route's schema. */
@@ -110,13 +111,16 @@ export function planKit(doc: DesignDoc, screenIds: readonly string[], inputs: Re
     if (!screen || inRun.has(screenId)) continue;
     for (const [blockId, block] of Object.entries(screen.aiRender?.blocks ?? {})) {
       const layoutBlock = screen.layout.blocks[blockId];
-      if (!layoutBlock || !KIT_TYPES.has(layoutBlock.type) || !block.active || !block.html || block.provenance.directionId !== directionId) continue;
+      // A page-mode navbar or footer leans on its page's stylesheet: it is never a kit piece for another screen.
+      if (!layoutBlock || !KIT_TYPES.has(layoutBlock.type) || !block.active || !block.html || block.mode === "page" || block.provenance.directionId !== directionId) continue;
       const key = kitKey(layoutBlock);
       if (!existing.has(key)) existing.set(key, { screenId, blockId });
     }
   }
   const sources = new Map<string, { screenId: string; blockId: string }>();
   for (const screenId of screenIds) {
+    // Page mode designs the whole screen, its navbar and footer included (they share the page's stylesheet).
+    if (inputs.get(screenId)?.mode === "page") continue;
     for (const block of inputs.get(screenId)?.blocks ?? []) {
       if (!KIT_TYPES.has(block.type)) continue;
       const key = kitKey(block);

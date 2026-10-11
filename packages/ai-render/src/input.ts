@@ -5,7 +5,7 @@ import { getProductType, getStyleRecipe } from "@dialmade/catalog";
 import type { DesignDoc, Screen } from "@dialmade/doc";
 import { ROW_UNIT, absorbChildren, inferStructure } from "@dialmade/layout";
 import { hexToOklch } from "@dialmade/palette";
-import type { RenderBlockInput, RenderBrandInput, RenderScreenInput } from "./prompt";
+import type { PageSectionData, RenderBlockInput, RenderBrandInput, RenderScreenInput } from "./prompt";
 
 /** Block types whose children are other blocks: they only get a surface in the MVP (spec §1 [C15]). */
 export const CONTAINER_TYPES: ReadonlySet<string> = new Set(["container", "modal"]);
@@ -82,6 +82,13 @@ export function brandInput(doc: DesignDoc, options: { description?: string; fing
 export type ScreenInputOptions = {
   /** Visible copy of a block's element (`visibleProps` of @dialmade/sections → `draftTexts`). */
   draftOf: (blockId: string) => string[];
+  /**
+   * «page»: the screen is designed as one page from the brief (./pagePrompt): no template copy travels, only the fixed
+   * values of `dataOf` (plan names and prices).
+   */
+  mode?: "page";
+  /** Page mode: the visible props of a block's element (`visibleProps`), read for `pageSectionData`. */
+  propsOf?: (blockId: string) => unknown;
   /** Block ids that are not sent (already designed: kit pieces cloned from another screen). */
   skip?: ReadonlySet<string>;
   /** Only these block ids (a retry of some blocks). */
@@ -102,7 +109,20 @@ export function h1BlockOf(screen: Pick<Screen, "kind" | "shell" | "layout">, ids
   return ids.find((id) => type(id) === "hero") ?? ids.find((id) => !KIT_TYPES.has(type(id) ?? "") && type(id) !== "sidebar" && !CONTAINER_TYPES.has(type(id) ?? "")) ?? null;
 }
 
-export function blockInput(screen: Screen, id: string, draft: string[], h1: boolean): RenderBlockInput {
+/** Fixed values a section must keep in page mode: the plans of a pricing block (name, price, highlighted), nothing else. */
+export function pageSectionData(props: unknown): PageSectionData | undefined {
+  if (!props || typeof props !== "object") return undefined;
+  const { plans, count, recurring } = props as { plans?: unknown; count?: unknown; recurring?: unknown };
+  if (!Array.isArray(plans)) return undefined;
+  const shown = typeof count === "number" ? plans.slice(0, count) : plans;
+  const out = shown.flatMap((plan) => {
+    const { name, price, highlighted } = (plan ?? {}) as { name?: unknown; price?: unknown; highlighted?: unknown };
+    return typeof name === "string" && typeof price === "number" ? [{ name: name.slice(0, 60), price, highlighted: highlighted === true }] : [];
+  });
+  return out.length > 0 ? { plans: out, ...(typeof recurring === "boolean" && { recurring }) } : undefined;
+}
+
+export function blockInput(screen: Screen, id: string, draft: string[], h1: boolean, data?: PageSectionData): RenderBlockInput {
   const block = screen.layout.blocks[id]!;
   return {
     id,
@@ -116,6 +136,7 @@ export function blockInput(screen: Screen, id: string, draft: string[], h1: bool
     ...(CONTAINER_TYPES.has(block.type) && { container: true as const }),
     ...(h1 && { h1: true as const }),
     draft: CONTAINER_TYPES.has(block.type) ? [] : draft,
+    ...(data && { data }),
   };
 }
 
@@ -126,7 +147,11 @@ export function screenInput(doc: DesignDoc, screenId: string, options: ScreenInp
   const h1 = h1BlockOf(screen, ids);
   const blocks = ids
     .filter((id) => !options.skip?.has(id) && (!options.only || options.only.has(id)))
-    .map((id) => blockInput(screen, id, options.draftOf(id), id === h1));
+    .map((id) =>
+      options.mode === "page"
+        ? blockInput(screen, id, [], id === h1, options.propsOf ? pageSectionData(options.propsOf(id)) : undefined)
+        : blockInput(screen, id, options.draftOf(id), id === h1),
+    );
   return {
     id: screen.id,
     name: screen.name,
@@ -135,5 +160,6 @@ export function screenInput(doc: DesignDoc, screenId: string, options: ScreenInp
     locale: doc.brief.locale,
     screens: doc.screenOrder.filter((other) => other !== screen.id && doc.screens[other]).map((other) => ({ id: other, name: doc.screens[other]!.name })),
     blocks,
+    ...(options.mode === "page" && { mode: "page" as const }),
   };
 }

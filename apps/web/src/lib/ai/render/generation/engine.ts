@@ -9,6 +9,7 @@
 // finishes and bills the screen); a failed screen is retried for free (the server gave its slot back); a block that
 // failed its gates is retried as one block action of the session.
 import {
+  AI_PAGE_PROMPT_VERSION,
   AI_RENDER_PROMPT_VERSION,
   KIT_TYPES,
   MAX_STYLE_LENGTH,
@@ -19,7 +20,9 @@ import {
   directionCandidates,
   hash32,
   newSeed,
+  pageStyleText,
   retargetBlock,
+  sanitizeCss,
   themeColorsFromVars,
   type BlockContext,
   type DirectionForPrompt,
@@ -33,7 +36,7 @@ import { normalizeAiContext, type AiBlock, type AiDirection, type DesignDoc } fr
 import type { StoreApi } from "zustand/vanilla";
 import { deriveDesign } from "@/lib/design-derived";
 import type { RenderApiError, RenderErrorCode, RenderSessionCounters } from "../api";
-import { aiBlockOps, directionOps, type PatchOp } from "./patches";
+import { aiBlockOps, aiPageCssOps, directionOps, type PatchOp } from "./patches";
 import { directionReusable, pickedScreens, planKit, requestBrand, requestScreen, screenBlocks, type KitClone, type KitPlan } from "./plan";
 import type { BlockFailure, BlockRun, GenerateRequest, GenerationState, RenderTransport, ScreenRun } from "./types";
 
@@ -152,8 +155,10 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const doc = deps.getDoc();
     const input = inputOf(target, screenId, blockId);
     if (!doc || !input) return false;
+    const page = target.inputs.get(screenId)?.mode === "page";
     const block: AiBlock = {
       html: processed.html,
+      ...(page && { mode: "page" as const }),
       ...(processed.surfaceClasses && { surfaceClasses: processed.surfaceClasses }),
       active: true,
       basis: blockBasis(input, target.locale, target.direction.id),
@@ -164,7 +169,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         model: target.model,
         ...(target.transport.tier && target.transport.tier !== "mockup" && { tier: target.transport.tier }),
         createdAt: now().toISOString(),
-        promptVersion: AI_RENDER_PROMPT_VERSION,
+        promptVersion: page ? AI_PAGE_PROMPT_VERSION : AI_RENDER_PROMPT_VERSION,
         directionId: target.direction.id,
         seed: hash32(`${target.direction.seed}:${screenId}:${blockId}`),
         recipeId: doc.brief.recipeId,
@@ -179,7 +184,8 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const doc = deps.getDoc();
     const input = inputOf(target, screenId, blockId);
     if (!doc || !input) return null;
-    const context: BlockContext = { block: input, screenIds: doc.screenOrder, theme: themeOf(target, doc, screenId) };
+    const page = target.inputs.get(screenId)?.mode === "page";
+    const context: BlockContext = { block: input, screenIds: doc.screenOrder, theme: themeOf(target, doc, screenId), ...(page && { mode: "page" as const }) };
     const first = await deps.process(raw, context).catch(() => null);
     if (!first?.ok || !KIT_TYPES.has(input.type) || !first.html) return first;
     return deps.process(retargetBlock(first.html, blockId, blockId, screenId), context).catch(() => null);
@@ -252,6 +258,14 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       const tracker = new StructureTracker(expected);
       const body = { task: "screen" as const, sessionId: target.sessionId, brand: target.brand, direction: forPrompt(target.direction), screen: request };
       for await (const event of target.transport.screen(body, target.controller.signal)) {
+        if (event.type === "block" && event.blockId === null && request.mode === "page") {
+          // Page mode: the page stylesheet comes first, before its sections; it is sanitized and scoped here.
+          const text = pageStyleText(event.html);
+          const doc = deps.getDoc();
+          const ops = text !== null && doc ? aiPageCssOps(doc, screenId, sanitizeCss(text, { kind: "page" }).css) : null;
+          if (ops) deps.applyPatch(ops);
+          continue;
+        }
         if (event.type === "block") {
           // Gate 1 on the stream: an expected id, once; anything else is ignored (the layout is the user's).
           if (tracker.accept(event.blockId) === "accept") pending.push(handleRoot(target, screenId, event.blockId!, event.html, "generate"));

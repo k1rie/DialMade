@@ -2,7 +2,20 @@
 // inert <template> (through a Trusted Types policy) and copied node by node with the same allowlist. Never
 // `innerHTML` on the live document. Icons and placeholders are our own
 // SVG markup, built from trusted strings.
-import { ALLOWED_TAGS, INPUT_TYPES, chartFromAttributes, iconSvg, isAllowedAttrFor, placeholderSvg } from "@dialmade/ai-render/runtime";
+import {
+  ALLOWED_TAGS,
+  INPUT_TYPES,
+  SVG_HOSTILE,
+  SVG_TAGS,
+  chartFromAttributes,
+  checkSvgAttr,
+  iconSvg,
+  isAllowedAttrFor,
+  isAllowedSvgAttr,
+  placeholderSvg,
+  sanitizeCss,
+  sanitizeStyleAttr,
+} from "@dialmade/ai-render/runtime";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -24,8 +37,41 @@ function parseTemplate(html: string): DocumentFragment {
   return template.content;
 }
 
+/** Page mode: what the copy needs to know about where it is. */
+type PageCopy = { blockId: string; depth: number } | null;
+
+/** An inline SVG of page mode: allowlisted elements and attributes only, values checked again. */
+function copySvg(element: Element, target: Node): void {
+  const tag = element.localName.toLowerCase();
+  if (element.namespaceURI !== SVG_NS || !SVG_TAGS.has(tag) || SVG_HOSTILE.has(tag)) return;
+  const copy = document.createElementNS(SVG_NS, element.localName);
+  for (const { name, value } of Array.from(element.attributes)) {
+    const lower = name.toLowerCase();
+    if (lower === "style") {
+      const style = sanitizeStyleAttr(value);
+      if (style) copy.setAttribute("style", style);
+      continue;
+    }
+    if (!isAllowedSvgAttr(lower)) continue;
+    if (lower === "class" || lower === "role" || lower.startsWith("aria-")) {
+      copy.setAttribute(name, value);
+      continue;
+    }
+    const verdict = checkSvgAttr(lower, value);
+    if (!verdict.keep) continue;
+    if ("value" in verdict) copy.setAttribute(name, verdict.value);
+    else if ("ref" in verdict) copy.setAttribute(name, `url(#${verdict.ref})`);
+    else if (/^[A-Za-z][\w-]{0,120}$/.test(verdict.id)) copy.setAttribute(name, verdict.id);
+  }
+  for (const child of Array.from(element.childNodes)) {
+    if (child.nodeType === Node.TEXT_NODE) copy.appendChild(document.createTextNode(child.textContent ?? ""));
+    else if (child.nodeType === Node.ELEMENT_NODE) copySvg(child as Element, copy);
+  }
+  target.appendChild(copy);
+}
+
 /** Copies `source` into `target` keeping only allowed tags and attributes (`javascript:` hrefs never pass). */
-function copyAllowed(source: ParentNode, target: Node): void {
+function copyAllowed(source: ParentNode, target: Node, page: PageCopy = null): void {
   for (const node of Array.from(source.childNodes)) {
     if (node.nodeType === Node.TEXT_NODE) {
       target.appendChild(document.createTextNode(node.textContent ?? ""));
@@ -34,9 +80,29 @@ function copyAllowed(source: ParentNode, target: Node): void {
     if (node.nodeType !== Node.ELEMENT_NODE) continue;
     const element = node as Element;
     const tag = element.localName;
+    if (page && element.namespaceURI === SVG_NS && tag === "svg") {
+      copySvg(element, target);
+      continue;
+    }
+    if (page && tag === "style" && element.namespaceURI === "http://www.w3.org/1999/xhtml") {
+      // A section's own rules, only as a child of its root, scoped and cleaned again.
+      if (page.depth !== 1) continue;
+      const css = sanitizeCss(element.textContent ?? "", { kind: "section", blockId: page.blockId }).css;
+      if (css) {
+        const style = document.createElement("style");
+        style.textContent = css;
+        target.appendChild(style);
+      }
+      continue;
+    }
     if (element.namespaceURI !== "http://www.w3.org/1999/xhtml" || !ALLOWED_TAGS.has(tag)) continue;
     const copy = document.createElement(tag);
     for (const { name, value } of Array.from(element.attributes)) {
+      if (page && name === "style") {
+        const style = sanitizeStyleAttr(value);
+        if (style) copy.setAttribute("style", style);
+        continue;
+      }
       if (!isAllowedAttrFor(tag, name)) continue;
       if (name === "href" && !/^#(?:screen:[\w-]+)?$/.test(value)) continue;
       if (name === "type" && tag === "input" && !INPUT_TYPES.has(value)) continue;
@@ -46,7 +112,8 @@ function copyAllowed(source: ParentNode, target: Node): void {
     }
     // A button never submits, whatever it was handed.
     if (tag === "button") copy.setAttribute("type", "button");
-    copyAllowed(element, copy);
+    const blockId = page ? (page.depth === 0 ? (copy.getAttribute("data-block-id") ?? page.blockId) : page.blockId) : "";
+    copyAllowed(element, copy, page ? { blockId, depth: page.depth + 1 } : null);
     target.appendChild(copy);
   }
 }
@@ -57,9 +124,9 @@ function copyAllowed(source: ParentNode, target: Node): void {
  * configuration is still changing between browser versions. Our own allowlist copy from an inert template is the
  * same everywhere, and the CSP plus the sandbox stay the real guarantee.
  */
-export function insertBlock(host: Element, html: string): void {
+export function insertBlock(host: Element, html: string, options: { page?: boolean } = {}): void {
   host.replaceChildren();
-  copyAllowed(parseTemplate(html), host);
+  copyAllowed(parseTemplate(html), host, options.page ? { blockId: "", depth: 0 } : null);
   drawAssets(host);
 }
 

@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ollaria · Handmade stoneware, fired in small batches</title>
+<meta name="description" content="Handmade stoneware from a small ceramics studio. Every piece is fired in a batch of 40, glazed with colors mixed in-house. Weekend workshops every Saturday.">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Work+Sans:ital,wght@0,300..600;1,300..500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.144 0.005 17.79);
+  --primary: oklch(0.557 0.137 41.94);
+  --primary-foreground: oklch(1 0 0);
+  --cta: oklch(0.557 0.137 41.94);
+  --cta-foreground: oklch(1 0 0);
+  --accent: oklch(0.947 0.027 40.2);
+  --accent-foreground: oklch(0.38 0.08 41.53);
+  --muted: oklch(0.97 0.005 34.31);
+  --muted-foreground: oklch(0.547 0.008 28.87);
+  --border: oklch(0.922 0.005 34.31);
+
+  /* derived from the pinned hues only */
+  --primary-hover: oklch(0.5 0.13 41.94);
+  --plank: oklch(0.885 0.008 34.31);
+  --plank-warm: oklch(0.87 0.04 40.2);
+  --line-strong: oklch(0.144 0.005 17.79 / 0.28);
+  --drop: oklch(0.144 0.005 17.79 / 0.26);
+  --drop-warm: oklch(0.38 0.08 41.53 / 0.22);
+
+  --radius-panel: 24px;
+  --radius-pill: 999px;
+  --pad: clamp(16px, 3.75vw, 48px);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --speck: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .2 0 0 0 0 .13 3 0 0 0 -1.2'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scrollbar-color: oklch(0.547 0.008 28.87 / 0.55) var(--background); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Work Sans", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  caret-color: var(--primary);
+}
+::selection { background: var(--accent); color: var(--accent-foreground); }
+img, svg { display: block; max-width: 100%; }
+h1, h2, h3 {
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+h2 { font-size: clamp(2rem, 3.6vw, 3.25rem); line-height: 1.06; max-width: 18ch; }
+h3 { font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.015em; }
+p { margin: 0; text-wrap: pretty; }
+a { color: inherit; text-underline-offset: 0.25em; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.wrap { max-width: 1360px; margin-inline: auto; padding-inline: var(--pad); }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 50px; padding: 0 24px;
+  border-radius: var(--radius-pill); border: 1.5px solid transparent;
+  font: 500 1rem/1 "Work Sans", system-ui, sans-serif;
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+.btn:active { transform: translateY(1px) scale(0.985); }
+.btn--primary { background: var(--cta); color: var(--cta-foreground); }
+.btn--primary:hover { background: var(--primary-hover); }
+.btn--ghost { background: transparent; color: var(--foreground); border-color: var(--line-strong); }
+.btn--ghost:hover { border-color: var(--foreground); }
+.btn--light { background: var(--background); color: var(--accent-foreground); }
+.btn--light:hover { background: var(--accent); }
+.btn--sm { height: 40px; padding: 0 18px; font-size: 0.9375rem; }
+.btn[aria-busy="true"] { cursor: progress; opacity: 0.85; }
+
+/* ---------- nav ---------- */
+.nav { position: sticky; top: 0; z-index: 10; background: var(--background); border-bottom: 1px solid var(--border); }
+.nav__in { height: 68px; display: flex; align-items: center; gap: 32px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand__mark {
+  width: 24px; height: 24px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle, var(--accent) 0 27%, var(--primary) 30% 60%, var(--background) 63%);
+  box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+.brand__name { font: 600 1.3125rem/1 "Outfit", system-ui, sans-serif; letter-spacing: -0.03em; }
+.nav__in > nav { margin-left: auto; }
+.nav__links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; }
+.nav__links a { text-decoration: none; font-size: 0.9375rem; }
+.nav__links a:hover { color: var(--primary); text-decoration: underline; }
+
+/* ---------- hero: the kiln shelf ---------- */
+.hero { background: var(--muted); padding-block: clamp(16px, 2.4vw, 32px) clamp(40px, 5vw, 64px); }
+.kiln {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(6, auto);
+}
+.kiln__title {
+  grid-column: 1 / 9; grid-row: 1 / 3;
+  align-self: center; position: relative; z-index: 1;
+  font-size: clamp(2.5rem, 4.6vw, 4.5rem);
+  line-height: 1.02; letter-spacing: -0.035em;
+  padding-right: 2%;
+}
+.kiln__copy {
+  grid-column: 1 / 5; grid-row: 3 / 7; align-self: end;
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 0 28px 10px 0;
+}
+.lede { font-size: 1.125rem; max-width: 34ch; }
+.tally { font-weight: 500; font-size: 0.9688rem; color: var(--accent-foreground); min-height: 3.2em; max-width: 34ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.pots {
+  grid-column: 5 / 13; grid-row: 1 / 7;
+  display: grid; grid-template-columns: subgrid; grid-template-rows: subgrid;
+  margin: 0; padding: 0; border: 0; min-width: 0;
+}
+.pots__hole { grid-column: 1 / 5; grid-row: 1 / 3; }
+.cell {
+  position: relative; aspect-ratio: 1; display: grid; place-items: center;
+  border-radius: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.cell input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: inherit; }
+.cell:has(input:focus-visible) { outline: 2px solid var(--foreground); outline-offset: -2px; }
+.cell:has(input:disabled) { cursor: not-allowed; }
+
+/* a piece, seen from above: lit from the top left */
+.pot {
+  --g-lite: color-mix(in oklch, var(--g), var(--background) 34%);
+  --lip: 9%;
+  --shadow: 3px 6px 9px -3px var(--drop), 7px 15px 24px -12px var(--drop-warm);
+  position: relative; display: block;
+  width: calc(var(--s, 0.78) * 100%); aspect-ratio: 1; border-radius: 50%;
+  translate: var(--dx, 0) var(--dy, 0);
+  background: linear-gradient(135deg, var(--g-lite) 0%, var(--g) 46%, var(--g-shade) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--g-shade), transparent 45%), var(--shadow);
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out), opacity 180ms var(--ease-out);
+}
+.pot::before { /* the glazed well: concave, so it is lit from the bottom right */
+  content: ""; position: absolute; inset: var(--lip); border-radius: 50%;
+  background:
+    var(--speck) center / 160px,
+    radial-gradient(circle at 63% 66%, oklch(1 0 0 / 0.42) 0 3%, transparent 11%),
+    radial-gradient(circle at 54% 56%, var(--pool) 0 16%, transparent 50%),
+    linear-gradient(135deg, var(--g-shade) 0%, var(--g) 52%, var(--g-lite) 100%);
+  box-shadow: 0 0 0 1.5px var(--g-edge), inset 2px 3px 6px -1px oklch(0.144 0.005 17.79 / 0.22);
+}
+.f-plate { --lip: 21%; }
+.f-plate::before {
+  background:
+    var(--speck) center / 160px,
+    radial-gradient(circle at 60% 62%, oklch(1 0 0 / 0.36) 0 4%, transparent 14%),
+    linear-gradient(135deg, color-mix(in oklch, var(--g), var(--g-shade) 55%) 0%, var(--g) 60%, var(--g-lite) 100%);
+  box-shadow: 0 0 0 1px var(--g-edge), inset 1px 2px 3px -1px oklch(0.144 0.005 17.79 / 0.18);
+}
+.f-cup { --lip: 8%; }
+.f-cup::before {
+  background:
+    var(--speck) center / 160px,
+    radial-gradient(circle at 60% 63%, oklch(1 0 0 / 0.4) 0 4%, transparent 12%),
+    radial-gradient(circle at 54% 56%, var(--pool) 0 30%, transparent 62%),
+    linear-gradient(135deg, var(--g-shade) 0%, var(--g) 50%, var(--g-lite) 100%);
+}
+.f-cup::after { /* the handle, turned to wherever the potter set it */
+  content: ""; position: absolute; inset: -22%; border-radius: 50%;
+  transform: rotate(var(--r, 0deg)); pointer-events: none;
+  background: radial-gradient(circle at 90% 50%, transparent 0 4%, var(--g-shade) 4.5% 9%, transparent 9.5%);
+  filter: drop-shadow(2px 3px 2px var(--drop));
+}
+.f-bottle { /* convex body with a narrow neck */
+  background:
+    var(--speck) center / 160px,
+    radial-gradient(circle at 34% 30%, var(--g-lite) 0%, var(--g) 46%, var(--g-shade) 100%);
+}
+.f-bottle::before {
+  inset: 33%;
+  background: radial-gradient(circle, var(--pool) 0 36%, var(--g-edge) 44% 54%, var(--g-lite) 62%, var(--g) 100%);
+  box-shadow: 1px 2px 3px -1px oklch(0.144 0.005 17.79 / 0.35);
+}
+
+/* in-house glazes */
+.g-milk  { --g: oklch(0.975 0.006 34.31); --g-shade: oklch(0.885 0.012 34.31); --g-edge: oklch(0.84 0.04 40.2); --pool: oklch(0.92 0.025 40.2); }
+.g-blush { --g: var(--accent); --g-shade: oklch(0.85 0.05 40.2); --g-edge: oklch(0.76 0.08 41.94); --pool: oklch(0.82 0.07 40.2); }
+.g-clay  { --g: var(--primary); --g-shade: oklch(0.46 0.12 41.94); --g-edge: oklch(0.68 0.11 41.94); --pool: oklch(0.42 0.11 41.94); }
+.g-ember { --g: var(--accent-foreground); --g-shade: oklch(0.29 0.06 41.53); --g-edge: oklch(0.56 0.12 41.94); --pool: oklch(0.25 0.05 41.53); }
+.g-ash   { --g: oklch(0.29 0.012 17.79); --g-shade: oklch(0.2 0.008 17.79); --g-edge: oklch(0.5 0.09 41.94); --pool: oklch(0.17 0.006 17.79); }
+.g-stone { --g: oklch(0.74 0.008 28.87); --g-shade: oklch(0.6 0.009 28.87); --g-edge: oklch(0.547 0.008 28.87); --pool: oklch(0.63 0.01 28.87); }
+
+.cell:hover .pot { transform: translateY(-3px); }
+.cell:has(input:checked) .pot {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--g-shade), transparent 45%),
+    0 0 0 4px var(--muted), 0 0 0 6.5px var(--primary), var(--shadow);
+}
+.cell:has(input:disabled) .pot { opacity: 0.34; transform: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cell .pot { animation: settle 560ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 11ms + 60ms); }
+  .slot.pot { animation: settle 320ms var(--ease-out) backwards; }
+  @keyframes settle { from { transform: translateY(-10px) scale(1.07); } }
+}
+
+/* ---------- sections ---------- */
+.section { padding-block: clamp(72px, 9vw, 128px) 0; }
+.section__head { margin-bottom: clamp(32px, 4vw, 52px); }
+
+/* features: three facts of a batch */
+.facts { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; }
+.fact {
+  border-radius: var(--radius-panel);
+  padding: clamp(24px, 3.4vw, 44px);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.fact p { max-width: 44ch; }
+.fact--glaze { border: 1px solid var(--border); }
+.fact--forty { background: var(--accent); color: var(--accent-foreground); }
+.fact--forty h3 { color: var(--foreground); }
+.fact--sat {
+  grid-column: 1 / -1; background: var(--muted);
+  display: grid; grid-template-columns: 5fr 7fr; gap: 32px; align-items: center;
+}
+.fact--sat > div { display: flex; flex-direction: column; gap: 14px; }
+
+.tiles {
+  list-style: none; margin: auto 0 0; padding: 28px 0 0;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(8px, 1.4vw, 18px);
+}
+.tiles li { display: flex; flex-direction: column; gap: 10px; font-size: 0.875rem; color: var(--muted-foreground); }
+.tile {
+  --g-lite: color-mix(in oklch, var(--g), var(--background) 30%);
+  position: relative; aspect-ratio: 3 / 5; border-radius: 7px 7px 4px 4px; overflow: hidden;
+  background: var(--speck) center / 160px, linear-gradient(160deg, oklch(0.93 0.02 40.2), oklch(0.86 0.03 40.2));
+  box-shadow: 2px 6px 12px -5px var(--drop);
+}
+.tile::before { /* glaze, dipped and running */
+  content: ""; position: absolute; inset: 0 0 26% 0;
+  background: var(--speck) center / 160px, linear-gradient(165deg, var(--g-lite), var(--g) 42%, var(--g-shade));
+  border-radius: 0 0 46% 30% / 0 0 13% 21%;
+  box-shadow: inset 0 -2px 0 color-mix(in oklch, var(--g-shade), transparent 30%);
+}
+.tile::after { /* hanging hole */
+  content: ""; position: absolute; top: 8%; left: 50%; width: 16%; aspect-ratio: 1; translate: -50% 0;
+  border-radius: 50%; background: var(--background);
+  box-shadow: inset 1px 1px 2px oklch(0.144 0.005 17.79 / 0.35);
+}
+
+.kiln-art { margin-top: auto; padding-top: 20px; width: 100%; max-width: 380px; align-self: center; }
+.kiln-art .k-body { fill: var(--background); stroke: var(--accent-foreground); stroke-width: 2; }
+.kiln-art .k-shelf { fill: var(--accent-foreground); }
+.kiln-art .k-post { fill: oklch(0.38 0.08 41.53 / 0.55); }
+.kiln-art .k-pot { stroke: oklch(0.38 0.08 41.53 / 0.55); stroke-width: 0.8; }
+.kiln-art .c-milk { fill: oklch(0.975 0.006 34.31); }
+.kiln-art .c-blush { fill: var(--accent); }
+.kiln-art .c-clay { fill: var(--primary); }
+.kiln-art .c-ember { fill: var(--accent-foreground); }
+.kiln-art .c-ash { fill: oklch(0.29 0.012 17.79); }
+.kiln-art .c-stone { fill: oklch(0.74 0.008 28.87); }
+.kiln-art .k-handle { fill: none; stroke-width: 2.2; stroke-linecap: round; }
+
+.week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.week li {
+  aspect-ratio: 4 / 5; border-radius: var(--radius-pill); border: 1px solid var(--line-strong);
+  display: grid; place-content: center; justify-items: center; gap: 2px;
+  font: 500 1rem/1.1 "Outfit", system-ui, sans-serif; color: var(--muted-foreground);
+}
+.week .is-sat { background: var(--primary); border-color: transparent; color: var(--primary-foreground); }
+.week small { font: 500 0.75rem/1 "Work Sans", system-ui, sans-serif; }
+
+/* testimonials */
+.quotes { display: grid; grid-template-columns: 7fr 5fr; gap: 28px clamp(32px, 6vw, 88px); align-items: start; }
+.quote { margin: 0; display: flex; flex-direction: column; gap: 18px; }
+.quote blockquote { margin: 0; }
+.quote p { font: italic 400 1.1875rem/1.5 "Work Sans", system-ui, sans-serif; }
+.quote--lead { grid-row: span 2; }
+.quote--lead p { font-weight: 300; font-size: clamp(1.5rem, 2.7vw, 2.25rem); line-height: 1.3; letter-spacing: -0.012em; }
+.quote:nth-child(3) { border-top: 1px solid var(--border); padding-top: 28px; }
+.quote figcaption { display: flex; flex-direction: column; gap: 2px; }
+.who { font: 500 1rem/1.3 "Outfit", system-ui, sans-serif; }
+.role { font-size: 0.9063rem; color: var(--muted-foreground); }
+.sample-note { margin-top: 44px; font-size: 0.8125rem; color: var(--muted-foreground); }
+
+/* pricing */
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.plan {
+  position: relative; border-radius: var(--radius-panel); border: 1px solid var(--border);
+  padding: clamp(24px, 2.6vw, 34px); display: flex; flex-direction: column; gap: 18px;
+  background: var(--background);
+  transition: box-shadow 220ms var(--ease-out);
+}
+.plan--popular { background: var(--accent); border-color: transparent; }
+.plan[data-match] { box-shadow: 0 0 0 2px var(--primary), 0 22px 40px -26px oklch(0.38 0.08 41.53 / 0.6); }
+.badge {
+  position: absolute; top: clamp(24px, 2.6vw, 34px); right: clamp(24px, 2.6vw, 34px);
+  background: var(--primary); color: var(--primary-foreground);
+  font-size: 0.8125rem; font-weight: 500; line-height: 1; padding: 7px 12px; border-radius: var(--radius-pill);
+}
+.shelf {
+  display: flex; align-items: flex-end; gap: 10px; min-height: 66px;
+  padding: 0 6px 10px; border-bottom: 6px solid var(--plank); border-radius: 0 0 3px 3px;
+  margin-top: 36px;
+}
+.plan--popular .shelf { border-bottom-color: var(--plank-warm); }
+.slot {
+  flex: 0 1 44px; min-width: 0; aspect-ratio: 1; border-radius: 50%;
+  border: 1.5px dashed oklch(0.547 0.008 28.87 / 0.6);
+}
+.plan--popular .slot { border-color: oklch(0.38 0.08 41.53 / 0.45); }
+.slot.pot { border: 0; width: auto; flex-basis: calc(var(--s, 0.78) * 56px); translate: none; }
+.plan h3 { font-size: 1.375rem; }
+.price { font: 600 clamp(2.75rem, 4vw, 3.5rem)/1 "Outfit", system-ui, sans-serif; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.perks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.perks li { display: flex; align-items: baseline; gap: 12px; }
+.perks li::before {
+  content: ""; flex: none; width: 9px; height: 9px; border-radius: 50%;
+  border: 2px solid var(--primary); translate: 0 -1px;
+}
+.buy { margin-top: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+.returns { font-size: 0.875rem; color: var(--muted-foreground); text-align: center; }
+.plan--popular .returns { color: var(--accent-foreground); }
+
+/* call to action: a Saturday seat */
+.close { padding-block: clamp(72px, 9vw, 128px); }
+.close__field {
+  background: var(--primary); color: var(--primary-foreground);
+  border-radius: 32px; padding: clamp(28px, 6vw, 80px);
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px clamp(32px, 6vw, 96px); align-items: end;
+}
+.close__copy { display: flex; flex-direction: column; gap: 18px; }
+.close__copy h2 { font-size: clamp(2.25rem, 4.4vw, 3.75rem); max-width: 14ch; }
+.close__copy p { max-width: 40ch; font-size: 1.125rem; }
+.seat-form { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: 18px 12px; align-items: start; }
+.field label { display: block; font-weight: 500; font-size: 0.9375rem; margin-bottom: 8px; }
+.field input {
+  width: 100%; height: 52px; padding: 0 20px;
+  border-radius: var(--radius-pill); border: 2px solid transparent;
+  background: var(--background); color: var(--foreground);
+  font: 400 1rem "Work Sans", system-ui, sans-serif;
+}
+.field input:focus-visible { outline: 3px solid var(--foreground); outline-offset: 2px; }
+.field input[aria-invalid="true"] { border-color: var(--foreground); }
+.help { margin-top: 8px; font-size: 0.875rem; }
+.error {
+  margin-top: 10px; display: inline-block; padding: 6px 12px; border-radius: 10px;
+  background: var(--foreground); color: var(--primary-foreground); font-size: 0.875rem; font-weight: 500;
+}
+.error[hidden] { display: none; }
+.seat-form .btn { grid-column: 1 / -1; justify-self: start; }
+.form-status { grid-column: 1 / -1; min-height: 1.6em; font-weight: 500; }
+
+/* footer */
+.foot { border-top: 1px solid var(--border); padding-block: 48px 40px; font-size: 0.9375rem; }
+.foot__in { display: grid; grid-template-columns: 1.4fr 1fr 1.4fr; gap: 32px; align-items: start; }
+.foot__in > div { display: flex; flex-direction: column; gap: 12px; }
+.foot p { color: var(--muted-foreground); }
+.foot ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.foot ul a { text-decoration: none; }
+.foot ul a:hover { color: var(--primary); text-decoration: underline; }
+.foot__legal { grid-column: 1 / -1; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.8125rem; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1099px) {
+  .kiln { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 24px; }
+  .kiln__title, .kiln__copy, .pots { grid-column: auto; grid-row: auto; }
+  .kiln__title { padding: 12px 0 0; max-width: 16ch; }
+  .kiln__copy { padding: 0; max-width: 620px; }
+  .pots { grid-template-columns: repeat(10, minmax(0, 1fr)); grid-template-rows: none; margin-top: 8px; }
+  .pots__hole { display: none; }
+  .plans { grid-template-columns: minmax(0, 1fr); max-width: 560px; }
+}
+@media (max-width: 899px) {
+  .facts, .quotes { grid-template-columns: minmax(0, 1fr); }
+  .fact--sat { grid-template-columns: minmax(0, 1fr); }
+  .quote--lead { grid-row: auto; }
+  .quote:nth-child(2) { border-top: 1px solid var(--border); padding-top: 28px; }
+  .close__field { grid-template-columns: minmax(0, 1fr); }
+  .foot__in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .foot__in > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 719px) {
+  .nav__links { display: none; }
+  .nav__in { justify-content: space-between; gap: 12px; }
+  .nav .btn--sm { padding: 0 14px; font-size: 0.875rem; }
+  .pots { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .lede { font-size: 1.0625rem; }
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 20px; }
+  .week { gap: 5px; }
+  .week li { font-size: 0.875rem; }
+  .week small { display: none; }
+  .seat-form { grid-template-columns: minmax(0, 1fr) 96px; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="brand" href="#top" aria-label="Ollaria, back to top"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">Ollaria</span></a>
+    <nav aria-label="Main">
+      <ul class="nav__links">
+        <li><a href="#batch">The batch</a></li>
+        <li><a href="#words">Customers</a></li>
+        <li><a href="#plans">Plans</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--ghost btn--sm" href="#saturday">Book a Saturday seat</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="wrap kiln">
+      <h1 class="kiln__title" id="hero-title">Handmade stoneware, fired in small batches.</h1>
+      <div class="kiln__copy">
+        <p class="lede">This is one batch: forty pieces in glazes we mix ourselves. Pick the ones you want to keep.</p>
+        <p class="tally" id="tally" aria-live="polite">Nothing picked yet. Plans hold 2, 4 or 6 pieces.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#plans">Choose a plan</a>
+          <a class="btn btn--ghost" href="#saturday">Book a Saturday seat</a>
+        </div>
+      </div>
+      <div class="pots" id="pots" role="group" aria-label="Pieces in this batch of 40" aria-describedby="tally">
+        <span class="pots__hole" aria-hidden="true"></span>
+        <label class="cell"><input type="checkbox" name="piece" value="1"><span class="pot f-bowl g-clay" style="--s:0.762;--dx:0.3%;--dy:-1.2%;--i:0"></span><span class="sr">Piece 1, Clay glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="2"><span class="pot f-cup g-clay" style="--s:0.578;--dx:-0.3%;--dy:-0.1%;--i:1;--r:2deg"></span><span class="sr">Piece 2, Clay glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="3"><span class="pot f-cup g-stone" style="--s:0.593;--dx:1.6%;--dy:-0.2%;--i:2;--r:31deg"></span><span class="sr">Piece 3, Stone glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="4"><span class="pot f-bottle g-blush" style="--s:0.474;--dx:2.3%;--dy:0.1%;--i:3"></span><span class="sr">Piece 4, Blush glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="5"><span class="pot f-cup g-ash" style="--s:0.532;--dx:-1.5%;--dy:2.0%;--i:4;--r:319deg"></span><span class="sr">Piece 5, Ash glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="6"><span class="pot f-cup g-milk" style="--s:0.578;--dx:0.1%;--dy:1.7%;--i:5;--r:58deg"></span><span class="sr">Piece 6, Milk glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="7"><span class="pot f-plate g-milk" style="--s:0.931;--dx:1.9%;--dy:2.4%;--i:6"></span><span class="sr">Piece 7, Milk glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="8"><span class="pot f-bottle g-blush" style="--s:0.470;--dx:-1.2%;--dy:1.6%;--i:7"></span><span class="sr">Piece 8, Blush glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="9"><span class="pot f-bowl g-blush" style="--s:0.740;--dx:2.0%;--dy:-0.1%;--i:8"></span><span class="sr">Piece 9, Blush glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="10"><span class="pot f-plate g-milk" style="--s:0.873;--dx:-1.9%;--dy:2.8%;--i:9"></span><span class="sr">Piece 10, Milk glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="11"><span class="pot f-bowl g-ember" style="--s:0.760;--dx:-1.3%;--dy:-2.0%;--i:10"></span><span class="sr">Piece 11, Ember glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="12"><span class="pot f-bowl g-ember" style="--s:0.750;--dx:-0.5%;--dy:1.1%;--i:11"></span><span class="sr">Piece 12, Ember glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="13"><span class="pot f-bowl g-milk" style="--s:0.756;--dx:0.5%;--dy:-0.4%;--i:12"></span><span class="sr">Piece 13, Milk glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="14"><span class="pot f-bowl g-clay" style="--s:0.781;--dx:1.8%;--dy:-0.6%;--i:13"></span><span class="sr">Piece 14, Clay glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="15"><span class="pot f-bowl g-milk" style="--s:0.726;--dx:-0.9%;--dy:1.4%;--i:14"></span><span class="sr">Piece 15, Milk glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="16"><span class="pot f-cup g-ash" style="--s:0.542;--dx:-1.7%;--dy:0.1%;--i:15;--r:20deg"></span><span class="sr">Piece 16, Ash glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="17"><span class="pot f-cup g-ash" style="--s:0.529;--dx:0.0%;--dy:-2.8%;--i:16;--r:197deg"></span><span class="sr">Piece 17, Ash glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="18"><span class="pot f-bowl g-ember" style="--s:0.748;--dx:2.4%;--dy:-1.0%;--i:17"></span><span class="sr">Piece 18, Ember glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="19"><span class="pot f-bowl g-milk" style="--s:0.752;--dx:-2.0%;--dy:-2.2%;--i:18"></span><span class="sr">Piece 19, Milk glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="20"><span class="pot f-plate g-ember" style="--s:0.920;--dx:-1.6%;--dy:1.6%;--i:19"></span><span class="sr">Piece 20, Ember glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="21"><span class="pot f-cup g-clay" style="--s:0.532;--dx:-2.6%;--dy:2.0%;--i:20;--r:185deg"></span><span class="sr">Piece 21, Clay glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="22"><span class="pot f-bottle g-ember" style="--s:0.511;--dx:-1.4%;--dy:-1.5%;--i:21"></span><span class="sr">Piece 22, Ember glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="23"><span class="pot f-bowl g-milk" style="--s:0.770;--dx:-0.1%;--dy:-1.5%;--i:22"></span><span class="sr">Piece 23, Milk glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="24"><span class="pot f-plate g-stone" style="--s:0.919;--dx:1.9%;--dy:-2.7%;--i:23"></span><span class="sr">Piece 24, Stone glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="25"><span class="pot f-cup g-ember" style="--s:0.594;--dx:-0.5%;--dy:-2.6%;--i:24;--r:344deg"></span><span class="sr">Piece 25, Ember glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="26"><span class="pot f-bowl g-stone" style="--s:0.748;--dx:-0.3%;--dy:-0.9%;--i:25"></span><span class="sr">Piece 26, Stone glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="27"><span class="pot f-cup g-ash" style="--s:0.581;--dx:2.9%;--dy:-1.2%;--i:26;--r:220deg"></span><span class="sr">Piece 27, Ash glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="28"><span class="pot f-bottle g-ash" style="--s:0.518;--dx:-0.8%;--dy:-2.6%;--i:27"></span><span class="sr">Piece 28, Ash glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="29"><span class="pot f-plate g-clay" style="--s:0.892;--dx:1.0%;--dy:-2.4%;--i:28"></span><span class="sr">Piece 29, Clay glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="30"><span class="pot f-bowl g-stone" style="--s:0.776;--dx:-2.6%;--dy:2.8%;--i:29"></span><span class="sr">Piece 30, Stone glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="31"><span class="pot f-bottle g-blush" style="--s:0.471;--dx:1.9%;--dy:2.7%;--i:30"></span><span class="sr">Piece 31, Blush glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="32"><span class="pot f-plate g-milk" style="--s:0.899;--dx:-0.7%;--dy:1.9%;--i:31"></span><span class="sr">Piece 32, Milk glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="33"><span class="pot f-plate g-clay" style="--s:0.873;--dx:-0.7%;--dy:0.2%;--i:32"></span><span class="sr">Piece 33, Clay glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="34"><span class="pot f-plate g-clay" style="--s:0.866;--dx:0.4%;--dy:-0.2%;--i:33"></span><span class="sr">Piece 34, Clay glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="35"><span class="pot f-bottle g-ash" style="--s:0.496;--dx:-0.9%;--dy:-2.6%;--i:34"></span><span class="sr">Piece 35, Ash glaze bottle</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="36"><span class="pot f-bowl g-ash" style="--s:0.725;--dx:-0.9%;--dy:1.2%;--i:35"></span><span class="sr">Piece 36, Ash glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="37"><span class="pot f-bowl g-blush" style="--s:0.726;--dx:1.1%;--dy:-0.1%;--i:36"></span><span class="sr">Piece 37, Blush glaze bowl</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="38"><span class="pot f-plate g-blush" style="--s:0.870;--dx:1.4%;--dy:0.7%;--i:37"></span><span class="sr">Piece 38, Blush glaze plate</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="39"><span class="pot f-cup g-milk" style="--s:0.564;--dx:-1.8%;--dy:-0.2%;--i:38;--r:325deg"></span><span class="sr">Piece 39, Milk glaze cup</span></label>
+        <label class="cell"><input type="checkbox" name="piece" value="40"><span class="pot f-bowl g-stone" style="--s:0.787;--dx:-2.7%;--dy:-0.1%;--i:39"></span><span class="sr">Piece 40, Stone glaze bowl</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="batch" aria-labelledby="batch-title">
+    <div class="wrap">
+      <div class="section__head"><h2 id="batch-title">What goes into a batch</h2></div>
+      <div class="facts">
+        <article class="fact fact--glaze">
+          <h3>Glazes mixed in-house</h3>
+          <p>We mix every glaze here in the studio. The colors on your table started as powders on our bench.</p>
+          <ul class="tiles" aria-label="Our glazes">
+            <li><span class="tile g-milk" aria-hidden="true"></span>Milk</li>
+            <li><span class="tile g-blush" aria-hidden="true"></span>Blush</li>
+            <li><span class="tile g-clay" aria-hidden="true"></span>Clay</li>
+            <li><span class="tile g-ember" aria-hidden="true"></span>Ember</li>
+            <li><span class="tile g-ash" aria-hidden="true"></span>Ash</li>
+            <li><span class="tile g-stone" aria-hidden="true"></span>Stone</li>
+          </ul>
+        </article>
+        <article class="fact fact--forty">
+          <h3>Fired in batches of 40</h3>
+          <p>Forty pieces share one firing. They come out of the kiln as a family: alike, never identical.</p>
+          <svg class="kiln-art" viewBox="0 0 360 262" role="img" aria-label="A kiln loaded with four shelves of ten pieces, forty in all">
+            <path class="k-body" d="M22 252 V98 Q180 -8 338 98 V252 Z"/>
+            <rect class="k-pot c-ash" x="45.5" y="115" width="25" height="5" rx="2"/><rect class="k-pot c-ash" x="46.5" y="110" width="23" height="5" rx="2"/>
+            <path class="k-pot c-ash" d="M74.1 105 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-handle" stroke="currentColor" d="M118.2 105 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-blush" x="105.2" y="101" width="14" height="19" rx="2"/>
+            <path class="k-pot c-stone" d="M136.8 91 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-pot c-clay" d="M155.4 105 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-ash" d="M182.5 105 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-handle" stroke="currentColor" d="M226.6 105 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-ash" x="213.6" y="101" width="14" height="19" rx="2"/>
+            <path class="k-pot c-milk" d="M236.7 105 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <rect class="k-pot c-ember" x="262.3" y="115" width="25" height="5" rx="2"/><rect class="k-pot c-ember" x="263.3" y="110" width="23" height="5" rx="2"/>
+            <path class="k-pot c-blush" d="M290.9 105 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <rect class="k-shelf" x="36" y="120" width="288" height="4" rx="1"/>
+            <rect class="k-post" x="42" y="124" width="5" height="36"/><rect class="k-post" x="313" y="124" width="5" height="36"/>
+            <path class="k-pot c-stone" d="M47 145 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <rect class="k-pot c-milk" x="72.6" y="155" width="25" height="5" rx="2"/><rect class="k-pot c-milk" x="73.6" y="150" width="23" height="5" rx="2"/>
+            <rect class="k-pot c-milk" x="99.7" y="155" width="25" height="5" rx="2"/><rect class="k-pot c-milk" x="100.7" y="150" width="23" height="5" rx="2"/>
+            <path class="k-pot c-blush" d="M128.3 145 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-milk" d="M155.4 145 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <rect class="k-pot c-ash" x="181" y="155" width="25" height="5" rx="2"/><rect class="k-pot c-ash" x="182" y="150" width="23" height="5" rx="2"/>
+            <path class="k-pot c-ember" d="M209.6 145 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-milk" d="M245.2 131 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-handle" stroke="currentColor" d="M280.8 145 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-stone" x="267.8" y="141" width="14" height="19" rx="2"/>
+            <path class="k-pot c-ash" d="M290.9 145 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <rect class="k-shelf" x="36" y="160" width="288" height="4" rx="1"/>
+            <rect class="k-post" x="42" y="164" width="5" height="36"/><rect class="k-post" x="313" y="164" width="5" height="36"/>
+            <path class="k-pot c-clay" d="M47 185 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-clay" d="M82.6 171 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-pot c-stone" d="M109.7 171 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-handle" stroke="currentColor" d="M145.3 185 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-milk" x="132.3" y="181" width="14" height="19" rx="2"/>
+            <path class="k-pot c-stone" d="M163.9 171 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-handle" stroke="currentColor" d="M199.5 185 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-blush" x="186.5" y="181" width="14" height="19" rx="2"/>
+            <rect class="k-pot c-ember" x="208.1" y="195" width="25" height="5" rx="2"/><rect class="k-pot c-ember" x="209.1" y="190" width="23" height="5" rx="2"/>
+            <path class="k-handle" stroke="currentColor" d="M253.7 185 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-milk" x="240.7" y="181" width="14" height="19" rx="2"/>
+            <path class="k-handle" stroke="currentColor" d="M280.8 185 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-ember" x="267.8" y="181" width="14" height="19" rx="2"/>
+            <path class="k-handle" stroke="currentColor" d="M307.9 185 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-clay" x="294.9" y="181" width="14" height="19" rx="2"/>
+            <rect class="k-shelf" x="36" y="200" width="288" height="4" rx="1"/>
+            <rect class="k-post" x="42" y="204" width="5" height="36"/><rect class="k-post" x="313" y="204" width="5" height="36"/>
+            <path class="k-handle" stroke="currentColor" d="M64 225 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-clay" x="51" y="221" width="14" height="19" rx="2"/>
+            <path class="k-handle" stroke="currentColor" d="M91.1 225 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-clay" x="78.1" y="221" width="14" height="19" rx="2"/>
+            <path class="k-handle" stroke="currentColor" d="M118.2 225 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-clay" x="105.2" y="221" width="14" height="19" rx="2"/>
+            <path class="k-pot c-milk" d="M136.8 211 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <path class="k-handle" stroke="currentColor" d="M172.4 225 q6 0 6 5 q0 5 -6 5"/><rect class="k-pot c-blush" x="159.4" y="221" width="14" height="19" rx="2"/>
+            <rect class="k-pot c-ember" x="181" y="235" width="25" height="5" rx="2"/><rect class="k-pot c-ember" x="182" y="230" width="23" height="5" rx="2"/>
+            <path class="k-pot c-ember" d="M209.6 225 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-blush" d="M236.7 225 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-ash" d="M263.8 225 h22 q-1.5 13 -11 15 q-9.5 -2 -11 -15 z"/>
+            <path class="k-pot c-milk" d="M299.4 211 h5 v7 q8 3 8 11 v9 q0 2 -2 2 h-17 q-2 0 -2 -2 v-9 q0 -8 8 -11 z"/>
+            <rect class="k-shelf" x="36" y="240" width="288" height="4" rx="1"/>
+          </svg>
+        </article>
+        <article class="fact fact--sat">
+          <div>
+            <h3>Workshops every Saturday</h3>
+            <p>Spend a Saturday in the studio with your hands in clay. Book a seat and we’ll keep a place at the table for you.</p>
+          </div>
+          <ol class="week" aria-label="The studio week">
+            <li>Mon</li><li>Tue</li><li>Wed</li><li>Thu</li><li>Fri</li>
+            <li class="is-sat"><span>Sat</span><small>Workshop</small><span class="sr">, workshop day</span></li>
+            <li>Sun</li>
+          </ol>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="words" aria-labelledby="words-title">
+    <div class="wrap">
+      <div class="section__head"><h2 id="words-title">What customers tell us</h2></div>
+      <div class="quotes">
+        <figure class="quote quote--lead">
+          <blockquote><p>“None of the bowls in my set match exactly, and that is why I keep reaching for them.”</p></blockquote>
+          <figcaption><span class="who">Marisol Vega</span><span class="role">Ordered the Complete plan</span></figcaption>
+        </figure>
+        <figure class="quote">
+          <blockquote><p>“I came for one Saturday workshop and booked another before I left.”</p></blockquote>
+          <figcaption><span class="who">Wren Okafor</span><span class="role">Saturday workshop guest</span></figcaption>
+        </figure>
+        <figure class="quote">
+          <blockquote><p>“You can see where the glaze pooled and thinned. It looks like someone cared.”</p></blockquote>
+          <figcaption><span class="who">Teodor Lind</span><span class="role">Ordered the Essential plan</span></figcaption>
+        </figure>
+      </div>
+      <p class="sample-note">Sample quotes for this layout. Replace them with real customer words before launch.</p>
+    </div>
+  </section>
+
+  <section class="section" id="plans" aria-labelledby="plans-title">
+    <div class="wrap">
+      <div class="section__head"><h2 id="plans-title">Choose how many pieces come home</h2></div>
+      <div class="plans">
+        <article class="plan" data-plan="essential" aria-labelledby="plan-essential">
+          <div class="shelf" aria-hidden="true"><span class="slot"></span><span class="slot"></span></div>
+          <h3 id="plan-essential">Essential</h3>
+          <p class="price">$39</p>
+          <ul class="perks">
+            <li>2 products of your choice</li>
+            <li>Free shipping</li>
+            <li>30-day returns</li>
+          </ul>
+          <div class="buy">
+            <a class="btn btn--primary" href="#top">Choose Essential</a>
+            <p class="returns">Free returns for 30 days</p>
+          </div>
+        </article>
+        <article class="plan plan--popular" data-plan="complete" aria-labelledby="plan-complete">
+          <p class="badge">Most popular</p>
+          <div class="shelf" aria-hidden="true"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span></div>
+          <h3 id="plan-complete">Complete</h3>
+          <p class="price">$79</p>
+          <ul class="perks">
+            <li>4 products</li>
+            <li>24-hour shipping</li>
+            <li>Gift wrapping</li>
+          </ul>
+          <div class="buy">
+            <a class="btn btn--primary" href="#top">Choose Complete</a>
+            <p class="returns">Free returns for 30 days</p>
+          </div>
+        </article>
+        <article class="plan" data-plan="premium" aria-labelledby="plan-premium">
+          <div class="shelf" aria-hidden="true"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span></div>
+          <h3 id="plan-premium">Premium</h3>
+          <p class="price">$129</p>
+          <ul class="perks">
+            <li>6 products</li>
+            <li>Limited edition included</li>
+            <li>Express shipping</li>
+          </ul>
+          <div class="buy">
+            <a class="btn btn--primary" href="#top">Choose Premium</a>
+            <p class="returns">Free returns for 30 days</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="close" id="saturday" aria-labelledby="sat-title">
+    <div class="wrap">
+      <div class="close__field">
+        <div class="close__copy">
+          <h2 id="sat-title">Spend a Saturday in the studio</h2>
+          <p>Workshops run every Saturday. Tell us how many seats you need and we’ll confirm by email.</p>
+        </div>
+        <form class="seat-form" id="seat-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required aria-describedby="email-help email-error">
+            <p class="help" id="email-help">Your confirmation goes here.</p>
+            <p class="error" id="email-error" hidden>Enter an email address so we can confirm your seat.</p>
+          </div>
+          <div class="field">
+            <label for="seats">Seats</label>
+            <input id="seats" name="seats" type="number" min="1" value="1" inputmode="numeric" required>
+          </div>
+          <button class="btn btn--light" type="submit">Book a Saturday seat</button>
+          <p class="form-status" id="form-status" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <div>
+      <a class="brand" href="#top" aria-label="Ollaria, back to top"><span class="brand__mark" aria-hidden="true"></span><span class="brand__name">Ollaria</span></a>
+      <p>Handmade stoneware, fired in small batches.</p>
+    </div>
+    <nav aria-label="Footer">
+      <ul>
+        <li><a href="#batch">The batch</a></li>
+        <li><a href="#plans">Plans</a></li>
+        <li><a href="#saturday">Workshops</a></li>
+      </ul>
+    </nav>
+    <p>Fired in batches of 40. Glazes mixed in-house. Free returns for 30 days.</p>
+    <p class="foot__legal">© 2026 Ollaria</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const boxes = [...document.querySelectorAll('#pots input')];
+  const tally = document.getElementById('tally');
+  const plans = [...document.querySelectorAll('.plan')];
+  const lines = [
+    'Nothing picked yet. Plans hold 2, 4 or 6 pieces.',
+    '1 piece picked. One more fills Essential, $39.',
+    '2 pieces picked: that’s Essential, $39.',
+    '3 pieces picked. One more fills Complete, $79.',
+    '4 pieces picked: that’s Complete, $79.',
+    '5 pieces picked. One more fills Premium, $129.',
+    '6 pieces picked: that’s Premium, $129, our largest plan.'
+  ];
+  document.getElementById('pots').addEventListener('change', () => {
+    const picked = boxes.filter((b) => b.checked).map((b) => b.nextElementSibling);
+    const n = picked.length;
+    boxes.forEach((b) => { b.disabled = !b.checked && n >= 6; });
+    tally.textContent = lines[n];
+    const match = n === 0 ? '' : n <= 2 ? 'essential' : n <= 4 ? 'complete' : 'premium';
+    plans.forEach((plan) => {
+      plan.toggleAttribute('data-match', plan.dataset.plan === match);
+      plan.querySelectorAll('.slot').forEach((slot, i) => {
+        const src = picked[i];
+        slot.className = src ? 'slot ' + src.className : 'slot';
+        slot.style.cssText = src ? src.style.cssText : '';
+      });
+    });
+  });
+
+  const form = document.getElementById('seat-form');
+  const email = form.elements.email;
+  const error = document.getElementById('email-error');
+  const status = document.getElementById('form-status');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = email.value.trim() !== '' && email.checkValidity();
+    email.setAttribute('aria-invalid', String(!ok));
+    error.hidden = ok;
+    if (!ok) { status.textContent = ''; email.focus(); return; }
+    const btn = form.querySelector('button');
+    btn.setAttribute('aria-busy', 'true');
+    btn.textContent = 'Booking your seat…';
+    setTimeout(() => {
+      btn.removeAttribute('aria-busy');
+      btn.textContent = 'Book a Saturday seat';
+      status.textContent = 'Thanks. We’ll email you to confirm your Saturday seat.';
+      form.reset();
+    }, 700);
+  });
+})();
+</script>
+</body>
+</html>

@@ -13,6 +13,9 @@ export type AiIslandProps = {
   html: string;
   /** Compiled CSS of the document's AI blocks (src/lib/ai/render/worker.ts). */
   css: string;
+  /** Page mode: the block is a section of a page, styled by `pageCss` (the screen's page stylesheet). */
+  page?: boolean;
+  pageCss?: string;
   /** Theme variables of the doc in `mode` (`compileThemeVars`). Live: a palette or mode change repaints. */
   vars: Readonly<Record<string, string>>;
   mode: "light" | "dark";
@@ -48,7 +51,7 @@ export type AiIslandProps = {
  * height, and keeps a compensated 24 px margin so shadows are not clipped. Renders nothing when there is no preview
  * origin (the feature is then not offered at all).
  */
-export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, measureWidths, edit, onEditEnd, className }: AiIslandProps) {
+export function AiIsland({ blockId, html, css, page, pageCss, vars, mode, fontsHref, editable, lang, title, onSelect, onTextEdit, onNavigate, onMeasure, measureWidths, edit, onEditEnd, className }: AiIslandProps) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [height, setHeight] = useState(0);
@@ -79,11 +82,11 @@ export function AiIsland({ blockId, html, css, vars, mode, fontsHref, editable, 
   const widthsKey = measureWidths?.join(",") ?? "";
   useEffect(() => {
     if (!ready) return;
-    post({ type: "render", v: 1, blockId, html, css, vars: pinned, mode, fontsHref, editable, lang });
+    post({ type: "render", v: 1, blockId, html, css, ...(page && { page: true, pageCss: pageCss ?? "" }), vars: pinned, mode, fontsHref, editable, lang });
     if (widthsKey) post({ type: "measure", v: 1, widths: widthsKey.split(",").map(Number) });
     // `vars`/`mode`/`fontsHref` are sent by the theme effect below without re-inserting the HTML.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, blockId, html, css, editable, lang, widthsKey]);
+  }, [ready, blockId, html, css, page, pageCss, editable, lang, widthsKey]);
 
   // Theme: palette, recipe tokens and light/dark repaint live.
   useEffect(() => {

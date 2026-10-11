@@ -112,8 +112,9 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
   const derived = useMemo(() => (available && screenId && blocks ? deriveDesign(doc, screenId) : null), [available, doc, screenId, blocks]);
   const tokens = useMemo(() => {
     if (!available || !blocks) return [];
+    // Page-mode sections bring their own CSS: their class names are not Tailwind's (a `container` of theirs is not Tailwind's).
     return Object.entries(blocks).flatMap(([id, block]) =>
-      block.active ? (block.surfaceClasses ? classTokens(surfaceHtml(id, block.surfaceClasses)) : classTokens(block.html)) : [],
+      block.active && block.mode !== "page" ? (block.surfaceClasses ? classTokens(surfaceHtml(id, block.surfaceClasses)) : classTokens(block.html)) : [],
     );
   }, [available, blocks]);
   const css = useAiCss(tokens);
@@ -145,7 +146,8 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
         );
         continue;
       }
-      if (!block.html || !css?.covers(classTokens(block.html))) continue;
+      const page = block.mode === "page";
+      if (!block.html || !css || (!page && !css.covers(classTokens(block.html)))) continue;
       replace.set(
         id,
         <AiBlockIsland
@@ -154,6 +156,7 @@ export function useAiBlocks({ doc, screen, mode, editable, selectedId, onSelect,
           label={labelOf(id)}
           html={block.html}
           css={css.css}
+          {...(page && { page: true, pageCss: screen.aiRender?.pageCss ?? "" })}
           vars={vars}
           mode={mode}
           fontsHref={fontsHref}

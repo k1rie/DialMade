@@ -2,7 +2,7 @@
 // no env). Everything the user wrote (names, labels, notes, copy, the brief, a request) travels in these bodies as
 // DATA: the prompt builder of @dialmade/ai-render escapes it, and the answer is only HTML that the client sanitizes.
 import { MAX_STYLE_LENGTH, MAX_STYLE_REFERENCES, type DirectionStyle } from "@dialmade/ai-render";
-import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, AiContextSchema, MAX_AI_REQUEST_LENGTH, type AiContext, type AiRenderTier } from "@dialmade/doc";
+import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, AiContextSchema, MAX_AI_BLOCK_BYTES, MAX_AI_PAGE_CSS_BYTES, MAX_AI_REQUEST_LENGTH, type AiContext, type AiRenderTier } from "@dialmade/doc";
 import { z } from "zod";
 import type { AiApiError, AiApiErrorCode } from "../api";
 import { AI_SESSION_SCREENS } from "../config";
@@ -57,6 +57,13 @@ export const RenderBlockSchema = z.strictObject({
   container: z.literal(true).optional(),
   h1: z.literal(true).optional(),
   draft: z.array(Line(200)).max(40),
+  /** Page mode: fixed values the section uses as given (plan names and prices). */
+  data: z
+    .strictObject({
+      plans: z.array(z.strictObject({ name: Line(60), price: z.number().min(0).max(1_000_000), highlighted: z.boolean() })).max(6).optional(),
+      recurring: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export const RenderScreenSchema = z.strictObject({
@@ -67,6 +74,8 @@ export const RenderScreenSchema = z.strictObject({
   locale: z.enum(["es", "en"]),
   screens: z.array(z.strictObject({ id: Id, name: Line(80) })).max(24),
   blocks: z.array(RenderBlockSchema).min(1).max(MAX_RENDER_BLOCKS),
+  /** «page»: designed as one page from the brief and the outline (@dialmade/ai-render pagePrompt). */
+  mode: z.literal("page").optional(),
 });
 
 export const RenderDirectionSchema = z.strictObject({
@@ -164,8 +173,10 @@ export const RenderBlockBodySchema = z.strictObject({
   direction: RenderDirectionSchema,
   screen: RenderScreenSchema.omit({ blocks: true }),
   block: RenderBlockSchema,
-  /** Current sanitized HTML of the block. */
-  html: z.string().max(16 * 1024),
+  /** Current sanitized HTML of the block (a page-mode section can be larger: it carries its SVG and rules). */
+  html: z.string().max(MAX_AI_BLOCK_BYTES),
+  /** Page mode: the screen's page stylesheet, so the section may reuse its classes. */
+  pageCss: z.string().max(MAX_AI_PAGE_CSS_BYTES).optional(),
   action: z.discriminatedUnion("kind", [
     z.strictObject({ kind: z.literal("reroll"), seed: z.number().int().min(0).max(0xffffffff) }),
     z.strictObject({ kind: z.literal("change"), request: z.string().min(1).max(MAX_AI_REQUEST_LENGTH), target: z.strictObject({ text: Line(200) }).optional() }),

@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brisa. Tu barbería, sin llamadas</title>
+<meta name="description" content="Brisa es la agenda de tu barbería: citas por silla, recordatorios por WhatsApp y cobros. Gratis hasta 5 personas, sin tarjeta.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.147 0.004 164.84);
+  --primary: oklch(0.511 0.086 186.39);
+  --primary-foreground: oklch(1 0 0);
+  --cta: oklch(0.608 0.133 68.71);
+  --cta-foreground: oklch(0.147 0.004 164.84);
+  --accent: oklch(0.95 0.02 189.21);
+  --accent-foreground: oklch(0.394 0.058 185.04);
+  --muted: oklch(0.971 0.003 174.48);
+  --muted-foreground: oklch(0.546 0.004 219.56);
+  --border: oklch(0.922 0.003 174.48);
+
+  /* Derived shades of the same hues only */
+  --primary-ink: oklch(0.43 0.075 186.39);
+  --cta-hover: oklch(0.665 0.13 68.71);
+  --cta-ink: oklch(0.47 0.11 68.71);
+  --rule: color-mix(in oklch, var(--primary) 14%, var(--background));
+  --rule-strong: color-mix(in oklch, var(--primary) 30%, var(--background));
+  --body-ink: color-mix(in oklch, var(--foreground) 82%, var(--background));
+  --board: oklch(0.335 0.055 186.39);
+  --board-groove: oklch(0.295 0.05 186.39);
+  --board-letter: oklch(0.975 0.008 186.39);
+  --board-letter-2: oklch(0.84 0.03 186.39);
+  --frame: oklch(0.21 0.006 164.84);
+  --shadow: oklch(0.147 0.004 164.84 / 0.2);
+  --shadow-soft: oklch(0.147 0.004 164.84 / 0.07);
+
+  --gutter: clamp(16px, 4vw, 32px);
+  --wrap: min(100vw - 2 * var(--gutter), 1240px);
+  --r-tag: 4px; --r-chip: 8px; --r-control: 10px; --r-object: 12px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --i-chat: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4a8 8 0 1 1-3.9 15L4 20l1.1-3.9A8 8 0 0 1 12 4z'/%3E%3C/svg%3E");
+  --i-double: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12.5l4.5 4.5L15 8M10.5 16.5l.5.5L19.5 8'/%3E%3C/svg%3E");
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: light; scrollbar-color: var(--rule-strong) var(--muted); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Inter", system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-feature-settings: "cv05", "cv08";
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  caret-color: var(--primary);
+}
+::selection { background: var(--accent); color: var(--accent-foreground); }
+a { color: inherit; text-underline-offset: 0.22em; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
+h1, h2, h3, p, figure, blockquote { margin: 0; }
+.sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.wrap { width: min(100% - 2 * var(--gutter), 1240px); margin-inline: auto; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; padding: 0 22px; border: 0; border-radius: var(--r-control);
+  font: 600 0.9375rem/1 "Inter", system-ui, sans-serif; letter-spacing: -0.005em;
+  white-space: nowrap; text-decoration: none; cursor: pointer;
+  transition: background-color 0.18s var(--ease-out), transform 0.12s var(--ease-out), box-shadow 0.18s var(--ease-out);
+}
+.btn:active { transform: translateY(1px); }
+.btn-cta {
+  background: var(--cta); color: var(--cta-foreground);
+  box-shadow: inset 0 -2px 0 oklch(0.5 0.12 68.71 / 0.55), 0 1px 2px var(--shadow-soft);
+}
+.btn-cta:hover { background: var(--cta-hover); }
+.btn-sm { height: 40px; padding: 0 16px; font-size: 0.875rem; }
+
+/* Navbar */
+.top { background: var(--muted); }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 72px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.375rem; letter-spacing: -0.035em; text-decoration: none; }
+.brand svg { flex: none; }
+.nav-links { display: flex; align-items: center; gap: 28px; margin: 0; padding: 0; list-style: none; font-size: 0.9375rem; font-weight: 500; }
+.nav-links a { text-decoration: none; color: var(--body-ink); transition: color 0.15s; }
+.nav-links a:hover { color: var(--primary-ink); }
+.nav-right { display: flex; align-items: center; gap: 28px; }
+
+/* Hero */
+.hero {
+  --bleed: max(0px, calc((100vw - var(--wrap)) / 2));
+  --rail: 64px; --head: 58px; --slot: 52px;
+  background: var(--muted);
+  padding: 28px 0 64px;
+  overflow-x: clip;
+}
+.hero-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 40px; align-items: center; }
+.hero-copy { grid-column: 1 / span 5; padding-bottom: 28px; }
+.hero h1 {
+  font-size: clamp(3rem, 1.4rem + 4.4vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 720;
+  text-wrap: balance;
+}
+.hero-sub { margin-top: 22px; font-size: 1.25rem; line-height: 1.45; color: var(--body-ink); max-width: 25ch; text-wrap: pretty; }
+.signup { margin-top: 32px; max-width: 30rem; }
+.signup label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; }
+.signup-row { display: flex; gap: 8px; }
+.signup input {
+  flex: 1; min-width: 0; height: 48px; padding: 0 14px;
+  border: 1px solid var(--muted-foreground); border-radius: var(--r-control);
+  background: var(--background); color: var(--foreground);
+  font: 400 1rem "Inter", system-ui, sans-serif;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.signup input::placeholder { color: var(--muted-foreground); }
+.signup input:hover { border-color: var(--body-ink); }
+.signup input:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--rule-strong); }
+.signup-error { display: none; margin-top: 8px; font-size: 0.875rem; font-weight: 500; color: var(--cta-ink); }
+.signup:has(input:user-invalid) input { border-color: var(--cta-ink); }
+.signup:has(input:user-invalid) .signup-error { display: block; }
+
+/* The week sheet */
+.sheet-fig { grid-column: 6 / -1; margin-right: calc(-1 * var(--bleed)); min-width: 0; }
+.tabs { display: flex; gap: 4px; border: 0; margin: 0; padding: 0 0 0 calc(var(--rail) - 4px); min-inline-size: 0; position: relative; z-index: 2; }
+.tabs input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.tabs label {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  padding: 9px 14px 8px; margin-bottom: -1px;
+  font-size: 0.875rem; font-weight: 600; color: var(--muted-foreground);
+  background: color-mix(in oklch, var(--border) 55%, var(--muted));
+  border: 1px solid var(--border); border-bottom: 0;
+  border-radius: var(--r-chip) var(--r-chip) 0 0;
+  cursor: pointer; user-select: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+.tabs label:hover { color: var(--foreground); }
+.tabs label small { font-size: 0.6875rem; font-weight: 600; color: var(--cta-ink); }
+.tabs input:checked + label { background: var(--background); color: var(--foreground); padding-bottom: 9px; }
+.tabs input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.sheet-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--rail) repeat(3, minmax(0, 1fr));
+  grid-template-rows: var(--head) repeat(8, var(--slot)) auto;
+  background: var(--background);
+  border: 1px solid var(--border); border-right: 0;
+  border-radius: 0 0 0 var(--r-object);
+  padding-right: var(--bleed);
+  box-shadow: 0 1px 2px var(--shadow-soft), 0 28px 56px -28px var(--shadow);
+}
+.ruling {
+  grid-column: 1 / -1; grid-row: 2 / 10;
+  margin-right: calc(-1 * var(--bleed));
+  background-image:
+    linear-gradient(var(--rule-strong) 1px, transparent 1px),
+    linear-gradient(var(--rule) 1px, transparent 1px);
+  background-size: 100% calc(var(--slot) * 2), 100% var(--slot);
+  pointer-events: none;
+}
+.corner { grid-column: 1; grid-row: 1; }
+.chair { grid-row: 1; padding: 11px 12px 0; border-left: 1px solid var(--rule); line-height: 1.2; min-width: 0; }
+.chair span { display: block; font-size: 0.75rem; color: var(--muted-foreground); font-weight: 500; }
+.chair b { display: block; font-size: 0.9375rem; font-weight: 650; margin-top: 2px; }
+.lane { grid-row: 2 / 10; border-left: 1px solid var(--rule); pointer-events: none; }
+.lane-end { border-right: 1px solid var(--rule); }
+.rail { grid-column: 1; grid-row: 2 / 10; display: grid; grid-template-rows: repeat(8, var(--slot)); font-variant-numeric: tabular-nums; }
+.rail span { padding: 6px 0 0 14px; font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); }
+.rail span:nth-child(odd) { color: var(--primary-ink); font-weight: 650; }
+
+.day {
+  display: none;
+  grid-column: 2 / 5; grid-row: 2 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(8, var(--slot)) auto;
+  margin: 0; padding: 0; list-style: none;
+  position: relative;
+}
+.sheet:has(#d-lun:checked) .day-lun,
+.sheet:has(#d-mar:checked) .day-mar,
+.sheet:has(#d-mie:checked) .day-mie,
+.sheet:has(#d-jue:checked) .day-jue,
+.sheet:has(#d-vie:checked) .day-vie,
+.sheet:has(#d-sab:checked) .day-sab { display: grid; }
+
+.b {
+  grid-column: var(--c); grid-row: var(--r) / span var(--s, 1);
+  position: relative; z-index: 2;
+  margin: 4px 5px; padding: 6px 9px;
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+  border-radius: var(--r-chip);
+  background: var(--background);
+  border: 1px solid var(--rule-strong);
+  line-height: 1.25;
+}
+.b b { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 16px; }
+.b small { font-size: 0.75rem; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b::after {
+  content: ""; position: absolute; top: 7px; right: 7px; width: 13px; height: 13px;
+  background: transparent;
+  -webkit-mask: var(--icon, none) center / contain no-repeat; mask: var(--icon, none) center / contain no-repeat;
+}
+.paid { background: var(--muted); border-color: var(--border); }
+.paid::after { --icon: var(--i-check); background: var(--primary); }
+.now { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+.now small { color: color-mix(in oklch, var(--primary-foreground) 88%, var(--primary)); }
+.sent::after { --icon: var(--i-chat); background: var(--primary); }
+.next { background: var(--accent); border: 1.5px solid var(--primary); }
+.next small { color: var(--accent-foreground); }
+.next::after { --icon: var(--i-chat); background: var(--primary-ink); }
+
+.now-line {
+  position: absolute; z-index: 1;
+  left: calc(-1 * var(--rail)); right: calc(-1 * var(--bleed));
+  top: calc(var(--slot) * 3.667);
+  height: 2px; background: var(--cta);
+  transform-origin: left center;
+}
+.now-line span {
+  position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
+  background: var(--cta); color: var(--cta-foreground);
+  font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  padding: 3px 7px; border-radius: 999px;
+}
+
+.bubble {
+  grid-column: 3; grid-row: 5 / span 3;
+  position: relative; z-index: 3;
+  align-self: start;
+  margin: 6px 8px 0 -6px; padding: 10px 12px 9px;
+  background: var(--background);
+  border: 1px solid var(--border); border-radius: var(--r-object);
+  box-shadow: 0 2px 4px var(--shadow-soft), 0 14px 28px -12px var(--shadow);
+  font-size: 0.8125rem; line-height: 1.4;
+}
+.bubble::before {
+  content: ""; position: absolute; left: -6px; top: 16px; width: 10px; height: 10px;
+  background: var(--background); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+.bubble-head { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 650; color: var(--primary-ink); margin-bottom: 4px; }
+.bubble-head::before, .bubble-meta::after {
+  content: ""; width: 13px; height: 13px; flex: none; background: currentColor;
+  -webkit-mask: var(--i-chat) center / contain no-repeat; mask: var(--i-chat) center / contain no-repeat;
+}
+.bubble-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 6px; font-size: 0.6875rem; color: var(--muted-foreground); }
+.bubble-meta::after { width: 15px; height: 15px; background: var(--primary); -webkit-mask-image: var(--i-double); mask-image: var(--i-double); }
+
+.sheet-cap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 16px; padding-left: calc(var(--rail) - 4px); font-size: 0.8125rem; color: var(--muted-foreground); }
+.sheet-cap strong { color: var(--body-ink); font-weight: 600; margin-right: 4px; }
+.key { display: inline-flex; align-items: center; gap: 7px; }
+.key::before { content: ""; width: 14px; height: 14px; border-radius: 4px; flex: none; }
+.key-paid::before { background: var(--primary); -webkit-mask: var(--i-check) center / contain no-repeat; mask: var(--i-check) center / contain no-repeat; border-radius: 0; }
+.key-now::before { background: var(--primary); }
+.key-sent::before { background: var(--primary); -webkit-mask: var(--i-chat) center / contain no-repeat; mask: var(--i-chat) center / contain no-repeat; border-radius: 0; }
+.key-line::before { height: 2px; width: 16px; background: var(--cta); border-radius: 0; }
+
+/* Shared section rhythm */
+.section { padding: clamp(80px, 9vw, 128px) 0 clamp(72px, 8vw, 112px); }
+.section h2 {
+  font-size: clamp(2.125rem, 1.2rem + 2.6vw, 3.5rem);
+  line-height: 1.04; letter-spacing: -0.038em; font-weight: 710;
+  text-wrap: balance; max-width: 18ch;
+}
+.lede { margin-top: 18px; font-size: 1.1875rem; line-height: 1.5; color: var(--body-ink); max-width: 46ch; }
+
+/* Features: what you cross out */
+.ledger { list-style: none; margin: 56px 0 0; padding: 0; }
+.ledger > li {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 28px;
+  align-items: center; padding: 52px 0; border-top: 1px solid var(--border);
+}
+.ledger-text { grid-column: 1 / span 6; }
+.ledger-spec { grid-column: 8 / -1; }
+.chore { font-style: italic; font-size: 1.1875rem; line-height: 1.45; color: var(--muted-foreground); margin-bottom: 18px; max-width: 34ch; }
+.strike {
+  background-image: linear-gradient(var(--primary), var(--primary));
+  background-repeat: no-repeat; background-position: 0 60%; background-size: 100% 2px;
+}
+.ledger h3 { font-size: clamp(1.625rem, 1.2rem + 1.1vw, 2.125rem); line-height: 1.12; letter-spacing: -0.03em; font-weight: 680; text-wrap: balance; max-width: 20ch; }
+.ledger-text > p:last-child { margin-top: 14px; font-size: 1.0625rem; color: var(--body-ink); max-width: 44ch; }
+
+.mini {
+  position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: repeat(4, 54px);
+  background: var(--background); border: 1px solid var(--border); border-radius: var(--r-object);
+  box-shadow: 0 1px 2px var(--shadow-soft), 0 18px 36px -24px var(--shadow);
+  overflow: hidden;
+  background-image: linear-gradient(var(--rule-strong) 1px, transparent 1px), linear-gradient(var(--rule) 1px, transparent 1px);
+  background-size: 100% 108px, 100% 54px; background-position: 0 -1px;
+}
+.mini-rail { grid-column: 1; grid-row: 1 / -1; display: grid; grid-template-rows: repeat(4, 54px); font-size: 0.75rem; font-variant-numeric: tabular-nums; border-right: 1px solid var(--rule); }
+.mini-rail span { padding: 6px 0 0 12px; color: var(--muted-foreground); }
+.mini-rail span:nth-child(odd) { color: var(--primary-ink); font-weight: 650; }
+.mini .b { grid-column: 2; width: 58%; margin: 4px 8px; }
+.mini .ghost { grid-row: 1; background: transparent; border: 1.5px dashed var(--rule-strong); color: var(--muted-foreground); }
+.mini .ghost b { font-weight: 500; }
+.mini .moved { grid-row: 4; }
+.mini svg { position: absolute; left: calc(56px + 58% + 8px); top: 20px; width: 44px; height: 172px; color: var(--primary); overflow: visible; }
+.spec-cap { margin-top: 12px; font-size: 0.875rem; color: var(--muted-foreground); }
+
+.msg-pane { background: var(--accent); border-radius: var(--r-object); padding: 28px 24px; }
+.msg {
+  max-width: 21rem; padding: 11px 14px 9px;
+  background: var(--background); border-radius: 4px var(--r-object) var(--r-object) var(--r-object);
+  box-shadow: 0 1px 2px var(--shadow-soft), 0 10px 24px -14px var(--shadow);
+}
+.msg-from { font-size: 0.8125rem; font-weight: 650; color: var(--primary-ink); }
+.msg p:not([class]) { margin-top: 3px; font-size: 0.9375rem; line-height: 1.45; }
+.msg-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 4px; font-size: 0.75rem; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.msg-meta::after { content: ""; width: 16px; height: 16px; background: var(--primary); -webkit-mask: var(--i-double) center / contain no-repeat; mask: var(--i-double) center / contain no-repeat; }
+.msg-note { margin-top: 14px; font-size: 0.8125rem; color: var(--accent-foreground); }
+
+.ficha {
+  background: var(--background); border: 1px solid var(--border); border-radius: var(--r-object);
+  box-shadow: 0 1px 2px var(--shadow-soft), 0 18px 36px -24px var(--shadow);
+  padding: 20px 22px 8px;
+}
+.ficha-head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; }
+.mono { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-foreground); font-weight: 650; font-size: 0.9375rem; letter-spacing: -0.01em; flex: none; }
+.ficha-head b { display: block; font-size: 1.0625rem; font-weight: 650; letter-spacing: -0.015em; }
+.ficha-head span { font-size: 0.8125rem; color: var(--muted-foreground); }
+.ficha dl { margin: 0; border-top: 1px solid var(--border); }
+.ficha dl div { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; font-size: 0.875rem; }
+.ficha dt { color: var(--muted-foreground); }
+.ficha dd { margin: 0; font-weight: 550; text-align: right; font-variant-numeric: tabular-nums; }
+.paid-tag { display: inline-flex; align-items: center; gap: 5px; color: var(--primary-ink); }
+.paid-tag::before { content: ""; width: 13px; height: 13px; background: currentColor; -webkit-mask: var(--i-check) center / contain no-repeat; mask: var(--i-check) center / contain no-repeat; }
+
+/* Testimonials */
+.voices { background: var(--accent); }
+.voices h2 .num { color: var(--primary-ink); }
+.quotes { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 40px; margin-top: 64px; align-items: start; }
+.q-main { grid-column: 1 / span 7; }
+.q-main p {
+  font-size: clamp(1.5rem, 1rem + 1.5vw, 2.125rem); line-height: 1.24; letter-spacing: -0.022em; font-weight: 520;
+  text-indent: -0.42em; text-wrap: pretty;
+}
+.q-side { grid-column: 9 / -1; display: grid; gap: 36px; }
+.q-side figure + figure { padding-top: 36px; border-top: 1px solid color-mix(in oklch, var(--primary) 22%, var(--accent)); }
+.q-side p { font-size: 1.1875rem; line-height: 1.42; font-weight: 500; letter-spacing: -0.012em; text-indent: -0.4em; }
+.quotes figcaption { margin-top: 18px; font-size: 0.9375rem; line-height: 1.4; }
+.quotes figcaption b { display: block; font-weight: 650; }
+.quotes figcaption span { color: var(--accent-foreground); }
+
+/* Pricing: the price board */
+.board {
+  margin-top: 56px;
+  border: 12px solid var(--frame); border-radius: 14px;
+  background-color: var(--board);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 9px, var(--board-groove) 9px 10px);
+  box-shadow: inset 0 3px 10px oklch(0.12 0.02 186.39 / 0.55), inset 0 -1px 0 oklch(0.45 0.05 186.39 / 0.4), 0 2px 0 oklch(0.32 0.006 164.84), 0 36px 64px -32px oklch(0.147 0.004 164.84 / 0.5);
+  color: var(--board-letter);
+  padding: 12px clamp(20px, 3.4vw, 44px);
+}
+.plans { list-style: none; margin: 0; padding: 0; }
+.plan { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr) auto; column-gap: 32px; row-gap: 12px; align-items: baseline; padding: 26px 0; }
+.plan + .plan { border-top: 1px dashed oklch(0.84 0.03 186.39 / 0.28); }
+.plan h3 { font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem); font-weight: 720; letter-spacing: 0.09em; text-transform: uppercase; line-height: 1.1; }
+.tag {
+  display: inline-block; margin: 10px 0 0; padding: 5px 8px 4px;
+  background: var(--cta); color: var(--cta-foreground);
+  font-size: 0.6875rem; font-weight: 750; letter-spacing: 0.1em; line-height: 1;
+  border-radius: var(--r-tag); transform: rotate(-3deg);
+  box-shadow: 0 3px 6px oklch(0.12 0.02 186.39 / 0.45);
+}
+.plan ul { list-style: none; margin: 0; padding: 0; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.07em; line-height: 1.75; text-transform: uppercase; color: var(--board-letter-2); }
+.price { text-align: right; font-variant-numeric: tabular-nums; }
+.price b { display: block; font-size: clamp(2rem, 1.4rem + 1.6vw, 2.75rem); font-weight: 720; letter-spacing: 0.02em; line-height: 1; white-space: nowrap; }
+.price span { display: block; margin-top: 6px; font-size: 0.75rem; font-weight: 650; letter-spacing: 0.09em; text-transform: uppercase; color: var(--board-letter-2); white-space: nowrap; }
+.pricing-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; margin-top: 36px; }
+.pricing-foot p { font-size: 1.0625rem; color: var(--body-ink); }
+
+/* Closing call to action: a booking with yourself, on the same sheet */
+.close { background: var(--muted); padding: clamp(72px, 9vw, 120px) 0; }
+.close-sheet {
+  display: grid; grid-template-columns: 9rem minmax(0, 1fr); align-items: start;
+  padding: 52px 28px 52px 0;
+  background-color: var(--background);
+  background-image: linear-gradient(var(--rule-strong) 1px, transparent 1px), linear-gradient(var(--rule) 1px, transparent 1px);
+  background-size: 100% 104px, 100% 52px;
+  border: 1px solid var(--border); border-radius: var(--r-object);
+  box-shadow: 0 1px 2px var(--shadow-soft), 0 28px 56px -28px var(--shadow);
+}
+.slot-time { padding: 8px 0 0 20px; font-size: 0.9375rem; font-weight: 650; color: var(--primary-ink); line-height: 1.3; }
+.slot {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 32px; row-gap: 20px;
+  background: var(--accent); border: 1.5px solid var(--primary); border-radius: var(--r-object);
+  padding: 32px 36px;
+}
+.slot h2 { font-size: clamp(1.875rem, 1.1rem + 2.2vw, 3rem); line-height: 1.05; letter-spacing: -0.036em; font-weight: 710; text-wrap: balance; }
+.slot p { margin-top: 10px; font-size: 1.125rem; color: var(--accent-foreground); }
+
+/* Footer */
+.foot { border-top: 1px solid var(--border); padding: 48px 0 40px; font-size: 0.875rem; color: var(--muted-foreground); }
+.foot-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 28px; align-items: start; }
+.foot-brand { grid-column: 1 / span 4; }
+.foot .brand { color: var(--foreground); }
+.foot-brand p { margin-top: 10px; color: var(--body-ink); }
+.foot-links { grid-column: 6 / span 3; list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.foot-links a { text-decoration: none; color: var(--body-ink); }
+.foot-links a:hover { color: var(--primary-ink); text-decoration: underline; }
+.foot-note { grid-column: 9 / -1; line-height: 1.5; }
+.foot-note p + p { margin-top: 10px; }
+
+/* Motion: one authored moment in the hero, a draw on the struck chores */
+@media (prefers-reduced-motion: no-preference) {
+  .day-jue .now-line { animation: draw 0.8s var(--ease-out) 0.15s both; }
+  .day-jue .bubble { animation: rise 0.5s var(--ease-out) 0.55s both; }
+  .day .b { animation: chip 0.32s var(--ease-out) both; animation-delay: calc(var(--c) * 22ms + var(--r) * 10ms); }
+  @supports (animation-timeline: view()) {
+    .strike { animation: strike linear both; animation-timeline: view(); animation-range: entry 60% cover 45%; }
+  }
+}
+@keyframes draw { from { transform: scaleX(0); } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px) scale(0.97); } }
+@keyframes chip { from { opacity: 0; transform: translateY(6px); } }
+@keyframes strike { from { background-size: 0% 2px; } to { background-size: 100% 2px; } }
+
+/* Responsive */
+@media (max-width: 1040px) {
+  .hero { --bleed: 0px; }
+  .hero-copy, .sheet-fig { grid-column: 1 / -1; }
+  .hero-copy { padding-bottom: 0; }
+  .hero-sub { max-width: 34ch; }
+  .sheet-fig { margin-right: 0; }
+  .sheet-body { border-right: 1px solid var(--border); border-radius: 0 0 var(--r-object) var(--r-object); }
+  .ledger-text { grid-column: 1 / span 7; }
+  .ledger-spec { grid-column: 8 / -1; }
+  .q-main { grid-column: 1 / -1; }
+  .q-side { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .q-side figure + figure { padding-top: 0; border-top: 0; }
+}
+@media (max-width: 860px) {
+  .nav-links { display: none; }
+  .ledger-text, .ledger-spec { grid-column: 1 / -1; }
+  .ledger > li { padding: 40px 0; }
+  .ledger-spec { max-width: 26rem; }
+  .plan { grid-template-columns: minmax(0, 1fr) auto; }
+  .plan ul { grid-column: 1 / -1; grid-row: 2; }
+  .close-sheet { grid-template-columns: 1fr; padding: 16px 12px 20px; row-gap: 12px; }
+  .slot-time { padding: 0 0 0 8px; }
+  .slot { grid-template-columns: 1fr; padding: 24px 20px; }
+  .foot-brand, .foot-links, .foot-note { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .hero { --rail: 46px; --head: 52px; --slot: 50px; padding-top: 16px; }
+  .hero h1 { font-size: clamp(2.75rem, 12.4vw, 3.5rem); }
+  .hero-sub { font-size: 1.125rem; }
+  .signup-row { flex-direction: column; }
+  .signup-row input { flex: none; }
+  .signup-row .btn { width: 100%; }
+  .tabs { padding-left: 0; gap: 3px; }
+  .tabs label { padding: 8px 10px 7px; font-size: 0.8125rem; }
+  .chair { padding: 10px 7px 0; }
+  .chair b { font-size: 0.875rem; }
+  .rail span { padding-left: 8px; font-size: 0.6875rem; }
+  .b { margin: 3px; padding: 5px 6px; }
+  .b b { font-size: 0.75rem; padding-right: 13px; }
+  .b small { font-size: 0.6875rem; }
+  .b::after { top: 6px; right: 5px; width: 11px; height: 11px; }
+  .now-line span { left: 3px; padding: 2px 5px; font-size: 0.625rem; }
+  .bubble { grid-column: 1 / -1; grid-row: 9; margin: 12px 4px 10px; }
+  .bubble::before { left: 50%; top: -6px; border: 0; border-left: 1px solid var(--border); border-top: 1px solid var(--border); }
+  .sheet-cap { padding-left: 0; }
+  .q-side { grid-template-columns: 1fr; }
+  .q-side figure + figure { padding-top: 32px; border-top: 1px solid color-mix(in oklch, var(--primary) 22%, var(--accent)); }
+  .board { border-width: 8px; }
+  .plan { padding: 22px 0; column-gap: 16px; }
+  .plan ul { font-size: 0.8125rem; letter-spacing: 0.05em; }
+  .price span { white-space: normal; max-width: 8rem; margin-left: auto; }
+  .btn-sm { padding: 0 14px; }
+  .brand { font-size: 1.25rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="#" aria-label="Brisa, inicio">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--primary)"/><path d="M8 11h10M8 15h14M8 19h7" stroke="var(--primary-foreground)" stroke-width="2.4" stroke-linecap="round"/></svg>
+      Brisa
+    </a>
+    <nav class="nav-right" aria-label="Principal">
+      <ul class="nav-links">
+        <li><a href="#como">Cómo funciona</a></li>
+        <li><a href="#opiniones">Opiniones</a></li>
+        <li><a href="#precios">Precios</a></li>
+        <li><a href="#entrar">Entrar</a></li>
+      </ul>
+      <a class="btn btn-cta btn-sm" href="#alta">Crear cuenta gratis</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1 id="hero-title">Tu barbería, sin llamadas.</h1>
+        <p class="hero-sub">Pasa tu agenda de papel a Brisa esta semana. Gratis hasta 5 personas, sin tarjeta.</p>
+        <form class="signup" id="alta" action="#" method="post" novalidate>
+          <label for="email">Tu email</label>
+          <div class="signup-row">
+            <input id="email" name="email" type="email" autocomplete="email" required placeholder="nombre@tubarberia.es" aria-describedby="email-error">
+            <button class="btn btn-cta" type="submit">Crear cuenta gratis</button>
+          </div>
+          <p class="signup-error" id="email-error">Ese email no está completo. Revisa la @ y lo que va detrás.</p>
+        </form>
+      </div>
+
+      <figure class="sheet-fig" aria-labelledby="sheet-cap">
+        <div class="sheet">
+          <fieldset class="tabs">
+            <legend class="sr">Día de la semana</legend>
+            <input type="radio" name="dia" id="d-lun"><label for="d-lun">Lun</label>
+            <input type="radio" name="dia" id="d-mar"><label for="d-mar">Mar</label>
+            <input type="radio" name="dia" id="d-mie"><label for="d-mie">Mié</label>
+            <input type="radio" name="dia" id="d-jue" checked><label for="d-jue">Jue <small>hoy</small></label>
+            <input type="radio" name="dia" id="d-vie"><label for="d-vie">Vie</label>
+            <input type="radio" name="dia" id="d-sab"><label for="d-sab">Sáb</label>
+          </fieldset>
+
+          <div class="sheet-body">
+            <div class="ruling" aria-hidden="true"></div>
+            <div class="corner" aria-hidden="true"></div>
+            <div class="chair" style="grid-column:2"><span>Silla 1</span><b>Paco</b></div>
+            <div class="chair" style="grid-column:3"><span>Silla 2</span><b>Rafa</b></div>
+            <div class="chair" style="grid-column:4"><span>Silla 3</span><b>Iker</b></div>
+            <div class="lane" style="grid-column:2" aria-hidden="true"></div>
+            <div class="lane" style="grid-column:3" aria-hidden="true"></div>
+            <div class="lane lane-end" style="grid-column:4" aria-hidden="true"></div>
+            <div class="rail" aria-hidden="true">
+              <span>10:00</span><span>10:30</span><span>11:00</span><span>11:30</span><span>12:00</span><span>12:30</span><span>13:00</span><span>13:30</span>
+            </div>
+
+            <ol class="day day-lun" aria-label="Citas del lunes">
+              <li class="b paid" style="--c:1;--r:1"><span class="sr">10:00, Paco, cobrado:</span><b>Luis M.</b><small>Corte</small></li>
+              <li class="b paid" style="--c:1;--r:2;--s:2"><span class="sr">10:30, Paco, cobrado:</span><b>Mateo</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:1;--r:5"><span class="sr">12:00, Paco, cobrado:</span><b>Adrián</b><small>Barba</small></li>
+              <li class="b paid" style="--c:1;--r:6"><span class="sr">12:30, Paco, cobrado:</span><b>Pablo</b><small>Corte</small></li>
+              <li class="b paid" style="--c:1;--r:8"><span class="sr">13:30, Paco, cobrado:</span><b>Nico</b><small>Corte niño</small></li>
+              <li class="b paid" style="--c:2;--r:1"><span class="sr">10:00, Rafa, cobrado:</span><b>Iván</b><small>Degradado</small></li>
+              <li class="b paid" style="--c:2;--r:3"><span class="sr">11:00, Rafa, cobrado:</span><b>Hugo</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:4"><span class="sr">11:30, Rafa, cobrado:</span><b>Sergio</b><small>Barba</small></li>
+              <li class="b paid" style="--c:2;--r:6;--s:2"><span class="sr">12:30, Rafa, cobrado:</span><b>Óscar</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:3;--r:2"><span class="sr">10:30, Iker, cobrado:</span><b>Bilal</b><small>Degradado</small></li>
+              <li class="b paid" style="--c:3;--r:4"><span class="sr">11:30, Iker, cobrado:</span><b>Marcos</b><small>Corte</small></li>
+              <li class="b paid" style="--c:3;--r:7"><span class="sr">13:00, Iker, cobrado:</span><b>Joel</b><small>Corte</small></li>
+              <li class="b paid" style="--c:3;--r:8"><span class="sr">13:30, Iker, cobrado:</span><b>Raúl</b><small>Barba</small></li>
+            </ol>
+
+            <ol class="day day-mar" aria-label="Citas del martes">
+              <li class="b paid" style="--c:1;--r:1"><span class="sr">10:00, Paco, cobrado:</span><b>Toni</b><small>Corte</small></li>
+              <li class="b paid" style="--c:1;--r:3"><span class="sr">11:00, Paco, cobrado:</span><b>Kike</b><small>Barba</small></li>
+              <li class="b paid" style="--c:1;--r:4;--s:2"><span class="sr">11:30, Paco, cobrado:</span><b>Samuel</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:1;--r:7"><span class="sr">13:00, Paco, cobrado:</span><b>Unai</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:2"><span class="sr">10:30, Rafa, cobrado:</span><b>Gonzalo</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:3"><span class="sr">11:00, Rafa, cobrado:</span><b>Héctor</b><small>Degradado</small></li>
+              <li class="b paid" style="--c:2;--r:5"><span class="sr">12:00, Rafa, cobrado:</span><b>Bruno</b><small>Barba</small></li>
+              <li class="b paid" style="--c:2;--r:7;--s:2"><span class="sr">13:00, Rafa, cobrado:</span><b>Lucas</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:3;--r:1"><span class="sr">10:00, Iker, cobrado:</span><b>Aitor</b><small>Corte</small></li>
+              <li class="b paid" style="--c:3;--r:4"><span class="sr">11:30, Iker, cobrado:</span><b>Diego</b><small>Corte niño</small></li>
+              <li class="b paid" style="--c:3;--r:6"><span class="sr">12:30, Iker, cobrado:</span><b>Fran</b><small>Degradado</small></li>
+            </ol>
+
+            <ol class="day day-mie" aria-label="Citas del miércoles">
+              <li class="b paid" style="--c:1;--r:1;--s:2"><span class="sr">10:00, Paco, cobrado:</span><b>Andrés</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:1;--r:4"><span class="sr">11:30, Paco, cobrado:</span><b>Mario</b><small>Corte</small></li>
+              <li class="b paid" style="--c:1;--r:5"><span class="sr">12:00, Paco, cobrado:</span><b>Jorge</b><small>Barba</small></li>
+              <li class="b paid" style="--c:1;--r:7"><span class="sr">13:00, Paco, cobrado:</span><b>Carlos</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:1"><span class="sr">10:00, Rafa, cobrado:</span><b>Youssef</b><small>Degradado</small></li>
+              <li class="b paid" style="--c:2;--r:3"><span class="sr">11:00, Rafa, cobrado:</span><b>Miguel</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:6"><span class="sr">12:30, Rafa, cobrado:</span><b>Rubén</b><small>Corte</small></li>
+              <li class="b paid" style="--c:2;--r:8"><span class="sr">13:30, Rafa, cobrado:</span><b>Álvaro</b><small>Barba</small></li>
+              <li class="b paid" style="--c:3;--r:2"><span class="sr">10:30, Iker, cobrado:</span><b>Izan</b><small>Corte niño</small></li>
+              <li class="b paid" style="--c:3;--r:3"><span class="sr">11:00, Iker, cobrado:</span><b>Eric</b><small>Corte</small></li>
+              <li class="b paid" style="--c:3;--r:5;--s:2"><span class="sr">12:00, Iker, cobrado:</span><b>Víctor</b><small>Corte y barba</small></li>
+              <li class="b paid" style="--c:3;--r:8"><span class="sr">13:30, Iker, cobrado:</span><b>Saúl</b><small>Corte</small></li>
+            </ol>
+
+            <ol class="day day-jue" aria-label="Citas del jueves, hoy">
+              <li class="b paid" style="--c:1;--r:1"><span class="sr">10:00, Paco, cobrado:</span><b>Luis M.</b><small>Corte</small></li>
+              <li class="b paid" style="--c:1;--r:2;--s:2"><span class="sr">10:30, Paco, cobrado:</span><b>Mateo</b><small>Corte y barba</small></li>
+              <li class="b now" style="--c:1;--r:4"><span class="sr">11:30, Paco, en la silla ahora:</span><b>Sergio</b><small>Barba</small></li>
+              <li class="b sent" style="--c:1;--r:6"><span class="sr">12:30, Paco, recordatorio enviado:</span><b>Pablo</b><small>Corte</small></li>
+              <li class="b sent" style="--c:1;--r:7"><span class="sr">13:00, Paco, recordatorio enviado:</span><b>Álex</b><small>Degradado</small></li>
+              <li class="b paid" style="--c:2;--r:1"><span class="sr">10:00, Rafa, cobrado:</span><b>Iván</b><small>Corte niño</small></li>
+              <li class="b paid" style="--c:2;--r:3"><span class="sr">11:00, Rafa, cobrado:</span><b>Hugo</b><small>Corte</small></li>
+              <li class="b next" style="--c:2;--r:5;--s:2"><span class="sr">12:00, Rafa, siguiente cita, recordatorio enviado:</span><b>Dani R.</b><small>Corte y barba</small></li>
+              <li class="b sent" style="--c:2;--r:8"><span class="sr">13:30, Rafa, recordatorio enviado:</span><b>Kike</b><small>Barba</small></li>
+              <li class="b paid" style="--c:3;--r:2"><span class="sr">10:30, Iker, cobrado:</span><b>Bilal</b><small>Degradado</small></li>
+              <li class="b now" style="--c:3;--r:4"><span class="sr">11:30, Iker, en la silla ahora:</span><b>Marcos</b><small>Corte</small></li>
+              <li class="b sent" style="--c:3;--r:8"><span class="sr">13:30, Iker, recordatorio enviado:</span><b>Raúl</b><small>Corte</small></li>
+              <li class="bubble">
+                <p class="bubble-head">Recordatorio por WhatsApp</p>
+                <p>Hola Dani, te esperamos hoy a las 12:00 con Rafa. ¡Hasta luego!</p>
+                <p class="bubble-meta">Enviado</p>
+              </li>
+              <li class="now-line" aria-hidden="true"><span>11:50</span></li>
+            </ol>
+
+            <ol class="day day-vie" aria-label="Citas del viernes">
+              <li class="b" style="--c:1;--r:1"><span class="sr">10:00, Paco:</span><b>Nico</b><small>Corte</small></li>
+              <li class="b" style="--c:1;--r:2"><span class="sr">10:30, Paco:</span><b>Pau</b><small>Barba</small></li>
+              <li class="b" style="--c:1;--r:3;--s:2"><span class="sr">11:00, Paco:</span><b>Ismael</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:1;--r:6"><span class="sr">12:30, Paco:</span><b>Marc</b><small>Corte</small></li>
+              <li class="b" style="--c:1;--r:7"><span class="sr">13:00, Paco:</span><b>Leo</b><small>Degradado</small></li>
+              <li class="b" style="--c:2;--r:1;--s:2"><span class="sr">10:00, Rafa:</span><b>Martín</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:2;--r:3"><span class="sr">11:00, Rafa:</span><b>Rayan</b><small>Degradado</small></li>
+              <li class="b" style="--c:2;--r:5"><span class="sr">12:00, Rafa:</span><b>Omar</b><small>Corte</small></li>
+              <li class="b" style="--c:2;--r:6"><span class="sr">12:30, Rafa:</span><b>Elías</b><small>Barba</small></li>
+              <li class="b" style="--c:2;--r:8"><span class="sr">13:30, Rafa:</span><b>Teo</b><small>Corte</small></li>
+              <li class="b" style="--c:3;--r:2"><span class="sr">10:30, Iker:</span><b>Jon</b><small>Corte</small></li>
+              <li class="b" style="--c:3;--r:4"><span class="sr">11:30, Iker:</span><b>Ander</b><small>Corte niño</small></li>
+              <li class="b" style="--c:3;--r:5;--s:2"><span class="sr">12:00, Iker:</span><b>Cristian</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:3;--r:7"><span class="sr">13:00, Iker:</span><b>Alberto</b><small>Barba</small></li>
+            </ol>
+
+            <ol class="day day-sab" aria-label="Citas del sábado">
+              <li class="b" style="--c:1;--r:1"><span class="sr">10:00, Paco:</span><b>Quique</b><small>Corte</small></li>
+              <li class="b" style="--c:1;--r:2"><span class="sr">10:30, Paco:</span><b>Ximo</b><small>Degradado</small></li>
+              <li class="b" style="--c:1;--r:3"><span class="sr">11:00, Paco:</span><b>Moha</b><small>Corte</small></li>
+              <li class="b" style="--c:1;--r:4;--s:2"><span class="sr">11:30, Paco:</span><b>Félix</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:1;--r:6"><span class="sr">12:30, Paco:</span><b>Rodri</b><small>Barba</small></li>
+              <li class="b" style="--c:1;--r:7"><span class="sr">13:00, Paco:</span><b>Asier</b><small>Corte</small></li>
+              <li class="b" style="--c:1;--r:8"><span class="sr">13:30, Paco:</span><b>Lolo</b><small>Corte niño</small></li>
+              <li class="b" style="--c:2;--r:1"><span class="sr">10:00, Rafa:</span><b>Edu</b><small>Corte</small></li>
+              <li class="b" style="--c:2;--r:2"><span class="sr">10:30, Rafa:</span><b>Santi</b><small>Barba</small></li>
+              <li class="b" style="--c:2;--r:3;--s:2"><span class="sr">11:00, Rafa:</span><b>Ángel</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:2;--r:5"><span class="sr">12:00, Rafa:</span><b>Jaime</b><small>Degradado</small></li>
+              <li class="b" style="--c:2;--r:6"><span class="sr">12:30, Rafa:</span><b>Nacho</b><small>Corte</small></li>
+              <li class="b" style="--c:2;--r:7"><span class="sr">13:00, Rafa:</span><b>Rober</b><small>Corte</small></li>
+              <li class="b" style="--c:2;--r:8"><span class="sr">13:30, Rafa:</span><b>Pepe</b><small>Barba</small></li>
+              <li class="b" style="--c:3;--r:1"><span class="sr">10:00, Iker:</span><b>Darío</b><small>Corte niño</small></li>
+              <li class="b" style="--c:3;--r:2"><span class="sr">10:30, Iker:</span><b>Tomás</b><small>Corte</small></li>
+              <li class="b" style="--c:3;--r:3"><span class="sr">11:00, Iker:</span><b>Ian</b><small>Degradado</small></li>
+              <li class="b" style="--c:3;--r:4"><span class="sr">11:30, Iker:</span><b>Alonso</b><small>Corte</small></li>
+              <li class="b" style="--c:3;--r:5;--s:2"><span class="sr">12:00, Iker:</span><b>Kevin</b><small>Corte y barba</small></li>
+              <li class="b" style="--c:3;--r:7"><span class="sr">13:00, Iker:</span><b>Vicente</b><small>Barba</small></li>
+              <li class="b" style="--c:3;--r:8"><span class="sr">13:30, Iker:</span><b>Gael</b><small>Corte</small></li>
+            </ol>
+          </div>
+        </div>
+        <figcaption class="sheet-cap" id="sheet-cap">
+          <span><strong>Agenda de ejemplo:</strong>una barbería de tres sillas, por la mañana.</span>
+          <span class="key key-paid">Cobrado</span>
+          <span class="key key-now">En la silla</span>
+          <span class="key key-sent">Recordatorio enviado</span>
+          <span class="key key-line">Ahora</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="como" aria-labelledby="como-title">
+    <div class="wrap">
+      <h2 id="como-title">Lo que tachas de la libreta.</h2>
+      <ol class="ledger">
+        <li>
+          <div class="ledger-text">
+            <p class="chore"><span class="strike">Apuntar cada cita a lápiz y borrar cuando alguien cambia la hora.</span></p>
+            <h3>La semana entera, silla por silla.</h3>
+            <p>Ves quién viene, a qué hora y con quién. Si alguien cambia la hora, mueves la cita y listo.</p>
+          </div>
+          <figure class="ledger-spec">
+            <div class="mini" aria-hidden="true">
+              <div class="mini-rail"><span>17:00</span><span>17:30</span><span>18:00</span><span>18:30</span></div>
+              <div class="b ghost"><b>Hugo</b><small>Corte</small></div>
+              <div class="b moved"><b>Hugo</b><small>Corte</small></div>
+              <svg viewBox="0 0 44 172" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c28 0 34 24 34 80s-6 80-30 80"/><path d="M12 159l-7 7 7 7"/></svg>
+            </div>
+            <figcaption class="spec-cap">Hugo pasa de las 17:00 a las 18:30.</figcaption>
+          </figure>
+        </li>
+        <li>
+          <div class="ledger-text">
+            <p class="chore"><span class="strike">Escribir uno a uno a los clientes para que no se les olvide la cita.</span></p>
+            <h3>Los recordatorios salen solos por WhatsApp.</h3>
+            <p>Cada cliente recibe su aviso antes de la cita. Tú no tienes que soltar la máquina.</p>
+          </div>
+          <figure class="ledger-spec">
+            <div class="msg-pane">
+              <div class="msg">
+                <p class="msg-from">Barbería Paco</p>
+                <p>Hola Óscar, te recordamos tu cita del viernes a las 18:30 con Paco. ¡Te esperamos!</p>
+                <p class="msg-meta">19:02</p>
+              </div>
+              <figcaption class="msg-note">Así le llega a Óscar, en su WhatsApp.</figcaption>
+            </div>
+          </figure>
+        </li>
+        <li>
+          <div class="ledger-text">
+            <p class="chore"><span class="strike">Buscar en el móvil quién era «Javi barba» y si ya había pagado.</span></p>
+            <h3>Cada cliente, con su ficha y sus cobros.</h3>
+            <p>Su nombre, sus citas y lo que ha pagado, a mano. Y cada semana, tu resumen.</p>
+          </div>
+          <figure class="ledger-spec">
+            <div class="ficha">
+              <div class="ficha-head">
+                <span class="mono" aria-hidden="true">JM</span>
+                <div><b>Javi Moreno</b><span>Le atiende Rafa</span></div>
+              </div>
+              <dl>
+                <div><dt>Próxima cita</dt><dd>Vie, 17:30</dd></div>
+                <div><dt>Última visita</dt><dd>Jue, 11:00</dd></div>
+                <div><dt>Pago</dt><dd><span class="paid-tag">Cobrado</span></dd></div>
+              </dl>
+            </div>
+            <figcaption class="spec-cap">«Javi barba», ya con nombre y apellido.</figcaption>
+          </figure>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section voices" id="opiniones" aria-labelledby="opiniones-title">
+    <div class="wrap">
+      <h2 id="opiniones-title"><span class="num">1.200 barberías</span> ya llevan la agenda en Brisa.</h2>
+      <div class="quotes">
+        <figure class="q-main">
+          <blockquote><p>«Antes el teléfono sonaba en mitad de cada corte. Ahora miro la agenda y sé quién viene.»</p></blockquote>
+          <figcaption><b>Rafa Ortega</b><span>Barbería Ortega, 2 sillas</span></figcaption>
+        </figure>
+        <div class="q-side">
+          <figure>
+            <blockquote><p>«Los recordatorios por WhatsApp salen solos. Ya no escribo a nadie por la noche.»</p></blockquote>
+            <figcaption><b>Nerea Salcedo</b><span>Barbería Nerea, 1 silla</span></figcaption>
+          </figure>
+          <figure>
+            <blockquote><p>«Pasé la libreta a Brisa en una tarde. Mis dos chavales ven su silla en el móvil.»</p></blockquote>
+            <figcaption><b>Youssef Amrani</b><span>Barbería El Cruce, 3 sillas</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="precios" aria-labelledby="precios-title">
+    <div class="wrap">
+      <h2 id="precios-title">Lo que cuesta, a la vista.</h2>
+      <p class="lede">Tres planes, como los precios de tu tablilla. Empieza gratis y sin tarjeta.</p>
+      <div class="board">
+        <ul class="plans">
+          <li class="plan">
+            <h3>Básico</h3>
+            <ul>
+              <li>Hasta 5 personas</li>
+              <li>Agenda y clientes ilimitados</li>
+              <li>Recordatorios básicos</li>
+            </ul>
+            <p class="price"><b>0 €</b><span>/mes</span></p>
+          </li>
+          <li class="plan">
+            <div>
+              <h3>Equipo</h3>
+              <p class="tag">MÁS POPULAR</p>
+            </div>
+            <ul>
+              <li>Todo lo del Básico</li>
+              <li>Recordatorios por WhatsApp</li>
+              <li>Cobros y resumen semanal</li>
+            </ul>
+            <p class="price"><b>12 €</b><span>/mes por equipo</span></p>
+          </li>
+          <li class="plan">
+            <h3>Empresa</h3>
+            <ul>
+              <li>Todo lo del plan Equipo</li>
+              <li>Varias sedes con permisos</li>
+              <li>Gestor de cuenta dedicado</li>
+            </ul>
+            <p class="price"><b>29 €</b><span>/mes</span></p>
+          </li>
+        </ul>
+      </div>
+      <div class="pricing-foot">
+        <a class="btn btn-cta" href="#alta">Crear cuenta gratis</a>
+        <p>Sin tarjeta. Gratis hasta 5 personas.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="close" aria-labelledby="close-title">
+    <div class="wrap">
+      <div class="close-sheet">
+        <p class="slot-time">Hoy,<br>al cerrar</p>
+        <div class="slot">
+          <div>
+            <h2 id="close-title">Pasa tu agenda a Brisa esta semana.</h2>
+            <p>Gratis hasta 5 personas. Sin tarjeta.</p>
+          </div>
+          <a class="btn btn-cta" href="#alta">Crear cuenta gratis</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div class="foot-brand">
+      <a class="brand" href="#" aria-label="Brisa, inicio">
+        <svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--primary)"/><path d="M8 11h10M8 15h14M8 19h7" stroke="var(--primary-foreground)" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Brisa
+      </a>
+      <p>Tu barbería, sin llamadas.</p>
+    </div>
+    <ul class="foot-links" aria-label="Enlaces">
+      <li><a href="#como">Cómo funciona</a></li>
+      <li><a href="#opiniones">Opiniones</a></li>
+      <li><a href="#precios">Precios</a></li>
+      <li><a href="#entrar" id="entrar">Entrar</a></li>
+    </ul>
+    <div class="foot-note">
+      <p>Brisa es una marca ficticia. Los nombres, las opiniones y la agenda de esta página son de ejemplo.</p>
+      <p>© 2026 Brisa</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

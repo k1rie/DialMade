@@ -2,10 +2,12 @@
 // from the kept tree (./tree). Pure TS, no DOM: it runs in a worker of the app and on the server for the export. It is
 // the first wall; the real guarantee is the sandboxed iframe on the preview origin and its CSP.
 import { ICON_NAMES } from "@dialmade/ui/icons";
-import { HTML_NS, parseRaw, serialize, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
+import { HTML_NS, parseRaw, serialize, SVG_NS, VOID_TAGS, type AiElement, type AiNode, type RawNode } from "./tree";
 import { ALLOWED_TAGS, INPUT_TYPES, NAMED_TAGS, ROOT_TAGS } from "./allowlist";
 import { CHART_LIMITS, canonicalChartValues, isChartKind, parseChartHighlight, parseChartLabels, parseChartUnit, parseChartValues } from "./chart";
 import { checkClass, type ClassRejection } from "./vocabulary";
+import { sanitizeCss, sanitizeStyleAttr } from "./pageCss";
+import { checkSvgAttr, SVG_HOSTILE, SVG_TAGS } from "./svgAllowlist";
 
 export { ALLOWED_TAGS, ROOT_TAGS };
 
@@ -43,12 +45,29 @@ export const BLOCK_LIMITS = {
   textLength: 2000,
 } as const;
 
+/** Caps of page mode: a section draws its own SVG and carries its own rules, so it is larger. */
+export const PAGE_BLOCK_LIMITS = {
+  rawBytes: 64 * 1024,
+  bytes: 48 * 1024,
+  elements: 1500,
+  depth: 48,
+  classesPerElement: 40,
+  textLength: 2000,
+} as const;
+
+/** «blocks»: token classes only (the default). «page»: own class names, one scoped `<style>` per section and inline SVG. */
+export type SanitizeMode = "blocks" | "page";
+
 export type SanitizeContext = {
   /** The block this root must carry as `data-block-id`. */
   blockId: string;
   /** Screen ids a `#screen:<id>` link may point to. */
   screenIds: readonly string[];
+  mode?: SanitizeMode;
 };
+
+/** A class name of page mode: lowercase, short, never the base kit's `dl-` prefix. */
+const PAGE_CLASS = /^(?!dl-)[a-z][a-z0-9_-]{0,48}$/;
 
 export type SanitizeReport = {
   droppedTags: Record<string, number>;
@@ -61,6 +80,8 @@ export type SanitizeReport = {
   unknownIcons: string[];
   /** Forbidden tags that make the whole block fail (scripts, frames, other namespaces…). */
   hostile: number;
+  /** Page mode: CSS declarations and rules the CSS sanitizer dropped. */
+  cssDropped: number;
 };
 
 export type SanitizeFailure = "too-large" | "too-many-elements" | "too-deep" | "no-root" | "wrong-root" | "empty" | "unstable";
@@ -69,7 +90,7 @@ export type SanitizeResult =
   | { ok: true; html: string; tree: AiElement; report: SanitizeReport; textNodes: number }
   | { ok: false; failure: SanitizeFailure; report: SanitizeReport };
 
-const emptyReport = (): SanitizeReport => ({ droppedTags: {}, droppedAttrs: {}, droppedClasses: {}, classesTotal: 0, classesKept: 0, unknownIcons: [], hostile: 0 });
+const emptyReport = (): SanitizeReport => ({ droppedTags: {}, droppedAttrs: {}, droppedClasses: {}, classesTotal: 0, classesKept: 0, unknownIcons: [], hostile: 0, cssDropped: 0 });
 const bump = (record: Record<string, number>, key: string) => (record[key] = (record[key] ?? 0) + 1);
 
 const SAFE_ID = /^[A-Za-z][\w-]{0,40}$/;
@@ -89,6 +110,26 @@ class Walker {
   maxDepth = 0;
   constructor(private readonly context: SanitizeContext) {}
 
+  private get page(): boolean {
+    return this.context.mode === "page";
+  }
+
+  /** The class list of page mode: own names (the page stylesheet defines them); anything else is dropped. */
+  private pageClasses(value: string): string | null {
+    const kept: string[] = [];
+    for (const token of value.split(/\s+/).filter(Boolean)) {
+      this.report.classesTotal++;
+      if (!PAGE_CLASS.test(token)) {
+        this.report.droppedClasses.unknown = (this.report.droppedClasses.unknown ?? 0) + 1;
+        continue;
+      }
+      if (kept.length >= PAGE_BLOCK_LIMITS.classesPerElement || kept.includes(token)) continue;
+      kept.push(token);
+    }
+    this.report.classesKept += kept.length;
+    return kept.length > 0 ? kept.join(" ") : null;
+  }
+
   private prefixId(id: string): string | null {
     const prefix = `ai-${sanitizeIdPart(this.context.blockId)}-`;
     // Idempotent: stored (already sanitized) HTML can go through the sanitizer again without growing its ids.
@@ -105,6 +146,18 @@ class Walker {
     for (const [rawName, rawValue] of attrs) {
       const name = rawName.toLowerCase();
       const value = rawValue;
+      if (name === "class" && this.page) {
+        const classes = this.pageClasses(value);
+        if (classes) out.push(["class", classes]);
+        continue;
+      }
+      if (name === "style" && this.page) {
+        // Page mode: one-off declarations (a flex row, a custom property), under the stylesheets' rules.
+        const style = sanitizeStyleAttr(value);
+        if (style) out.push(["style", style]);
+        else drop(name);
+        continue;
+      }
       if (name === "class") {
         const kept: string[] = [];
         for (const token of value.split(/\s+/).filter(Boolean)) {
@@ -309,6 +362,22 @@ class Walker {
         if (value) out.push({ type: "text", value });
         continue;
       }
+      if (this.page && node.namespace === SVG_NS && node.tag === "svg") {
+        out.push(this.svg(node, depth + 1));
+        continue;
+      }
+      if (this.page && node.namespace === HTML_NS && node.tag === "style") {
+        // A section's own rules: only as a child of its root, scoped to it by the CSS sanitizer.
+        if (depth !== 1) {
+          bump(this.report.droppedTags, "style");
+          continue;
+        }
+        const text = node.children.map((child) => (child.type === "text" ? child.value : "")).join("");
+        const css = sanitizeCss(text, { kind: "section", blockId: this.context.blockId });
+        this.report.cssDropped += css.report.droppedDeclarations + css.report.droppedRules;
+        if (css.css) out.push({ type: "element", tag: "style", attrs: [], children: [{ type: "text", value: css.css }] });
+        continue;
+      }
       if (node.namespace !== HTML_NS || DROP_WITH_CONTENT.has(node.tag)) {
         bump(this.report.droppedTags, node.namespace !== HTML_NS ? node.namespace.split("/").pop() ?? "ns" : node.tag);
         this.report.hostile++;
@@ -323,6 +392,85 @@ class Walker {
       out.push(this.element(node, depth + 1, false));
     }
     return out;
+  }
+
+  /** An inline SVG of page mode: allowlisted elements and attributes, ids and local references prefixed. */
+  private svg(node: Extract<RawNode, { type: "element" }>, depth: number): AiElement {
+    this.elements++;
+    this.maxDepth = Math.max(this.maxDepth, depth);
+    const children: AiNode[] = [];
+    const holdsText = node.tag === "text" || node.tag === "tspan" || node.tag === "title" || node.tag === "desc";
+    for (const child of node.children) {
+      if (child.type === "text") {
+        const value = holdsText ? cleanText(child.value) : "";
+        if (value.trim()) children.push({ type: "text", value });
+        continue;
+      }
+      if (SVG_HOSTILE.has(child.tag)) {
+        bump(this.report.droppedTags, `svg:${child.tag}`);
+        this.report.hostile++;
+        continue;
+      }
+      if (child.namespace !== SVG_NS || !SVG_TAGS.has(child.tag)) {
+        bump(this.report.droppedTags, `svg:${child.tag}`);
+        continue;
+      }
+      children.push(this.svg(child, depth + 1));
+    }
+    return { type: "element", tag: node.tag, attrs: this.svgAttrs(node.tag, node.attrs), children };
+  }
+
+  private svgAttrs(tag: string, attrs: readonly [string, string][]): [string, string][] {
+    const out: [string, string][] = [];
+    for (const [rawName, value] of attrs) {
+      const name = rawName.toLowerCase();
+      if (name === "class") {
+        const classes = this.pageClasses(value);
+        if (classes) out.push(["class", classes]);
+        continue;
+      }
+      if (name === "role") {
+        if (/^(?:img|presentation|none)$/.test(value.trim())) out.push([name, value.trim()]);
+        continue;
+      }
+      if (name === "aria-label") {
+        out.push([name, cleanAttrText(value)]);
+        continue;
+      }
+      if (name === "aria-hidden") {
+        if (value.trim() === "true" || value.trim() === "false") out.push([name, value.trim()]);
+        continue;
+      }
+      if (name === "style") {
+        const style = sanitizeStyleAttr(value);
+        if (style) out.push([name, style]);
+        continue;
+      }
+      const verdict = checkSvgAttr(name, value);
+      if (!verdict.keep) {
+        bump(this.report.droppedAttrs, name.startsWith("on") ? "on*" : `svg:${name}`);
+        continue;
+      }
+      if ("value" in verdict) out.push([name, verdict.value]);
+      else if ("ref" in verdict) {
+        const id = this.prefixId(verdict.ref);
+        if (id) out.push([name, `url(#${id})`]);
+      } else {
+        const id = this.prefixId(verdict.id);
+        if (id) out.push([name, id]);
+      }
+    }
+    if (tag === "svg") {
+      // Decorative unless it says what it shows: a labelled drawing is an image for assistive technology.
+      const labelled = out.some(([name]) => name === "aria-label");
+      if (labelled && !out.some(([name]) => name === "role")) out.push(["role", "img"]);
+      if (!labelled && !out.some(([name]) => name === "aria-hidden")) out.push(["aria-hidden", "true"]);
+      if (!out.some(([name]) => name === "focusable")) out.push(["focusable", "false"]);
+    }
+    const seen = new Set<string>();
+    return out
+      .filter(([name]) => (seen.has(name) ? false : (seen.add(name), true)))
+      .sort(([a], [b]) => (a === "class" ? -1 : b === "class" ? 1 : 0));
   }
 
   element(node: Extract<RawNode, { type: "element" }>, depth: number, isRoot: boolean): AiElement {
@@ -342,6 +490,8 @@ class Walker {
 function markText(root: AiElement): number {
   let n = 0;
   const visit = (element: AiElement) => {
+    // A page-mode stylesheet and drawings are not editable copy.
+    if (element.tag === "style" || element.tag === "svg") return;
     element.attrs = element.attrs.filter(([name]) => name !== "data-dl-t");
     if (element.children.some((child) => child.type === "text" && child.value.trim() !== "")) element.attrs.push(["data-dl-t", String(n++)]);
     for (const child of element.children) if (child.type === "element") visit(child);
@@ -372,9 +522,12 @@ export function sanitizeBlock(raw: string, context: SanitizeContext): SanitizeRe
 
 const MAX_PASSES = 4;
 
+export const limitsOf = (mode: SanitizeMode | undefined) => (mode === "page" ? PAGE_BLOCK_LIMITS : BLOCK_LIMITS);
+
 function sanitizeOnce(raw: string, context: SanitizeContext): SanitizeResult {
   const walker = new Walker(context);
-  if (new TextEncoder().encode(raw).length > BLOCK_LIMITS.rawBytes) return { ok: false, failure: "too-large", report: walker.report };
+  const limits = limitsOf(context.mode);
+  if (new TextEncoder().encode(raw).length > limits.rawBytes) return { ok: false, failure: "too-large", report: walker.report };
   const { nodes } = parseRaw(raw);
   const roots = nodes.filter((node): node is Extract<RawNode, { type: "element" }> => node.type === "element");
   if (roots.length === 0) return { ok: false, failure: "no-root", report: walker.report };
@@ -383,12 +536,12 @@ function sanitizeOnce(raw: string, context: SanitizeContext): SanitizeResult {
   if (first!.namespace !== HTML_NS || !ROOT_TAGS.has(first!.tag)) return { ok: false, failure: "wrong-root", report: walker.report };
   const root = walker.element(first!, 1, true);
   if (!root.attrs.some(([name]) => name === "data-block-id")) root.attrs.push(["data-block-id", context.blockId]);
-  if (walker.elements > BLOCK_LIMITS.elements) return { ok: false, failure: "too-many-elements", report: walker.report };
-  if (walker.maxDepth > BLOCK_LIMITS.depth) return { ok: false, failure: "too-deep", report: walker.report };
+  if (walker.elements > limits.elements) return { ok: false, failure: "too-many-elements", report: walker.report };
+  if (walker.maxDepth > limits.depth) return { ok: false, failure: "too-deep", report: walker.report };
   const textNodes = markText(root);
-  if (root.children.length === 0) return { ok: false, failure: "empty", report: walker.report };
+  if (root.children.every((child) => child.type === "element" && child.tag === "style")) return { ok: false, failure: "empty", report: walker.report };
   const html = serialize([root]);
-  if (new TextEncoder().encode(html).length > BLOCK_LIMITS.bytes) return { ok: false, failure: "too-large", report: walker.report };
+  if (new TextEncoder().encode(html).length > limits.bytes) return { ok: false, failure: "too-large", report: walker.report };
   return { ok: true, html, tree: root, report: walker.report, textNodes };
 }
 

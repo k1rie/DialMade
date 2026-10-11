@@ -1,4 +1,4 @@
-import { AI_RENDER_SYSTEM_PROMPT, processBlock, themeColorsFromVars, type RenderScreenInput } from "@dialmade/ai-render";
+import { AI_PAGE_SYSTEM_PROMPT, AI_RENDER_SYSTEM_PROMPT, processBlock, themeColorsFromVars, type RenderScreenInput } from "@dialmade/ai-render";
 import { compileThemeVars, createDesignDoc } from "@dialmade/doc";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RenderStreamEvent } from "./api";
@@ -45,6 +45,22 @@ describe("«Copiar prompt para mi Claude» (spec §5.6)", () => {
     // The direction without a model is the code's first pick: deterministic for a seed.
     expect(manualDirection(7, "soft-ui", "editorial")).toEqual(direction);
     expect(direction.axes.composition).toBe("editorial");
+  });
+
+  it("landings go as pages: the page contract, the outline, and the page stylesheet goes to its screen", async () => {
+    const page = (screen: RenderScreenInput): RenderScreenInput => ({ ...screen, mode: "page", blocks: screen.blocks.map((block) => ({ ...block, draft: [] })) });
+    const job = manualRenderJob({ brand: BRAND, direction, screens: [page(home)] });
+    expect(job.prompt.startsWith(AI_PAGE_SYSTEM_PROMPT)).toBe(true);
+    expect(job.prompt).not.toContain("Impeccable");
+    const agent = manualRenderJob({ brand: BRAND, direction, screens: [page(home)], tier: "final" });
+    expect(agent.prompt).toContain("pbakaus/impeccable");
+    const first = home.blocks[0]!.id;
+    const parsed = job.parse(`<style data-dl-page>.btn{gap:1px}</style>\n<section data-block-id="${first}"><h1>Hola</h1></section>`);
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(parsed.value.screens[home.id]!.map((root) => root.blockId)).toEqual([null, first]);
+    const events: RenderStreamEvent[] = [];
+    for await (const event of manualTransport({ direction, answer: parsed.value }).screen({ screen: page(home) } as never)) events.push(event);
+    expect(events.filter((event) => event.type === "block").map((event) => (event.type === "block" ? event.blockId : ""))).toEqual([null, first]);
   });
 
   it("pasting the answer gives the same blocks, and the same gates, as the streamed API paths", async () => {

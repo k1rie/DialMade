@@ -1,5 +1,6 @@
 // Server only. The common front of the /api/ai/render/* routes: same guards as every hosted AI route (no cross-site
 // requests, JSON only, a body cap, strict Zod) before any ledger or model work.
+import { TIER_MODEL } from "@dialmade/ai-render";
 import type { AiRenderTier } from "@dialmade/doc";
 import type { z } from "zod";
 import { resolveAiAccess, type AiCaller } from "../access";
@@ -51,5 +52,9 @@ export async function parseRenderRequest<S extends z.ZodType>(
   if ((choice.model !== undefined || choice.tier !== undefined) && !caller?.fullAccess) {
     return { ok: false, response: Response.json({ code: "invalid-request", message: "Only accounts with full access pick the model or the finish" }, { status: 400, headers: NO_STORE }) };
   }
-  return { ok: true, body: parsed.data, caller, config: choice.model ? { ...config, freeModel: choice.model } : config, tier: choice.tier ?? "mockup" };
+  // The finish decides the model (@dialmade/ai-render TIER_MODEL): Maqueta Haiku, Presentable Sonnet. «Producto final» is
+  // an agent outside these routes; a call that still asks for it runs as Presentable.
+  const tierModel = choice.tier ? (TIER_MODEL[choice.tier] ?? TIER_MODEL.presentable) : null;
+  const model = tierModel ?? choice.model;
+  return { ok: true, body: parsed.data, caller, config: model ? { ...config, freeModel: model } : config, tier: choice.tier ?? "mockup" };
 }
