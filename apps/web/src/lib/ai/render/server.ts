@@ -189,7 +189,11 @@ async function reserveCall(
   }
   let maxCostUsd: number;
   try {
-    const { max_tokens: maxTokens, ...countable } = params;
+    // count_tokens takes neither the output cap nor the refusal fallbacks (400 «fallbacks: Extra inputs are not
+    // permitted», Sonnet/Opus only: Haiku sends none).
+    const { max_tokens: maxTokens, ...countable } = params as typeof params & { fallbacks?: unknown };
+    delete countable.fallbacks;
+    delete countable.betas;
     const counted = await client.beta.messages.countTokens(countable as Anthropic.Beta.Messages.MessageCountTokensParams, {
       timeout: AI_COUNT_TIMEOUT_MS,
       maxRetries: 0,

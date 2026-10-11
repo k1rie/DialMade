@@ -299,6 +299,22 @@ describe("«Acceso completo» (full-access accounts)", () => {
     expect(params.output_config?.effort).toBe("high");
   });
 
+  it("count_tokens never gets the refusal fallbacks (the API answers 400 to them)", async () => {
+    const full: AiCaller = { ...caller, fullAccess: true };
+    const sonnet = { ...config, freeModel: "claude-sonnet-5-5", freeUsesPerMonth: 1000 };
+    const { client, countTokens, stream } = streamingClient(HTML, message({ model: "claude-sonnet-5-5", output: HTML }));
+    const opened = await openRenderSession({ screens: 1 }, { caller: full, config: sonnet, ledger, now: NOW, client });
+    if (!opened.ok) throw new Error(JSON.stringify(opened.body));
+    const result = await renderScreen({ task: "screen", sessionId: opened.body.sessionId, brand, direction, screen }, { caller: full, config: sonnet, ledger, now: NOW, client });
+    if (result.ok) await events(result.body);
+    const counted = (countTokens.mock.calls as unknown as [Record<string, unknown>][])[0]![0];
+    expect(counted).not.toHaveProperty("fallbacks");
+    expect(counted).not.toHaveProperty("betas");
+    expect(counted).not.toHaveProperty("max_tokens");
+    // The generation itself keeps them.
+    expect(stream.mock.calls[0]![0]).toMatchObject({ fallbacks: "default" });
+  });
+
   it("a session's worst case grows with the finish", () => {
     expect(sessionWorstCaseUsd("claude-opus-5-5", 3, "final")).toBeGreaterThan(sessionWorstCaseUsd("claude-opus-5-5", 3));
   });
