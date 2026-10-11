@@ -115,3 +115,30 @@ describe("«Diseño con IA» in the exports", () => {
     expect(toDesignMd(plain, { locale: "es" })).not.toContain("Diseño con IA");
   });
 });
+
+describe("context and concept in DESIGN.md", () => {
+  const withDirection = (extra: Partial<AiDirection>): DesignDoc => {
+    const base = aiScreensDoc();
+    return parseDesignDoc({ ...base, aiRender: { ...base.aiRender!, direction: { ...direction, ...extra } } });
+  };
+
+  it("lists what the developer said, field by field, and the model's concept", () => {
+    const doc = withDirection({
+      context: { audience: "Dueños de barberías", goal: "Reservar una demo", facts: "Desde 19 USD al mes" },
+      concept: "Una agenda que se siente como una libreta de barbero.",
+    });
+    const out = aiDesignLines(doc, "es").join("\n");
+    expect(out).toContain("Contexto del producto:");
+    expect(out).toContain("- Para quién: Dueños de barberías");
+    expect(out).toContain("- Qué debe provocar: Reservar una demo");
+    expect(out).toContain("- Datos reales: Desde 19 USD al mes");
+    expect(out).not.toContain("Tono:");
+    expect(out).toContain("Concepto: Una agenda que se siente como una libreta de barbero.");
+  });
+
+  it("says nothing when there is no context", () => {
+    const out = aiDesignLines(aiScreensDoc(), "en").join("\n");
+    expect(out).not.toContain("Product context");
+    expect(out).not.toContain("Concept:");
+  });
+});

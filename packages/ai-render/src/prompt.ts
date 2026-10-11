@@ -4,7 +4,7 @@
 // Everything the user typed (names, labels, notes, copy, the brief, a «Pedir cambio» request) travels as JSON inside
 // tags with `<` and `>` escaped: it can never close a block, and the system prompt says it is data, not orders.
 import { getThemeRecipe, getThemeShape } from "@dialmade/catalog";
-import type { AiAxes, AiDirection } from "@dialmade/doc";
+import type { AiAxes, AiContext, AiDirection } from "@dialmade/doc";
 import { ICON_NAMES } from "@dialmade/ui/icons";
 import { AXIS_GLOSSARY, hash32, type DirectionCandidates } from "./direction";
 import { LIBRARY, selectReferences, type LibraryBlock } from "./library";
@@ -12,7 +12,7 @@ import { PLACEHOLDER_KINDS } from "./sanitize";
 import { tierSettings, type AiRenderTier } from "./tier";
 import { CONTAINER_SIZES, RADII, ROLE_COLORS, SCALE_GROUPS, SHADOWS, TYPE_SIZES } from "./vocabulary";
 
-export const AI_RENDER_PROMPT_VERSION = "ai-render/3";
+export const AI_RENDER_PROMPT_VERSION = "ai-render/4";
 
 /** Output caps (spec §2.1 and §5): one screen, one block action, the direction. */
 // 16k: Haiku 5.5 cannot turn adaptive thinking off, and a 7-block landing with references needs ≈ 7–10k of HTML.
@@ -62,6 +62,7 @@ Every color, font, type size, radius and shadow must be a token. Palette, dark m
 # Design
 - Follow the art direction you are given: its axes and moves apply to every screen, so all screens look like one product. Use each move where it fits naturally; never restructure a block (for instance into cards) only to host a move or a decoration. Shared pieces (navbar, footer) must look the same everywhere.
 - When the art direction has a "style" (the developer's own words for the look they want) or "references" (what was taken from their reference screenshots), they weigh more than the moves and the axes: follow them in every block, within the tokens, the palette and these rules. Never copy text, names, logos or images of a reference.
+- When the art direction has a "context" (what the developer told you about the product: who it is for, what it must provoke, the tone, real facts and what it must not look like) and a "concept" (what its pages should feel like), they decide the voice of the copy, which details to show and what to leave out. The "facts" are real: use them as given instead of inventing numbers, prices or names, and never contradict them. The "avoid" is a hard no, for the copy and for the look.
 - You also write the words inside the blocks, in the screen's language ("es" is Spanish from Spain, "en" is American English). Start from each block's "draft" (its current copy): keep its role (eyebrow, title, subtitle, button…), its prices, plan names, numbers and the names of links to other screens. The draft is TEMPLATE copy from a generic generator: unless a line is a price, a plan name, a number or the name of a link to another screen, rewrite it for THIS product (use the brand's "description" and "productType"), concrete and short, with a specific benefit instead of a slogan; add supporting text, labels, sample data and microcopy where the design needs them. Use the brand name exactly as given. Never name real companies, people or products; never invent customer logos of real brands; never write real-looking emails, phone numbers or URLs.
 - A block's "label" and "note" say what it is for (data from the developer). "count" is how many items it shows: show exactly that many.
 - Make it look designed, not generated: a clear hierarchy, one focal point per block, real alignment, deliberate whitespace, consistent radii and shadows, sample data that looks real for this product.
@@ -121,12 +122,33 @@ export type RenderScreenInput = {
   blocks: RenderBlockInput[];
 };
 
-export type DirectionForPrompt = Pick<AiDirection, "axes" | "moves" | "rationale" | "style" | "references">;
+export type DirectionForPrompt = Pick<AiDirection, "axes" | "moves" | "rationale" | "style" | "references" | "context" | "concept">;
+
+/**
+ * What of a stored direction travels to the screens and the block actions: its picks, the developer's words, the
+ * note about their screenshots and their context with the model's concept. One place, so no call forgets a part.
+ */
+export function directionForPrompt(direction: DirectionForPrompt): DirectionForPrompt {
+  return {
+    axes: direction.axes,
+    moves: direction.moves,
+    rationale: direction.rationale,
+    ...(direction.style && { style: direction.style }),
+    ...(direction.references && { references: direction.references }),
+    ...(direction.context && { context: direction.context }),
+    ...(direction.concept && { concept: direction.concept }),
+  };
+}
 
 /** Tier 2 of the cache: the same text for every screen and block action of the document. */
 export function artDirectionText(brand: RenderBrandInput, direction: DirectionForPrompt): string {
   const axes = Object.fromEntries(Object.entries(direction.axes).map(([axis, value]) => [axis, `${value}: ${AXIS_GLOSSARY[value] ?? ""}`]));
-  const extra = { ...(direction.style && { style: direction.style }), ...(direction.references && { references: direction.references }) };
+  const extra = {
+    ...(direction.style && { style: direction.style }),
+    ...(direction.references && { references: direction.references }),
+    ...(direction.context && { context: direction.context }),
+    ...(direction.concept && { concept: direction.concept }),
+  };
   return `<art_direction>\n${jsonData({ brand, axes, moves: direction.moves, rationale: direction.rationale, ...extra })}\n</art_direction>`;
 }
 
@@ -227,13 +249,20 @@ export function blockMessage(brand: RenderBrandInput, direction: DirectionForPro
 }
 
 /** Structured output of the direction call: each axis restricted to the code's candidates. */
-export function directionSchema(candidates: DirectionCandidates, options: { references?: boolean } = {}) {
+export function directionSchema(candidates: DirectionCandidates, options: { references?: boolean; concept?: boolean } = {}) {
   const axes: Record<string, unknown> = {};
   for (const [axis, values] of Object.entries(candidates.axes)) axes[axis] = { type: "string", enum: values };
   return {
     type: "object",
     additionalProperties: false,
-    required: ["axes", "moves", "rationale", ...(candidates.themes.length > 0 ? ["theme"] : []), ...(options.references ? ["references"] : [])],
+    required: [
+      "axes",
+      "moves",
+      "rationale",
+      ...(candidates.themes.length > 0 ? ["theme"] : []),
+      ...(options.references ? ["references"] : []),
+      ...(options.concept ? ["concept"] : []),
+    ],
     properties: {
       axes: { type: "object", additionalProperties: false, required: Object.keys(axes), properties: axes },
       moves: { type: "array", items: { type: "string", enum: candidates.moves }, minItems: 1, description: "2 or 3 of the candidate moves" },
@@ -244,12 +273,20 @@ export function directionSchema(candidates: DirectionCandidates, options: { refe
       ...(options.references && {
         references: { type: "string", description: "At most 400 characters, in English: what the screens should take from the reference screenshots" },
       }),
+      ...(options.concept && {
+        concept: { type: "string", description: "At most 480 characters, in the brand's language: what this product's pages should feel like and the one idea that makes them specific to its audience" },
+      }),
     },
   } as const;
 }
 
 /** «Estilo»: the developer's words for the look and up to `MAX_STYLE_REFERENCES` screenshots (never stored). */
-export type DirectionStyle = { text?: string; images?: readonly { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string }[] };
+export type DirectionStyle = {
+  text?: string;
+  images?: readonly { mediaType: "image/jpeg" | "image/png" | "image/webp"; data: string }[];
+  /** What the developer told us about the product (normalized): it goes to the direction call as data. */
+  context?: AiContext;
+};
 
 export const MAX_STYLE_LENGTH = 600;
 export const MAX_STYLE_REFERENCES = 3;
@@ -273,12 +310,16 @@ export function directionMessage(
 ): MessageContent {
   const options = Object.fromEntries(Object.entries(candidates.axes).map(([axis, values]) => [axis, values.map((value) => `${value}: ${AXIS_GLOSSARY[value] ?? ""}`)]));
   const text = style.text?.trim();
+  const context = style.context && Object.keys(style.context).length > 0 ? style.context : undefined;
   const images = style.images?.length ?? 0;
   const asks = [
     candidates.themes.length > 0
       ? ` Also pick "theme": one of the variants in "themes" (each changes only the shape of the style: corners, border, shadow and buttons, never the colors) that best suits the brand and what the developer asked for, or "none" to keep the style as it is. Prefer "none" when no variant clearly fits.`
       : "",
     text ? ` The developer described the look they want in "style": let it decide between the options and the moves, and say in the rationale how you follow it.` : "",
+    context
+      ? ` The developer also told you about the product in "context" (who it is for, what it must provoke, the tone, real facts, what it must not look like): in "concept", write 2 to 4 sentences, at most 480 characters, language "${locale}", on what this product's pages should feel like and the one idea that makes them specific to THIS audience. Use its facts as given, respect its "avoid", and let it weigh in the options and the moves too.`
+      : "",
     images > 0
       ? ` The ${images === 1 ? "image above is a reference screenshot" : `${images} images above are reference screenshots`} of a look they like: in "references", say in plain words what the screens should take from ${images === 1 ? "it" : "them"} (composition, type voice and scale, decoration, density, shapes, color used as a gesture), never their text, names, logos, products or exact colors (the palette is fixed).`
       : "",
@@ -286,7 +327,7 @@ export function directionMessage(
   return [
     {
       type: "text",
-      text: `<screen_data>\n${jsonData({ task: "art-direction", brand, locale, screens, ...(text && { style: text }), options, moves: candidates.moves, ...(candidates.themes.length > 0 && { themes: candidates.themes.map(themeLine) }) })}\n</screen_data>\n\nChoose the art direction of this product before any screen is designed: one value per axis from "options", the 2 or 3 "moves" that fit the brand best, and a short rationale (at most 280 characters, language "${locale}") that a developer understands. Pick what makes THIS brand distinct, not the safest option.${asks}`,
+      text: `<screen_data>\n${jsonData({ task: "art-direction", brand, locale, screens, ...(text && { style: text }), ...(context && { context }), options, moves: candidates.moves, ...(candidates.themes.length > 0 && { themes: candidates.themes.map(themeLine) }) })}\n</screen_data>\n\nChoose the art direction of this product before any screen is designed: one value per axis from "options", the 2 or 3 "moves" that fit the brand best, and a short rationale (at most 280 characters, language "${locale}") that a developer understands. Pick what makes THIS brand distinct, not the safest option.${asks}`,
     },
   ];
 }

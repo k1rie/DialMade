@@ -63,6 +63,42 @@ export const MAX_AI_STASHED_BLOCKS = 12;
 
 const Text = (max: number) => z.string().max(max);
 
+/**
+ * The context a developer gives before «Generar con IA»: who the product is for, what it must provoke, the tone, the
+ * real facts (figures, prices, names) and what it must not look like. All optional, single-line and short, like a block
+ * note. It is data for the model, never instructions.
+ */
+export const AI_CONTEXT_FIELDS = ["audience", "goal", "tone", "facts", "avoid"] as const;
+export type AiContextField = (typeof AI_CONTEXT_FIELDS)[number];
+export const AI_CONTEXT_MAX: Readonly<Record<AiContextField, number>> = { audience: 160, goal: 120, tone: 80, facts: 300, avoid: 120 };
+
+export const AiContextSchema = z.strictObject({
+  audience: Text(AI_CONTEXT_MAX.audience).optional(),
+  goal: Text(AI_CONTEXT_MAX.goal).optional(),
+  tone: Text(AI_CONTEXT_MAX.tone).optional(),
+  facts: Text(AI_CONTEXT_MAX.facts).optional(),
+  avoid: Text(AI_CONTEXT_MAX.avoid).optional(),
+});
+export type AiContext = z.output<typeof AiContextSchema>;
+
+/** Single line, trimmed, capped; empty fields dropped. `undefined` when nothing is left (no context at all). */
+export function normalizeAiContext(input: Partial<Record<AiContextField, string | undefined>> | null | undefined): AiContext | undefined {
+  if (!input) return undefined;
+  const out: AiContext = {};
+  for (const field of AI_CONTEXT_FIELDS) {
+    const value = input[field]?.replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, " ").replace(/\s+/g, " ").trim().slice(0, AI_CONTEXT_MAX[field]);
+    if (value) out[field] = value;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Same context after normalizing (key order and blanks do not matter). */
+export function sameAiContext(a: AiContext | undefined, b: AiContext | undefined): boolean {
+  const left = normalizeAiContext(a);
+  const right = normalizeAiContext(b);
+  return AI_CONTEXT_FIELDS.every((field) => left?.[field] === right?.[field]);
+}
+
 export const AiProvenanceSchema = z.strictObject({
   kind: z.enum(AI_RENDER_KINDS),
   path: z.enum(AI_RENDER_PATHS),
@@ -113,6 +149,13 @@ export const AiDirectionSchema = z.strictObject({
    * own words. The screenshots themselves are never stored: only this note travels to the screens.
    */
   references: Text(400).optional(),
+  /** What the developer told us about the product before generating (`AiContextSchema`). */
+  context: AiContextSchema.optional(),
+  /**
+   * The model's reading of that context in its own words: what the product's pages should feel like and the one
+   * idea that makes them specific to its audience. It travels to every screen; the developer can read it.
+   */
+  concept: Text(500).optional(),
   /**
    * The variant of the recipe (`brief.themeId`) the model picked with this direction. The brief holds the value in
    * use; this one remembers what the AI chose, so a later direction only replaces a variant the developer did not set.

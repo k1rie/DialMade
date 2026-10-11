@@ -2,7 +2,7 @@
 // no env). Everything the user wrote (names, labels, notes, copy, the brief, a request) travels in these bodies as
 // DATA: the prompt builder of @dialmade/ai-render escapes it, and the answer is only HTML that the client sanitizes.
 import { MAX_STYLE_LENGTH, MAX_STYLE_REFERENCES, type DirectionStyle } from "@dialmade/ai-render";
-import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, MAX_AI_REQUEST_LENGTH, type AiRenderTier } from "@dialmade/doc";
+import { AI_DIRECTION_CHIPS, AI_AXES, AI_RENDER_TIERS, AiContextSchema, MAX_AI_REQUEST_LENGTH, type AiContext, type AiRenderTier } from "@dialmade/doc";
 import { z } from "zod";
 import type { AiApiError, AiApiErrorCode } from "../api";
 import { AI_SESSION_SCREENS } from "../config";
@@ -82,6 +82,9 @@ export const RenderDirectionSchema = z.strictObject({
   rationale: Line(280),
   style: Line(MAX_STYLE_LENGTH).optional(),
   references: Line(400).optional(),
+  /** What the developer told us about the product, and the model's reading of it (see `AiContextSchema`). */
+  context: AiContextSchema.optional(),
+  concept: Line(500).optional(),
   /** The variant of the recipe the model picked (one of the code's candidates; the engine checks it again). */
   themeId: Line(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
 });
@@ -124,6 +127,8 @@ export const RenderRequestBodySchema = z.discriminatedUnion("task", [
     /** «Estilo»: the developer's words for the look and up to 3 reference screenshots (data, not instructions). */
     style: Line(MAX_STYLE_LENGTH).optional(),
     references: z.array(StyleReferenceSchema).max(MAX_STYLE_REFERENCES).optional(),
+    /** «Contexto»: who it is for, what it must provoke, the tone, real facts, what to avoid (data, not instructions). */
+    context: AiContextSchema.optional(),
     screens: z.array(z.strictObject({ name: Line(80), kind: z.enum(["landing", "app"]), blocks: z.array(Line(32)).max(MAX_RENDER_BLOCKS) })).max(AI_SESSION_SCREENS),
     ...FullAccessChoice,
   }),
@@ -142,9 +147,14 @@ export type RenderRequestBody = z.infer<typeof RenderRequestBodySchema>;
 export const carriesReferences = (json: unknown): boolean => typeof json === "object" && json !== null && (json as { task?: unknown }).task === "direction";
 
 /** «Estilo» of a direction body as the prompt builder takes it. */
-export const styleOf = (body: { style?: string | undefined; references?: { mediaType: "image/jpeg"; data: string }[] | undefined }): DirectionStyle => ({
+export const styleOf = (body: {
+  style?: string | undefined;
+  references?: { mediaType: "image/jpeg"; data: string }[] | undefined;
+  context?: AiContext | undefined;
+}): DirectionStyle => ({
   ...(body.style?.trim() && { text: body.style.trim() }),
   ...(body.references?.length && { images: body.references }),
+  ...(body.context && Object.keys(body.context).length > 0 && { context: body.context }),
 });
 
 /** POST /api/ai/render/block: «Otra versión» or «Pedir cambio» of one block (one session action). */

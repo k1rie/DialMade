@@ -34,7 +34,7 @@ export type GenerationActions = {
 export type GenerationStoreState = GenerationState & { prefs: GenerationPrefs; actions: GenerationActions };
 export type GenerationStore = StoreApi<GenerationStoreState>;
 
-export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null, style: "", references: [] };
+export const DEFAULT_PREFS: GenerationPrefs = { mode: "off", chip: "auto", screens: null, style: "", references: [], context: null };
 
 let transportOverride: RenderTransport | null = null;
 /** The transport of the NEXT run only (consumed when it starts): «mi Claude»'s pasted answer is good for one run. */

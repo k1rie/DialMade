@@ -4,7 +4,7 @@
 //
 // The transport is an interface: the free tier (POST /api/ai/render/block with the live session) is here; BYOK and
 // «Copiar prompt para mi Claude» come with track C's `transport.ts` and plug in as other `BlockActionTransport`s.
-import { AI_RENDER_PROMPT_VERSION, brandInput, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
+import { AI_RENDER_PROMPT_VERSION, brandInput, directionForPrompt, newSeed, screenInput, themeColorsFromVars, type BlockContext, type ProcessedBlock, type ThemeColors } from "@dialmade/ai-render";
 import { MAX_AI_REQUEST_LENGTH, compileThemeVars, type AiBlock, type AiRenderPath, type AiRenderTier, type DesignDoc } from "@dialmade/doc";
 import { AI_SESSION_SCREENS } from "../config";
 import {
@@ -132,7 +132,8 @@ export function blockActionBody(doc: DesignDoc, screenId: string, blockId: strin
   return {
     sessionId: options.sessionId,
     brand: { ...brand, ...(brand.description && { description: brand.description.slice(0, 500) }) },
-    direction: { axes: direction.axes, moves: direction.moves, rationale: direction.rationale },
+    // The same parts the screens got: the developer's words, their screenshots' note, context and concept.
+    direction: directionForPrompt(direction),
     screen: { id, name, kind, route, locale, screens },
     block: input,
     html,

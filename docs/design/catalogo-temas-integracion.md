@@ -101,3 +101,31 @@ A corregir, por prioridad:
 ## Sinergia pendiente
 
 La IA nunca escribe `brief`, `tokens` ni `system`; solo `/aiRender/*`. Por eso «editorial y sobrio» influye en la composición de cada bloque pero **no puede cambiar radios, sombra, borde ni pesos globales**. Los temas son justo esa mitad que falta. Con la opción A, la dirección de arte podría elegir `themeId` entre 3–5 candidatos filtrados por receta, igual que hoy elige ejes y movimientos de una lista cerrada.
+
+## Contexto antes de generar (2026-10-10, noche)
+
+Motivo: el diseño salía correcto pero genérico porque Claude sabía el *estilo* pedido y no *de qué trata* ni *para quién*.
+La palanca es la entrada (el doc de calidad ya decía que la variedad sale de las entradas, no del muestreo). El paso va
+**antes** de generar: se pregunta el contexto, luego la dirección y el estilo, y solo después diseña la IA.
+
+- **Qué se pregunta** («Contexto» en el popover «Diseño con IA», antes de «Dirección de arte» y «Estilo»; todo opcional,
+  una línea, corto): ¿para quién es? (160) · ¿qué debe provocar? (120) · tono (80) · datos reales (300) · ¿qué NO debe
+  parecer? (120). Es dato, nunca instrucciones.
+- **Qué hace Claude con él:** la misma llamada de dirección (sin endpoint ni ledger nuevos) devuelve además un
+  `concept` (≤ 480 caracteres, en el idioma de la marca): lo que deben sentir las páginas y la idea que las hace
+  específicas de esa audiencia. El popover lo enseña («Lo que entendió Claude») para que se vea qué entendió.
+- **Cómo viaja:** `AiDirection.context` (lo que dijo el desarrollador, viene de la petición, nunca de la respuesta) y
+  `AiDirection.concept` van en la dirección de arte cacheada, así que llegan a **todas las pantallas y a «Otra
+  versión» / «Pedir cambio»**. El prompt de sistema dice que los `facts` son reales (se usan tal cual, no se inventan
+  cifras) y que `avoid` es un no rotundo. Un contexto distinto pide una dirección nueva (`directionReusable`).
+- **Vías:** API del plan gratis, key propia y «mi Claude» (ahí el contexto va en la dirección de arte del prompt, sin
+  `concept`: no hay llamada de dirección). DESIGN.md lo exporta como «Contexto del producto» y «Concepto».
+- **Corregido de paso:** «Otra versión» y «Pedir cambio» mandaban solo ejes, movimientos y razón: perdían el «Estilo»
+  del desarrollador y la nota de sus capturas. Ahora usan `directionForPrompt`, igual que las pantallas.
+- **Popover:** el panel compartido (`ui/Popover`) no tenía altura máxima y con más campos se salía por arriba de la
+  ventana; ahora hace scroll dentro (`max-h-[calc(100dvh-24px)]`).
+
+**Límites honestos:** no hay medida de calidad antes/después (haría falta correr `eval:quality` con una key); el concepto
+no se edita ni se aprueba antes de generar (se ve después de la dirección); el contexto no se persiste entre
+documentos. Siguiente paso natural si funciona: que el desarrollador pueda editar el concepto y regenerar solo las
+pantallas.

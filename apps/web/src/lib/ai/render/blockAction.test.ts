@@ -42,6 +42,26 @@ describe("block action body", () => {
     expect(change.action).toEqual({ kind: "change", request: "x".repeat(500), target: { text: "Ver demo" } });
   });
 
+  it("carries what the developer told the direction (words, screenshots' note, context) and its concept to the block", () => {
+    const { doc, hero } = designedDoc({ direction: true });
+    const direction = {
+      ...doc.aiRender!.direction!,
+      style: "Editorial y sobrio",
+      references: "Titulares enormes en serif, mucho aire",
+      context: { audience: "Dueños de barberías", facts: "Desde 19 USD al mes" },
+      concept: "Una agenda que se siente como una libreta de barbero.",
+    };
+    const themed = { ...doc, aiRender: { ...doc.aiRender!, direction } };
+    const body = blockActionBody(themed, "s-home", hero, { kind: "reroll" }, { sessionId: SESSION, seed: 3 });
+    expect(RenderBlockBodySchema.safeParse(body).success).toBe(true);
+    expect(body.direction).toMatchObject({
+      style: "Editorial y sobrio",
+      references: "Titulares enormes en serif, mucho aire",
+      context: { audience: "Dueños de barberías", facts: "Desde 19 USD al mes" },
+      concept: "Una agenda que se siente como una libreta de barbero.",
+    });
+  });
+
   it("refuses a block without AI design or a document without direction", () => {
     const { doc, hero } = designedDoc();
     expect(() => blockActionBody(doc, "s-home", hero, { kind: "reroll" }, { sessionId: SESSION, seed: 1 })).toThrow(BlockActionError);

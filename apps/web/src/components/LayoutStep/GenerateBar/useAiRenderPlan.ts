@@ -1,6 +1,6 @@
 "use client";
 
-import type { AiDirectionChip, AiRenderTier } from "@dialmade/doc";
+import { normalizeAiContext, type AiContext, type AiDirectionChip, type AiRenderTier } from "@dialmade/doc";
 import { useCallback, useMemo } from "react";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { useI18n } from "@/i18n";
@@ -45,6 +45,11 @@ export type AiRenderPlan = {
   setStyle: (style: string) => void;
   references: StyleReference[];
   setReferences: (references: StyleReference[]) => void;
+  /** «Contexto»: what the developer says about the product (the document's own until they touch it). */
+  context: AiContext;
+  setContext: (context: AiContext) => void;
+  /** What the model made of the context in the document's current direction (read-only). */
+  concept: string | undefined;
   /** «Maqueta · Presentable · Producto final» (the tab's choice). */
   tier: AiRenderTier;
   setTier: (tier: AiRenderTier) => void;
@@ -115,6 +120,7 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const setChip = useCallback((chip: AiDirectionChip) => store?.getState().actions.setPrefs({ chip }), [store]);
   const setStyle = useCallback((style: string) => store?.getState().actions.setPrefs({ style }), [store]);
   const setReferences = useCallback((references: StyleReference[]) => store?.getState().actions.setPrefs({ references }), [store]);
+  const setContext = useCallback((context: AiContext) => store?.getState().actions.setPrefs({ context }), [store]);
 
   const screens = useMemo<AiRenderScreenOption[]>(() => {
     if (!wantsList) return [];
@@ -157,7 +163,9 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
   const tierNeedsKey = path.path !== "byok" && !hostedFull && !FREE_RENDER_TIERS.includes(tier);
   const blocked = path.reason;
   const existing = doc.aiRender?.direction;
-  const needsDirection = !directionReusable(existing, prefs.chip, prefs.style, prefs.references.length);
+  // Untouched = what the document's direction already carries, so reopening the popover shows what was used.
+  const context = useMemo<AiContext>(() => prefs.context ?? existing?.context ?? {}, [prefs.context, existing?.context]);
+  const needsDirection = !directionReusable(existing, prefs.chip, prefs.style, prefs.references.length, context);
   const estimate = useMemo(() => {
     if (!wantsList || selected.length === 0 || !status) return null;
     const counts = selected.map((id) => screens.find((screen) => screen.id === id)?.blocks ?? 0);
@@ -188,8 +196,15 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
     if (!store || !ready) return;
     // The screenshots are used once, by this direction, and dropped: only the model's note about them is kept. The
     // engine drops them when the direction call answers, so a run that fails before that leaves them attached.
-    void store.getState().actions.start({ screenIds: selected, chip: prefs.chip, style: prefs.style, references: prefs.references });
-  }, [store, ready, selected, prefs.chip, prefs.style, prefs.references]);
+    const sent = normalizeAiContext(context);
+    void store.getState().actions.start({
+      screenIds: selected,
+      chip: prefs.chip,
+      style: prefs.style,
+      references: prefs.references,
+      ...(sent && { context: sent }),
+    });
+  }, [store, ready, selected, prefs.chip, prefs.style, prefs.references, context]);
 
   const startWith = useCallback(
     (transport: RenderTransport) => {
@@ -198,11 +213,12 @@ export function useAiRenderPlan(options: { estimate?: boolean } = {}): AiRenderP
       const { actions } = store.getState();
       // «mi Claude»: a copied prompt carries the words only; the user attached the screenshots in Claude (the dialog
       // listed them), so they are spent here and the answer is local: nothing can fail before the direction.
-      void actions.start({ screenIds: selected, chip: prefs.chip, style: prefs.style });
+      const sent = normalizeAiContext(context);
+      void actions.start({ screenIds: selected, chip: prefs.chip, style: prefs.style, ...(sent && { context: sent }) });
       if (prefs.references.length > 0) actions.setPrefs({ references: [] });
     },
-    [store, mode, selected, busy, prefs.chip, prefs.style, prefs.references.length],
+    [store, mode, selected, busy, prefs.chip, prefs.style, prefs.references.length, context],
   );
 
-  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, style: prefs.style, setStyle, references: prefs.references, setReferences, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
+  return { mode, setMode, designAvailable, chip: prefs.chip, setChip, style: prefs.style, setStyle, references: prefs.references, setReferences, context, setContext, concept: existing?.concept, tier, setTier: setRenderTier, tierNeedsKey, fullAccess, screens, selected, toggleScreen, blocked, estimate, cost, ready, start, startWith };
 }

@@ -56,6 +56,7 @@ export {
   MAX_STYLE_REFERENCES,
   SCREEN_MAX_TOKENS,
   artDirectionText,
+  directionForPrompt,
   axesLine,
   blockMessage,
   directionMessage,

@@ -50,7 +50,7 @@ const answerAll: ScreenScript = async function* (body) {
   yield { type: "done", session: { ...COUNTERS, screensUsed: 1 } };
 };
 
-function fakeTransport(script: ScreenScript = answerAll, options: { direction?: "ok" | "fail"; themeId?: string } = {}) {
+function fakeTransport(script: ScreenScript = answerAll, options: { direction?: "ok" | "fail"; themeId?: string; concept?: string } = {}) {
   const screens: ScreenBody[] = [];
   const transport = {
     path: "free" as const,
@@ -66,6 +66,7 @@ function fakeTransport(script: ScreenScript = answerAll, options: { direction?: 
                 moves: ["Cards with a border and no shadow"],
                 rationale: "Calma y aire",
                 ...(options.themeId && { themeId: options.themeId }),
+                ...(options.concept && { concept: options.concept }),
               },
               usage: { model: "claude-haiku-5-5", inputTokens: 2000, outputTokens: 400, cacheReadTokens: 0, costUsd: 0.0015 },
               session: { ...COUNTERS, directionsUsed: 1 },
@@ -363,5 +364,49 @@ describe("«Generar con IA»: the reference screenshots are spent when the direc
     const { engine } = setup(transport, baseDoc(), { onDirectionUsed });
     await engine.start({ screenIds: ["s-home"], chip: "auto" });
     expect(onDirectionUsed).not.toHaveBeenCalled();
+  });
+});
+
+describe("«Generar con IA»: the context", () => {
+  const context = { audience: "Dueños de barberías", goal: "Reservar una demo", facts: "Desde 19 USD al mes" };
+
+  it("travels in the direction body, is stored with the model's concept and reaches every screen", async () => {
+    const { transport, screens } = fakeTransport(answerAll, { concept: "Una agenda que se siente como una libreta de barbero." });
+    const { engine, doc } = setup(transport);
+    await engine.start({ screenIds: ["s-home", "s-pricing"], chip: "auto", context: { ...context, tone: "  " } });
+
+    // The body carries the normalized context (blank fields dropped).
+    expect(transport.direction).toHaveBeenCalledWith(expect.objectContaining({ context }), expect.anything());
+    const stored = doc().aiRender?.direction;
+    expect(stored?.context).toEqual(context);
+    expect(stored?.concept).toBe("Una agenda que se siente como una libreta de barbero.");
+    // Every screen request carries the direction with both parts.
+    expect(screens.length).toBeGreaterThan(0);
+    for (const body of screens) {
+      expect(body.direction).toMatchObject({ context, concept: "Una agenda que se siente como una libreta de barbero." });
+    }
+  });
+
+  it("the context comes from the request, never from the answer, and a failed call keeps it", async () => {
+    const { transport } = fakeTransport(answerAll, { direction: "fail" });
+    const { engine, doc } = setup(transport);
+    await engine.start({ screenIds: ["s-home"], chip: "auto", context });
+    expect(doc().aiRender?.direction?.context).toEqual(context);
+    expect(doc().aiRender?.direction?.concept).toBeUndefined();
+  });
+
+  it("the same context reuses the direction; another one asks for a new call", async () => {
+    const first = fakeTransport(answerAll, { concept: "Una libreta" });
+    const run = setup(first.transport);
+    await run.engine.start({ screenIds: ["s-home"], chip: "auto", context });
+    expect(first.transport.direction).toHaveBeenCalledTimes(1);
+
+    run.store.setState({ ...IDLE_GENERATION });
+    await run.engine.start({ screenIds: ["s-home"], chip: "auto", context: { ...context } });
+    expect(first.transport.direction).toHaveBeenCalledTimes(1);
+
+    run.store.setState({ ...IDLE_GENERATION });
+    await run.engine.start({ screenIds: ["s-home"], chip: "auto", context: { ...context, goal: "Que se registren" } });
+    expect(first.transport.direction).toHaveBeenCalledTimes(2);
   });
 });

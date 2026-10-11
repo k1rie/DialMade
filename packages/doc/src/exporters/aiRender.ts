@@ -3,7 +3,7 @@
 // Cursor) also carry each AI block's HTML as a reference, at most 60 KB per pack. Read-only over the stored
 // `aiRender` (@dialmade/doc's schema, owned by track B); nothing here when the document has no AI direction or blocks.
 import type { Locale } from "@dialmade/catalog";
-import { AI_AXIS_NAMES, type AiBlock } from "../aiRender";
+import { AI_AXIS_NAMES, AI_CONTEXT_FIELDS, type AiBlock } from "../aiRender";
 import type { DesignDoc, Screen } from "../schema";
 import { orderedScreens } from "../screens";
 import { plainText } from "./layoutBlock";
@@ -24,6 +24,9 @@ const T = {
     why: "Por qué",
     style: "Estilo pedido",
     references: "De las referencias",
+    context: "Contexto del producto",
+    contextFields: { audience: "Para quién", goal: "Qué debe provocar", tone: "Tono", facts: "Datos reales", avoid: "Qué no debe parecer" },
+    concept: "Concepto",
     chip: (chip: string) => `Dirección elegida: «${chip}».`,
     blocks: "Bloques de IA por pantalla",
     base: "diseño base",
@@ -43,6 +46,9 @@ const T = {
     why: "Why",
     style: "Requested style",
     references: "From the references",
+    context: "Product context",
+    contextFields: { audience: "Who it is for", goal: "What it must provoke", tone: "Tone", facts: "Real facts", avoid: "What it must not look like" },
+    concept: "Concept",
     chip: (chip: string) => `Chosen direction: "${chip}".`,
     blocks: "AI blocks per screen",
     base: "base design",
@@ -120,6 +126,15 @@ export function aiDesignLines(doc: DesignDoc, locale: Locale, level = 2): string
       "",
       ...(direction.style ? [`${L.style}: ${line(direction.style)}`, ""] : []),
       ...(direction.references ? [`${L.references}: ${line(direction.references)}`, ""] : []),
+      ...(direction.context
+        ? [
+            `${L.context}:`,
+            "",
+            ...AI_CONTEXT_FIELDS.flatMap((field) => (direction.context?.[field] ? [`- ${L.contextFields[field]}: ${line(direction.context[field]!)}`] : [])),
+            "",
+          ]
+        : []),
+      ...(direction.concept ? [`${L.concept}: ${line(direction.concept)}`, ""] : []),
     );
   }
   const all = entries(doc);

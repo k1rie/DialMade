@@ -65,9 +65,9 @@ describe("generation store", () => {
     const engine = { start: vi.fn(async () => {}), cancel: vi.fn(), retryScreen: vi.fn(async () => {}), retryBlock: vi.fn(async () => {}), dismiss: vi.fn() };
     const factory = vi.fn(() => engine);
     const store = createGenerationStore(docStore(doc).store, { engine: factory });
-    expect(store.getState().prefs).toEqual({ mode: "off", chip: "auto", screens: null, style: "", references: [] });
+    expect(store.getState().prefs).toEqual({ mode: "off", chip: "auto", screens: null, style: "", references: [], context: null });
     store.getState().actions.setPrefs({ mode: "design", chip: "luxury" });
-    expect(store.getState().prefs).toEqual({ mode: "design", chip: "luxury", screens: null, style: "", references: [] });
+    expect(store.getState().prefs).toEqual({ mode: "design", chip: "luxury", screens: null, style: "", references: [], context: null });
     await store.getState().actions.start({ screenIds: ["s-home"], chip: "luxury" });
     await store.getState().actions.retryScreen("s-home");
     expect(engine.start).toHaveBeenCalledWith({ screenIds: ["s-home"], chip: "luxury" });

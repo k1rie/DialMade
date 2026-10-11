@@ -5,6 +5,7 @@ import { ai as aiText } from "@/i18n/ai";
 import { useByokKey } from "@/lib/ai/byokKey";
 import type { AiRenderPlan } from "../../useAiRenderPlan";
 import { AiAccessActions } from "../AiAccessActions";
+import { AiContextBrief } from "../AiContextBrief";
 import { AiDirectionChips } from "../AiDirectionChips";
 import { AiModelPicker } from "../AiModelPicker";
 import { AiRenderCost } from "../AiRenderCost";
@@ -21,7 +22,7 @@ export type DesignDetailsProps = {
 };
 
 /**
- * «Diseño con IA»: the finish (Maqueta · Presentable · Producto final), the art direction chips, «Estilo» (words and reference screenshots) and the screens, a status only when the free tier cannot answer, and the
+ * «Diseño con IA»: the finish (Maqueta · Presentable · Producto final), «Contexto» (what the developer knows), the art direction chips, «Estilo» (words and reference screenshots) and the screens, a status only when the free tier cannot answer, and the
  * two other ways to Claude (spec §5.3, §10.3): the user's key and «Usar mi Claude». When the free tier is closed the
  * key is the primary way out. The cost line lives in the CTA's tooltip.
  */
@@ -34,6 +35,7 @@ export function DesignDetails({ plan, onUseKey, onUseClaude }: DesignDetailsProp
       <p className="m-0 text-caption text-muted">{t.designDescription}</p>
       <AiTierPicker value={plan.tier} onChange={plan.setTier} needsKey={plan.tierNeedsKey} />
       {plan.fullAccess && <AiModelPicker value={plan.fullAccess.model} onChange={plan.fullAccess.setModel} />}
+      <AiContextBrief context={plan.context} onContextChange={plan.setContext} concept={plan.concept} />
       <AiDirectionChips value={plan.chip} onChange={plan.setChip} />
       <AiStyleBrief style={plan.style} onStyleChange={plan.setStyle} references={plan.references} onReferencesChange={plan.setReferences} />
       <AiScreensPicker screens={plan.screens} selected={plan.selected} onToggle={plan.toggleScreen} />

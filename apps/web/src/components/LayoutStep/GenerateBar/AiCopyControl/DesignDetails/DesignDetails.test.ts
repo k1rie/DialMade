@@ -15,6 +15,9 @@ const plan = (over: Partial<AiRenderPlan> = {}): AiRenderPlan => ({
   setStyle: () => {},
   references: [],
   setReferences: () => {},
+  context: {},
+  setContext: () => {},
+  concept: undefined,
   tier: "mockup",
   setTier: () => {},
   tierNeedsKey: false,
@@ -67,5 +70,29 @@ describe("DesignDetails («Diseño con IA»)", () => {
     const html = render(plan({ selected: [] }));
     expect(html.match(/<button[^>]*disabled=""[^>]*>(<span[^>]*>)?Usar mi Claude/)).not.toBeNull();
     expect(html).toContain("Elige al menos una pantalla.");
+  });
+
+  it("asks for the context before the direction and the style, with every field", () => {
+    const html = render(plan());
+    for (const label of ["Contexto", "¿Para quién es?", "¿Qué debe provocar?", "Tono", "Datos reales", "¿Qué NO debe parecer?"]) expect(html).toContain(label);
+    expect(html).toContain("Cuanto más sepa Claude de tu producto, menos genérico sale.");
+    expect(html).toContain("0 de 5");
+    expect(html.indexOf("Contexto")).toBeLessThan(html.indexOf("Dirección de arte"));
+    expect(html.indexOf("Dirección de arte")).toBeLessThan(html.indexOf("Estilo"));
+  });
+
+  it("shows what was filled, the field caps and what Claude understood", () => {
+    const html = render(plan({ context: { audience: "Dueños de barberías", facts: "Desde 19 USD al mes" }, concept: "Una agenda que se siente como una libreta." }));
+    expect(html).toContain("2 de 5");
+    expect(html).toContain('value="Dueños de barberías"');
+    expect(html).toContain("Desde 19 USD al mes");
+    expect(html).toMatch(/maxLength="160"/i);
+    expect(html).toMatch(/maxLength="300"/i);
+    expect(html).toContain("Lo que entendió Claude");
+    expect(html).toContain("Una agenda que se siente como una libreta.");
+  });
+
+  it("does not claim an understanding before there is one", () => {
+    expect(render(plan())).not.toContain("Lo que entendió Claude");
   });
 });

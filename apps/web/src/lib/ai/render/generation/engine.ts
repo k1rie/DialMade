@@ -15,6 +15,7 @@ import {
   StructureTracker,
   blockBasis,
   defaultPick,
+  directionForPrompt,
   directionCandidates,
   hash32,
   newSeed,
@@ -28,7 +29,7 @@ import {
   type RenderScreenInput,
   type ThemeColors,
 } from "@dialmade/ai-render";
-import type { AiBlock, AiDirection, DesignDoc } from "@dialmade/doc";
+import { normalizeAiContext, type AiBlock, type AiDirection, type DesignDoc } from "@dialmade/doc";
 import type { StoreApi } from "zustand/vanilla";
 import { deriveDesign } from "@/lib/design-derived";
 import type { RenderApiError, RenderErrorCode, RenderSessionCounters } from "../api";
@@ -92,13 +93,7 @@ type Run = {
   active: Set<string>;
 };
 
-const forPrompt = (direction: AiDirection): DirectionForPrompt => ({
-  axes: direction.axes,
-  moves: direction.moves,
-  rationale: direction.rationale,
-  ...(direction.style && { style: direction.style }),
-  ...(direction.references && { references: direction.references }),
-});
+const forPrompt = (direction: AiDirection): DirectionForPrompt => directionForPrompt(direction);
 
 export type GenerationEngine = {
   start: (request: GenerateRequest) => Promise<void>;
@@ -296,8 +291,9 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
     const { chip } = request;
     const style = request.style?.trim().slice(0, MAX_STYLE_LENGTH) ?? "";
     const references = request.references ?? [];
+    const context = normalizeAiContext(request.context);
     const existing = doc.aiRender?.direction;
-    if (directionReusable(existing, chip, style, references.length)) {
+    if (directionReusable(existing, chip, style, references.length, context)) {
       update(target.id, () => ({ direction: { rationale: existing.rationale, fromModel: true } }));
       return existing;
     }
@@ -313,6 +309,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         recipeId: recipeId.slice(0, 48),
         chip,
         ...(style && { style }),
+        ...(context && { context }),
         ...(references.length > 0 && { references: references.map(({ mediaType, data }) => ({ mediaType, data })) }),
         screens: screenIds.map((id) => {
           const input = target.inputs.get(id)!;
@@ -344,6 +341,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
         ...answer.value.direction,
         // The developer's words come from the request, never from the answer.
         ...(style && { style }),
+        ...(context && { context }),
         provenance: {
           ...provenance,
           model: (usage?.model ?? target.model).slice(0, 80),
@@ -354,7 +352,7 @@ export function createGenerationEngine(store: EngineStore, deps: GenerationDeps)
       // Without a model the code's first pick is the direction (spec §4.2); the screens still get one.
       deps.onCounters?.(answer.error);
       setCounters(target.id, answer.error.session);
-      made = { id: `d-${drawn.toString(36)}`, version: 1, seed: drawn, chip, ...defaultPick(directionCandidates(drawn, recipeId, chip)), rationale: "", ...(style && { style }), provenance };
+      made = { id: `d-${drawn.toString(36)}`, version: 1, seed: drawn, chip, ...defaultPick(directionCandidates(drawn, recipeId, chip)), rationale: "", ...(style && { style }), ...(context && { context }), provenance };
     }
     const latest = deps.getDoc();
     if (latest) deps.applyPatch(directionOps(latest, made));

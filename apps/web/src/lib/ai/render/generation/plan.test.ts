@@ -1,4 +1,4 @@
-import { applyPatch, createDesignDoc, type AiBlock, type DesignDoc } from "@dialmade/doc";
+import { applyPatch, createDesignDoc, type AiBlock, type AiDirection, type DesignDoc } from "@dialmade/doc";
 import { getScreenTemplate, instantiateTemplate, type ScreenTemplateId } from "@dialmade/layout";
 import { describe, expect, it } from "vitest";
 import { withGeneratedScreens, type GeneratedScreenInput } from "@/lib/design-engine";
@@ -6,7 +6,7 @@ import { encodeSse, readRenderStream, RenderBlockSchema, RenderBrandSchema, type
 import { estimateGenerate, formatRenderCost } from "./cost";
 import { createFreeTierTransport } from "./freeTier";
 import { aiBlockActiveOps, aiBlockOps } from "./patches";
-import { defaultScreenPick, pickedScreens, planKit, requestBrand, screenBlocks } from "./plan";
+import { defaultScreenPick, directionReusable, pickedScreens, planKit, requestBrand, screenBlocks } from "./plan";
 
 function doc4(): DesignDoc {
   let n = 0;
@@ -159,5 +159,42 @@ describe("free-tier transport", () => {
     const back: RenderStreamEvent[] = [];
     for await (const event of readRenderStream(stream([{ type: "progress", received: 10 }]).body!)) back.push(event);
     expect(back).toEqual([{ type: "progress", received: 10 }]);
+  });
+});
+
+describe("directionReusable", () => {
+  const direction: AiDirection = {
+    id: "d-1",
+    version: 1,
+    seed: 1,
+    chip: "editorial",
+    axes: { composition: "split", typeVoice: "quiet", decoration: "none", imagery: "icon-led", colorStrategy: "brand-forward", rhythm: "airy" },
+    moves: ["Cards with a border and no shadow"],
+    rationale: "Calma",
+    style: "Editorial y sobrio",
+    context: { audience: "Dueños de barberías", goal: "Reservar una demo" },
+    provenance: { kind: "direction", path: "free", createdAt: "2026-10-10T12:00:00.000Z", promptVersion: "ai-render/4", seed: 1 },
+  };
+
+  it("is reused for the same chip, words and context, however the context is spaced or ordered", () => {
+    expect(directionReusable(direction, "editorial", "Editorial y sobrio", 0, { goal: " Reservar una demo ", audience: "Dueños de barberías" })).toBe(true);
+    expect(directionReusable(direction, "auto", "Editorial y sobrio", 0, direction.context)).toBe(true);
+  });
+
+  it("a changed, added or removed context asks for a new direction", () => {
+    expect(directionReusable(direction, "editorial", "Editorial y sobrio", 0, { audience: "Dueños de barberías", goal: "Que se registren" })).toBe(false);
+    expect(directionReusable(direction, "editorial", "Editorial y sobrio", 0, { ...direction.context, tone: "cercano" })).toBe(false);
+    expect(directionReusable(direction, "editorial", "Editorial y sobrio", 0, undefined)).toBe(false);
+  });
+
+  it("a document direction without context is reused when none is given, and not when one is", () => {
+    const bare = { ...direction, context: undefined } as AiDirection;
+    expect(directionReusable(bare, "editorial", "Editorial y sobrio", 0, undefined)).toBe(true);
+    expect(directionReusable(bare, "editorial", "Editorial y sobrio", 0, {})).toBe(true);
+    expect(directionReusable(bare, "editorial", "Editorial y sobrio", 0, { audience: "x" })).toBe(false);
+  });
+
+  it("new reference screenshots always ask for a new one", () => {
+    expect(directionReusable(direction, "editorial", "Editorial y sobrio", 1, direction.context)).toBe(false);
   });
 });

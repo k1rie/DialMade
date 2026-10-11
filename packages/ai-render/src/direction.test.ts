@@ -3,7 +3,7 @@ import { getThemeRecipe, styleRecipes } from "@dialmade/catalog";
 import { describe, expect, it } from "vitest";
 import { parseDirectionAnswer } from "./anthropic";
 import { CHIP_AXES, MOVES, RECIPE_EXCLUSIONS, defaultPick, directionCandidates, hash32, prng, themeCandidates } from "./direction";
-import { directionSchema } from "./prompt";
+import { directionForPrompt, directionSchema } from "./prompt";
 
 describe("art direction (spec §4)", () => {
   it("the same seed draws the same candidates; another seed, others", () => {
@@ -126,5 +126,32 @@ describe("art direction (spec §4)", () => {
     expect(Math.min(...values)).toBeGreaterThanOrEqual(0);
     expect(Math.max(...values)).toBeLessThan(1);
     expect(values.reduce((a, b) => a + b) / values.length).toBeCloseTo(0.5, 1);
+  });
+});
+
+describe("context and concept of the direction call", () => {
+  const candidates = directionCandidates(5, "playful");
+
+  it("asks for a concept only when there is context", () => {
+    const withContext = directionSchema(candidates, { concept: true }) as unknown as { required: string[]; properties: Record<string, unknown> };
+    expect(withContext.required).toContain("concept");
+    expect(withContext.properties).toHaveProperty("concept");
+    const without = directionSchema(candidates) as unknown as { required: string[]; properties: Record<string, unknown> };
+    expect(without.required).not.toContain("concept");
+    expect(without.properties).not.toHaveProperty("concept");
+  });
+
+  it("parseDirectionAnswer keeps the concept on one line, capped at 500", () => {
+    const pick = parseDirectionAnswer({ axes: {}, moves: [], rationale: "", concept: `A  barber's\nledger ${"z".repeat(600)}` }, candidates)!;
+    expect(pick.concept).toMatch(/^A barber's ledger z+$/);
+    expect(pick.concept).toHaveLength(500);
+    expect(parseDirectionAnswer({ axes: {}, moves: [], rationale: "", concept: 42 }, candidates)).not.toHaveProperty("concept");
+  });
+
+  it("directionForPrompt carries every part of a stored direction and nothing that is absent", () => {
+    const bare = { ...defaultPick(candidates), rationale: "r" };
+    expect(Object.keys(directionForPrompt(bare)).sort()).toEqual(["axes", "moves", "rationale"]);
+    const full = directionForPrompt({ ...bare, style: "s", references: "r", context: { audience: "a" }, concept: "c" });
+    expect(Object.keys(full).sort()).toEqual(["axes", "concept", "context", "moves", "rationale", "references", "style"]);
   });
 });

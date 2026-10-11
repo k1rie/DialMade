@@ -1,6 +1,7 @@
 "use client";
 
 import { newSeed } from "@dialmade/ai-render";
+import { normalizeAiContext } from "@dialmade/doc";
 import { useMemo, useState } from "react";
 import { AiKeyDialog, type AiKeyDialogView } from "@/components/AiKeyDialog";
 import { BYOK_RENDER_MODELS, type ByokRenderModel } from "@/lib/ai/render/byokModel";
@@ -45,10 +46,19 @@ export function DesignAccessDialog({ plan, view, onClose }: DesignAccessDialogPr
     const existing = next.aiRender?.direction;
     const style = plan.style.trim();
     const references = plan.references;
-    const reuse = directionReusable(existing, plan.chip, style);
+    const context = normalizeAiContext(plan.context);
+    const reuse = directionReusable(existing, plan.chip, style, 0, context);
     const direction = reuse
-      ? { axes: existing.axes, moves: existing.moves, rationale: existing.rationale, ...(existing.style && { style: existing.style }), ...(existing.references && { references: existing.references }) }
-      : { ...manualDirection(seed, recipeId, plan.chip), ...(style && { style }) };
+      ? {
+          axes: existing.axes,
+          moves: existing.moves,
+          rationale: existing.rationale,
+          ...(existing.style && { style: existing.style }),
+          ...(existing.references && { references: existing.references }),
+          ...(existing.context && { context: existing.context }),
+          ...(existing.concept && { concept: existing.concept }),
+        }
+      : { ...manualDirection(seed, recipeId, plan.chip), ...(style && { style }), ...(context && { context }) };
     const estimates: Partial<Record<ByokRenderModel, CostRange>> = Object.fromEntries(
       BYOK_RENDER_MODELS.map((model) => [
         model,
@@ -57,7 +67,7 @@ export function DesignAccessDialog({ plan, view, onClose }: DesignAccessDialogPr
       ]),
     );
     return { direction, estimates, job: manualRenderJob({ brand, direction, screens: inputs, tier: plan.tier, references }) };
-  }, [open, plan.selected, plan.chip, plan.style, plan.tier, plan.references, doc, screens, order, seed]);
+  }, [open, plan.selected, plan.chip, plan.style, plan.tier, plan.references, plan.context, doc, screens, order, seed]);
 
   const onManualResult = (answer: ManualRenderAnswer) => {
     if (!prepared) return;

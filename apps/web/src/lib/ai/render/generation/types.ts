@@ -1,6 +1,6 @@
 // «Generar con IA» (spec §5, tracks doc · Track A): the state of one generation, the transport it talks to and what
 // the UI reads. Type-only module (client-safe, no React).
-import type { AiDirectionChip, AiRenderPath, AiRenderTier } from "@dialmade/doc";
+import type { AiContext, AiDirectionChip, AiRenderPath, AiRenderTier } from "@dialmade/doc";
 import type {
   RenderApiError,
   RenderBlockBody,
@@ -112,7 +112,12 @@ export type GenerationState = {
   /** `counters` only in the free tier. */
   session: { id: string; counters: RenderSessionCounters | null } | null;
   /** The art direction of this run: the model's rationale, or the code's pick when the call failed. */
-  direction: { rationale: string; fromModel: boolean; /** The variant of the recipe the direction picked (brief.themeId). */ themeId?: string } | null;
+  direction: {
+    rationale: string;
+    fromModel: boolean;
+    /** The variant of the recipe the direction picked (brief.themeId). */
+    themeId?: string;
+  } | null;
   /** What stopped the run before any screen (or the last error of a block action). */
   error: RenderErrorCode | null;
   announcement: ScreenAnnouncement | null;
@@ -136,6 +141,11 @@ export type GenerationPrefs = {
   style: string;
   /** Reference screenshots for the next direction: in memory only, never written to the document or storage. */
   references: StyleReference[];
+  /**
+   * «Contexto»: who it is for, what it must provoke, tone, real facts, what to avoid. `null` = untouched: the
+   * document's own direction context (if any) is what is shown and reused.
+   */
+  context: AiContext | null;
 };
 
 /** A reference screenshot, re-encoded in the browser (JPEG, long side ≤ 1280 px). */
@@ -148,4 +158,5 @@ export type GenerateRequest = {
   chip: AiDirectionChip;
   style?: string;
   references?: readonly Pick<StyleReference, "mediaType" | "data">[];
+  context?: AiContext;
 };
